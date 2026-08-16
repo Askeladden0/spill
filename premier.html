@@ -33,23 +33,85 @@
         </a>
       </nav>
     </div>
-
     <div class="header-right" data-auth-slot></div>
   </header>
 
   <main>
-    <section>
-      <div class="section-heading">
-        <h1>Premier</h1>
-        <span class="section-sub">Bytt poeng mot premier</span>
+    <section class="premier-hero-grid">
+      <div class="level-card">
+        <div class="level-ring-wrap" data-level-ring-wrap>
+          <div class="level-ring-tooltip" data-level-tooltip>– poeng totalt</div>
+          <svg width="132" height="132" viewBox="0 0 132 132">
+            <circle cx="66" cy="66" r="58" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="11"></circle>
+            <circle cx="66" cy="66" r="58" fill="none" stroke="#2ee87f" stroke-width="11" stroke-linecap="round"
+              stroke-dasharray="364.4" stroke-dashoffset="364.4" data-level-ring-progress
+              style="transition:stroke-dashoffset .6s ease"></circle>
+          </svg>
+          <div class="level-ring-center">
+            <span class="level-ring-num" data-level-num>–</span>
+            <span class="level-ring-label">NIVÅ</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+          <h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-.025em;color:#fff" data-level-headline>Laster nivå …</h1>
+          <p style="margin:0;font-size:15px;line-height:1.6;color:var(--muted);max-width:46ch;text-wrap:pretty">Spill for å samle poeng. Hvert nivå låser opp nye rabattkoder fra våre partnere — de blir liggende i «Mine koder» til du bruker dem.</p>
+          <div class="level-stats-row">
+            <div class="level-stat">
+              <span class="level-stat-num is-accent" data-stat-codes>7</span>
+              <span class="level-stat-label">TILGJENGELIGE KODER</span>
+            </div>
+            <div class="level-stat">
+              <span class="level-stat-num" data-stat-points>0</span>
+              <span class="level-stat-label">POENG TOTALT</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="placeholder-panel">
-        <span class="placeholder-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
-        </span>
-        <h2>Premiebutikken kommer snart</h2>
-        <p>Her vil du kunne bytte inn poengene dine mot premier så snart backenden og admin-panelet er på plass.</p>
+
+      <div class="spin-card">
+        <div class="spin-wheel-wrap">
+          <div class="spin-wheel" data-mini-wheel></div>
+          <svg width="18" height="14" viewBox="0 0 18 14" class="spin-wheel-pointer">
+            <path d="M9 14 L0 0 L18 0 Z" fill="#2ee87f"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="spin-card-title">Lykkehjulet</h2>
+          <p class="spin-card-sub">Spinn hjulet og vinn mellom 10 og 1000 poeng.</p>
+        </div>
+        <button class="btn-primary" type="button" style="width:100%" data-open-spin>Spinn hjulet</button>
+        <span class="spin-card-note">Ingen grense på antall spinn ennå</span>
       </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:1fr 340px;gap:32px;align-items:start" class="premier-layout">
+
+      <div>
+        <div class="section-heading spread">
+          <h2>Nivåstigen</h2>
+          <span class="section-sub" data-ladder-range>Nivå 1–15</span>
+        </div>
+        <div class="level-ladder" data-level-ladder>
+          <p class="section-sub">Laster nivåer …</p>
+        </div>
+      </div>
+
+      <aside class="premier-side">
+        <div class="side-card">
+          <div class="side-card-head">
+            <span class="live-dot"></span>
+            <h2 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff">Nettopp låst opp</h2>
+          </div>
+          <div data-feed-list></div>
+        </div>
+
+        <div class="side-card codes-card">
+          <h2>Mine koder</h2>
+          <div style="display:flex;flex-direction:column;gap:10px" data-my-codes>
+            <p class="section-sub">Laster …</p>
+          </div>
+        </div>
+      </aside>
     </section>
   </main>
 
@@ -67,10 +129,455 @@
   </footer>
 </div>
 
+<!-- Lykkehjul-modal -->
+<div class="modal-overlay" data-spin-modal hidden>
+  <div class="modal-backdrop" data-spin-backdrop></div>
+  <div class="modal-card">
+    <button type="button" class="modal-close" data-close-spin aria-label="Lukk">×</button>
+    <h2 class="modal-title">Spinn og vinn poeng!</h2>
+    <div class="big-wheel-wrap">
+      <div class="big-wheel" data-big-wheel></div>
+      <svg width="24" height="18" viewBox="0 0 18 14" class="big-wheel-pointer">
+        <path d="M9 14 L0 0 L18 0 Z" fill="#2ee87f"></path>
+      </svg>
+    </div>
+    <p class="modal-result" data-spin-result></p>
+    <p class="modal-sub" data-spin-hint>Trykk på knappen for å spinne hjulet.</p>
+    <button class="btn-primary" type="button" style="width:100%" data-spin-action>Spinn!</button>
+  </div>
+</div>
+
+<!-- Rabattkode-modal -->
+<div class="modal-overlay" data-code-modal hidden>
+  <div class="modal-backdrop" data-code-backdrop></div>
+  <div class="modal-card">
+    <button type="button" class="modal-close" data-close-code aria-label="Lukk">×</button>
+    <h2 class="modal-title" data-code-brand>Din rabattkode</h2>
+    <p class="modal-sub" data-code-title></p>
+    <div class="code-value" data-code-value>–</div>
+    <p class="modal-sub">Koden er lagret i profilen din under «Mine koder».</p>
+    <button class="btn-primary" type="button" style="width:100%" data-close-code-btn>Lukk</button>
+  </div>
+</div>
+
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/games-data.js"></script>
-<script src="js/main.js"></script>
+<script>
+(function () {
+  "use strict";
+  const sb = window.supabaseClient;
+  const Auth = window.PixelPlayAuth;
+
+  const WHEEL_VALUES = [10, 750, 100, 500, 50, 1000, 250, 400];
+  const WHEEL_COLORS = ["#2ee87f", "#1b2434"];
+
+  const FEED_ITEMS = [
+    { initials: "MJ", text: "Mari hentet 25 % hos Nike", time: "2 min siden" },
+    { initials: "SO", text: "Sondre nådde nivå 9", time: "6 min siden" },
+    { initials: "AH", text: "Amina hentet gratis McFlurry", time: "11 min siden" },
+    { initials: "TK", text: "Trym spant 500 poeng", time: "18 min siden" },
+    { initials: "LB", text: "Lea hentet 150 kr hos Sushi & Wok", time: "24 min siden" },
+    { initials: "EN", text: "Even nådde nivå 13", time: "31 min siden" }
+  ];
+
+  let profile = null;
+  let levels = [];
+  let userCodes = [];
+  let miniRotation = 0;
+  let bigRotation = 0;
+  let spinning = false;
+
+  function fmt(n) {
+    return Math.round(n).toLocaleString("no-NO");
+  }
+
+  function currentPoints() {
+    return profile ? profile.xp : Auth.getGuestPoints();
+  }
+
+  function computedLevelFromPoints(points) {
+    let best = levels.length ? levels[0].level_number : 1;
+    levels.forEach((lv) => {
+      if (points >= lv.points_required) best = lv.level_number;
+    });
+    return best;
+  }
+
+  function displayLevel() {
+    if (!levels.length) return profile ? profile.level : 1;
+    const computed = computedLevelFromPoints(currentPoints());
+    if (profile) return Math.max(profile.level, computed);
+    return computed;
+  }
+
+  function nextLevelInfo() {
+    const dl = displayLevel();
+    return levels.find((lv) => lv.level_number > dl) || null;
+  }
+
+  // ---------- SVG-hjul ----------
+  function polar(cx, cy, r, angleDeg) {
+    const rad = ((angleDeg - 90) * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  function wheelSVG(size, withLabels) {
+    const cx = size / 2, cy = size / 2, r = size / 2 - 4;
+    const n = WHEEL_VALUES.length;
+    const seg = 360 / n;
+    let paths = "", labels = "";
+    for (let i = 0; i < n; i++) {
+      const start = i * seg, end = (i + 1) * seg;
+      const p1 = polar(cx, cy, r, start);
+      const p2 = polar(cx, cy, r, end);
+      const color = WHEEL_COLORS[i % 2];
+      paths += `<path d="M${cx} ${cy} L${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A${r} ${r} 0 0 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z" fill="${color}"></path>`;
+      if (withLabels) {
+        const mid = start + seg / 2;
+        const lp = polar(cx, cy, r * 0.64, mid);
+        const textColor = color === "#2ee87f" ? "#0d1117" : "#e8edf5";
+        labels += `<text x="${lp.x.toFixed(2)}" y="${lp.y.toFixed(2)}" fill="${textColor}" font-size="${(size * 0.075).toFixed(1)}" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(${mid.toFixed(2)} ${lp.x.toFixed(2)} ${lp.y.toFixed(2)})" font-family="Poppins, sans-serif">${WHEEL_VALUES[i]}</text>`;
+      }
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <circle cx="${cx}" cy="${cy}" r="${r + 2}" fill="#0d1117"></circle>
+      ${paths}
+      ${labels}
+      <circle cx="${cx}" cy="${cy}" r="${size * 0.11}" fill="#131a25" stroke="rgba(46,232,127,.5)" stroke-width="3"></circle>
+    </svg>`;
+  }
+
+  function renderWheels() {
+    document.querySelector("[data-mini-wheel]").innerHTML = wheelSVG(132, false);
+    document.querySelector("[data-big-wheel]").innerHTML = wheelSVG(260, true);
+  }
+
+  // ---------- Hero / nivå-kort ----------
+  function renderLevelCard() {
+    const points = currentPoints();
+    const dl = displayLevel();
+    const next = nextLevelInfo();
+
+    document.querySelector("[data-level-num]").textContent = dl;
+
+    const headline = document.querySelector("[data-level-headline]");
+    if (next) {
+      headline.textContent = `Du er ${fmt(Math.max(0, next.points_required - points))} poeng fra nivå ${next.level_number}`;
+    } else {
+      headline.textContent = "Du har nådd toppnivået! 🎉";
+    }
+
+    const ring = document.querySelector("[data-level-ring-progress]");
+    const circumference = 364.4;
+    let pct = 1;
+    if (next) {
+      const cur = levels.find((lv) => lv.level_number === dl);
+      const lo = cur ? cur.points_required : 0;
+      const span = Math.max(1, next.points_required - lo);
+      pct = Math.min(1, Math.max(0, (points - lo) / span));
+    }
+    ring.style.strokeDashoffset = String(circumference * (1 - pct));
+
+    document.querySelector("[data-stat-points]").textContent = fmt(points);
+    document.querySelector("[data-level-tooltip]").textContent = `${fmt(points)} poeng totalt`;
+
+    const availableCodes = levels
+      .filter((lv) => lv.level_number <= dl)
+      .reduce((sum, lv) => sum + (lv.rewards ? lv.rewards.length : 0), 0);
+    document.querySelector('[data-stat-codes]').textContent = availableCodes;
+  }
+
+  // ---------- Nivåstige ----------
+  function levelBadgeColors(state) {
+    if (state === "now") return { bg: "#2ee87f", fg: "#0d1117", border: "#2ee87f" };
+    if (state === "done") return { bg: "rgba(46,232,127,.14)", fg: "#2ee87f", border: "rgba(46,232,127,.35)" };
+    return { bg: "#131a25", fg: "#7c8aa0", border: "rgba(255,255,255,.09)" };
+  }
+
+  function renderLadder() {
+    const el = document.querySelector("[data-level-ladder]");
+    if (!levels.length) {
+      el.innerHTML = '<p class="section-sub">Ingen nivåer er satt opp ennå.</p>';
+      return;
+    }
+
+    const dl = displayLevel();
+    const nums = levels.map((l) => l.level_number);
+    document.querySelector("[data-ladder-range]").textContent = `Nivå ${Math.min(...nums)}–${Math.max(...nums)}`;
+
+    el.innerHTML = levels
+      .map((lv) => {
+        const state = lv.level_number < dl ? "done" : lv.level_number === dl ? "now" : "locked";
+        const unlocked = lv.level_number <= dl;
+        const colors = levelBadgeColors(state);
+        const label = state === "done" ? "LÅST OPP" : state === "now" ? "DITT NIVÅ" : "LÅST";
+        const labelColor = state === "locked" ? "#7c8aa0" : "#2ee87f";
+        const lineColor = unlocked ? "rgba(46,232,127,.35)" : "rgba(255,255,255,.08)";
+
+        const rewardsHTML = (lv.rewards || [])
+          .map(
+            (r, ri) => `
+            <article class="reward-card" style="opacity:${unlocked ? 1 : 0.55}">
+              <div class="reward-thumb">
+                <span class="reward-thumb-slot">[ partnerbilde ]</span>
+                <span class="reward-brand-tag">${r.brand}</span>
+              </div>
+              <div class="reward-body">
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <h3 class="reward-title">${r.title}</h3>
+                  <span class="reward-sub">${r.sub || ""}</span>
+                </div>
+                <button type="button" class="btn-reward ${unlocked ? "is-unlocked" : "is-locked"}"
+                  ${unlocked ? `data-redeem="${lv.level_number}:${ri}"` : "disabled"}>
+                  ${unlocked ? "Hent rabattkode" : "Låses på nivå " + lv.level_number}
+                </button>
+              </div>
+            </article>
+          `
+          )
+          .join("");
+
+        return `
+          <div class="level-row">
+            <div class="level-badge-col">
+              <div class="level-badge" style="background:${colors.bg};color:${colors.fg};border-color:${colors.border}">${lv.level_number}</div>
+              <div class="level-badge-line" style="background:${lineColor}"></div>
+            </div>
+            <div class="level-row-body">
+              <div class="level-row-heading">
+                <span class="level-row-status" style="color:${labelColor}">${label}</span>
+                <span class="level-row-req">${fmt(lv.points_required)} poeng</span>
+              </div>
+              <div class="reward-grid">${rewardsHTML}</div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    el.querySelectorAll("[data-redeem]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const [levelNumber, rewardIndex] = btn.dataset.redeem.split(":").map(Number);
+        const lv = levels.find((l) => l.level_number === levelNumber);
+        const reward = lv && lv.rewards[rewardIndex];
+        if (reward) openCodeModal(reward);
+      });
+    });
+  }
+
+  // ---------- Sidepanel ----------
+  function renderFeed() {
+    document.querySelector("[data-feed-list]").innerHTML = FEED_ITEMS.map(
+      (f) => `
+      <div class="feed-row">
+        <div class="feed-avatar">${f.initials}</div>
+        <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+          <span class="feed-text">${f.text}</span>
+          <span class="feed-time">${f.time}</span>
+        </div>
+      </div>
+    `
+    ).join("");
+  }
+
+  function renderMyCodes() {
+    const el = document.querySelector("[data-my-codes]");
+    if (!profile) {
+      el.innerHTML = '<p class="section-sub">Logg inn for å se og hente dine rabattkoder.</p>';
+      return;
+    }
+    if (!userCodes.length) {
+      el.innerHTML = '<p class="section-sub">Ingen koder ennå — hent en fra en premie du har låst opp!</p>';
+      return;
+    }
+    el.innerHTML = userCodes
+      .map(
+        (c) => `
+        <div class="code-row">
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+            <span class="code-row-text">${c.code}</span>
+            <span class="code-row-sub">${c.brand} · ${c.title}</span>
+          </div>
+          <button type="button" class="btn-copy" data-copy-code="${c.code}">Kopier</button>
+        </div>
+      `
+      )
+      .join("");
+
+    el.querySelectorAll("[data-copy-code]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(btn.dataset.copyCode);
+          const original = btn.textContent;
+          btn.textContent = "Kopiert!";
+          setTimeout(() => (btn.textContent = original), 1500);
+        } catch (e) {
+          /* utilgjengelig utklippstavle, ignorer */
+        }
+      });
+    });
+  }
+
+  // ---------- Rabattkode-modal ----------
+  function randomCode(brand, title) {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let suffix = "";
+    for (let i = 0; i < 4; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+    const pctMatch = (title || "").match(/(\d+)\s*%/);
+    const num = pctMatch ? pctMatch[1] : String(Math.floor(Math.random() * 90 + 10));
+    const brandSlug = (brand || "KODE").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) || "KODE";
+    return `${brandSlug}-${num}-${suffix}`;
+  }
+
+  async function openCodeModal(reward) {
+    if (!profile) {
+      window.location.href = "login.html";
+      return;
+    }
+    const modal = document.querySelector("[data-code-modal]");
+    const code = randomCode(reward.brand, reward.title);
+
+    document.querySelector("[data-code-brand]").textContent = reward.brand;
+    document.querySelector("[data-code-title]").textContent = reward.title;
+    document.querySelector("[data-code-value]").textContent = code;
+    modal.hidden = false;
+
+    const { data, error } = await sb
+      .from("user_codes")
+      .insert({ user_id: profile.id, brand: reward.brand, title: reward.title, code })
+      .select()
+      .single();
+
+    if (!error && data) {
+      userCodes.unshift(data);
+      renderMyCodes();
+    }
+  }
+
+  document.querySelector("[data-close-code]").addEventListener("click", closeCodeModal);
+  document.querySelector("[data-close-code-btn]").addEventListener("click", closeCodeModal);
+  document.querySelector("[data-code-backdrop]").addEventListener("click", closeCodeModal);
+  function closeCodeModal() {
+    document.querySelector("[data-code-modal]").hidden = true;
+  }
+
+  // ---------- Lykkehjul-modal ----------
+  function openSpinModal() {
+    document.querySelector("[data-spin-modal]").hidden = false;
+    document.querySelector("[data-spin-result]").textContent = "";
+    document.querySelector("[data-spin-hint]").textContent = "Trykk på knappen for å spinne hjulet.";
+    document.querySelector("[data-spin-action]").textContent = "Spinn!";
+    document.querySelector("[data-spin-action]").disabled = false;
+  }
+
+  function closeSpinModal() {
+    if (spinning) return;
+    document.querySelector("[data-spin-modal]").hidden = true;
+  }
+
+  async function doSpin() {
+    if (spinning) return;
+    spinning = true;
+    const actionBtn = document.querySelector("[data-spin-action]");
+    actionBtn.disabled = true;
+    document.querySelector("[data-spin-hint]").textContent = "Hjulet spinner …";
+    document.querySelector("[data-spin-result]").textContent = "";
+
+    const idx = Math.floor(Math.random() * WHEEL_VALUES.length);
+    const value = WHEEL_VALUES[idx];
+    const seg = 360 / WHEEL_VALUES.length;
+    const targetCenter = idx * seg + seg / 2;
+    const spins = 5;
+    const deltaToAlign = ((360 - targetCenter - (bigRotation % 360)) % 360 + 360) % 360;
+    bigRotation += spins * 360 + deltaToAlign;
+
+    const wheelEl = document.querySelector("[data-big-wheel]");
+    wheelEl.style.transition = "transform 4s cubic-bezier(.17,.67,.32,1.1)";
+    wheelEl.style.transform = `rotate(${bigRotation}deg)`;
+
+    await new Promise((resolve) => setTimeout(resolve, 4100));
+
+    let newTotal;
+    if (profile) {
+      const { data, error } = await sb.rpc("add_points", { p_delta: value });
+      if (!error && data) {
+        profile.xp = data.xp;
+        profile.level = data.level;
+        newTotal = data.xp;
+      } else {
+        newTotal = currentPoints();
+      }
+    } else {
+      newTotal = Auth.addGuestPoints(value);
+    }
+
+    document.querySelector("[data-spin-result]").textContent = `Du vant ${fmt(value)} poeng!`;
+    document.querySelector("[data-spin-hint]").textContent = `Du har nå ${fmt(newTotal)} poeng totalt.`;
+    actionBtn.textContent = "Spinn igjen";
+    actionBtn.disabled = false;
+    spinning = false;
+
+    renderLevelCard();
+    renderLadder();
+    Auth.renderHeaderAuth();
+  }
+
+  document.querySelector("[data-open-spin]").addEventListener("click", openSpinModal);
+  document.querySelector("[data-close-spin]").addEventListener("click", closeSpinModal);
+  document.querySelector("[data-spin-backdrop]").addEventListener("click", closeSpinModal);
+  document.querySelector("[data-spin-action]").addEventListener("click", doSpin);
+
+  // ---------- Mini-hjul: dekorativ konstant rotasjon ----------
+  function spinMiniForever() {
+    const el = document.querySelector("[data-mini-wheel]");
+    miniRotation += 360;
+    el.style.transition = "transform 12s linear";
+    el.style.transform = `rotate(${miniRotation}deg)`;
+  }
+
+  // ---------- Init ----------
+  async function loadLevels() {
+    const { data, error } = await sb.from("levels").select("level_number, points_required, rewards").order("level_number");
+    if (!error && data) levels = data;
+  }
+
+  async function loadUserCodes() {
+    if (!profile) {
+      userCodes = [];
+      return;
+    }
+    const { data, error } = await sb
+      .from("user_codes")
+      .select("id, brand, title, code, created_at")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false });
+    if (!error && data) userCodes = data;
+  }
+
+  (async function init() {
+    profile = await Auth.getCurrentProfile();
+    renderWheels();
+    spinMiniForever();
+    setInterval(spinMiniForever, 12000);
+    renderFeed();
+
+    await loadLevels();
+    renderLevelCard();
+    renderLadder();
+
+    await loadUserCodes();
+    renderMyCodes();
+  })();
+
+  sb.auth.onAuthStateChange(async () => {
+    profile = await Auth.getCurrentProfile();
+    renderLevelCard();
+    renderLadder();
+    await loadUserCodes();
+    renderMyCodes();
+  });
+})();
+</script>
 </body>
 </html>
