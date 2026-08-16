@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PixelPlay · Spillerprofil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="rangering">
+<div class="page">
+
+  <header class="site-header">
+    <div class="header-left">
+      <a href="index.html" class="logo">
+        <span class="logo-mark">P</span>
+        <span class="logo-text">PIXEL<span>PLAY</span></span>
+      </a>
+      <nav class="main-nav">
+        <a href="index.html#spill" class="nav-link" data-page="spill">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
+          Spill
+        </a>
+        <a href="premier.html" class="nav-link" data-page="premier">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
+          Premier
+        </a>
+        <a href="rangering.html" class="nav-link" data-page="rangering">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
+          Rangering
+        </a>
+      </nav>
+    </div>
+    <div class="header-right" data-auth-slot></div>
+  </header>
+
+  <main>
+    <section>
+      <a href="rangering.html" class="back-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Tilbake til rangering
+      </a>
+    </section>
+
+    <section data-not-found hidden>
+      <div class="public-profile-not-found">
+        <h2 style="margin:0 0 8px;color:#fff">Fant ikke spilleren</h2>
+        <p style="margin:0">Sjekk at lenken er riktig, eller søk etter spilleren på <a href="rangering.html">rangeringssiden</a>.</p>
+      </div>
+    </section>
+
+    <section data-profile-main hidden>
+      <div class="public-profile-header">
+        <span data-profile-avatar></span>
+        <div>
+          <h1 style="margin:0 0 4px;font-size:24px;color:#fff" data-profile-username>–</h1>
+          <span class="section-sub" data-profile-scope-label>–</span>
+        </div>
+        <div class="public-profile-stats">
+          <div class="public-profile-stat">
+            <span class="public-profile-stat-num" data-stat-rank>–</span>
+            <span class="public-profile-stat-label">PLASSERING</span>
+          </div>
+          <div class="public-profile-stat">
+            <span class="public-profile-stat-num is-accent" data-stat-points>–</span>
+            <span class="public-profile-stat-label">POENG TOTALT</span>
+          </div>
+          <div class="public-profile-stat">
+            <span class="public-profile-stat-num" data-stat-level>–</span>
+            <span class="public-profile-stat-label">NIVÅ</span>
+          </div>
+          <div class="public-profile-stat">
+            <span class="public-profile-stat-num" data-stat-codes>–</span>
+            <span class="public-profile-stat-label">RABATTKODER HENTET</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-scores-section hidden>
+      <div class="section-heading spread">
+        <h2>Score per spill</h2>
+        <span class="section-sub" data-scores-sub></span>
+      </div>
+      <div class="mygames-grid" data-scores-grid></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-brand">
+      <span class="footer-logo-mark">P</span>
+      <span class="footer-copy">© 2026 PixelPlay</span>
+    </div>
+    <nav class="footer-nav">
+      <a href="#kontakt">Kontakt</a>
+      <a href="#personvern">Personvern</a>
+      <a href="#vilkar">Vilkår</a>
+      <a href="admin.html" data-admin-only style="display:none">Admin</a>
+    </nav>
+  </footer>
+</div>
+
+<script src="js/vendor/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/games-data.js"></script>
+<script src="js/leaderboard-data.js"></script>
+<script>
+(function () {
+  "use strict";
+  const Auth = window.PixelPlayAuth;
+  const LB = window.PixelPlayLeaderboard;
+  const games = LB.games;
+
+  function fmt(n) {
+    return Math.round(n || 0).toLocaleString("no-NO");
+  }
+
+  async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const username = (params.get("u") || "").trim();
+
+    if (!username) {
+      document.querySelector("[data-not-found]").hidden = false;
+      return;
+    }
+
+    const [profiles, records] = await Promise.all([LB.loadProfiles(), LB.loadRecords()]);
+    const player = profiles.find((p) => p.username.toLowerCase() === username.toLowerCase());
+
+    if (!player) {
+      document.querySelector("[data-not-found]").hidden = false;
+      return;
+    }
+
+    document.title = `${player.username} · PixelPlay`;
+
+    const boards = LB.buildBoards(profiles, records);
+    const meInTotal = boards.total.find((p) => p.id === player.id);
+    const codes = await LB.codesCount(player.id);
+
+    document.querySelector("[data-profile-avatar]").outerHTML =
+      `<span class="avatar-badge avatar-badge-lg" data-profile-avatar style="background:${player.avatar_color}22;border-color:${player.avatar_color}66">${player.avatar_icon}</span>`;
+    document.querySelector("[data-profile-username]").textContent = player.username;
+    document.querySelector("[data-profile-scope-label]").textContent = `${fmt(meInTotal ? meInTotal.matches : 0)} kamper spilt totalt`;
+
+    document.querySelector("[data-stat-rank]").textContent = meInTotal ? "#" + meInTotal.rank : "–";
+    document.querySelector("[data-stat-points]").textContent = fmt(player.xp);
+    document.querySelector("[data-stat-level]").textContent = player.level;
+    document.querySelector("[data-stat-codes]").textContent = fmt(codes);
+
+    document.querySelector("[data-profile-main]").hidden = false;
+
+    const playedGames = games.filter((g) => (boards.perGame[g.id] || []).some((p) => p.id === player.id));
+    document.querySelector("[data-scores-sub]").textContent = `${playedGames.length} av ${games.length} spill spilt`;
+
+    const maxScore = Math.max(1, ...games.map((g) => {
+      const board = boards.perGame[g.id] || [];
+      return board.length ? board[0].score : 1;
+    }));
+
+    document.querySelector("[data-scores-grid]").innerHTML = games
+      .map((g) => {
+        const board = boards.perGame[g.id] || [];
+        const entry = board.find((p) => p.id === player.id);
+        const pct = entry ? Math.max(4, Math.round((entry.score / maxScore) * 100)) : 0;
+        return `
+          <a class="mygame-card" href="player.html?id=${encodeURIComponent(g.id)}">
+            <div class="mygame-head">
+              <span class="mygame-name">${g.name}</span>
+              <span class="mygame-genre">${g.genre}</span>
+            </div>
+            <div class="mygame-stats">
+              <div>
+                <div class="mygame-score">${entry ? fmt(entry.score) : "–"}</div>
+                <span class="mygame-label">POENG</span>
+              </div>
+              <div style="text-align:right">
+                <div class="mygame-rank">${entry ? "#" + entry.rank : "Ikke spilt"}</div>
+                <span class="mygame-label">PLASSERING</span>
+              </div>
+            </div>
+            <div class="mygame-bar"><div class="mygame-bar-fill" style="width:${pct}%"></div></div>
+          </a>
+        `;
+      })
+      .join("");
+
+    document.querySelector("[data-scores-section]").hidden = false;
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

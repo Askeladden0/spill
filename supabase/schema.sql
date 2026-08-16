@@ -378,6 +378,25 @@ $$;
 revoke all on function public.add_points(int) from public;
 grant execute on function public.add_points(int) to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 13. RPC: antall rabattkoder en spiller har hentet ut, uten å eksponere de
+--     faktiske kodene (user_codes er kun lesbar for eieren selv, se policy
+--     "user_codes_select_own" over). Brukes på offentlige spillerprofiler og
+--     rangeringssiden, som skal vise "antall rabattkoder" for alle spillere.
+-- ---------------------------------------------------------------------------
+create or replace function public.user_codes_count(p_user_id uuid)
+returns bigint
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select count(*) from public.user_codes where user_id = p_user_id;
+$$;
+
+revoke all on function public.user_codes_count(uuid) from public;
+grant execute on function public.user_codes_count(uuid) to anon, authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

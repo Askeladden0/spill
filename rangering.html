@@ -39,17 +39,44 @@
 
   <main>
     <section>
-      <div class="section-heading">
-        <h1>Rangering</h1>
-        <span class="section-sub">Se hvem som topper listen</span>
+      <div class="section-heading spread" style="align-items:flex-end;flex-wrap:wrap;gap:20px">
+        <div>
+          <h1>Rangering</h1>
+          <span class="section-sub" data-rank-subtitle>Laster rangering …</span>
+        </div>
+        <div class="rank-search-wrap">
+          <input type="search" class="rank-search-input" placeholder="Søk etter en spiller …" data-search-input autocomplete="off">
+          <div class="rank-search-results" data-search-results hidden></div>
+        </div>
       </div>
-      <div class="placeholder-panel">
-        <span class="placeholder-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
-        </span>
-        <h2>Rangeringslisten kommer snart</h2>
-        <p>Her vil du kunne se hvordan du ligger an mot andre spillere så snart backenden og admin-panelet er på plass.</p>
+
+      <div class="scope-chips" data-scope-chips style="margin-bottom:22px"></div>
+
+      <div class="rank-hero-grid" style="margin-bottom:22px">
+        <div data-rank-me-slot></div>
+        <div class="rank-podium-card">
+          <span class="rank-podium-title" data-podium-title>TOPP 3</span>
+          <div class="rank-podium-list" data-podium-list></div>
+        </div>
       </div>
+
+      <div class="leaderboard-panel">
+        <div class="leaderboard-head">
+          <span>PLASS</span><span>SPILLER</span><span>NIVÅ</span><span>KAMPER</span><span>POENG</span>
+        </div>
+        <div class="leaderboard-body" data-leaderboard-body>
+          <div class="leaderboard-empty">Laster spillere …</div>
+        </div>
+        <div class="leaderboard-foot">
+          <span class="section-sub" data-shown-label></span>
+          <button type="button" class="btn-outline" data-toggle-rows hidden>Vis alle</button>
+        </div>
+      </div>
+    </section>
+
+    <section data-mygames-section hidden>
+      <div class="section-heading"><h2>Din score per spill</h2></div>
+      <div class="mygames-grid" data-mygames-grid></div>
     </section>
   </main>
 
@@ -71,6 +98,309 @@
 <script src="js/supabase-config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/games-data.js"></script>
+<script src="js/leaderboard-data.js"></script>
 <script src="js/main.js"></script>
+<script>
+(function () {
+  "use strict";
+  const Auth = window.PixelPlayAuth;
+  const LB = window.PixelPlayLeaderboard;
+  const games = LB.games;
+
+  const VISIBLE_ROWS = 20;
+  const MEDAL_COLORS = ["#f5c451", "#c9d2de", "#d08a52"];
+
+  let profile = null;
+  let profiles = [];
+  let boards = { total: [], perGame: {} };
+  let scope = "total";
+  let expanded = false;
+
+  function fmt(n) {
+    return Math.round(n || 0).toLocaleString("no-NO");
+  }
+
+  function scopeLabel(s) {
+    if (s === "total") return "Alle spill samlet";
+    const g = games.find((x) => x.id === s);
+    return g ? g.name : s;
+  }
+
+  function currentBoard() {
+    return scope === "total" ? boards.total : boards.perGame[scope] || [];
+  }
+
+  function playerLink(p) {
+    return `spillerprofil.html?u=${encodeURIComponent(p.username)}`;
+  }
+
+  function renderScopeChips() {
+    const items = [{ id: "total", label: "Alle spill samlet" }].concat(
+      games.map((g) => ({ id: g.id, label: g.name }))
+    );
+    document.querySelector("[data-scope-chips]").innerHTML = items
+      .map(
+        (c) => `
+        <button type="button" class="scope-chip ${scope === c.id ? "is-active" : ""}" data-scope="${c.id}">${c.label}</button>
+      `
+      )
+      .join("");
+
+    document.querySelectorAll("[data-scope]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        scope = btn.dataset.scope;
+        expanded = false;
+        renderAll();
+      });
+    });
+  }
+
+  function renderMeCard() {
+    const slot = document.querySelector("[data-rank-me-slot]");
+    const board = currentBoard();
+
+    if (!profile) {
+      slot.innerHTML = `
+        <div class="rank-me-guest">
+          <span class="section-sub">Logg inn for å se din plassering og få poeng registrert på rangeringen.</span>
+          <a href="login.html"><button class="btn-primary" type="button">Logg inn</button></a>
+        </div>
+      `;
+      return;
+    }
+
+    const me = board.find((p) => p.id === profile.id);
+    if (!me) {
+      slot.innerHTML = `
+        <div class="rank-me-guest">
+          <span class="section-sub">Du har ikke spilt «${scopeLabel(scope)}» ennå, så du er ikke rangert her.</span>
+          <a href="index.html#spill"><button class="btn-primary" type="button">Finn et spill</button></a>
+        </div>
+      `;
+      return;
+    }
+
+    const ahead = board[Math.max(0, me.rank - 2)];
+    const gap = ahead && ahead.id !== me.id ? ahead.score - me.score : 0;
+    const gapText = gap > 0
+      ? `${fmt(gap)} poeng opp til plass ${me.rank - 1}`
+      : "Du er på topp i denne listen";
+
+    slot.innerHTML = `
+      <div class="rank-me-card">
+        <div class="rank-me-badge">
+          <span class="rank-me-badge-label">PLASS</span>
+          <span class="rank-me-badge-num">${me.rank}</span>
+          <span class="rank-me-badge-of">av ${fmt(board.length)}</span>
+        </div>
+        <div class="rank-me-body">
+          <div class="rank-me-identity">
+            ${Auth.avatarHTML(me, 34)}
+            <div style="display:flex;flex-direction:column">
+              <span class="rank-me-name">Deg — ${me.username}</span>
+              <span class="rank-me-scope">${scopeLabel(scope)} · Nivå ${me.level}</span>
+            </div>
+          </div>
+          <div class="rank-me-stats">
+            <div class="rank-me-stat">
+              <span class="rank-me-stat-num">${fmt(me.score)}</span>
+              <span class="rank-me-stat-label">POENG</span>
+            </div>
+            <div class="rank-me-stat">
+              <span class="rank-me-stat-num is-plain">${fmt(me.matches)}</span>
+              <span class="rank-me-stat-label">KAMPER</span>
+            </div>
+          </div>
+          <span class="rank-me-gap">${gapText}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPodium() {
+    const board = currentBoard();
+    document.querySelector("[data-podium-title]").textContent = `TOPP 3 · ${scopeLabel(scope).toUpperCase()}`;
+    const list = document.querySelector("[data-podium-list]");
+
+    if (!board.length) {
+      list.innerHTML = `<span class="rank-podium-empty">Ingen spillere ennå.</span>`;
+      return;
+    }
+
+    list.innerHTML = board
+      .slice(0, 3)
+      .map(
+        (p, i) => `
+        <a class="rank-podium-row" href="${playerLink(p)}">
+          <span class="rank-podium-medal" style="background:${MEDAL_COLORS[i]}">${p.rank}</span>
+          ${Auth.avatarHTML(p, 30)}
+          <span class="rank-podium-name">${p.username}</span>
+          <span class="rank-podium-score">${fmt(p.score)}</span>
+        </a>
+      `
+      )
+      .join("");
+  }
+
+  function renderTable() {
+    const board = currentBoard();
+    const body = document.querySelector("[data-leaderboard-body]");
+    const toggleBtn = document.querySelector("[data-toggle-rows]");
+    const shownLabel = document.querySelector("[data-shown-label]");
+
+    if (!board.length) {
+      body.innerHTML = `<div class="leaderboard-empty">Ingen har spilt «${scopeLabel(scope)}» ennå. Bli den første!</div>`;
+      shownLabel.textContent = "";
+      toggleBtn.hidden = true;
+      return;
+    }
+
+    const visible = expanded ? board : board.slice(0, VISIBLE_ROWS);
+    const meInVisible = profile && visible.some((p) => p.id === profile.id);
+    const me = profile && board.find((p) => p.id === profile.id);
+    const shown = me && !meInVisible ? visible.concat([me]) : visible;
+
+    body.innerHTML = shown
+      .map(
+        (p) => `
+        <a class="leaderboard-row ${profile && p.id === profile.id ? "is-me" : ""}" href="${playerLink(p)}">
+          <span class="leaderboard-rank ${p.rank <= 3 ? "is-top" : ""}">${p.rank}</span>
+          <span class="leaderboard-player">
+            ${Auth.avatarHTML(p, 30)}
+            <span class="leaderboard-player-name">${p.username}</span>
+            ${profile && p.id === profile.id ? '<span class="you-badge">DEG</span>' : ""}
+          </span>
+          <span class="leaderboard-level">${p.level}</span>
+          <span class="leaderboard-matches">${fmt(p.matches)}</span>
+          <span class="leaderboard-score">${fmt(p.score)}</span>
+        </a>
+      `
+      )
+      .join("");
+
+    shownLabel.textContent = `Viser ${shown.length} av ${board.length} spillere`;
+    toggleBtn.hidden = board.length <= VISIBLE_ROWS;
+    toggleBtn.textContent = expanded ? "Vis færre" : `Vis alle ${board.length}`;
+  }
+
+  function renderMyGames() {
+    const section = document.querySelector("[data-mygames-section]");
+    if (!profile) {
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+
+    const maxScore = Math.max(1, ...games.map((g) => {
+      const board = boards.perGame[g.id] || [];
+      return board.length ? board[0].score : 1;
+    }));
+
+    document.querySelector("[data-mygames-grid]").innerHTML = games
+      .map((g) => {
+        const board = boards.perGame[g.id] || [];
+        const me = board.find((p) => p.id === profile.id);
+        const pct = me ? Math.max(4, Math.round((me.score / maxScore) * 100)) : 0;
+        return `
+          <a class="mygame-card" href="player.html?id=${encodeURIComponent(g.id)}">
+            <div class="mygame-head">
+              <span class="mygame-name">${g.name}</span>
+              <span class="mygame-genre">${g.genre}</span>
+            </div>
+            <div class="mygame-stats">
+              <div>
+                <div class="mygame-score">${me ? fmt(me.score) : "–"}</div>
+                <span class="mygame-label">POENG</span>
+              </div>
+              <div style="text-align:right">
+                <div class="mygame-rank">${me ? "#" + me.rank : "Ikke spilt"}</div>
+                <span class="mygame-label">PLASSERING</span>
+              </div>
+            </div>
+            <div class="mygame-bar"><div class="mygame-bar-fill" style="width:${pct}%"></div></div>
+          </a>
+        `;
+      })
+      .join("");
+  }
+
+  function renderSubtitle() {
+    document.querySelector("[data-rank-subtitle]").textContent =
+      `${scopeLabel(scope)} · ${fmt(currentBoard().length)} spillere rangert`;
+  }
+
+  function renderAll() {
+    renderScopeChips();
+    renderSubtitle();
+    renderMeCard();
+    renderPodium();
+    renderTable();
+    renderMyGames();
+  }
+
+  document.querySelector("[data-toggle-rows]").addEventListener("click", () => {
+    expanded = !expanded;
+    renderTable();
+  });
+
+  // ---------- Søk ----------
+  const searchInput = document.querySelector("[data-search-input]");
+  const searchResults = document.querySelector("[data-search-results]");
+
+  function renderSearch(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      searchResults.hidden = true;
+      searchResults.innerHTML = "";
+      return;
+    }
+
+    const matches = profiles
+      .filter((p) => p.username.toLowerCase().includes(q))
+      .sort((a, b) => b.xp - a.xp)
+      .slice(0, 8);
+
+    searchResults.innerHTML = matches.length
+      ? matches
+          .map(
+            (p) => `
+            <a class="rank-search-result" href="${playerLink(p)}">
+              ${Auth.avatarHTML(p, 32)}
+              <span class="rank-search-name">${p.username}</span>
+              <span class="rank-search-meta">Nivå ${p.level} · ${fmt(p.xp)} p</span>
+            </a>
+          `
+          )
+          .join("")
+      : `<div class="rank-search-empty">Fant ingen spillere som matcher «${query}».</div>`;
+
+    searchResults.hidden = false;
+  }
+
+  searchInput.addEventListener("input", (e) => renderSearch(e.target.value));
+  searchInput.addEventListener("focus", (e) => {
+    if (e.target.value.trim()) renderSearch(e.target.value);
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".rank-search-wrap")) searchResults.hidden = true;
+  });
+
+  // ---------- Init ----------
+  async function init() {
+    profile = await Auth.getCurrentProfile();
+    const [loadedProfiles, records] = await Promise.all([LB.loadProfiles(), LB.loadRecords()]);
+    profiles = loadedProfiles;
+    boards = LB.buildBoards(profiles, records);
+    renderAll();
+  }
+
+  init();
+
+  window.supabaseClient.auth.onAuthStateChange(async () => {
+    profile = await Auth.getCurrentProfile();
+    renderAll();
+  });
+})();
+</script>
 </body>
 </html>
