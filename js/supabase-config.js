@@ -9,8 +9,8 @@
  * Se SUPABASE_SETUP.md for full oppsettsguide.
  */
 
-window.SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
-window.SUPABASE_ANON_KEY = "YOUR-PUBLIC-ANON-KEY";
+window.SUPABASE_URL = "https://dtchrzsayskizbhuqdls.supabase.co/rest/v1/";
+window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0Y2hyenNheXNraXpiaHVxZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NjY1NjcsImV4cCI6MjEwMjQ0MjU2N30.T2zNImuxWM4E5JkqnAphpYt_NZ3biY8I4TPr6VPrmN0";
 
 if (
   window.SUPABASE_URL.includes("YOUR-PROJECT-REF") ||
