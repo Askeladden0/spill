@@ -32,6 +32,16 @@ window.PIXELPLAY_GAMES = [
     isDailyGame: true
   },
   {
+    id: "snake",
+    name: "Snake",
+    genre: "Arkade",
+    rating: "4,7",
+    points: "Din skår = dine poeng",
+    time: "~5 min",
+    thumbnail: null,
+    description: "Styr slangen rundt brettet, spis mat for å vokse, og unngå å krasje i veggen eller deg selv."
+  },
+  {
     id: "neon-drift",
     name: "Neon Drift",
     genre: "Racing",
