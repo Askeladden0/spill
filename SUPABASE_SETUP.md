@@ -17,9 +17,17 @@ stegene for å koble et Supabase-prosjekt til nettsiden.
    - `profiles` – brukernavn, avatar, nivå/xp, admin-flagg
    - `avatar_options` – fargene/ikonene som tildeles tilfeldig ved registrering
    - `game_records` – tabell klar for fremtidige spillpoeng
+   - `levels` – nivåstigen på premier.html (poengkrav + premier/rabattkoder per nivå)
+   - `user_codes` – rabattkodene en bruker har hentet ut ("Mine koder")
+   - `add_points`-funksjonen som lykkehjulet på premier.html bruker til å legge
+     poeng til innlogget bruker og oppdatere nivået automatisk
    - Triggere som auto-oppretter en profil med tilfeldig avatar når noen registrerer seg
    - Row Level Security-regler som sikrer at brukere kun kan endre sin egen data,
-     og at kun admins kan endre `avatar_options` eller andres `level`/`xp`/`is_admin`
+     og at kun admins kan endre `avatar_options`, `levels`, eller andres `level`/`xp`/`is_admin`
+
+   Filen er skrevet slik at den er trygg å kjøre på nytt (bruker `if not exists`,
+   `on conflict do nothing` osv.) – kjør den gjerne igjen etter at nye tabeller
+   som `levels`/`user_codes` er lagt til, selv om prosjektet allerede er satt opp.
 
 ## 3. Skru på Google-innlogging
 

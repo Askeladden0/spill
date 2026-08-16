@@ -68,16 +68,33 @@
 
     <section>
       <div class="section-heading spread">
+        <h2>Nivåer og premier</h2>
+        <span class="section-sub" data-level-count></span>
+      </div>
+      <p class="section-sub" style="margin:-8px 0 0">Poengkravet avgjør når et nivå låses opp automatisk. Legg til premier (rabattkoder) per nivå – koden selv genereres tilfeldig når en bruker henter den.</p>
+      <div style="display:flex;flex-direction:column;gap:14px" data-levels-list>Laster nivåer …</div>
+      <form class="inline-form" data-add-level-form>
+        <input type="number" name="level_number" placeholder="Nivånummer" min="1" required style="max-width:160px">
+        <input type="number" name="points_required" placeholder="Poeng krevd" min="0" required style="max-width:180px">
+        <button type="submit" class="btn-start" style="width:auto;padding:12px 24px">Legg til nivå</button>
+      </form>
+      <p class="auth-error" data-levels-error hidden></p>
+      <p class="auth-success" data-levels-success hidden></p>
+    </section>
+
+    <section>
+      <div class="section-heading spread">
         <h2>Brukere</h2>
         <span class="section-sub" data-user-count></span>
       </div>
+      <p class="section-sub" style="margin:-8px 0 0">Endre en brukers poeng eller nivå manuelt – trykk Enter eller klikk utenfor feltet for å lagre.</p>
       <div class="settings-card">
         <table class="records-table" data-users-table>
           <thead>
-            <tr><th>Brukernavn</th><th>Nivå</th><th>Registrert</th><th>Admin</th></tr>
+            <tr><th>Brukernavn</th><th>Poeng</th><th>Nivå</th><th>Registrert</th><th>Admin</th></tr>
           </thead>
           <tbody data-users-tbody>
-            <tr><td colspan="4">Laster brukere …</td></tr>
+            <tr><td colspan="5">Laster brukere …</td></tr>
           </tbody>
         </table>
       </div>
@@ -197,12 +214,12 @@
   async function loadUsers() {
     const { data, error } = await sb
       .from("profiles")
-      .select("id, username, level, is_admin, created_at")
+      .select("id, username, xp, level, is_admin, created_at")
       .order("created_at", { ascending: false });
 
     const tbody = document.querySelector("[data-users-tbody]");
     if (error) {
-      tbody.innerHTML = `<tr><td colspan="4">Kunne ikke laste brukere.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5">Kunne ikke laste brukere.</td></tr>`;
       return;
     }
 
@@ -213,7 +230,8 @@
         (u) => `
         <tr>
           <td>${u.username}</td>
-          <td>${u.level}</td>
+          <td><input type="number" min="0" value="${u.xp}" data-points-input="${u.id}" style="width:100px;padding:6px 8px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);font-family:inherit"></td>
+          <td><input type="number" min="1" value="${u.level}" data-level-input="${u.id}" style="width:70px;padding:6px 8px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);font-family:inherit"></td>
           <td>${new Date(u.created_at).toLocaleDateString("no-NO")}</td>
           <td>
             <label class="admin-toggle">
@@ -238,7 +256,191 @@
         }
       });
     });
+
+    async function saveField(input, field) {
+      const value = Number(input.value);
+      if (!Number.isFinite(value) || value < (field === "level" ? 1 : 0)) return;
+      const id = field === "level" ? input.dataset.levelInput : input.dataset.pointsInput;
+      const { error: updateError } = await sb
+        .from("profiles")
+        .update({ [field]: value })
+        .eq("id", id);
+      if (updateError) {
+        alert(`Kunne ikke oppdatere ${field === "level" ? "nivå" : "poeng"}: ` + Auth.friendlyAuthError(updateError));
+      }
+    }
+
+    tbody.querySelectorAll("[data-points-input]").forEach((input) => {
+      input.addEventListener("change", () => saveField(input, "xp"));
+    });
+    tbody.querySelectorAll("[data-level-input]").forEach((input) => {
+      input.addEventListener("change", () => saveField(input, "level"));
+    });
   }
+
+  // ---------- Nivåer og premier ----------
+  let levels = [];
+
+  function showLevelsMessage(kind, msg) {
+    const errorEl = document.querySelector("[data-levels-error]");
+    const successEl = document.querySelector("[data-levels-success]");
+    errorEl.hidden = kind !== "error";
+    successEl.hidden = kind !== "success";
+    if (kind === "error") errorEl.textContent = msg;
+    if (kind === "success") successEl.textContent = msg;
+  }
+
+  async function loadLevels() {
+    const { data, error } = await sb.from("levels").select("level_number, points_required, rewards").order("level_number");
+    if (error) {
+      document.querySelector("[data-levels-list]").innerHTML = "<p class=\"section-sub\">Kunne ikke laste nivåer.</p>";
+      return;
+    }
+    levels = data;
+    document.querySelector("[data-level-count]").textContent = `${levels.length} nivå${levels.length === 1 ? "" : "er"}`;
+    renderLevelsAdmin();
+  }
+
+  async function saveLevel(levelNumber, fields) {
+    const { error } = await sb.from("levels").update(fields).eq("level_number", levelNumber);
+    if (error) {
+      showLevelsMessage("error", Auth.friendlyAuthError(error));
+      return false;
+    }
+    showLevelsMessage("success", "Lagret!");
+    return true;
+  }
+
+  function renderLevelsAdmin() {
+    const el = document.querySelector("[data-levels-list]");
+    if (!levels.length) {
+      el.innerHTML = "<p class=\"section-sub\">Ingen nivåer ennå.</p>";
+      return;
+    }
+
+    el.innerHTML = levels
+      .map(
+        (lv) => `
+        <div class="level-admin-card" data-level-card="${lv.level_number}">
+          <div class="level-admin-head">
+            <label>Nivå
+              <input type="number" min="1" value="${lv.level_number}" disabled>
+            </label>
+            <label>Poeng krevd
+              <input type="number" min="0" value="${lv.points_required}" data-points-required="${lv.level_number}">
+            </label>
+            <button type="button" class="btn-danger" style="padding:8px 14px;align-self:flex-end" data-delete-level="${lv.level_number}">Slett nivå</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px" data-rewards-list="${lv.level_number}">
+            ${(lv.rewards || [])
+              .map(
+                (r, ri) => `
+              <div class="reward-admin-row">
+                <input type="text" value="${r.brand}" placeholder="Merke" data-reward-field="brand" data-reward-index="${ri}">
+                <input type="text" value="${r.title}" placeholder="Tittel" data-reward-field="title" data-reward-index="${ri}">
+                <input type="text" value="${r.sub || ""}" placeholder="Undertekst" data-reward-field="sub" data-reward-index="${ri}">
+                <button type="button" class="btn-danger" style="padding:6px 10px" data-remove-reward="${ri}">Fjern</button>
+              </div>
+            `
+              )
+              .join("")}
+          </div>
+          <button type="button" class="btn-start" style="width:auto;padding:10px 18px;align-self:flex-start" data-add-reward>+ Legg til premie</button>
+        </div>
+      `
+      )
+      .join("");
+
+    el.querySelectorAll("[data-points-required]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        const levelNumber = Number(input.dataset.pointsRequired);
+        const value = Number(input.value);
+        if (!Number.isFinite(value) || value < 0) return;
+        if (await saveLevel(levelNumber, { points_required: value })) {
+          const lv = levels.find((l) => l.level_number === levelNumber);
+          if (lv) lv.points_required = value;
+        }
+      });
+    });
+
+    el.querySelectorAll("[data-delete-level]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const levelNumber = Number(btn.dataset.deleteLevel);
+        if (!confirm(`Slette nivå ${levelNumber}? Dette kan ikke angres.`)) return;
+        const { error } = await sb.from("levels").delete().eq("level_number", levelNumber);
+        if (error) return showLevelsMessage("error", Auth.friendlyAuthError(error));
+        levels = levels.filter((l) => l.level_number !== levelNumber);
+        showLevelsMessage("success", "Nivå slettet.");
+        renderLevelsAdmin();
+      });
+    });
+
+    el.querySelectorAll("[data-level-card]").forEach((card) => {
+      const levelNumber = Number(card.dataset.levelCard);
+      const lv = levels.find((l) => l.level_number === levelNumber);
+
+      function collectRewards() {
+        const rows = card.querySelectorAll("[data-rewards-list] .reward-admin-row");
+        return Array.from(rows).map((row) => ({
+          brand: row.querySelector('[data-reward-field="brand"]').value.trim(),
+          title: row.querySelector('[data-reward-field="title"]').value.trim(),
+          sub: row.querySelector('[data-reward-field="sub"]').value.trim(),
+        }));
+      }
+
+      card.querySelectorAll('[data-reward-field]').forEach((input) => {
+        input.addEventListener("change", async () => {
+          const rewards = collectRewards();
+          if (await saveLevel(levelNumber, { rewards })) lv.rewards = rewards;
+        });
+      });
+
+      card.querySelectorAll("[data-remove-reward]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const rewards = collectRewards();
+          rewards.splice(Number(btn.dataset.removeReward), 1);
+          if (await saveLevel(levelNumber, { rewards })) {
+            lv.rewards = rewards;
+            renderLevelsAdmin();
+          }
+        });
+      });
+
+      card.querySelector("[data-add-reward]").addEventListener("click", async () => {
+        const rewards = collectRewards();
+        rewards.push({ brand: "Ny partner", title: "Ny premie", sub: "" });
+        if (await saveLevel(levelNumber, { rewards })) {
+          lv.rewards = rewards;
+          renderLevelsAdmin();
+        }
+      });
+    });
+  }
+
+  document.querySelector("[data-add-level-form]").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = new FormData(e.target);
+    const levelNumber = Number(form.get("level_number"));
+    const pointsRequired = Number(form.get("points_required"));
+    if (!Number.isFinite(levelNumber) || levelNumber < 1) return showLevelsMessage("error", "Ugyldig nivånummer.");
+    if (!Number.isFinite(pointsRequired) || pointsRequired < 0) return showLevelsMessage("error", "Ugyldig poengkrav.");
+    if (levels.some((l) => l.level_number === levelNumber)) return showLevelsMessage("error", "Dette nivået finnes allerede.");
+
+    const { data, error } = await sb
+      .from("levels")
+      .insert({ level_number: levelNumber, points_required: pointsRequired, rewards: [] })
+      .select()
+      .single();
+
+    if (error) return showLevelsMessage("error", Auth.friendlyAuthError(error));
+
+    levels.push(data);
+    levels.sort((a, b) => a.level_number - b.level_number);
+    document.querySelector("[data-level-count]").textContent = `${levels.length} nivå${levels.length === 1 ? "" : "er"}`;
+    renderLevelsAdmin();
+    showLevelsMessage("success", "Nivå lagt til!");
+    e.target.reset();
+  });
 
   (async function init() {
     const profile = await Auth.requireAdmin();
@@ -252,6 +454,7 @@
       renderAvatarAdmin();
     }
 
+    await loadLevels();
     await loadUsers();
   })();
 })();

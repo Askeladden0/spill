@@ -14,6 +14,23 @@
   //   Passord: minst 8 tegn, minst én bokstav og ett tall
   const USERNAME_REGEX = /^[a-zA-Z0-9_]{5,20}$/;
   const PASSWORD_MIN_LENGTH = 8;
+  const GUEST_POINTS_KEY = "pixelplay_guest_points";
+
+  // Poeng en utlogget besøkende har "tjent" (f.eks. ved å spinne hjulet uten
+  // å være innlogget). Lagres lokalt i nettleseren og vises i headeren i
+  // stedet for nivå-widgeten, sammen med en "Logg inn"-knapp, slik at
+  // besøkende ser hva de går glipp av å ikke lagre permanent.
+  function getGuestPoints() {
+    const raw = window.localStorage.getItem(GUEST_POINTS_KEY);
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  }
+
+  function addGuestPoints(delta) {
+    const next = getGuestPoints() + Math.max(0, delta || 0);
+    window.localStorage.setItem(GUEST_POINTS_KEY, String(next));
+    return next;
+  }
 
   function validateUsername(username) {
     if (!username) return "Brukernavn er påkrevd.";
@@ -91,7 +108,12 @@
     const profile = await getCurrentProfile();
 
     if (!profile) {
+      const guestPoints = getGuestPoints();
       slot.innerHTML = `
+        <div class="guest-points" data-guest-points-display>
+          <span class="guest-points-num">${guestPoints.toLocaleString("no-NO")}</span>
+          <span class="guest-points-label">POENG DU HADDE HATT</span>
+        </div>
         <a href="login.html">
           <button class="login-btn" type="button">
             <span class="login-avatar">
@@ -162,6 +184,8 @@
     getCurrentProfile,
     avatarHTML,
     xpProgress,
+    getGuestPoints,
+    addGuestPoints,
     renderHeaderAuth,
     renderFooterAdminLink,
     requireAuth,

@@ -24,7 +24,8 @@ spill/
 │   ├── supabase-config.js Supabase-nøkler (må fylles inn, se SUPABASE_SETUP.md)
 │   └── auth.js            Delt innloggingslogikk: header-avatar, admin-lenke, tilgangssjekk
 ├── supabase/
-│   └── schema.sql          Databaseskjema: profiler, avatar-innstillinger, spillrekorder, RLS
+│   └── schema.sql          Databaseskjema: profiler, avatar-innstillinger, spillrekorder, nivåer,
+│                          rabattkoder, RLS
 ├── SUPABASE_SETUP.md       Steg-for-steg-guide for å koble opp Supabase-prosjektet
 └── assets/
     └── img/
@@ -81,6 +82,25 @@ Spillet dukker automatisk opp i rutenettet på forsiden og får en egen side på
 Når spillene etter hvert kan rapportere poeng, skriv til `game_records`-tabellen
 i Supabase (`user_id`, `game_id`, `score`) – de dukker automatisk opp under
 "Mine rekorder" på profilsiden.
+
+## Premier-siden (`premier.html`)
+
+Poeng lagres i `profiles.xp` og nivået i `profiles.level`. Nivåstigen (poengkrav
+og premier per nivå) ligger i `levels`-tabellen og redigeres fra `admin.html`
+(legg til/slett nivå, endre poengkrav, legg til/fjern premier). Admin kan også
+sette en brukers poeng og nivå manuelt direkte i brukerlisten.
+
+- **Lykkehjulet**: å trykke "Spinn hjulet" åpner et modalvindu med et stort
+  hjul (konkrete verdier 10–1000) og en nedtonet bakgrunn. Et nytt trykk
+  spinner hjulet, og resultatet legges til poengsummen via RPC-funksjonen
+  `add_points` (som også oppdaterer nivået automatisk). Ikke innloggede
+  besøkende samler i stedet poeng lokalt i nettleseren
+  (`localStorage`), og ser dette igjen som "poeng du hadde hatt" i headeren
+  sammen med en logg inn-knapp. Det er ingen grense på antall spinn ennå.
+- **Hent rabattkode**: åpner et modalvindu med nedtonet bakgrunn og en
+  tilfeldig generert placeholder-kode, som lagres i `user_codes` og dukker
+  opp under "Mine koder".
+- Hold musepekeren over nivåhjulet i heltefeltet for å se totalt antall poeng.
 
 ## Fremtidig admin for selve spillistene
 

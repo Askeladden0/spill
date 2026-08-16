@@ -251,6 +251,133 @@ drop policy if exists "avatar_options_update_admin" on public.avatar_options;
 create policy "avatar_options_update_admin" on public.avatar_options
   for update using (public.is_admin());
 
+-- ---------------------------------------------------------------------------
+-- 10. levels – nivåstigen som vises på premier.html. Hvert nivå har et
+--     poengkrav og en liste med premier (rabattkoder). Redigeres fra
+--     adminpanelet (admin.html): admin kan legge til nye nivåer, endre
+--     poengkrav, og legge til/fjerne premier per nivå.
+--     rewards-formatet er en JSON-liste av objekter:
+--     [{ "brand": "Nike", "title": "25 % på sko", "sub": "Utvalgte modeller" }, ...]
+-- ---------------------------------------------------------------------------
+create table if not exists public.levels (
+  level_number int primary key,
+  points_required int not null default 0,
+  rewards jsonb not null default '[]'::jsonb,
+  constraint levels_points_positive check (points_required >= 0)
+);
+
+insert into public.levels (level_number, points_required, rewards) values
+  (1, 0, '[
+    {"brand":"Peppes","title":"20 % på pizza","sub":"Gjelder hele menyen"},
+    {"brand":"Narvesen","title":"Gratis kaffe","sub":"Én kopp per uke"}
+  ]'::jsonb),
+  (2, 1000, '[
+    {"brand":"Cubus","title":"15 % på klær","sub":"Nettbutikk og butikk"},
+    {"brand":"McDonald''s","title":"Gratis McFlurry","sub":"Ved kjøp over 99 kr"}
+  ]'::jsonb),
+  (3, 2500, '[
+    {"brand":"Elkjøp","title":"10 % på gaming","sub":"Headset og mus"},
+    {"brand":"Burger King","title":"2 for 1 burger","sub":"Alle dager"}
+  ]'::jsonb),
+  (12, 12000, '[
+    {"brand":"Nike","title":"25 % på sko","sub":"Utvalgte modeller"},
+    {"brand":"Sushi & Wok","title":"150 kr avslag","sub":"Ved kjøp over 500 kr"}
+  ]'::jsonb),
+  (13, 13000, '[
+    {"brand":"Norwegian","title":"500 kr på fly","sub":"Innenriks, hele året"},
+    {"brand":"Kicks","title":"30 % på hudpleie","sub":"Én ordre"}
+  ]'::jsonb),
+  (15, 16000, '[
+    {"brand":"Steam","title":"Gavekort 500 kr","sub":"Trekning hver måned"},
+    {"brand":"XXL","title":"20 % på alt","sub":"Unntatt sykkel"}
+  ]'::jsonb)
+on conflict (level_number) do nothing;
+
+alter table public.levels enable row level security;
+
+drop policy if exists "levels_select_all" on public.levels;
+create policy "levels_select_all" on public.levels
+  for select using (true);
+
+drop policy if exists "levels_admin_write" on public.levels;
+create policy "levels_admin_write" on public.levels
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 11. user_codes – rabattkoder en bruker har hentet ut ("Mine koder" på
+--     premier.html). Koden selv genereres tilfeldig på klienten når brukeren
+--     trykker "Hent rabattkode" (placeholder-koder inntil ekte partnerintegrasjon
+--     finnes), og lagres her slik at den blir liggende i profilen.
+-- ---------------------------------------------------------------------------
+create table if not exists public.user_codes (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  brand text not null,
+  title text not null,
+  code text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists user_codes_user_idx on public.user_codes (user_id);
+
+alter table public.user_codes enable row level security;
+
+drop policy if exists "user_codes_select_own" on public.user_codes;
+create policy "user_codes_select_own" on public.user_codes
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "user_codes_insert_own" on public.user_codes;
+create policy "user_codes_insert_own" on public.user_codes
+  for insert with check (auth.uid() = user_id);
+
+-- ---------------------------------------------------------------------------
+-- 12. RPC: legg poeng til innlogget bruker (brukes av lykkehjulet på
+--     premier.html). SECURITY DEFINER slik at klienten ikke trenger direkte
+--     skrivetilgang til xp/level-feltene (de er beskyttet av trigger #7).
+--     Nivået oppdateres automatisk til høyeste nivå brukeren nå har nok
+--     poeng til – men aldri nedover, og en admin kan fortsatt sette et
+--     manuelt nivå fra adminpanelet (det blir stående til brukeren tjener
+--     seg forbi et enda høyere nivå).
+-- ---------------------------------------------------------------------------
+create or replace function public.add_points(p_delta int)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  updated public.profiles;
+  best_level int;
+begin
+  if p_delta is null or p_delta <= 0 then
+    raise exception 'p_delta må være et positivt tall';
+  end if;
+
+  update public.profiles
+     set xp = xp + p_delta
+   where id = auth.uid()
+   returning * into updated;
+
+  if updated is null then
+    raise exception 'Fant ingen profil for innlogget bruker';
+  end if;
+
+  select max(level_number) into best_level
+    from public.levels
+   where points_required <= updated.xp;
+
+  if best_level is not null and best_level > updated.level then
+    update public.profiles set level = best_level where id = auth.uid()
+      returning * into updated;
+  end if;
+
+  return updated;
+end;
+$$;
+
+revoke all on function public.add_points(int) from public;
+grant execute on function public.add_points(int) to authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
