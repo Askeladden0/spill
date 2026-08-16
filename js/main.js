@@ -102,7 +102,12 @@
     if (timeEl) timeEl.textContent = game.time;
     if (descEl) descEl.textContent = game.description || "";
 
-    stage.innerHTML = `<span class="player-stage-slot">[ spillinnhold lastes her: ${game.id} ]</span>`;
+    const module = window.PIXELPLAY_GAME_MODULES && window.PIXELPLAY_GAME_MODULES[game.id];
+    if (module && window.PixelPlayGameRuntime) {
+      module.start(stage, game);
+    } else {
+      stage.innerHTML = `<span class="player-stage-slot">[ spillinnhold lastes her: ${game.id} ]</span>`;
+    }
   }
 
   document.addEventListener("DOMContentLoaded", function () {
