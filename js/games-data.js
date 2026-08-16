@@ -21,16 +21,15 @@
 
 window.PIXELPLAY_GAMES = [
   {
-    id: "skyfall-tactics",
-    name: "Skyfall Tactics",
-    genre: "Strategi",
-    rating: "4,7",
-    points: "3 750 poeng",
-    time: "~25 min",
+    id: "2048",
+    name: "2048",
+    genre: "Puslespill",
+    rating: "4,9",
+    points: "Din skår = dine poeng",
+    time: "~5 min",
     thumbnail: null,
-    description: "Bygg forsvaret ditt og slå tilbake luftangrep i dette taktiske strategispillet.",
-    isDailyGame: true,
-    pointsMultiplier: "1,5X POENG"
+    description: "Slå sammen brikker med like tall og jag den store 2048-brikken. Skåren din legges rett til poengsummen og nivået ditt.",
+    isDailyGame: true
   },
   {
     id: "neon-drift",
