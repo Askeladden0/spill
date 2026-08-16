@@ -104,9 +104,6 @@
           </div>
           <div data-feed-list></div>
         </div>
-
-        
-        </div>
       </aside>
     </section>
   </main>
@@ -177,7 +174,6 @@
 
   let profile = null;
   let levels = [];
-  let userCodes = [];
   let miniRotation = 0;
   let bigRotation = 0;
   let spinning = false;
@@ -375,44 +371,6 @@
     ).join("");
   }
 
-  function renderMyCodes() {
-    const el = document.querySelector("[data-my-codes]");
-    if (!profile) {
-      el.innerHTML = '<p class="section-sub">Logg inn for å se og hente dine rabattkoder.</p>';
-      return;
-    }
-    if (!userCodes.length) {
-      el.innerHTML = '<p class="section-sub">Ingen koder ennå — hent en fra en premie du har låst opp!</p>';
-      return;
-    }
-    el.innerHTML = userCodes
-      .map(
-        (c) => `
-        <div class="code-row">
-          <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
-            <span class="code-row-text">${c.code}</span>
-            <span class="code-row-sub">${c.brand} · ${c.title}</span>
-          </div>
-          <button type="button" class="btn-copy" data-copy-code="${c.code}">Kopier</button>
-        </div>
-      `
-      )
-      .join("");
-
-    el.querySelectorAll("[data-copy-code]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(btn.dataset.copyCode);
-          const original = btn.textContent;
-          btn.textContent = "Kopiert!";
-          setTimeout(() => (btn.textContent = original), 1500);
-        } catch (e) {
-          /* utilgjengelig utklippstavle, ignorer */
-        }
-      });
-    });
-  }
-
   // ---------- Rabattkode-modal ----------
   function randomCode(brand, title) {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -437,16 +395,9 @@
     document.querySelector("[data-code-value]").textContent = code;
     modal.hidden = false;
 
-    const { data, error } = await sb
+    await sb
       .from("user_codes")
-      .insert({ user_id: profile.id, brand: reward.brand, title: reward.title, code })
-      .select()
-      .single();
-
-    if (!error && data) {
-      userCodes.unshift(data);
-      renderMyCodes();
-    }
+      .insert({ user_id: profile.id, brand: reward.brand, title: reward.title, code });
   }
 
   document.querySelector("[data-close-code]").addEventListener("click", closeCodeModal);
@@ -536,19 +487,6 @@
     if (!error && data) levels = data;
   }
 
-  async function loadUserCodes() {
-    if (!profile) {
-      userCodes = [];
-      return;
-    }
-    const { data, error } = await sb
-      .from("user_codes")
-      .select("id, brand, title, code, created_at")
-      .eq("user_id", profile.id)
-      .order("created_at", { ascending: false });
-    if (!error && data) userCodes = data;
-  }
-
   (async function init() {
     profile = await Auth.getCurrentProfile();
     renderWheels();
@@ -559,17 +497,12 @@
     await loadLevels();
     renderLevelCard();
     renderLadder();
-
-    await loadUserCodes();
-    renderMyCodes();
   })();
 
   sb.auth.onAuthStateChange(async () => {
     profile = await Auth.getCurrentProfile();
     renderLevelCard();
     renderLadder();
-    await loadUserCodes();
-    renderMyCodes();
   });
 })();
 </script>
