@@ -1,30 +1,62 @@
 # PixelPlay – spillnettside
 
-Statisk demo av spillnettsiden, basert på designfilen `Spillnettside.dc.html`.
-Mørkt tema, grønn aksentfarge (`#2ee87f`), Poppins-font.
+Statisk frontend + Supabase-backend for spillnettsiden, basert på designfilen
+`Spillnettside.dc.html`. Mørkt tema, grønn aksentfarge (`#2ee87f`), Poppins-font.
 
 ## Filstruktur
 
 ```
 spill/
-├── index.html          Forsiden – "Dagens spill" + rutenett med alle spill (ferdig demo)
-├── premier.html         Premier-siden – delt layout, plassholderinnhold
-├── rangering.html        Rangering-siden – delt layout, plassholderinnhold
-├── player.html          Delt spillmal – viser ETT spill basert på ?id=<slug> i URL-en.
-│                        Det lages IKKE én fil per spill; alle spill går gjennom denne malen.
+├── index.html            Forsiden – "Dagens spill" + rutenett med alle spill (ferdig demo)
+├── premier.html           Premier-siden – delt layout, plassholderinnhold
+├── rangering.html          Rangering-siden – delt layout, plassholderinnhold
+├── player.html            Delt spillmal – viser ETT spill basert på ?id=<slug> i URL-en.
+│                          Det lages IKKE én fil per spill; alle spill går gjennom denne malen.
+├── login.html             Logg inn / registrer deg (e-post+passord eller Google)
+├── profil.html            Profilside – avatar, brukernavn, nivå, rekorder, slett konto
+├── admin.html             Adminpanel – standard avatarfarger/-ikoner, brukerliste, gi admin-tilgang
 ├── css/
-│   └── style.css        Alt av delt CSS (farger, header, footer, kort, knapper osv.)
-│                        Brukes av alle sider – endringer her slår ut overalt.
+│   └── style.css          Alt av delt CSS (farger, header, footer, kort, skjemaer, adminpanel osv.)
+│                          Brukes av alle sider – endringer her slår ut overalt.
 ├── js/
-│   ├── games-data.js    Midlertidig "database" med spillobjekter (se under)
-│   └── main.js          Rendrer heltefelt, spillrutenett, aktiv meny og spillside
+│   ├── games-data.js      Midlertidig "database" med spillobjekter (se under)
+│   ├── main.js            Rendrer heltefelt, spillrutenett, aktiv meny og spillside
+│   ├── supabase-config.js Supabase-nøkler (må fylles inn, se SUPABASE_SETUP.md)
+│   └── auth.js            Delt innloggingslogikk: header-avatar, admin-lenke, tilgangssjekk
+├── supabase/
+│   └── schema.sql          Databaseskjema: profiler, avatar-innstillinger, spillrekorder, RLS
+├── SUPABASE_SETUP.md       Steg-for-steg-guide for å koble opp Supabase-prosjektet
 └── assets/
     └── img/
-        ├── games/        Miniatyrbilder for spill legges her, f.eks. skyfall-tactics.jpg
-        └── icons/         Ev. egne ikoner/logoer
+        ├── games/          Miniatyrbilder for spill legges her, f.eks. skyfall-tactics.jpg
+        └── icons/           Ev. egne ikoner/logoer
 ```
 
-## Hvordan legge til et nytt spill (før backend/admin-panel finnes)
+## Innlogging og profiler
+
+Innlogging kjøres via [Supabase](https://supabase.com) – se
+[`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) for full oppsettsguide (opprette
+prosjekt, kjøre `supabase/schema.sql`, skru på Google-innlogging, koble
+`js/supabase-config.js` til prosjektet, og gjøre deg selv til admin).
+
+Kort oppsummert:
+- **Registrering**: e-post/passord (brukernavn 5–20 tegn, passord min. 8 tegn
+  med bokstav+tall) eller "Fortsett med Google". 2FA er ikke i bruk.
+- **Automatisk avatar**: ny bruker får tilfeldig farge + ikon fra listen i
+  `avatar_options`-tabellen (redigeres fra `admin.html`). Kan endres når som
+  helst fra `profil.html`.
+- **Google-brukere** får et automatisk generert brukernavn ved første
+  innlogging (siden Google ikke lar oss spørre om det på forhånd), og blir
+  bedt om å velge sitt eget på profilsiden.
+- **Profilsiden** (`profil.html`) viser nivå/XP, lar deg redigere avatar og
+  brukernavn, viser dine beste rekorder per spill (tom liste inntil spillene
+  faktisk rapporterer poeng), og har en "Slett konto"-knapp som sletter
+  brukeren permanent.
+- **Adminpanelet** (`admin.html`, lenket i bunnmenyen kun for admins) lar deg
+  redigere fargene/ikonene som tildeles automatisk, se alle brukere, og gjøre
+  andre til admin.
+
+## Hvordan legge til et nytt spill
 
 Åpne `js/games-data.js` og legg til et nytt objekt i `PIXELPLAY_GAMES`-listen:
 
@@ -46,11 +78,14 @@ spill/
 Spillet dukker automatisk opp i rutenettet på forsiden og får en egen side på
 `player.html?id=mitt-nye-spill` – uten at noen nye filer trenger å lages.
 
-## Planlagt admin-panel (fremtidig backend)
+Når spillene etter hvert kan rapportere poeng, skriv til `game_records`-tabellen
+i Supabase (`user_id`, `game_id`, `score`) – de dukker automatisk opp under
+"Mine rekorder" på profilsiden.
 
-Når backenden er klar, er tanken at `js/games-data.js` erstattes av et
-API-kall (f.eks. `fetch('/api/games')`) som returnerer spill på nøyaktig
-samme format som objektene over. Admin-panelet vil da kunne legge til,
-redigere og fjerne spill uten kodeendringer, og resten av siden
-(`main.js`, `css/style.css`) fungerer uendret siden de kun er avhengige av
-dataformatet – ikke av hvor dataene kommer fra.
+## Fremtidig admin for selve spillistene
+
+`js/games-data.js` er fortsatt en statisk fil. Når spilladministrasjon skal
+inn i `admin.html`, er tanken å flytte denne listen til en egen Supabase-tabell
+(samme mønster som `avatar_options`) slik at `main.js` kan hente den med et
+`fetch`/`supabase.from(...)`-kall i stedet – resten av siden (`css/style.css`,
+kortoppsettet) trenger ikke endres siden de kun er avhengige av dataformatet.

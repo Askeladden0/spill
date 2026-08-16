@@ -34,21 +34,7 @@
       </nav>
     </div>
 
-    <div class="header-right">
-      <div class="xp-widget">
-        <div class="xp-level">12</div>
-        <div class="xp-meta">
-          <div class="xp-labels"><span>NIVÅ 12</span><span>640/1000</span></div>
-          <div class="xp-bar"><div class="xp-bar-fill" style="width:64%"></div></div>
-        </div>
-      </div>
-      <button class="login-btn" type="button">
-        <span class="login-avatar">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#96a3b8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
-        </span>
-        Logg inn
-      </button>
-    </div>
+    <div class="header-right" data-auth-slot></div>
   </header>
 
   <main>
@@ -88,10 +74,14 @@
       <a href="#kontakt">Kontakt</a>
       <a href="#personvern">Personvern</a>
       <a href="#vilkar">Vilkår</a>
+      <a href="admin.html" data-admin-only style="display:none">Admin</a>
     </nav>
   </footer>
 </div>
 
+<script src="js/vendor/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/games-data.js"></script>
 <script src="js/main.js"></script>
 </body>

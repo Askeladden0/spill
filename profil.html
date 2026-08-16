@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PixelPlay · Min profil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="profil">
+<div class="page">
+
+  <header class="site-header">
+    <div class="header-left">
+      <a href="index.html" class="logo">
+        <span class="logo-mark">P</span>
+        <span class="logo-text">PIXEL<span>PLAY</span></span>
+      </a>
+      <nav class="main-nav">
+        <a href="index.html#spill" class="nav-link" data-page="spill">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
+          Spill
+        </a>
+        <a href="premier.html" class="nav-link" data-page="premier">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
+          Premier
+        </a>
+        <a href="rangering.html" class="nav-link" data-page="rangering">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
+          Rangering
+        </a>
+      </nav>
+    </div>
+    <div class="header-right" data-auth-slot></div>
+  </header>
+
+  <main data-profile-main hidden>
+    <section>
+      <div class="section-heading"><h1>Min profil</h1></div>
+
+      <p class="auth-success" data-default-username-banner hidden>
+        Du logget inn med Google og fikk et automatisk generert brukernavn. Du kan endre det under.
+      </p>
+
+      <div class="profile-header-card">
+        <span class="avatar-badge avatar-badge-lg" data-profile-avatar></span>
+        <div>
+          <h2 data-profile-username style="margin:0 0 4px;font-size:22px;color:#fff">–</h2>
+          <p style="margin:0;color:var(--muted);font-size:14px" data-profile-email>–</p>
+        </div>
+        <div class="profile-level-block">
+          <div class="xp-labels"><span data-profile-level-label>NIVÅ –</span><span data-profile-xp-label>–</span></div>
+          <div class="xp-bar" style="width:180px"><div class="xp-bar-fill" data-profile-xp-fill></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading"><h2>Rediger avatar</h2></div>
+      <div class="settings-card">
+        <div>
+          <p class="settings-label">Farge</p>
+          <div class="swatch-row" data-color-picker></div>
+        </div>
+        <div>
+          <p class="settings-label">Ikon</p>
+          <div class="swatch-row" data-icon-picker></div>
+        </div>
+        <p class="auth-error" data-avatar-error hidden></p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading"><h2>Brukernavn</h2></div>
+      <div class="settings-card">
+        <form data-username-form class="inline-form">
+          <input type="text" name="username" minlength="5" maxlength="20" required>
+          <button type="submit" class="btn-start" style="width:auto;padding:12px 24px">Lagre</button>
+        </form>
+        <p class="auth-error" data-username-error hidden></p>
+        <p class="auth-success" data-username-success hidden></p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading spread"><h2>Mine rekorder</h2></div>
+      <div class="settings-card">
+        <div data-records-list>
+          <p class="section-sub">Laster rekorder …</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading"><h2>Konto</h2></div>
+      <div class="settings-card" style="flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+        <button type="button" class="login-btn" data-logout-btn>Logg ut</button>
+        <button type="button" class="btn-danger" data-delete-btn>Slett konto</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-brand">
+      <span class="footer-logo-mark">P</span>
+      <span class="footer-copy">© 2026 PixelPlay</span>
+    </div>
+    <nav class="footer-nav">
+      <a href="#kontakt">Kontakt</a>
+      <a href="#personvern">Personvern</a>
+      <a href="#vilkar">Vilkår</a>
+      <a href="admin.html" data-admin-only style="display:none">Admin</a>
+    </nav>
+  </footer>
+</div>
+
+<script src="js/vendor/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/games-data.js"></script>
+<script>
+(function () {
+  "use strict";
+  const sb = window.supabaseClient;
+  const Auth = window.PixelPlayAuth;
+  const games = window.PIXELPLAY_GAMES || [];
+
+  let profile = null;
+  let avatarOptions = { colors: [], icons: [] };
+
+  function gameName(id) {
+    const g = games.find((x) => x.id === id);
+    return g ? g.name : id;
+  }
+
+  function renderProfileHeader() {
+    document.querySelector("[data-profile-avatar]").outerHTML =
+      `<span class="avatar-badge avatar-badge-lg" data-profile-avatar style="background:${profile.avatar_color}22;border-color:${profile.avatar_color}66">${profile.avatar_icon}</span>`;
+    document.querySelector("[data-profile-username]").textContent = profile.username;
+    document.querySelector("[data-profile-email]").textContent = profile.email;
+
+    const { pct, xp, threshold } = Auth.xpProgress(profile);
+    document.querySelector("[data-profile-level-label]").textContent = `NIVÅ ${profile.level}`;
+    document.querySelector("[data-profile-xp-label]").textContent = `${xp}/${threshold}`;
+    document.querySelector("[data-profile-xp-fill]").style.width = pct + "%";
+
+    document.querySelector("[data-default-username-banner]").hidden = !profile.username_is_default;
+    document.querySelector('[name="username"]').value = profile.username;
+  }
+
+  async function loadAvatarOptions() {
+    const { data, error } = await sb.from("avatar_options").select("colors, icons").eq("id", 1).single();
+    if (error) {
+      console.error(error);
+      return;
+    }
+    avatarOptions = data;
+    renderAvatarPickers();
+  }
+
+  function renderAvatarPickers() {
+    const colorPicker = document.querySelector("[data-color-picker]");
+    const iconPicker = document.querySelector("[data-icon-picker]");
+
+    colorPicker.innerHTML = avatarOptions.colors
+      .map(
+        (c) => `
+        <button type="button" class="swatch ${c === profile.avatar_color ? "is-selected" : ""}"
+          style="background:${c}" data-color="${c}" aria-label="Velg farge ${c}"></button>
+      `
+      )
+      .join("");
+
+    iconPicker.innerHTML = avatarOptions.icons
+      .map(
+        (i) => `
+        <button type="button" class="swatch swatch-icon ${i === profile.avatar_icon ? "is-selected" : ""}"
+          data-icon="${i}" aria-label="Velg ikon ${i}">${i}</button>
+      `
+      )
+      .join("");
+
+    colorPicker.querySelectorAll(".swatch").forEach((btn) => {
+      btn.addEventListener("click", () => updateAvatar({ avatar_color: btn.dataset.color }));
+    });
+    iconPicker.querySelectorAll(".swatch").forEach((btn) => {
+      btn.addEventListener("click", () => updateAvatar({ avatar_icon: btn.dataset.icon }));
+    });
+  }
+
+  async function updateAvatar(fields) {
+    const errorEl = document.querySelector("[data-avatar-error]");
+    errorEl.hidden = true;
+    const { error } = await sb.from("profiles").update(fields).eq("id", profile.id);
+    if (error) {
+      errorEl.textContent = Auth.friendlyAuthError(error);
+      errorEl.hidden = false;
+      return;
+    }
+    Object.assign(profile, fields);
+    renderProfileHeader();
+    renderAvatarPickers();
+  }
+
+  async function loadRecords() {
+    const list = document.querySelector("[data-records-list]");
+    const { data, error } = await sb
+      .from("game_records")
+      .select("game_id, score")
+      .eq("user_id", profile.id)
+      .order("score", { ascending: false });
+
+    if (error) {
+      list.innerHTML = `<p class="section-sub">Kunne ikke laste rekorder.</p>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      list.innerHTML = `<p class="section-sub">Ingen rekorder ennå – de dukker opp her etter hvert som du spiller.</p>`;
+      return;
+    }
+
+    const bestPerGame = {};
+    data.forEach((r) => {
+      if (!bestPerGame[r.game_id] || r.score > bestPerGame[r.game_id]) {
+        bestPerGame[r.game_id] = r.score;
+      }
+    });
+
+    list.innerHTML = `
+      <table class="records-table">
+        <thead><tr><th>Spill</th><th>Beste poengsum</th></tr></thead>
+        <tbody>
+          ${Object.entries(bestPerGame)
+            .map(([gameId, score]) => `<tr><td>${gameName(gameId)}</td><td>${score}</td></tr>`)
+            .join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  document.querySelector("[data-username-form]").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorEl = document.querySelector("[data-username-error]");
+    const successEl = document.querySelector("[data-username-success]");
+    errorEl.hidden = true;
+    successEl.hidden = true;
+
+    const newUsername = new FormData(e.target).get("username").trim();
+    const usernameError = Auth.validateUsername(newUsername);
+    if (usernameError) {
+      errorEl.textContent = usernameError;
+      errorEl.hidden = false;
+      return;
+    }
+
+    if (newUsername.toLowerCase() !== profile.username.toLowerCase() && (await Auth.isUsernameTaken(newUsername))) {
+      errorEl.textContent = "Dette brukernavnet er allerede tatt.";
+      errorEl.hidden = false;
+      return;
+    }
+
+    const { error } = await sb
+      .from("profiles")
+      .update({ username: newUsername, username_is_default: false })
+      .eq("id", profile.id);
+
+    if (error) {
+      errorEl.textContent = Auth.friendlyAuthError(error);
+      errorEl.hidden = false;
+      return;
+    }
+
+    profile.username = newUsername;
+    profile.username_is_default = false;
+    renderProfileHeader();
+    successEl.textContent = "Brukernavn oppdatert!";
+    successEl.hidden = false;
+  });
+
+  document.querySelector("[data-logout-btn]").addEventListener("click", () => Auth.signOut());
+
+  document.querySelector("[data-delete-btn]").addEventListener("click", async () => {
+    const confirmed = window.confirm(
+      "Er du sikker på at du vil slette kontoen din? Dette kan ikke angres, og all data (profil, rekorder) slettes permanent."
+    );
+    if (!confirmed) return;
+
+    const { error } = await sb.rpc("delete_own_account");
+    if (error) {
+      alert("Kunne ikke slette kontoen: " + Auth.friendlyAuthError(error));
+      return;
+    }
+    await sb.auth.signOut();
+    window.location.href = "index.html";
+  });
+
+  (async function init() {
+    profile = await Auth.requireAuth();
+    if (!profile) return;
+    document.querySelector("[data-profile-main]").hidden = false;
+    renderProfileHeader();
+    await loadAvatarOptions();
+    await loadRecords();
+  })();
+})();
+</script>
+</body>
+</html>
