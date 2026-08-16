@@ -55,6 +55,7 @@
           <div class="xp-bar" style="width:180px"><div class="xp-bar-fill" data-profile-xp-fill></div></div>
         </div>
       </div>
+      <a class="section-sub" data-public-profile-link href="#" style="display:inline-block;margin-top:10px">Se din offentlige spillerprofil →</a>
     </section>
 
     <section>
@@ -148,6 +149,7 @@
 
     document.querySelector("[data-default-username-banner]").hidden = !profile.username_is_default;
     document.querySelector('[name="username"]').value = profile.username;
+    document.querySelector("[data-public-profile-link]").href = `spillerprofil.html?u=${encodeURIComponent(profile.username)}`;
   }
 
   async function loadAvatarOptions() {
