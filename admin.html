@@ -443,9 +443,14 @@
   });
 
   (async function init() {
-    const profile = await Auth.requireAdmin();
-    if (!profile) return;
-    currentUserId = profile.id;
+    // Midlertidig: admin-sjekken er slått av på klientsiden slik at siden
+    // kan besøkes/testes uten å ha kjørt supabase/schema.sql og satt
+    // is_admin ennå. Skru dette tilbake til Auth.requireAdmin() når det er
+    // gjort, ellers kan hvem som helst se panelet (lagring vil uansett
+    // feile med en RLS-feilmelding for ikke-admins helt til de er admin i
+    // databasen).
+    const profile = await Auth.getCurrentProfile();
+    if (profile) currentUserId = profile.id;
     document.querySelector("[data-admin-main]").hidden = false;
 
     const { data, error } = await sb.from("avatar_options").select("colors, icons").eq("id", 1).single();
