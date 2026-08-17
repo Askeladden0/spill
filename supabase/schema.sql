@@ -166,6 +166,14 @@ create trigger on_auth_user_created
 -- 7. Trigger: hindre vanlige brukere i å skrive til level/xp/is_admin selv
 --    (disse skal kun endres av adminpanelet eller av spill-backend senere).
 --    Brukeren kan fortsatt oppdatere username/avatar_color/avatar_icon.
+--
+--    Trigger'en fyrer på ENHVER oppdatering av profiles, også den som
+--    public.add_points() gjør selv for å legge til poeng. Systemfunksjoner
+--    som skal få lov til å skrive level/xp setter derfor et transaksjons-
+--    lokalt flagg ("pixelplay.trusted_profile_write" = 'on') rett før sin
+--    egen update; trigger'en slipper skrivingen gjennom når flagget er satt,
+--    i tillegg til når brukeren er admin. Flagget nullstilles automatisk når
+--    transaksjonen er ferdig (set_config-parameteret `is_local` = true).
 -- ---------------------------------------------------------------------------
 create or replace function public.guard_privileged_profile_fields()
 returns trigger
@@ -174,7 +182,8 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
-  if not public.is_admin() then
+  if not public.is_admin()
+     and coalesce(current_setting('pixelplay.trusted_profile_write', true), '') <> 'on' then
     new.is_admin := old.is_admin;
     new.level := old.level;
     new.xp := old.xp;
@@ -353,6 +362,7 @@ begin
     raise exception 'p_delta må være et positivt tall';
   end if;
 
+  perform set_config('pixelplay.trusted_profile_write', 'on', true);
   update public.profiles
      set xp = xp + p_delta
    where id = auth.uid()
@@ -367,6 +377,7 @@ begin
    where points_required <= updated.xp;
 
   if best_level is not null and best_level > updated.level then
+    perform set_config('pixelplay.trusted_profile_write', 'on', true);
     update public.profiles set level = best_level where id = auth.uid()
       returning * into updated;
   end if;
