@@ -102,6 +102,16 @@ window.PIXELPLAY_GAMES = [
     description: "Løp, hopp og slåss deg gjennom sprekker i virkeligheten."
   },
   {
+    id: "snake",
+    name: "Snake",
+    genre: "Arkade",
+    rating: "4,6",
+    points: "Din skår = dine poeng",
+    time: "~8 min",
+    thumbnail: null,
+    description: "Styr slangen rundt brettet, spis prikkene og voks deg lengst mulig uten å treffe deg selv eller veggen."
+  },
+  {
     id: "kortkongen",
     name: "Kortkongen",
     genre: "Kort",
