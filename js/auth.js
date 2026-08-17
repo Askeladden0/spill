@@ -193,18 +193,18 @@
     requestAnimationFrame(() => {
       fill.style.width = "100%";
     });
-    fill.addEventListener(
-      "transitionend",
-      () => {
-        fill.style.transition = "none";
-        fill.style.width = "0%";
-        // eslint-disable-next-line no-unused-expressions
-        fill.offsetHeight;
-        fill.style.transition = "";
-        requestAnimationFrame(applyFinal);
-      },
-      { once: true }
-    );
+    // Bruker en tidsavbrudd i stedet for å vente på "transitionend": hvis
+    // stolpen allerede sto på 100% (skjer for alle over nivå 1, siden
+    // fremdriften er regnet ut fra total xp uten per-nivå-terskel), skjer
+    // det ingen visuell endring og "transitionend" fyres da aldri.
+    window.setTimeout(() => {
+      fill.style.transition = "none";
+      fill.style.width = "0%";
+      // eslint-disable-next-line no-unused-expressions
+      fill.offsetHeight;
+      fill.style.transition = "";
+      requestAnimationFrame(applyFinal);
+    }, 950);
   }
 
   async function renderFooterAdminLink() {

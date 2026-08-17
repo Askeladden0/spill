@@ -182,18 +182,18 @@
       requestAnimationFrame(() => {
         els.overlayLevelFill.style.width = "100%";
       });
-      els.overlayLevelFill.addEventListener(
-        "transitionend",
-        () => {
-          els.overlayLevelFill.style.transition = "none";
-          els.overlayLevelFill.style.width = "0%";
-          // eslint-disable-next-line no-unused-expressions
-          els.overlayLevelFill.offsetHeight;
-          els.overlayLevelFill.style.transition = "";
-          requestAnimationFrame(applyFinal);
-        },
-        { once: true }
-      );
+      // Tidsavbrudd i stedet for "transitionend": hvis stolpen allerede sto
+      // på 100% (typisk for alle over nivå 1, siden fremdriften regnes ut
+      // fra total xp uten per-nivå-terskel), skjer det ingen visuell
+      // endring, og "transitionend" fyres da aldri.
+      window.setTimeout(() => {
+        els.overlayLevelFill.style.transition = "none";
+        els.overlayLevelFill.style.width = "0%";
+        // eslint-disable-next-line no-unused-expressions
+        els.overlayLevelFill.offsetHeight;
+        els.overlayLevelFill.style.transition = "";
+        requestAnimationFrame(applyFinal);
+      }, 1150);
     }
 
     return {
