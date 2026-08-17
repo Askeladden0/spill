@@ -101,11 +101,26 @@
     return { pct, xp: profile.xp, threshold: XP_PER_LEVEL };
   }
 
-  async function renderHeaderAuth() {
+  function xpWidgetHTML(profile) {
+    const { pct, xp, threshold } = xpProgress(profile);
+    return `
+      <div class="xp-widget" data-xp-widget>
+        <div class="xp-level" data-xp-level>${profile.level}</div>
+        <div class="xp-meta">
+          <div class="xp-labels"><span data-xp-level-label>NIVÅ ${profile.level}</span><span data-xp-fraction>${xp}/${threshold}</span></div>
+          <div class="xp-bar"><div class="xp-bar-fill" data-xp-bar-fill style="width:${pct}%"></div></div>
+        </div>
+      </div>
+      <a href="profil.html" class="login-btn" style="padding:6px 14px 6px 6px" aria-label="Min profil">
+        ${avatarHTML(profile, 30)}
+        <span>${profile.username}</span>
+      </a>
+    `;
+  }
+
+  function renderHeaderWithProfile(profile) {
     const slot = document.querySelector("[data-auth-slot]");
     if (!slot) return;
-
-    const profile = await getCurrentProfile();
 
     if (!profile) {
       const guestPoints = getGuestPoints();
@@ -126,21 +141,70 @@
       return;
     }
 
-    const { pct, xp, threshold } = xpProgress(profile);
+    slot.innerHTML = xpWidgetHTML(profile);
+  }
 
-    slot.innerHTML = `
-      <div class="xp-widget">
-        <div class="xp-level">${profile.level}</div>
-        <div class="xp-meta">
-          <div class="xp-labels"><span>NIVÅ ${profile.level}</span><span>${xp}/${threshold}</span></div>
-          <div class="xp-bar"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
-        </div>
-      </div>
-      <a href="profil.html" class="login-btn" style="padding:6px 14px 6px 6px" aria-label="Min profil">
-        ${avatarHTML(profile, 30)}
-        <span>${profile.username}</span>
-      </a>
-    `;
+  async function renderHeaderAuth() {
+    const profile = await getCurrentProfile();
+    renderHeaderWithProfile(profile);
+  }
+
+  /**
+   * Animerer nivå-widgeten i toppmenyen fra forrige profiltilstand til den
+   * nye, slik at spilleren ser nivåstolpen stige (og en egen "nivå opp"-puls
+   * hvis nivået økte) i stedet for at tallene bare hopper til sluttverdien.
+   */
+  function animateHeaderLevelUp(prevProfile, newProfile) {
+    const slot = document.querySelector("[data-auth-slot]");
+    if (!slot || !prevProfile || !newProfile) {
+      renderHeaderWithProfile(newProfile);
+      return;
+    }
+
+    renderHeaderWithProfile(prevProfile);
+    const widget = slot.querySelector("[data-xp-widget]");
+    const fill = slot.querySelector("[data-xp-bar-fill]");
+    const levelEl = slot.querySelector("[data-xp-level]");
+    const levelLabel = slot.querySelector("[data-xp-level-label]");
+    const fraction = slot.querySelector("[data-xp-fraction]");
+    if (!widget || !fill) return;
+
+    const from = xpProgress(prevProfile);
+    const to = xpProgress(newProfile);
+    const leveledUp = newProfile.level > prevProfile.level;
+
+    function applyFinal() {
+      fill.style.width = `${to.pct}%`;
+      fraction.textContent = `${to.xp}/${to.threshold}`;
+      levelEl.textContent = newProfile.level;
+      levelLabel.textContent = `NIVÅ ${newProfile.level}`;
+      widget.classList.add("is-leveling");
+      widget.addEventListener("animationend", () => widget.classList.remove("is-leveling"), { once: true });
+    }
+
+    if (!leveledUp) {
+      requestAnimationFrame(() => {
+        fill.style.width = `${to.pct}%`;
+        fraction.textContent = `${to.xp}/${to.threshold}`;
+      });
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      fill.style.width = "100%";
+    });
+    fill.addEventListener(
+      "transitionend",
+      () => {
+        fill.style.transition = "none";
+        fill.style.width = "0%";
+        // eslint-disable-next-line no-unused-expressions
+        fill.offsetHeight;
+        fill.style.transition = "";
+        requestAnimationFrame(applyFinal);
+      },
+      { once: true }
+    );
   }
 
   async function renderFooterAdminLink() {
@@ -187,6 +251,7 @@
     getGuestPoints,
     addGuestPoints,
     renderHeaderAuth,
+    animateHeaderLevelUp,
     renderFooterAdminLink,
     requireAuth,
     requireAdmin,

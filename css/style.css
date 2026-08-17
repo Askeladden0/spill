@@ -196,6 +196,22 @@ button { font-family: inherit; }
   height: 100%;
   border-radius: 99px;
   background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  transition: width .9s cubic-bezier(.22, 1, .36, 1);
+}
+
+.xp-widget.is-leveling .xp-level { animation: xpLevelPop .6s ease; }
+.xp-widget.is-leveling { animation: xpWidgetGlow .9s ease; }
+
+@keyframes xpLevelPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); box-shadow: 0 0 0 6px var(--accent-soft); }
+  100% { transform: scale(1); }
+}
+
+@keyframes xpWidgetGlow {
+  0% { box-shadow: 0 0 0 0 rgba(46, 232, 127, .55); }
+  60% { box-shadow: 0 0 0 8px rgba(46, 232, 127, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 232, 127, 0); }
 }
 
 .login-btn {
@@ -605,6 +621,34 @@ main {
 .game-over-card { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 32px; max-width: 320px; }
 .game-over-card h3 { margin: 0; font-size: 22px; font-weight: 800; color: var(--text-strong); }
 .game-over-score { margin: 0; font-size: 15px; color: var(--text); }
+
+.game-over-level { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 4px; }
+.game-over-level-labels { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+.game-over-level-bar { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, .09); overflow: hidden; }
+.game-over-level-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  width: 0%;
+  transition: width 1.1s cubic-bezier(.22, 1, .36, 1);
+}
+
+.game-over-levelup {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: .04em;
+  opacity: 0;
+  transform: translateY(4px) scale(.9);
+}
+.game-over-levelup.is-shown { animation: levelUpPop .7s cubic-bezier(.22, 1, .36, 1) forwards; }
+
+@keyframes levelUpPop {
+  0% { opacity: 0; transform: translateY(4px) scale(.8); }
+  55% { opacity: 1; transform: translateY(-2px) scale(1.15); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 /* ---------- Spill: Fruktfusjon ---------- */
 .fruit-merge-hint { margin: 0; font-size: 13px; color: var(--muted); text-align: center; max-width: 420px; }

@@ -83,6 +83,14 @@
             <h3 data-game-over-title>Spillet er over</h3>
             <p class="game-over-score" data-game-over-score></p>
             <p class="section-sub" data-game-over-best></p>
+            <div class="game-over-level" data-game-over-level hidden>
+              <div class="game-over-level-labels">
+                <span data-game-over-level-label>Nivå</span>
+                <span data-game-over-level-xp></span>
+              </div>
+              <div class="game-over-level-bar"><div class="game-over-level-fill" data-game-over-level-fill></div></div>
+              <p class="game-over-levelup" data-game-over-levelup>Nivå opp!</p>
+            </div>
             <button type="button" class="btn-primary" data-game-over-restart>Spill igjen</button>
           </div>
         </div>
@@ -109,18 +117,84 @@
       overlayScore: container.querySelector("[data-game-over-score]"),
       overlayBest: container.querySelector("[data-game-over-best]"),
       overlayRestart: container.querySelector("[data-game-over-restart]"),
+      overlayLevel: container.querySelector("[data-game-over-level]"),
+      overlayLevelLabel: container.querySelector("[data-game-over-level-label]"),
+      overlayLevelXp: container.querySelector("[data-game-over-level-xp]"),
+      overlayLevelFill: container.querySelector("[data-game-over-level-fill]"),
+      overlayLevelUp: container.querySelector("[data-game-over-levelup]"),
     };
 
     let best = await loadBest(gameId, await Auth.getCurrentProfile());
     els.best.textContent = best.toLocaleString("no-NO");
 
     let restartHandler = null;
+    let pendingHeaderAnimation = null;
+
     function fireRestart() {
       els.overlay.hidden = true;
+      if (pendingHeaderAnimation) {
+        Auth.animateHeaderLevelUp(pendingHeaderAnimation.prevProfile, pendingHeaderAnimation.newProfile);
+        pendingHeaderAnimation = null;
+      }
       if (restartHandler) restartHandler();
     }
     els.restartBtn.addEventListener("click", fireRestart);
     els.overlayRestart.addEventListener("click", fireRestart);
+
+    /**
+     * Animerer nivå-stolpen på game-over-kortet fra forrige nivåprogresjon
+     * til den nye. Hvis spilleren steg et nivå, fylles stolpen først helt
+     * opp før den nullstilles og fylles til riktig progresjon på det nye
+     * nivået, sammen med en "Nivå opp!"-tekst.
+     */
+    function animateOverlayLevel(prevProfile, newProfile) {
+      if (!prevProfile || !newProfile) {
+        els.overlayLevel.hidden = true;
+        return;
+      }
+      els.overlayLevel.hidden = false;
+      els.overlayLevelUp.classList.remove("is-shown");
+
+      const from = Auth.xpProgress(prevProfile);
+      const to = Auth.xpProgress(newProfile);
+      const leveledUp = newProfile.level > prevProfile.level;
+
+      els.overlayLevelFill.style.transition = "none";
+      els.overlayLevelFill.style.width = `${from.pct}%`;
+      els.overlayLevelLabel.textContent = `Nivå ${prevProfile.level}`;
+      els.overlayLevelXp.textContent = `${from.xp}/${from.threshold}`;
+      // eslint-disable-next-line no-unused-expressions
+      els.overlayLevelFill.offsetHeight;
+      els.overlayLevelFill.style.transition = "";
+
+      function applyFinal() {
+        els.overlayLevelFill.style.width = `${to.pct}%`;
+        els.overlayLevelLabel.textContent = `Nivå ${newProfile.level}`;
+        els.overlayLevelXp.textContent = `${to.xp}/${to.threshold}`;
+        if (leveledUp) els.overlayLevelUp.classList.add("is-shown");
+      }
+
+      if (!leveledUp) {
+        requestAnimationFrame(applyFinal);
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        els.overlayLevelFill.style.width = "100%";
+      });
+      els.overlayLevelFill.addEventListener(
+        "transitionend",
+        () => {
+          els.overlayLevelFill.style.transition = "none";
+          els.overlayLevelFill.style.width = "0%";
+          // eslint-disable-next-line no-unused-expressions
+          els.overlayLevelFill.offsetHeight;
+          els.overlayLevelFill.style.transition = "";
+          requestAnimationFrame(applyFinal);
+        },
+        { once: true }
+      );
+    }
 
     return {
       playArea: els.playArea,
@@ -144,11 +218,20 @@
       async finish(score, opts) {
         opts = opts || {};
         const prevBest = best;
-        const profile = await Auth.getCurrentProfile();
-        const result = await submitScore(gameId, score, profile);
+        const prevProfile = await Auth.getCurrentProfile();
+        const result = await submitScore(gameId, score, prevProfile);
         best = Math.max(best, result.best);
         els.best.textContent = best.toLocaleString("no-NO");
-        await Auth.renderHeaderAuth();
+
+        // Ikke oppdater header-widgeten med sluttresultatet med en gang: den
+        // holdes på forrige tilstand og animeres til den nye først når
+        // spilleren trykker "Spill igjen" / "Nytt spill".
+        const newProfile = prevProfile ? await Auth.getCurrentProfile() : null;
+        if (newProfile) {
+          pendingHeaderAnimation = { prevProfile, newProfile };
+        } else {
+          await Auth.renderHeaderAuth();
+        }
 
         const isNewBest = result.saved && score > prevBest;
         const roundedScore = Math.max(0, Math.round(score));
@@ -158,9 +241,10 @@
         els.overlayBest.textContent = isNewBest
           ? "Ny personlig rekord! 🎉"
           : `Rekord: ${best.toLocaleString("no-NO")} poeng.`;
+        animateOverlayLevel(prevProfile, newProfile);
         els.overlay.hidden = false;
 
-        return { isNewBest, best };
+        return { isNewBest, best, leveledUp: !!(newProfile && prevProfile && newProfile.level > prevProfile.level) };
       },
     };
   }
