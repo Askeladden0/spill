@@ -2,4 +2,6 @@ NEVER write play or game or something that makes the SEO look like it's a game w
 
 Merge after writing code, unless you suspect something is wrong or dangorous
 
+Never add category tags to games or ratings
+
 
