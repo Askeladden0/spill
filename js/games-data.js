@@ -43,74 +43,26 @@ window.PIXELPLAY_GAMES = [
     isDailyGame: true
   },
   {
-    id: "neon-drift",
-    name: "Neon Drift",
-    genre: "Racing",
-    rating: "4,5",
-    points: "1 900 poeng",
-    time: "~10 min",
-    thumbnail: null,
-    description: "Driftkjør gjennom neonopplyste gater i høy fart."
-  },
-  {
-    id: "kokkeliv",
-    name: "Kokkeliv",
-    genre: "Simulator",
-    rating: "4,2",
-    points: "820 poeng",
+    id: "tetris",
+    name: "Tetris",
+    genre: "Puslespill",
+    rating: "4,9",
+    points: "Din skår = dine poeng",
     time: "~15 min",
     thumbnail: null,
-    description: "Driv din egen restaurant og server sultne kunder."
+    description: "Styr de fargerike klossene mens de faller, fyll hele rader for å sprenge dem, og jag din egen rekord i det klassiske puslespillet.",
+    isDailyGame: false
   },
   {
-    id: "dypets-vokter",
-    name: "Dypets Vokter",
-    genre: "Eventyr",
-    rating: "4,8",
-    points: "4 100 poeng",
-    time: "~40 min",
-    thumbnail: null,
-    description: "Utforsk havets dyp og avdekk gamle mysterier."
-  },
-  {
-    id: "bricks-bolts",
-    name: "Bricks & Bolts",
+    id: "block-blast",
+    name: "Block Blast",
     genre: "Puslespill",
-    rating: "4,1",
-    points: "560 poeng",
-    time: "~5 min",
+    rating: "4,8",
+    points: "Din skår = dine poeng",
+    time: "~10 min",
     thumbnail: null,
-    description: "Rask og knotete klossepuslespill for en rask pause."
-  },
-  {
-    id: "frostmark",
-    name: "Frostmark",
-    genre: "RPG",
-    rating: "4,6",
-    points: "2 480 poeng",
-    time: "~30 min",
-    thumbnail: null,
-    description: "Et frossent kongerike venter på sin neste helt."
-  },
-  {
-    id: "skyline-tycoon",
-    name: "Skyline Tycoon",
-    genre: "Bygging",
-    rating: "4,3",
-    points: "1 350 poeng",
-    time: "~20 min",
-    thumbnail: null,
-    description: "Bygg din egen skyline fra bunnen av."
-  },
-  {
-    id: "rift-runners",
-    name: "Rift Runners",
-    genre: "Action",
-    rating: "4,4",
-    points: "2 050 poeng",
-    time: "~18 min",
-    thumbnail: null,
-    description: "Løp, hopp og slåss deg gjennom sprekker i virkeligheten."
+    description: "Dra fargerike klosser fra hånden din over på brettet og fyll hele rader eller kolonner for å sprenge dem og score poeng.",
+    isDailyGame: false
   },
   {
     id: "snake",
@@ -131,15 +83,5 @@ window.PIXELPLAY_GAMES = [
     time: "~10 min",
     thumbnail: null,
     description: "Sikt og skyt kuler for å matche tre eller flere med samme farge. Tøm hele brettet for maks poeng før kulene når bunnen."
-  },
-  {
-    id: "kortkongen",
-    name: "Kortkongen",
-    genre: "Kort",
-    rating: "4,0",
-    points: "430 poeng",
-    time: "~8 min",
-    thumbnail: null,
-    description: "Klassisk kortspill med en vri."
   }
 ];
