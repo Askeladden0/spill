@@ -606,6 +606,27 @@ main {
 .game-over-card h3 { margin: 0; font-size: 22px; font-weight: 800; color: var(--text-strong); }
 .game-over-score { margin: 0; font-size: 15px; color: var(--text); }
 
+/* ---------- Spill: Fruktfusjon ---------- */
+.fruit-merge-hint { margin: 0; font-size: 13px; color: var(--muted); text-align: center; max-width: 420px; }
+
+.fruit-merge-stage { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+.fruit-merge-next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.fruit-merge-next-label { text-transform: uppercase; letter-spacing: .04em; }
+
+.fruit-merge-next-fruit { font-weight: 700; }
+
+.fruit-merge-canvas-wrap { border-radius: 12px; overflow: hidden; touch-action: none; line-height: 0; }
+
+.fruit-merge-canvas { display: block; touch-action: none; cursor: pointer; }
+
 /* ---------- Spill: 2048 ---------- */
 .game-2048-hint { margin: 0; font-size: 13px; color: var(--muted); text-align: center; max-width: 420px; }
 
