@@ -254,6 +254,7 @@
 
         const isNewBest = result.saved && score > prevBest;
         const roundedScore = Math.max(0, Math.round(score));
+        const leveledUp = !!(newProfile && prevProfile && newProfile.level > prevProfile.level);
 
         els.overlayTitle.textContent = opts.title || "Spillet er over";
         els.overlayScore.textContent = `Du fikk ${roundedScore.toLocaleString("no-NO")} poeng.`;
@@ -263,7 +264,11 @@
         animateOverlayLevel(prevProfile, newProfile);
         els.overlay.hidden = false;
 
-        return { isNewBest, best, leveledUp: !!(newProfile && prevProfile && newProfile.level > prevProfile.level) };
+        if (leveledUp && window.PixelPlayLevelUp) {
+          window.PixelPlayLevelUp.show(prevProfile, newProfile);
+        }
+
+        return { isNewBest, best, leveledUp };
       },
     };
   }
