@@ -47,20 +47,37 @@
   async function submitScore(gameId, score, profile) {
     const rounded = Math.round(score);
     if (!Number.isFinite(rounded) || rounded <= 0) {
-      return { saved: false, best: await loadBest(gameId, profile) };
+      return { saved: false, best: await loadBest(gameId, profile), profile: null };
     }
 
     if (profile) {
-      await sb.from("game_records").insert({ user_id: profile.id, game_id: gameId, score: rounded });
-      await sb.rpc("add_points", { p_delta: rounded });
+      const { error: insertError } = await sb
+        .from("game_records")
+        .insert({ user_id: profile.id, game_id: gameId, score: rounded });
+      if (insertError) {
+        console.error("[PixelPlay] Klarte ikke lagre rekord:", insertError.message);
+      }
+
+      // add_points returnerer den oppdaterte profilraden direkte, så vi
+      // slipper å hente den på nytt i et eget kall etterpå (som kan gi
+      // race/cache-problemer og vise gammel xp/nivå i UIen).
+      const { data: updatedProfile, error: rpcError } = await sb.rpc("add_points", { p_delta: rounded });
+      if (rpcError) {
+        console.error("[PixelPlay] Klarte ikke oppdatere xp/nivå:", rpcError.message);
+      }
+
       const best = await loadBest(gameId, profile);
-      return { saved: true, best: Math.max(best, rounded) };
+      return {
+        saved: true,
+        best: Math.max(best, rounded),
+        profile: updatedProfile ? { ...updatedProfile, email: profile.email } : null,
+      };
     }
 
     Auth.addGuestPoints(rounded);
     const best = Math.max(getGuestBest(gameId), rounded);
     setGuestBest(gameId, best);
-    return { saved: true, best };
+    return { saved: true, best, profile: null };
   }
 
   function shellHTML() {
@@ -225,9 +242,11 @@
 
         // Ikke oppdater header-widgeten med sluttresultatet med en gang: den
         // holdes på forrige tilstand og animeres til den nye først når
-        // spilleren trykker "Spill igjen" / "Nytt spill".
-        const newProfile = prevProfile ? await Auth.getCurrentProfile() : null;
-        if (newProfile) {
+        // spilleren trykker "Spill igjen" / "Nytt spill". Faller tilbake til
+        // forrige profil (ingen synlig endring) hvis xp/nivå-oppdateringen
+        // feilet, i stedet for å la resten av visningen krasje.
+        const newProfile = prevProfile ? result.profile || prevProfile : null;
+        if (prevProfile) {
           pendingHeaderAnimation = { prevProfile, newProfile };
         } else {
           await Auth.renderHeaderAuth();
