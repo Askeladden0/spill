@@ -21,6 +21,17 @@
 
 window.PIXELPLAY_GAMES = [
   {
+    id: "fruktfusjon",
+    name: "Fruktfusjon",
+    genre: "Puslespill",
+    rating: "4,7",
+    points: "Din skår = dine poeng",
+    time: "~10 min",
+    thumbnail: null,
+    description: "Slipp frukt ned i krukken og slå sammen like frukter til større og større frukter, uten at haugen renner over.",
+    isDailyGame: false
+  },
+  {
     id: "2048",
     name: "2048",
     genre: "Puslespill",
