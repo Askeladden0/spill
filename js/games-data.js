@@ -112,6 +112,16 @@ window.PIXELPLAY_GAMES = [
     description: "Styr slangen rundt brettet, spis prikkene og voks deg lengst mulig uten å treffe deg selv eller veggen."
   },
   {
+    id: "bubble-shooter",
+    name: "Bubble Shooter",
+    genre: "Puslespill",
+    rating: "4,7",
+    points: "Din skår = dine poeng",
+    time: "~10 min",
+    thumbnail: null,
+    description: "Sikt og skyt kuler for å matche tre eller flere med samme farge. Tøm hele brettet for maks poeng før kulene når bunnen."
+  },
+  {
     id: "kortkongen",
     name: "Kortkongen",
     genre: "Kort",
