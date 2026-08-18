@@ -117,6 +117,7 @@ window.PIXELPLAY_GAMES_READY = (async function loadGames() {
     sb
       .from("games")
       .select("id, name, genre, rating, points, time_estimate, description, thumbnail_url, icon_url, points_multiplier, is_daily_game")
+      .eq("hidden", false)
       .order("sort_order", { ascending: true }),
     timeout
   ]);

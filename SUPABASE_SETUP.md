@@ -72,6 +72,12 @@ av å holde nøkkelen hemmelig.
 Etter dette kan du gjøre flere brukere til admin direkte fra adminpanelet –
 SQL-kommandoen trengs kun for den aller første.
 
+`schema.sql` legger også til `games.hidden` (lar admin skjule et spill fra
+lister uten å slette det) og RPC-funksjonen `admin_delete_user` (lar en admin
+slette andre brukere fra "Brukere"-seksjonen i adminpanelet). Har du kjørt
+filen tidligere, kjør den bare på nytt – den er skrevet slik at det er trygt
+(se punktet under).
+
 ## 6. Valgfritt: skru av e-postbekreftelse for testing
 
 Under **Authentication → Providers → Email**, kan du skru av "Confirm email"
@@ -85,7 +91,9 @@ bekrefte e-post først. Anbefales skrudd på igjen i produksjon.
   innlogget.
 - `[data-admin-only]`-lenken i bunnmenyen vises kun for administratorer.
 - `profil.html` krever innlogging (redirigerer til `login.html` ellers).
-- `admin.html` krever admin-status (redirigerer til `index.html` ellers).
+- `admin.html` krever innlogging og admin-status (redirigerer til `login.html`
+  hvis ingen er innlogget, ellers til `index.html` hvis brukeren ikke er
+  admin) – håndhevet av `Auth.requireAdmin()` i `js/admin.js`.
 - Passordregler: minst 8 tegn, med minst én bokstav og ett tall.
 - Brukernavnregler: 5–20 tegn, kun bokstaver/tall/understrek, unikt.
 - Google-innlogging kan ikke spørre om brukernavn før kontoen opprettes, så
