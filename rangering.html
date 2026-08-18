@@ -96,6 +96,7 @@
 
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/games-data.js"></script>
 <script src="js/leaderboard-data.js"></script>
@@ -218,7 +219,7 @@
   }
 
   function renderPodium() {
-    const board = currentBoard();
+    const board = LB.visiblePlayers(currentBoard());
     document.querySelector("[data-podium-title]").textContent = `TOPP 3 · ${scopeLabel(scope).toUpperCase()}`;
     const list = document.querySelector("[data-podium-list]");
 
@@ -243,7 +244,8 @@
   }
 
   function renderTable() {
-    const board = currentBoard();
+    const fullBoard = currentBoard();
+    const board = LB.visiblePlayers(fullBoard);
     const body = document.querySelector("[data-leaderboard-body]");
     const toggleBtn = document.querySelector("[data-toggle-rows]");
     const shownLabel = document.querySelector("[data-shown-label]");
@@ -257,7 +259,7 @@
 
     const visible = expanded ? board : board.slice(0, VISIBLE_ROWS);
     const meInVisible = profile && visible.some((p) => p.id === profile.id);
-    const me = profile && board.find((p) => p.id === profile.id);
+    const me = profile && fullBoard.find((p) => p.id === profile.id);
     const shown = me && !meInVisible ? visible.concat([me]) : visible;
 
     body.innerHTML = shown
@@ -328,7 +330,7 @@
 
   function renderSubtitle() {
     document.querySelector("[data-rank-subtitle]").textContent =
-      `${scopeLabel(scope)} · ${fmt(currentBoard().length)} spillere rangert`;
+      `${scopeLabel(scope)} · ${fmt(LB.visiblePlayers(currentBoard()).length)} spillere rangert`;
   }
 
   function renderAll() {
@@ -357,7 +359,7 @@
       return;
     }
 
-    const matches = profiles
+    const matches = LB.visiblePlayers(profiles)
       .filter((p) => p.username.toLowerCase().includes(q))
       .sort((a, b) => b.xp - a.xp)
       .slice(0, 8);

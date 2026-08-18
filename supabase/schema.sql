@@ -14,11 +14,13 @@
 create table if not exists public.avatar_options (
   id smallint primary key default 1,
   colors text[] not null default array[
-    '#2ee87f', '#5c8df5', '#f5715c', '#f5c95c',
-    '#a56cf5', '#5cf5df', '#f55c9b', '#8bf05c'
+    '#2ee87f', '#38bdf8', '#a78bfa', '#f472b6',
+    '#ffd166', '#fb923c', '#ff9385', '#e8edf5'
   ],
+  -- icons er nøkler inn i figur-settet i js/avatar-figures.js (robot, katt,
+  -- spoke, alien, fugl, bjorn, krystall, blekk), ikke emoji-tegn.
   icons text[] not null default array[
-    '🎮', '🚀', '🐱', '🦊', '🐸', '🔥', '⚡', '🌟', '🎯', '👾', '🐼', '🦄'
+    'robot', 'katt', 'spoke', 'alien', 'fugl', 'bjorn', 'krystall', 'blekk'
   ],
   updated_at timestamptz not null default now(),
   constraint avatar_options_singleton check (id = 1)
@@ -26,6 +28,16 @@ create table if not exists public.avatar_options (
 
 insert into public.avatar_options (id) values (1)
 on conflict (id) do nothing;
+
+-- Migrering: eksisterende installasjoner som fortsatt har de gamle
+-- emoji-verdiene (fra før figur-avatarene ble innført) får de nye
+-- standardfigurene/-fargene i stedet, slik at avataren ikke blir tom.
+update public.avatar_options
+   set colors = array['#2ee87f', '#38bdf8', '#a78bfa', '#f472b6', '#ffd166', '#fb923c', '#ff9385', '#e8edf5'],
+       icons = array['robot', 'katt', 'spoke', 'alien', 'fugl', 'bjorn', 'krystall', 'blekk'],
+       updated_at = now()
+ where id = 1
+   and not (icons <@ array['robot', 'katt', 'spoke', 'alien', 'fugl', 'bjorn', 'krystall', 'blekk']);
 
 -- ---------------------------------------------------------------------------
 -- 2. profiles – ett rad per bruker (1:1 med auth.users).
@@ -49,6 +61,20 @@ create table if not exists public.profiles (
 
 create unique index if not exists profiles_username_lower_idx
   on public.profiles (lower(username));
+
+-- ---------------------------------------------------------------------------
+-- 2b. profiles.is_hidden – lar en bruker skjule seg selv fra rangeringen
+--     (personvern-innstilling på innstillinger.html). Brukeren fortsetter å
+--     samle poeng som normalt, men vises ikke i offentlige lister/søk.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists is_hidden boolean not null default false;
+
+-- Migrering: eksisterende profiler med et gammelt emoji-avatar_icon (fra før
+-- figur-avatarene ble innført) får standardfiguren "robot" i stedet, slik at
+-- avataren ikke blir tom.
+update public.profiles
+   set avatar_icon = 'robot'
+ where avatar_icon not in ('robot', 'katt', 'spoke', 'alien', 'fugl', 'bjorn', 'krystall', 'blekk');
 
 -- ---------------------------------------------------------------------------
 -- 3. game_records – historikk over poengsummer per spiller/spill.
@@ -151,7 +177,7 @@ begin
     from public.avatar_options where id = 1;
 
   insert into public.profiles (id, username, username_is_default, avatar_color, avatar_icon)
-  values (new.id, final_username, is_default, coalesce(picked_color, '#2ee87f'), coalesce(picked_icon, '🎮'));
+  values (new.id, final_username, is_default, coalesce(picked_color, '#2ee87f'), coalesce(picked_icon, 'robot'));
 
   return new;
 end;

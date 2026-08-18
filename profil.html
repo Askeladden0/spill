@@ -38,67 +38,93 @@
 
   <main data-profile-main hidden>
     <section>
-      <div class="section-heading"><h1>Min profil</h1></div>
-
       <p class="auth-success" data-default-username-banner hidden>
-        Du logget inn med Google og fikk et automatisk generert brukernavn. Du kan endre det under.
+        Du logget inn med Google og fikk et automatisk generert brukernavn. Du kan endre det under «Innstillinger».
       </p>
 
-      <div class="profile-header-card">
-        <span class="avatar-badge avatar-badge-lg" data-profile-avatar></span>
-        <div>
-          <h2 data-profile-username style="margin:0 0 4px;font-size:22px;color:#fff">–</h2>
-          <p style="margin:0;color:var(--muted);font-size:14px" data-profile-email>–</p>
-        </div>
-        <div class="profile-level-block">
-          <div class="xp-labels"><span data-profile-level-label>NIVÅ –</span><span data-profile-xp-label>–</span></div>
-          <div class="xp-bar" style="width:180px"><div class="xp-bar-fill" data-profile-xp-fill></div></div>
-        </div>
-      </div>
-      <a class="section-sub" data-public-profile-link href="#" style="display:inline-block;margin-top:10px">Se din offentlige spillerprofil →</a>
-    </section>
+      <div class="profile-top-card">
+        <button type="button" class="avatar-edit-trigger" data-open-avatar-modal aria-label="Endre profilbilde">
+          <span data-profile-avatar-slot></span>
+          <span class="avatar-edit-pencil">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+          </span>
+        </button>
 
-    <section>
-      <div class="section-heading"><h2>Rediger avatar</h2></div>
-      <div class="settings-card">
-        <div>
-          <p class="settings-label">Farge</p>
-          <div class="swatch-row" data-color-picker></div>
+        <div class="profile-top-meta">
+          <div class="profile-top-name-row">
+            <h1 data-profile-username>–</h1>
+            <span class="level-pill" data-profile-level-pill>NIVÅ –</span>
+          </div>
+          <span class="section-sub" data-profile-email-line>–</span>
+          <a href="#" class="section-sub" data-public-profile-link>Se din offentlige spillerprofil →</a>
         </div>
-        <div>
-          <p class="settings-label">Ikon</p>
-          <div class="swatch-row" data-icon-picker></div>
-        </div>
-        <p class="auth-error" data-avatar-error hidden></p>
-      </div>
-    </section>
 
-    <section>
-      <div class="section-heading"><h2>Brukernavn</h2></div>
-      <div class="settings-card">
-        <form data-username-form class="inline-form">
-          <input type="text" name="username" minlength="5" maxlength="20" required>
-          <button type="submit" class="btn-start" style="width:auto;padding:12px 24px">Lagre</button>
-        </form>
-        <p class="auth-error" data-username-error hidden></p>
-        <p class="auth-success" data-username-success hidden></p>
-      </div>
-    </section>
-
-    <section>
-      <div class="section-heading spread"><h2>Mine rekorder</h2></div>
-      <div class="settings-card">
-        <div data-records-list>
-          <p class="section-sub">Laster rekorder …</p>
+        <div class="profile-stats-grid">
+          <div class="profile-stat"><span class="profile-stat-num is-accent" data-stat-points>–</span><span class="profile-stat-label">POENG TOTALT</span></div>
+          <div class="profile-stat"><span class="profile-stat-num" data-stat-rank>–</span><span class="profile-stat-label">PLASSERING</span></div>
+          <div class="profile-stat"><span class="profile-stat-num" data-stat-matches>–</span><span class="profile-stat-label">KAMPER</span></div>
+          <div class="profile-stat"><span class="profile-stat-num" data-stat-codes>–</span><span class="profile-stat-label">RABATTKODER</span></div>
         </div>
       </div>
     </section>
 
     <section>
-      <div class="section-heading"><h2>Konto</h2></div>
-      <div class="settings-card" style="flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
-        <button type="button" class="login-btn" data-logout-btn>Logg ut</button>
-        <button type="button" class="btn-danger" data-delete-btn>Slett konto</button>
+      <div class="profile-tabs-row">
+        <div class="profile-tabs" data-profile-tabs>
+          <button type="button" class="profile-tab is-active" data-tab="oversikt">Oversikt</button>
+          <button type="button" class="profile-tab" data-tab="rekorder">Mine rekorder</button>
+          <button type="button" class="profile-tab" data-tab="koder">Rabattkoder <span class="profile-tab-count" data-tab-codes-count></span></button>
+        </div>
+        <a href="innstillinger.html" class="settings-link-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          Innstillinger
+        </a>
+      </div>
+
+      <div data-tab-panel="oversikt">
+        <div class="overview-grid">
+          <div class="overview-card">
+            <div class="overview-card-head"><h2 data-level-progress-title>Vei til neste nivå</h2><span class="section-sub" data-level-progress-sub></span></div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <div class="level-progress-bar"><div class="level-progress-fill" data-level-progress-fill style="width:0%"></div></div>
+              <div class="level-progress-labels"><span data-level-progress-fraction></span><span data-level-progress-reward></span></div>
+            </div>
+            <div class="overview-divider"></div>
+            <h2>Dine tre beste</h2>
+            <div style="display:flex;flex-direction:column;gap:10px" data-top-records></div>
+            <button type="button" class="btn-outline-sm" style="align-self:flex-start" data-goto-records>Se alle rekorder</button>
+          </div>
+          <div class="overview-card">
+            <div class="overview-card-head"><h2>Nyeste rabattkode</h2><span class="section-sub" data-more-codes-label></span></div>
+            <div data-latest-code-slot></div>
+            <div class="overview-divider"></div>
+            <h2>Siste aktivitet</h2>
+            <div style="display:flex;flex-direction:column;gap:12px" data-activity-list></div>
+          </div>
+        </div>
+      </div>
+
+      <div data-tab-panel="rekorder" hidden>
+        <div class="settings-card">
+          <div data-records-list>
+            <p class="section-sub">Laster rekorder …</p>
+          </div>
+        </div>
+      </div>
+
+      <div data-tab-panel="koder" hidden>
+        <div style="display:flex;flex-direction:column;gap:22px">
+          <div class="codes-grid" data-codes-grid>
+            <p class="section-sub">Laster rabattkoder …</p>
+          </div>
+          <div class="codes-cta">
+            <div>
+              <div class="codes-cta-title" data-codes-cta-title>Du har poeng å bruke</div>
+              <div class="codes-cta-sub">Hent nye rabattkoder på premier-siden</div>
+            </div>
+            <a href="premier.html" class="btn-primary" style="padding:12px 22px">Hent ny kode</a>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -117,19 +143,51 @@
   </footer>
 </div>
 
+<div class="modal-overlay" data-avatar-modal hidden>
+  <div class="modal-backdrop" data-avatar-modal-backdrop></div>
+  <div class="modal-card avatar-modal-card">
+    <button type="button" class="modal-close" data-close-avatar-modal aria-label="Lukk">×</button>
+    <h2 class="modal-title">Rediger profilbilde</h2>
+    <div>
+      <p class="settings-label">Figur</p>
+      <div class="figure-grid" data-figure-picker></div>
+    </div>
+    <div>
+      <p class="settings-label">Farge</p>
+      <div class="swatch-row" data-modal-color-picker></div>
+    </div>
+    <p class="auth-error" data-avatar-error hidden></p>
+    <span class="section-sub">Lagres automatisk.</span>
+  </div>
+</div>
+
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/games-data.js"></script>
+<script src="js/leaderboard-data.js"></script>
 <script>
 (function () {
   "use strict";
   const sb = window.supabaseClient;
   const Auth = window.PixelPlayAuth;
+  const Avatars = window.PixelPlayAvatars;
+  const LB = window.PixelPlayLeaderboard;
   const games = window.PIXELPLAY_GAMES || [];
 
   let profile = null;
   let avatarOptions = { colors: [], icons: [] };
+  let boards = { total: [], perGame: {} };
+  let bestPerGame = {};
+  let records = [];
+  let codes = [];
+  let levels = [];
+  let tab = "oversikt";
+
+  function fmt(n) {
+    return Math.round(n || 0).toLocaleString("no-NO");
+  }
 
   function findGame(id) {
     return games.find((x) => x.id === id);
@@ -140,20 +198,294 @@
     return g ? g.name : id;
   }
 
+  function relTime(iso) {
+    const then = new Date(iso).getTime();
+    const days = Math.floor((Date.now() - then) / 86400000);
+    if (days <= 0) return "i dag";
+    if (days === 1) return "i går";
+    return `${days} dager siden`;
+  }
+
   function renderProfileHeader() {
-    document.querySelector("[data-profile-avatar]").outerHTML =
-      `<span class="avatar-badge avatar-badge-lg" data-profile-avatar style="background:${profile.avatar_color}22;border-color:${profile.avatar_color}66">${profile.avatar_icon}</span>`;
+    document.querySelector("[data-profile-avatar-slot]").innerHTML =
+      Avatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, 86);
     document.querySelector("[data-profile-username]").textContent = profile.username;
-    document.querySelector("[data-profile-email]").textContent = profile.email;
-
-    const { pct, xp, threshold } = Auth.xpProgress(profile);
-    document.querySelector("[data-profile-level-label]").textContent = `NIVÅ ${profile.level}`;
-    document.querySelector("[data-profile-xp-label]").textContent = `${xp}/${threshold}`;
-    document.querySelector("[data-profile-xp-fill]").style.width = pct + "%";
-
+    document.querySelector("[data-profile-level-pill]").textContent = `NIVÅ ${profile.level}`;
+    document.querySelector("[data-profile-email-line]").textContent = `${profile.email} · medlem siden ${new Date(profile.created_at).toLocaleDateString("no-NO", { month: "long", year: "numeric" })}`;
     document.querySelector("[data-default-username-banner]").hidden = !profile.username_is_default;
-    document.querySelector('[name="username"]').value = profile.username;
     document.querySelector("[data-public-profile-link]").href = `spillerprofil.html?u=${encodeURIComponent(profile.username)}`;
+  }
+
+  function renderStats() {
+    const me = boards.total.find((p) => p.id === profile.id);
+    document.querySelector("[data-stat-points]").textContent = fmt(profile.xp);
+    document.querySelector("[data-stat-rank]").textContent = me ? "#" + me.rank : "–";
+    document.querySelector("[data-stat-matches]").textContent = fmt(me ? me.matches : 0);
+    document.querySelector("[data-stat-codes]").textContent = fmt(codes.length);
+    document.querySelector("[data-tab-codes-count]").textContent = codes.length ? codes.length : "";
+  }
+
+  function renderLevelProgress() {
+    const xp = profile.xp;
+    const passed = levels.filter((l) => l.points_required <= xp).sort((a, b) => b.points_required - a.points_required);
+    const upcoming = levels.filter((l) => l.points_required > xp).sort((a, b) => a.points_required - b.points_required);
+    const currentThreshold = passed.length ? passed[0].points_required : 0;
+    const next = upcoming[0];
+
+    const title = document.querySelector("[data-level-progress-title]");
+    const sub = document.querySelector("[data-level-progress-sub]");
+    const fill = document.querySelector("[data-level-progress-fill]");
+    const fraction = document.querySelector("[data-level-progress-fraction]");
+    const reward = document.querySelector("[data-level-progress-reward]");
+
+    if (!next) {
+      title.textContent = "Du er på toppnivået";
+      sub.textContent = "";
+      fill.style.width = "100%";
+      fraction.textContent = `${fmt(xp)} poeng totalt`;
+      reward.textContent = "";
+      return;
+    }
+
+    const span = next.points_required - currentThreshold;
+    const pct = span > 0 ? Math.min(100, Math.round(((xp - currentThreshold) / span) * 100)) : 100;
+    const pointsLeft = Math.max(0, next.points_required - xp);
+    const rewardTitle = next.rewards && next.rewards[0] ? `${next.rewards[0].title} hos ${next.rewards[0].brand}` : null;
+
+    title.textContent = `Vei til nivå ${next.level_number}`;
+    sub.textContent = `${fmt(pointsLeft)} poeng igjen`;
+    fill.style.width = `${pct}%`;
+    fraction.textContent = `${fmt(xp - currentThreshold)} / ${fmt(span)} poeng i dette nivået`;
+    reward.textContent = rewardTitle ? `Neste premie: ${rewardTitle}` : "";
+  }
+
+  function renderTopRecords() {
+    const entries = Object.entries(bestPerGame)
+      .map(([gameId, score]) => {
+        const board = boards.perGame[gameId] || [];
+        const me = board.find((p) => p.id === profile.id);
+        return { gameId, score, rank: me ? me.rank : null };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+
+    const el = document.querySelector("[data-top-records]");
+    if (!entries.length) {
+      el.innerHTML = `<p class="section-sub">Ingen rekorder ennå.</p>`;
+      return;
+    }
+    el.innerHTML = entries
+      .map(
+        (e) => `
+        <div class="best-record-row">
+          ${window.gameIconHTML(findGame(e.gameId), 26)}
+          <span class="best-record-name">${gameName(e.gameId)}</span>
+          <span class="best-record-rank">${e.rank ? "#" + e.rank + " totalt" : ""}</span>
+          <span class="best-record-score">${fmt(e.score)}</span>
+        </div>
+      `
+      )
+      .join("");
+  }
+
+  function codeCardHTML(c, opts) {
+    const surfaceClass = opts && opts.inSurface ? " is-in-surface" : "";
+    return `
+      <div class="code-card${surfaceClass}">
+        <span class="code-card-notch is-left"></span>
+        <span class="code-card-notch is-right"></span>
+        <div class="code-card-head"><span class="code-card-brand">${c.brand.toUpperCase()}</span><span class="code-card-date">Hentet ${relTime(c.created_at)}</span></div>
+        <span class="code-card-title">${c.title}</span>
+        <div class="code-card-foot">
+          <span class="code-card-foot-label">${c.code}</span>
+          <button type="button" class="btn-copy-code" data-copy-code="${c.code}">Kopier</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderLatestCode() {
+    const slot = document.querySelector("[data-latest-code-slot]");
+    const moreLabel = document.querySelector("[data-more-codes-label]");
+    if (!codes.length) {
+      slot.innerHTML = `<div class="empty-state-note">Ingen rabattkoder hentet ennå. Prøv lykkehjulet på premier-siden!</div>`;
+      moreLabel.textContent = "";
+      return;
+    }
+    slot.innerHTML = codeCardHTML(codes[0], { inSurface: true });
+    moreLabel.textContent = codes.length > 1 ? `${codes.length - 1} flere` : "";
+  }
+
+  function renderActivity() {
+    const events = [];
+    Object.entries(bestPerGame).forEach(([gameId, score]) => {
+      const row = records
+        .filter((r) => r.game_id === gameId && r.score === score)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      if (row) events.push({ text: `Ny rekord i ${gameName(gameId)} · ${fmt(score)}`, at: row.created_at, isNew: true });
+    });
+    codes.forEach((c) => events.push({ text: `Hentet rabattkode hos ${c.brand}`, at: c.created_at, isNew: false }));
+
+    events.sort((a, b) => new Date(b.at) - new Date(a.at));
+    const el = document.querySelector("[data-activity-list]");
+    if (!events.length) {
+      el.innerHTML = `<p class="section-sub">Ingen aktivitet ennå.</p>`;
+      return;
+    }
+    el.innerHTML = events
+      .slice(0, 5)
+      .map(
+        (e, i) => `
+        <div class="activity-row">
+          <span class="activity-dot ${i === 0 && e.isNew ? "is-new" : ""}"></span>
+          <span class="activity-text">${e.text}</span>
+          <span class="activity-time">${relTime(e.at)}</span>
+        </div>
+      `
+      )
+      .join("");
+  }
+
+  function renderRecords() {
+    const list = document.querySelector("[data-records-list]");
+    const entries = Object.entries(bestPerGame);
+    const playedIds = new Set(entries.map(([id]) => id));
+    const unplayed = games.filter((g) => !playedIds.has(g.id));
+
+    if (!entries.length && !unplayed.length) {
+      list.innerHTML = `<p class="section-sub">Ingen rekorder ennå.</p>`;
+      return;
+    }
+
+    const rows = entries
+      .map(([gameId, score]) => {
+        const board = boards.perGame[gameId] || [];
+        const me = board.find((p) => p.id === profile.id);
+        const matches = me ? me.matches : records.filter((r) => r.game_id === gameId).length;
+        return `
+          <tr>
+            <td><span style="display:flex;align-items:center;gap:10px">${window.gameIconHTML(findGame(gameId), 22)}${gameName(gameId)}</span></td>
+            <td>${fmt(score)}</td>
+            <td>${me ? "#" + me.rank : "–"}</td>
+            <td>${fmt(matches)}</td>
+            <td style="text-align:right"><a href="player.html?id=${encodeURIComponent(gameId)}">Spill igjen</a></td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const unplayedRows = unplayed
+      .map(
+        (g) => `
+        <tr style="opacity:.55">
+          <td><span style="display:flex;align-items:center;gap:10px">${window.gameIconHTML(g, 22)}${g.name}</span></td>
+          <td>–</td><td>Ikke spilt</td><td>0</td>
+          <td style="text-align:right"><a href="player.html?id=${encodeURIComponent(g.id)}">Prøv nå</a></td>
+        </tr>
+      `
+      )
+      .join("");
+
+    list.innerHTML = `
+      <table class="records-table">
+        <thead><tr><th>Spill</th><th>Beste poengsum</th><th>Plassering</th><th>Kamper</th><th></th></tr></thead>
+        <tbody>${rows}${unplayedRows}</tbody>
+      </table>
+    `;
+  }
+
+  function renderCodesTab() {
+    const grid = document.querySelector("[data-codes-grid]");
+    document.querySelector("[data-codes-cta-title]").textContent = `Du har ${fmt(profile.xp)} poeng å bruke`;
+    if (!codes.length) {
+      grid.innerHTML = `<div class="empty-state-note">Ingen rabattkoder hentet ennå. Prøv lykkehjulet på premier-siden!</div>`;
+      return;
+    }
+    grid.innerHTML = codes.map((c) => codeCardHTML(c)).join("");
+  }
+
+  function bindCopyButtons() {
+    document.querySelectorAll("[data-copy-code]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const code = btn.dataset.copyCode;
+        navigator.clipboard?.writeText(code);
+        const original = btn.textContent;
+        btn.textContent = "Kopiert!";
+        setTimeout(() => { btn.textContent = original; }, 1500);
+      });
+    });
+  }
+
+  function renderTabs() {
+    document.querySelectorAll("[data-profile-tabs] [data-tab]").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.tab === tab);
+    });
+    document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.tabPanel !== tab;
+    });
+  }
+
+  function renderAll() {
+    renderProfileHeader();
+    renderStats();
+    renderLevelProgress();
+    renderTopRecords();
+    renderLatestCode();
+    renderActivity();
+    renderRecords();
+    renderCodesTab();
+    bindCopyButtons();
+    renderTabs();
+  }
+
+  document.querySelector("[data-profile-tabs]").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-tab]");
+    if (!btn) return;
+    tab = btn.dataset.tab;
+    renderTabs();
+  });
+
+  document.querySelector("[data-goto-records]").addEventListener("click", () => {
+    tab = "rekorder";
+    renderTabs();
+  });
+
+  // ---------- Avatar-modal ----------
+  const avatarModal = document.querySelector("[data-avatar-modal]");
+
+  function openAvatarModal() {
+    avatarModal.hidden = false;
+  }
+  function closeAvatarModal() {
+    avatarModal.hidden = true;
+  }
+
+  function renderAvatarPickers() {
+    const figurePicker = document.querySelector("[data-figure-picker]");
+    const colorPicker = document.querySelector("[data-modal-color-picker]");
+
+    figurePicker.innerHTML = (avatarOptions.icons || [])
+      .map(
+        (key) => `
+        <button type="button" class="figure-swatch ${key === profile.avatar_icon ? "is-selected" : ""}" data-figure="${key}" title="${Avatars.figureLabel(key)}">${Avatars.figureSVG(key)}</button>
+      `
+      )
+      .join("");
+
+    colorPicker.innerHTML = (avatarOptions.colors || [])
+      .map(
+        (c) => `
+        <button type="button" class="swatch ${c === profile.avatar_color ? "is-selected" : ""}" style="background:${c}" data-color="${c}" aria-label="Velg farge ${c}"></button>
+      `
+      )
+      .join("");
+
+    figurePicker.querySelectorAll("[data-figure]").forEach((btn) => {
+      btn.addEventListener("click", () => updateAvatar({ avatar_icon: btn.dataset.figure }));
+    });
+    colorPicker.querySelectorAll("[data-color]").forEach((btn) => {
+      btn.addEventListener("click", () => updateAvatar({ avatar_color: btn.dataset.color }));
+    });
   }
 
   async function loadAvatarOptions() {
@@ -164,36 +496,6 @@
     }
     avatarOptions = data;
     renderAvatarPickers();
-  }
-
-  function renderAvatarPickers() {
-    const colorPicker = document.querySelector("[data-color-picker]");
-    const iconPicker = document.querySelector("[data-icon-picker]");
-
-    colorPicker.innerHTML = avatarOptions.colors
-      .map(
-        (c) => `
-        <button type="button" class="swatch ${c === profile.avatar_color ? "is-selected" : ""}"
-          style="background:${c}" data-color="${c}" aria-label="Velg farge ${c}"></button>
-      `
-      )
-      .join("");
-
-    iconPicker.innerHTML = avatarOptions.icons
-      .map(
-        (i) => `
-        <button type="button" class="swatch swatch-icon ${i === profile.avatar_icon ? "is-selected" : ""}"
-          data-icon="${i}" aria-label="Velg ikon ${i}">${i}</button>
-      `
-      )
-      .join("");
-
-    colorPicker.querySelectorAll(".swatch").forEach((btn) => {
-      btn.addEventListener("click", () => updateAvatar({ avatar_color: btn.dataset.color }));
-    });
-    iconPicker.querySelectorAll(".swatch").forEach((btn) => {
-      btn.addEventListener("click", () => updateAvatar({ avatar_icon: btn.dataset.icon }));
-    });
   }
 
   async function updateAvatar(fields) {
@@ -210,112 +512,43 @@
     renderAvatarPickers();
   }
 
-  async function loadRecords() {
-    const list = document.querySelector("[data-records-list]");
-    const { data, error } = await sb
-      .from("game_records")
-      .select("game_id, score")
-      .eq("user_id", profile.id)
-      .order("score", { ascending: false });
+  document.querySelector("[data-open-avatar-modal]").addEventListener("click", openAvatarModal);
+  document.querySelector("[data-close-avatar-modal]").addEventListener("click", closeAvatarModal);
+  document.querySelector("[data-avatar-modal-backdrop]").addEventListener("click", closeAvatarModal);
 
-    if (error) {
-      list.innerHTML = `<p class="section-sub">Kunne ikke laste rekorder.</p>`;
-      return;
-    }
+  // ---------- Init ----------
+  async function loadRecordsAndCodes() {
+    const [recordsRes, codesRes, levelsRes] = await Promise.all([
+      sb.from("game_records").select("game_id, score, created_at").eq("user_id", profile.id).order("score", { ascending: false }),
+      sb.from("user_codes").select("brand, title, code, created_at").eq("user_id", profile.id).order("created_at", { ascending: false }),
+      sb.from("levels").select("level_number, points_required, rewards").order("points_required", { ascending: true }),
+    ]);
 
-    if (!data || data.length === 0) {
-      list.innerHTML = `<p class="section-sub">Ingen rekorder ennå – de dukker opp her etter hvert som du spiller.</p>`;
-      return;
-    }
+    records = recordsRes.data || [];
+    codes = codesRes.data || [];
+    levels = levelsRes.data || [];
 
-    const bestPerGame = {};
-    data.forEach((r) => {
+    bestPerGame = {};
+    records.forEach((r) => {
       if (!bestPerGame[r.game_id] || r.score > bestPerGame[r.game_id]) {
         bestPerGame[r.game_id] = r.score;
       }
     });
-
-    list.innerHTML = `
-      <table class="records-table">
-        <thead><tr><th>Spill</th><th>Beste poengsum</th></tr></thead>
-        <tbody>
-          ${Object.entries(bestPerGame)
-            .map(([gameId, score]) => `
-              <tr>
-                <td><span style="display:flex;align-items:center;gap:10px">${window.gameIconHTML(findGame(gameId), 22)}${gameName(gameId)}</span></td>
-                <td>${score}</td>
-              </tr>
-            `)
-            .join("")}
-        </tbody>
-      </table>
-    `;
   }
-
-  document.querySelector("[data-username-form]").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const errorEl = document.querySelector("[data-username-error]");
-    const successEl = document.querySelector("[data-username-success]");
-    errorEl.hidden = true;
-    successEl.hidden = true;
-
-    const newUsername = new FormData(e.target).get("username").trim();
-    const usernameError = Auth.validateUsername(newUsername);
-    if (usernameError) {
-      errorEl.textContent = usernameError;
-      errorEl.hidden = false;
-      return;
-    }
-
-    if (newUsername.toLowerCase() !== profile.username.toLowerCase() && (await Auth.isUsernameTaken(newUsername))) {
-      errorEl.textContent = "Dette brukernavnet er allerede tatt.";
-      errorEl.hidden = false;
-      return;
-    }
-
-    const { error } = await sb
-      .from("profiles")
-      .update({ username: newUsername, username_is_default: false })
-      .eq("id", profile.id);
-
-    if (error) {
-      errorEl.textContent = Auth.friendlyAuthError(error);
-      errorEl.hidden = false;
-      return;
-    }
-
-    profile.username = newUsername;
-    profile.username_is_default = false;
-    renderProfileHeader();
-    successEl.textContent = "Brukernavn oppdatert!";
-    successEl.hidden = false;
-  });
-
-  document.querySelector("[data-logout-btn]").addEventListener("click", () => Auth.signOut());
-
-  document.querySelector("[data-delete-btn]").addEventListener("click", async () => {
-    const confirmed = window.confirm(
-      "Er du sikker på at du vil slette kontoen din? Dette kan ikke angres, og all data (profil, rekorder) slettes permanent."
-    );
-    if (!confirmed) return;
-
-    const { error } = await sb.rpc("delete_own_account");
-    if (error) {
-      alert("Kunne ikke slette kontoen: " + Auth.friendlyAuthError(error));
-      return;
-    }
-    await sb.auth.signOut();
-    window.location.href = "index.html";
-  });
 
   (async function init() {
     if (window.PIXELPLAY_GAMES_READY) await window.PIXELPLAY_GAMES_READY;
     profile = await Auth.requireAuth();
     if (!profile) return;
+
+    const [loadedProfiles, allRecords] = await Promise.all([LB.loadProfiles(), LB.loadRecords()]);
+    boards = LB.buildBoards(loadedProfiles, allRecords);
+
+    await loadRecordsAndCodes();
+
     document.querySelector("[data-profile-main]").hidden = false;
-    renderProfileHeader();
+    renderAll();
     await loadAvatarOptions();
-    await loadRecords();
   })();
 })();
 </script>

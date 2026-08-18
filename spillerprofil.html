@@ -104,6 +104,7 @@
 
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/games-data.js"></script>
 <script src="js/leaderboard-data.js"></script>
@@ -129,10 +130,10 @@
       return;
     }
 
-    const [profiles, records] = await Promise.all([LB.loadProfiles(), LB.loadRecords()]);
+    const [profiles, records, viewer] = await Promise.all([LB.loadProfiles(), LB.loadRecords(), Auth.getCurrentProfile()]);
     const player = profiles.find((p) => p.username.toLowerCase() === username.toLowerCase());
 
-    if (!player) {
+    if (!player || (player.is_hidden && (!viewer || viewer.id !== player.id))) {
       document.querySelector("[data-not-found]").hidden = false;
       return;
     }
@@ -144,7 +145,7 @@
     const codes = await LB.codesCount(player.id);
 
     document.querySelector("[data-profile-avatar]").outerHTML =
-      `<span class="avatar-badge avatar-badge-lg" data-profile-avatar style="background:${player.avatar_color}22;border-color:${player.avatar_color}66">${player.avatar_icon}</span>`;
+      window.PixelPlayAvatars.avatarBadgeHTML(player.avatar_color, player.avatar_icon, 72, { className: "avatar-badge-lg", attrs: "data-profile-avatar" });
     document.querySelector("[data-profile-username]").textContent = player.username;
     document.querySelector("[data-profile-scope-label]").textContent = `${fmt(meInTotal ? meInTotal.matches : 0)} kamper spilt totalt`;
 

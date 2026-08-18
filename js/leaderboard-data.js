@@ -16,7 +16,7 @@
   async function loadProfiles() {
     const { data, error } = await sb
       .from("profiles")
-      .select("id, username, avatar_color, avatar_icon, level, xp");
+      .select("id, username, avatar_color, avatar_icon, level, xp, is_hidden");
     if (error) {
       console.error("[PixelPlay] Klarte ikke hente spillere:", error.message);
       return [];
@@ -98,5 +98,15 @@
     return { total, perGame };
   }
 
-  window.PixelPlayLeaderboard = { games, loadProfiles, loadRecords, buildBoards, codesCount };
+  /**
+   * Filtrerer bort spillere som har skjult seg selv fra rangeringen
+   * (profiles.is_hidden), uten å endre rank-tallene deres – brukes av
+   * offentlige lister/søk (rangering.html), men ikke når en spiller ser sin
+   * egen plassering (den beholder sitt ekte, uendrede rank-tall).
+   */
+  function visiblePlayers(list) {
+    return list.filter((p) => !p.is_hidden);
+  }
+
+  window.PixelPlayLeaderboard = { games, loadProfiles, loadRecords, buildBoards, codesCount, visiblePlayers };
 })();
