@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>body{margin:0;background:#0d1117;color:#e8edf5;font-family:'Poppins',system-ui,sans-serif;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}a{color:#2ee87f;text-decoration:none}a:hover{color:#5cf5a0}input,button,select,textarea{font-family:inherit}input:focus,textarea:focus{outline:none;border-color:#2ee87f}</style></helmet>
+<div style="display:flex;min-height:100vh;background:#0d1117">
+
+  <aside style="width:252px;flex:none;background:#131a25;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;padding:20px 14px;gap:22px;position:sticky;top:0;height:100vh">
+    <a href="#" style="display:flex;align-items:center;gap:10px;padding:0 8px">
+      <span style="width:30px;height:30px;border-radius:9px;background:#2ee87f;display:flex;align-items:center;justify-content:center;color:#0d1117;font-weight:800;font-size:16px">P</span>
+      <span style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:#fff">PIXEL<span style="color:#2ee87f">PLAY</span></span>
+      <span style="margin-left:auto;padding:3px 8px;border-radius:99px;background:rgba(46,232,127,.12);color:#2ee87f;font-size:10px;font-weight:800;letter-spacing:.08em">ADMIN</span>
+    </a>
+
+    <button type="button" onClick="{{ openPalette }}" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#6b7b93;font-size:13px;font-weight:600;cursor:pointer;text-align:left" style-hover="border-color:rgba(46,232,127,.5);color:#96a3b8">
+      <span style="font-size:13px">⌕</span><span style="flex:1">Søk eller hopp til …</span>
+      <span style="padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.06);font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#7c8aa0">⌘K</span>
+    </button>
+
+    <nav style="display:flex;flex-direction:column;gap:18px;flex:1;overflow-y:auto">
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <span style="padding:0 10px 6px;font-size:10.5px;font-weight:800;letter-spacing:.12em;color:#6b7b93">OVERSIKT</span>
+        <button type="button" onClick="{{ nOversikt.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border:none;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left;background:{{ nOversikt.bg }};color:{{ nOversikt.color }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
+          <span style="flex:1">Oversikt</span>
+        </button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <span style="padding:0 10px 6px;font-size:10.5px;font-weight:800;letter-spacing:.12em;color:#6b7b93">ADMINISTRER</span>
+        <button type="button" onClick="{{ nStatistikk.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border:none;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left;background:{{ nStatistikk.bg }};color:{{ nStatistikk.color }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 4 4-7 5 5"></path><line x1="3" y1="21" x2="21" y2="21"></line></svg>
+          <span style="flex:1">Statistikk</span>
+        </button>
+        <button type="button" onClick="{{ nBrukere.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border:none;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left;background:{{ nBrukere.bg }};color:{{ nBrukere.color }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
+          <span style="flex:1">Brukere</span>
+        </button>
+        <button type="button" onClick="{{ nSpill.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border:none;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left;background:{{ nSpill.bg }};color:{{ nSpill.color }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
+          <span style="flex:1">Spill</span>
+        </button>
+        <button type="button" onClick="{{ nNivaaer.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border:none;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left;background:{{ nNivaaer.bg }};color:{{ nNivaaer.color }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
+          <span style="flex:1">Nivåer og premier</span>
+        </button>
+        <button type="button" onClick="{{ nAvatar.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border:none;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left;background:{{ nAvatar.bg }};color:{{ nAvatar.color }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="10" r="3"></circle><path d="M6.6 19c1.2-2.1 3.1-3.1 5.4-3.1s4.2 1 5.4 3.1"></path></svg>
+          <span style="flex:1">Profilbilder</span>
+        </button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <span style="padding:0 10px 6px;font-size:10.5px;font-weight:800;letter-spacing:.12em;color:#6b7b93">SENERE</span>
+        <button type="button" onClick="{{ nKoder.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border:none;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left;background:{{ nKoder.bg }};color:{{ nKoder.color }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="3"></rect><line x1="9" y1="7" x2="9" y2="17"></line></svg>
+          <span style="flex:1">Rabattkoder</span>
+          <span style="font-size:11px;font-weight:700;color:#6b7b93">Snart</span>
+        </button>
+        <button type="button" onClick="{{ nDrift.onClick }}" style="display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border:none;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left;background:{{ nDrift.bg }};color:{{ nDrift.color }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><circle cx="15" cy="9" r="2.2"></circle><line x1="4" y1="16" x2="20" y2="16"></line><circle cx="9" cy="16" r="2.2"></circle></svg>
+          <span style="flex:1">Drift</span>
+          <span style="font-size:11px;font-weight:700;color:#6b7b93">Snart</span>
+        </button>
+      </div>
+    </nav>
+
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:#0d1117">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9px;font-size:16px;background:#4287f522;border:1px solid #4287f566">🐙</span>
+      <span style="display:flex;flex-direction:column;line-height:1.3">
+        <span style="font-size:12.5px;font-weight:700;color:#e8edf5">nikolai_a</span>
+        <span style="font-size:10.5px;font-weight:600;color:#6b7b93">Administrator</span>
+      </span>
+      <a href="#" style="margin-left:auto;font-size:11.5px;font-weight:700;color:#7c8aa0;white-space:nowrap">Til siden ↗</a>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="display:flex;align-items:center;gap:20px;padding:0 34px;height:72px;border-bottom:1px solid rgba(255,255,255,.06);background:#0d1117;position:sticky;top:0;z-index:10">
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#6b7b93">ADMIN</span>
+        <h1 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;color:#fff">{{ viewTitle }}</h1>
+      </div>
+      <span style="flex:1"></span>
+      <sc-if value="{{ viewHint }}" hint-placeholder-val="{{ true }}">
+        <span style="font-size:12.5px;font-weight:500;color:#7c8aa0;max-width:520px;text-align:right">{{ viewHint }}</span>
+      </sc-if>
+    </header>
+
+    <main style="flex:1;padding:28px 34px 60px;max-width:1180px;width:100%">
+
+      <sc-if value="{{ isOversikt }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:26px">
+          <div style="display:flex;flex-direction:column;gap:20px;padding:22px 24px 18px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+            <div style="display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <h2 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff">Brukere gjennom dagen</h2>
+                <span style="font-size:12.5px;font-weight:500;color:#7c8aa0">Aktive brukere per time, {{ chartDate }}</span>
+              </div>
+              <span style="flex:1"></span>
+              <div style="display:flex;align-items:flex-end;gap:26px">
+                <span style="display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#6b7b93">NÅ</span>
+                  <span style="font-size:24px;font-weight:800;letter-spacing:-.03em;color:#2ee87f;line-height:1.1">{{ chartNow }}</span>
+                </span>
+                <span style="display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#6b7b93">TOPP</span>
+                  <span style="font-size:24px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1.1">{{ chartPeak }}</span>
+                </span>
+                <span style="display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#6b7b93">TOPPTID</span>
+                  <span style="font-size:24px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1.1">{{ chartPeakHour }}</span>
+                </span>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:14px">
+              <div style="display:flex;flex-direction:column;justify-content:space-between;height:208px;padding-bottom:22px;font-size:10.5px;font-weight:700;color:#6b7b93;text-align:right;min-width:26px">
+                <span>{{ chartPeak }}</span><span>{{ chartMid }}</span><span>0</span>
+              </div>
+              <div style="flex:1;display:flex;align-items:flex-end;gap:5px;height:208px;border-left:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.09);padding:0 4px 0 8px">
+                <sc-for list="{{ hours }}" as="h" hint-placeholder-count="24">
+                  <span title="{{ h.tip }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;cursor:default">
+                    <span style="width:100%;border-radius:5px 5px 0 0;height:{{ h.pct }};background:{{ h.bg }};min-height:3px"></span>
+                    <span style="height:14px;font-size:9.5px;font-weight:700;color:{{ h.labelColor }}">{{ h.label }}</span>
+                  </span>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;gap:8px;padding:18px 20px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:16px">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#6b7b93">{{ k.label }}</span>
+                <span style="font-size:30px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1">{{ k.value }}</span>
+                <span style="font-size:12px;font-weight:600;color:{{ k.deltaColor }}">{{ k.delta }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start">
+            <div style="display:flex;flex-direction:column;gap:14px;padding:20px 22px;background:#131a25;border:1px solid rgba(46,232,127,.22);border-radius:20px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+                <h2 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff">Dagens spill</h2>
+                <button type="button" onClick="{{ goGames }}" style="padding:7px 13px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8edf5;font-size:12px;font-weight:700;cursor:pointer" style-hover="border-color:rgba(46,232,127,.5);color:#2ee87f">Bytt spill</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px">
+                <div style="width:132px;height:82px;border-radius:12px;flex:none;background:repeating-linear-gradient(135deg,#1b2434 0 12px,#202b3d 12px 24px);display:flex;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#6b7b93">cover</div>
+                <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                  <span style="font-size:19px;font-weight:800;letter-spacing:-.02em;color:#fff">{{ dailyGameName }}</span>
+                  <span style="font-size:12.5px;font-weight:500;color:#7c8aa0">Vises i heltefeltet på forsiden akkurat nå</span>
+                  <span style="font-size:12.5px;font-weight:700;color:#2ee87f">{{ dailyGamePlays }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;padding:6px 0;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px;overflow:hidden">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px 12px;border-bottom:1px solid rgba(255,255,255,.06)">
+                <h2 style="margin:0;font-size:14.5px;font-weight:800;color:#fff">Nyeste brukere</h2>
+                <button type="button" onClick="{{ goUsers }}" style="border:none;background:transparent;color:#7c8aa0;font-size:11.5px;font-weight:700;cursor:pointer" style-hover="color:#2ee87f">Se alle →</button>
+              </div>
+              <sc-for list="{{ newestUsers }}" as="u" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 20px;border-bottom:1px solid rgba(255,255,255,.06)">
+                  <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9px;font-size:15px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)">{{ u.avatar_icon }}</span>
+                  <span style="flex:1;min-width:0;font-size:13px;font-weight:700;color:#e8edf5">{{ u.username }}</span>
+                  <span style="font-size:11.5px;font-weight:600;color:#6b7b93">{{ u.created }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <h2 style="margin:0;font-size:14.5px;font-weight:800;color:#fff">Hurtighandlinger</h2>
+            <div style="display:flex;flex-wrap:wrap;gap:10px">
+              <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="4">
+                <button type="button" onClick="{{ q.onClick }}" style="display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:#131a25;color:#e8edf5;font-size:13px;font-weight:700;cursor:pointer" style-hover="border-color:rgba(46,232,127,.5);color:#2ee87f">
+                  <span style="font-size:13px">{{ q.icon }}</span>{{ q.label }}
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStats }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:20px;padding:22px 24px 18px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+            <div style="display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <h2 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff">{{ statsTitle }}</h2>
+                <span style="font-size:12.5px;font-weight:500;color:#7c8aa0">{{ statsSub }}</span>
+              </div>
+              <span style="flex:1"></span>
+              <span style="display:flex;gap:4px;padding:4px;border-radius:11px;background:#0d1117;border:1px solid rgba(255,255,255,.06)">
+                <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="4">
+                  <button type="button" onClick="{{ r.onClick }}" style="padding:7px 13px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;background:{{ r.bg }};color:{{ r.color }}">{{ r.label }}</button>
+                </sc-for>
+              </span>
+              <span style="display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#6b7b93">{{ statsAvgLabel }}</span>
+                <span style="font-size:24px;font-weight:800;letter-spacing:-.03em;color:#2ee87f;line-height:1.1">{{ daysAvg }}</span>
+              </span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:8px;height:196px;border-left:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.09);padding:0 4px 0 8px">
+              <sc-for list="{{ days }}" as="d" hint-placeholder-count="14">
+                <span title="{{ d.tip }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">
+                  <span style="width:100%;border-radius:6px 6px 0 0;height:{{ d.pct }};background:{{ d.bg }};min-height:3px"></span>
+                  <span style="height:14px;font-size:9.5px;font-weight:700;color:#6b7b93">{{ d.label }}</span>
+                </span>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px;padding:22px 24px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+            <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+              <h2 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff">Poeng samlet opp per spill</h2>
+              <span style="flex:1"></span>
+              <span style="font-size:12.5px;font-weight:700;color:#7c8aa0">{{ pointsTotal }} totalt</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ pointsShare }}" as="p" hint-placeholder-count="6">
+                <span style="display:flex;align-items:center;gap:14px">
+                  <span style="width:140px;flex:none;font-size:13px;font-weight:700;color:#e8edf5">{{ p.name }}</span>
+                  <span style="flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.05);overflow:hidden">
+                    <span style="display:block;height:100%;border-radius:99px;width:{{ p.pct }};background:{{ p.bg }}"></span>
+                  </span>
+                  <span style="width:76px;text-align:right;font-size:12.5px;font-weight:700;color:#96a3b8;font-variant-numeric:tabular-nums">{{ p.points }}</span>
+                </span>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px;padding:22px 24px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+            <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+              <h2 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff">Spilte runder per spill</h2>
+              <span style="flex:1"></span>
+              <span style="display:flex;gap:4px;padding:4px;border-radius:11px;background:#0d1117;border:1px solid rgba(255,255,255,.06)">
+                <sc-for list="{{ playRanges }}" as="r" hint-placeholder-count="4">
+                  <button type="button" onClick="{{ r.onClick }}" style="padding:7px 13px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;background:{{ r.bg }};color:{{ r.color }}">{{ r.label }}</button>
+                </sc-for>
+              </span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ gameShare }}" as="g" hint-placeholder-count="6">
+                <span style="display:flex;align-items:center;gap:14px">
+                  <span style="width:140px;flex:none;font-size:13px;font-weight:700;color:#e8edf5">{{ g.name }}</span>
+                  <span style="flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.05);overflow:hidden">
+                    <span style="display:block;height:100%;border-radius:99px;width:{{ g.pct }};background:{{ g.bg }}"></span>
+                  </span>
+                  <span style="width:64px;text-align:right;font-size:12.5px;font-weight:700;color:#96a3b8;font-variant-numeric:tabular-nums">{{ g.plays }}</span>
+                </span>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isGames }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:600;color:#7c8aa0">{{ gamesCount }}</span>
+            <span style="flex:1"></span>
+            <span style="font-size:12px;font-weight:600;color:#6b7b93">Dra ⠿ for å endre rekkefølgen på forsiden</span>
+            <button type="button" onClick="{{ addGame }}" style="padding:10px 16px;border:none;border-radius:10px;background:#2ee87f;color:#0d1117;font-size:13.5px;font-weight:800;cursor:pointer" style-hover="background:#5cf5a0">+ Nytt spill</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ games }}" as="g" hint-placeholder-count="6">
+              <div style="background:#131a25;border:1px solid {{ g.borderColor }};border-radius:14px;overflow:hidden">
+                <div draggable="true" onDragStart="{{ g.onDragStart }}" onDragOver="{{ g.onDragOver }}" onDragEnd="{{ g.onDragEnd }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;cursor:pointer;opacity:{{ g.opacity }}" onClick="{{ g.onToggle }}" style-hover="background:rgba(255,255,255,.02)">
+                  <span style="color:#6b7b93;font-size:15px;cursor:grab;letter-spacing:-2px">⠿</span>
+                  <span style="width:56px;height:36px;border-radius:8px;flex:none;background:repeating-linear-gradient(135deg,#1b2434 0 9px,#202b3d 9px 18px)"></span>
+                  <span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+                    <span style="display:flex;align-items:center;gap:8px">
+                      <span style="font-size:14px;font-weight:700;color:#fff">{{ g.name }}</span>
+                      <sc-if value="{{ g.is_daily_game }}" hint-placeholder-val="{{ false }}"><span style="padding:2px 8px;border-radius:99px;background:rgba(46,232,127,.12);color:#2ee87f;font-size:10px;font-weight:800;letter-spacing:.04em">★ DAGENS</span></sc-if>
+                      <sc-if value="{{ g.hidden }}" hint-placeholder-val="{{ false }}"><span style="padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.06);color:#96a3b8;font-size:10px;font-weight:800;letter-spacing:.04em">SKJULT</span></sc-if>
+                    </span>
+                    <span style="font-size:11.5px;font-weight:500;color:#6b7b93;font-family:ui-monospace,Menlo,monospace">{{ g.id }}</span>
+                  </span>
+                  <span style="font-size:12px;font-weight:600;color:#7c8aa0">{{ g.visibleLabel }}</span>
+                  <span onClick="{{ g.onToggleHidden }}" style="position:relative;display:inline-block;width:38px;height:22px;flex:none;cursor:pointer">
+                    <span style="position:absolute;inset:0;border-radius:99px;background:{{ g.switchBg }}"></span>
+                    <span style="position:absolute;width:16px;height:16px;top:3px;left:3px;background:#fff;border-radius:50%;transform:{{ g.knob }}"></span>
+                  </span>
+                  <span style="width:22px;text-align:center;color:#7c8aa0;font-size:11px">{{ g.chev }}</span>
+                </div>
+
+                <sc-if value="{{ g.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:4px 16px 18px 62px;border-top:1px solid rgba(255,255,255,.06)">
+                    <label style="display:flex;flex-direction:column;gap:5px;font-size:11.5px;font-weight:700;letter-spacing:.04em;color:#96a3b8;padding-top:14px">NAVN
+                      <input type="text" value="{{ g.name }}" onChange="{{ g.onName }}" style="padding:10px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:13.5px;font-weight:400">
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:5px;font-size:11.5px;font-weight:700;letter-spacing:.04em;color:#96a3b8;padding-top:14px">COVER-BILDE (URL)
+                      <input type="text" value="{{ g.thumbnail_url }}" style="padding:10px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:13.5px;font-weight:400">
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:5px;font-size:11.5px;font-weight:700;letter-spacing:.04em;color:#96a3b8;grid-column:1 / -1">BESKRIVELSE
+                      <textarea rows="2" style="padding:10px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:13.5px;font-weight:400;resize:vertical">{{ g.description }}</textarea>
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:5px;font-size:11.5px;font-weight:700;letter-spacing:.04em;color:#96a3b8">IKON (URL)
+                      <input type="text" value="{{ g.icon_url }}" style="padding:10px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:13.5px;font-weight:400">
+                    </label>
+                    <div style="display:flex;align-items:flex-end;gap:10px">
+                      <button type="button" onClick="{{ g.onSetDaily }}" style="padding:10px 15px;border:none;border-radius:9px;background:#2ee87f;color:#0d1117;font-size:13px;font-weight:800;cursor:pointer;opacity:{{ g.dailyBtnOpacity }}" style-hover="background:#5cf5a0">{{ g.dailyBtnLabel }}</button>
+                      <button type="button" onClick="{{ g.onDelete }}" style="padding:10px 15px;border-radius:9px;border:1px solid rgba(245,113,92,.4);background:rgba(245,113,92,.12);color:#ff9385;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:rgba(245,113,92,.22)">Slett spill</button>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isLevels }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:600;color:#7c8aa0">{{ levelsCount }}</span>
+            <span style="flex:1"></span>
+            <button type="button" onClick="{{ addLevel }}" style="padding:10px 16px;border:none;border-radius:10px;background:#2ee87f;color:#0d1117;font-size:13.5px;font-weight:800;cursor:pointer" style-hover="background:#5cf5a0">+ Nytt nivå</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ levels }}" as="lv" hint-placeholder-count="6">
+              <div style="background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:14px;overflow:hidden">
+                <div onClick="{{ lv.onToggle }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;cursor:pointer" style-hover="background:rgba(255,255,255,.02)">
+                  <span style="width:38px;height:38px;flex:none;border-radius:11px;background:rgba(46,232,127,.12);color:#2ee87f;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800">{{ lv.level_number }}</span>
+                  <span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+                    <span style="font-size:14px;font-weight:700;color:#fff">Nivå {{ lv.level_number }}</span>
+                    <span style="font-size:11.5px;font-weight:600;color:#6b7b93">{{ lv.pointsLabel }}</span>
+                  </span>
+                  <span style="font-size:12px;font-weight:600;color:#7c8aa0">{{ lv.rewardsLabel }}</span>
+                  <span style="width:22px;text-align:center;color:#7c8aa0;font-size:11px">{{ lv.chev }}</span>
+                </div>
+
+                <sc-if value="{{ lv.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:12px;padding:14px 16px 18px 68px;border-top:1px solid rgba(255,255,255,.06)">
+                    <label style="display:flex;flex-direction:column;gap:5px;font-size:11.5px;font-weight:700;letter-spacing:.04em;color:#96a3b8;max-width:200px">POENG KREVD
+                      <input type="number" value="{{ lv.points_required }}" onChange="{{ lv.onPoints }}" style="padding:10px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:13.5px">
+                    </label>
+                    <span style="font-size:11.5px;font-weight:700;letter-spacing:.04em;color:#96a3b8">PREMIER</span>
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                      <sc-for list="{{ lv.rewards }}" as="r" hint-placeholder-count="2">
+                        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:#0d1117;border:1px solid rgba(255,255,255,.06)">
+                          <input type="text" value="{{ r.brand }}" placeholder="Merke" style="flex:1;min-width:110px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.09);background:#131a25;color:#e8edf5;font-size:13px">
+                          <input type="text" value="{{ r.title }}" placeholder="Tittel" style="flex:1;min-width:110px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.09);background:#131a25;color:#e8edf5;font-size:13px">
+                          <span title="Undertekst: kort forklaring som vises under premien på Premier-siden" style="width:24px;height:24px;flex:none;border-radius:50%;border:1px solid rgba(255,255,255,.14);color:#7c8aa0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:help" style-hover="border-color:rgba(46,232,127,.5);color:#2ee87f">i</span>
+                          <button type="button" onClick="{{ r.onRemove }}" style="padding:7px 11px;border-radius:8px;border:1px solid rgba(245,113,92,.4);background:rgba(245,113,92,.12);color:#ff9385;font-size:12.5px;font-weight:700;cursor:pointer">Fjern</button>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <div style="display:flex;gap:10px">
+                      <button type="button" onClick="{{ lv.onAddReward }}" style="padding:10px 15px;border:none;border-radius:9px;background:#2ee87f;color:#0d1117;font-size:13px;font-weight:800;cursor:pointer" style-hover="background:#5cf5a0">+ Legg til premie</button>
+                      <button type="button" onClick="{{ lv.onDelete }}" style="padding:10px 15px;border-radius:9px;border:1px solid rgba(245,113,92,.4);background:rgba(245,113,92,.12);color:#ff9385;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:rgba(245,113,92,.22)">Slett nivå</button>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <input type="text" value="{{ query }}" onChange="{{ onQuery }}" onInput="{{ onQuery }}" placeholder="Søk på brukernavn …" style="width:280px;padding:11px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.09);background:#131a25;color:#e8edf5;font-size:13.5px">
+            <span style="flex:1"></span>
+            <span style="font-size:12.5px;font-weight:600;color:#7c8aa0">{{ usersCount }}</span>
+          </div>
+
+          <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:12px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.3)">
+              <span style="font-size:12.5px;font-weight:700;color:#2ee87f">{{ selectionLabel }}</span>
+              <span style="flex:1"></span>
+              <button type="button" onClick="{{ bulkAdmin }}" style="padding:8px 13px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#e8edf5;font-size:12.5px;font-weight:700;cursor:pointer">Gi admin</button>
+              <button type="button" onClick="{{ bulkUnadmin }}" style="padding:8px 13px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#e8edf5;font-size:12.5px;font-weight:700;cursor:pointer">Fjern admin</button>
+              <button type="button" onClick="{{ bulkDelete }}" style="padding:8px 13px;border-radius:9px;border:1px solid rgba(245,113,92,.4);background:rgba(245,113,92,.12);color:#ff9385;font-size:12.5px;font-weight:700;cursor:pointer">Slett valgte</button>
+              <button type="button" onClick="{{ clearSelection }}" style="padding:8px 11px;border:none;border-radius:9px;background:transparent;color:#7c8aa0;font-size:12.5px;font-weight:700;cursor:pointer">Avbryt</button>
+            </div>
+          </sc-if>
+
+          <div style="background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow-x:auto;overflow-y:hidden">
+            <div style="display:grid;grid-template-columns:34px minmax(120px,1fr) 84px 54px 96px 52px 26px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.09)">
+              <span onClick="{{ toggleAll }}" style="width:17px;height:17px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:{{ allBoxBg }};cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0d1117;font-size:11px;font-weight:800">{{ allBoxMark }}</span>
+              <sc-for list="{{ userCols }}" as="c" hint-placeholder-count="5">
+                <button type="button" onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:5px;border:none;background:transparent;padding:0;cursor:pointer;font-size:10.5px;font-weight:800;letter-spacing:.1em;color:{{ c.color }};justify-content:{{ c.justify }}">{{ c.label }}<span style="font-size:9px">{{ c.arrow }}</span></button>
+              </sc-for>
+              <span></span>
+            </div>
+
+            <sc-for list="{{ users }}" as="u" hint-placeholder-count="8">
+              <div style="border-bottom:1px solid rgba(255,255,255,.06);background:{{ u.rowBg }}">
+                <div onClick="{{ u.onToggle }}" style="display:grid;grid-template-columns:34px minmax(120px,1fr) 84px 54px 96px 52px 26px;gap:10px;align-items:center;padding:11px 18px;cursor:pointer" style-hover="background:rgba(255,255,255,.02)">
+                  <span onClick="{{ u.onSelect }}" style="width:17px;height:17px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:{{ u.boxBg }};cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0d1117;font-size:11px;font-weight:800">{{ u.boxMark }}</span>
+                  <span style="display:flex;align-items:center;gap:11px;min-width:0">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none;border-radius:9px;font-size:15px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)">{{ u.avatar_icon }}</span>
+                    <span style="font-size:13.5px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.username }}</span>
+                    <sc-if value="{{ u.is_admin }}" hint-placeholder-val="{{ false }}"><span style="padding:2px 7px;border-radius:99px;background:rgba(46,232,127,.12);color:#2ee87f;font-size:9.5px;font-weight:800;letter-spacing:.06em">ADMIN</span></sc-if>
+                  </span>
+                  <span style="font-size:13px;font-weight:700;color:#e8edf5;text-align:right;font-variant-numeric:tabular-nums">{{ u.xpLabel }}</span>
+                  <span style="font-size:13px;font-weight:700;color:#e8edf5;text-align:right">{{ u.level }}</span>
+                  <span style="font-size:12.5px;font-weight:600;color:#7c8aa0;text-align:right">{{ u.created }}</span>
+                  <span onClick="{{ u.onAdminToggle }}" style="justify-self:end;position:relative;display:inline-block;width:38px;height:22px;cursor:pointer">
+                    <span style="position:absolute;inset:0;border-radius:99px;background:{{ u.switchBg }}"></span>
+                    <span style="position:absolute;width:16px;height:16px;top:3px;left:3px;background:#fff;border-radius:50%;transform:{{ u.knob }}"></span>
+                  </span>
+                  <span style="text-align:center;color:#7c8aa0;font-size:11px">{{ u.chev }}</span>
+                </div>
+
+                <sc-if value="{{ u.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:14px;padding:16px 18px 20px 62px;background:#0d1117;border-top:1px solid rgba(255,255,255,.06)">
+                    <div onMouseEnter="{{ u.onHoverName }}" onMouseLeave="{{ u.onLeaveName }}" style="display:flex;align-items:center;gap:12px;min-height:34px">
+                      <sc-if value="{{ u.editingName }}" hint-placeholder-val="{{ false }}">
+                        <input type="text" value="{{ u.username }}" onChange="{{ u.onRename }}" style="width:170px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.09);background:#131a25;color:#fff;font-size:14px;font-weight:700">
+                      </sc-if>
+                      <sc-if value="{{ u.notEditingName }}" hint-placeholder-val="{{ true }}">
+                        <span style="font-size:15px;font-weight:800;letter-spacing:-.01em;color:#fff">{{ u.username }}</span>
+                      </sc-if>
+                      <button type="button" onClick="{{ u.onEditName }}" style="padding:5px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#96a3b8;font-size:11.5px;font-weight:700;cursor:pointer;opacity:{{ u.renameOpacity }}" style-hover="border-color:rgba(46,232,127,.5);color:#2ee87f">{{ u.renameLabel }}</button>
+                      <span style="flex:1"></span>
+                      <span style="padding:5px 11px;border-radius:99px;background:rgba(255,255,255,.05);font-size:11.5px;font-weight:700;color:#96a3b8">Aktiv {{ u.lastSeen }}</span>
+                      <a href="{{ u.profileHref }}" target="_blank" style="padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.14);color:#e8edf5;font-size:11.5px;font-weight:700" style-hover="border-color:rgba(46,232,127,.5);color:#2ee87f">Offentlig profil ↗</a>
+                      <button type="button" onClick="{{ u.onDelete }}" style="padding:7px 12px;border-radius:8px;border:1px solid rgba(245,113,92,.3);background:transparent;color:#ff9385;font-size:11.5px;font-weight:700;cursor:pointer" style-hover="background:rgba(245,113,92,.16)">Slett</button>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:150px 110px;gap:12px;align-items:stretch">
+                      <label style="display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:12px;background:#131a25;border:1px solid rgba(255,255,255,.06);font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#6b7b93">POENG
+                        <input type="number" value="{{ u.xp }}" onChange="{{ u.onXp }}" style="width:100%;padding:0;border:none;background:transparent;color:#fff;font-size:20px;font-weight:800;letter-spacing:-.02em">
+                      </label>
+                      <label style="display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:12px;background:#131a25;border:1px solid rgba(255,255,255,.06);font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#6b7b93">NIVÅ
+                        <input type="number" value="{{ u.level }}" onChange="{{ u.onLevel }}" style="width:100%;padding:0;border:none;background:transparent;color:#fff;font-size:20px;font-weight:800;letter-spacing:-.02em">
+                      </label>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+
+            <sc-if value="{{ noUsers }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:36px;text-align:center;font-size:13px;color:#7c8aa0">Ingen brukere passer søket.</div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isAvatar }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:16px;padding:22px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <h2 style="margin:0;font-size:15px;font-weight:800;color:#fff">Farger</h2>
+              <span style="font-size:12px;font-weight:500;color:#7c8aa0">Nye brukere får én tilfeldig farge herfra.</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px">
+              <sc-for list="{{ colors }}" as="c" hint-placeholder-count="5">
+                <span style="position:relative;width:40px;height:40px;border-radius:12px;background:{{ c.value }}">
+                  <button type="button" onClick="{{ c.onRemove }}" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;background:#f5715c;color:#fff;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+                </span>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:10px">
+              <input type="text" value="{{ colorDraft }}" onChange="{{ onColorDraft }}" onInput="{{ onColorDraft }}" placeholder="#4287f5" style="flex:1;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:13.5px">
+              <button type="button" onClick="{{ addColor }}" style="padding:11px 20px;border:none;border-radius:10px;background:#2ee87f;color:#0d1117;font-size:13.5px;font-weight:800;cursor:pointer" style-hover="background:#5cf5a0">Legg til</button>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:16px;padding:22px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <h2 style="margin:0;font-size:15px;font-weight:800;color:#fff">Ikoner</h2>
+              <span style="font-size:12px;font-weight:500;color:#7c8aa0">Kombineres med fargen over ved registrering.</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px">
+              <sc-for list="{{ icons }}" as="ic" hint-placeholder-count="6">
+                <span style="position:relative;width:40px;height:40px;border-radius:12px;border:2px solid rgba(255,255,255,.09);background:#0d1117;display:flex;align-items:center;justify-content:center;font-size:19px">{{ ic.value }}
+                  <button type="button" onClick="{{ ic.onRemove }}" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;background:#f5715c;color:#fff;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+                </span>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:10px">
+              <input type="text" value="{{ iconDraft }}" onChange="{{ onIconDraft }}" onInput="{{ onIconDraft }}" placeholder="🐙" style="flex:1;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:13.5px">
+              <button type="button" onClick="{{ addIcon }}" style="padding:11px 20px;border:none;border-radius:10px;background:#2ee87f;color:#0d1117;font-size:13.5px;font-weight:800;cursor:pointer" style-hover="background:#5cf5a0">Legg til</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isEmptyView }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:72px 32px;text-align:center;border:1px dashed rgba(255,255,255,.09);border-radius:20px;background:#131a25">
+          <span style="width:52px;height:52px;border-radius:16px;background:rgba(46,232,127,.12);color:#2ee87f;display:flex;align-items:center;justify-content:center;font-size:22px">{{ emptyIcon }}</span>
+          <h2 style="margin:0;font-size:18px;font-weight:800;color:#fff">{{ emptyTitle }}</h2>
+          <p style="margin:0;max-width:420px;font-size:13.5px;line-height:1.55;color:#96a3b8">{{ emptyBody }}</p>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+
+  <sc-if value="{{ paletteOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:96px 24px">
+      <div onClick="{{ closePalette }}" style="position:absolute;inset:0;background:rgba(6,9,14,.82);backdrop-filter:blur(3px)"></div>
+      <div style="position:relative;z-index:1;width:100%;max-width:540px;background:#131a25;border:1px solid rgba(255,255,255,.09);border-radius:18px;box-shadow:0 24px 64px rgba(0,0,0,.5);overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.06)">
+          <span style="color:#6b7b93;font-size:15px">⌕</span>
+          <input type="text" value="{{ paletteQuery }}" onChange="{{ onPaletteQuery }}" onInput="{{ onPaletteQuery }}" placeholder="Hopp til seksjon, spill, nivå eller bruker …" autoFocus="{{ true }}" style="flex:1;border:none;background:transparent;color:#e8edf5;font-size:15px;font-weight:600">
+          <span style="padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.06);font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#7c8aa0">ESC</span>
+        </div>
+        <div style="max-height:380px;overflow-y:auto;padding:6px">
+          <sc-for list="{{ paletteResults }}" as="r" hint-placeholder-count="5">
+            <button type="button" onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border:none;border-radius:10px;background:transparent;color:#e8edf5;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left" style-hover="background:rgba(255,255,255,.05)">
+              <span style="width:20px;text-align:center;font-size:13px">{{ r.icon }}</span>
+              <span style="flex:1">{{ r.label }}</span>
+              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#6b7b93">{{ r.kind }}</span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ paletteEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:28px;text-align:center;font-size:13px;color:#7c8aa0">Ingen treff.</div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:24px;right:26px;z-index:120;display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.3);color:#2ee87f;font-size:13px;font-weight:700;box-shadow:0 12px 32px rgba(0,0,0,.4)">
+      <span>✓</span>{{ toast }}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:940}}">
+const NOK = (n) => n.toLocaleString("no-NO");
+
+class Component extends DCLogic {
+  state = {
+    view: "oversikt",
+    paletteOpen: false,
+    paletteQuery: "",
+    query: "",
+    sort: "created",
+    dir: "desc",
+    adminOnly: false,
+    selected: [],
+    openUsers: [],
+    openGames: [],
+    openLevels: [],
+    dragFrom: null,
+    range: "7d",
+    playRange: "7d",
+    hoverName: null,
+    editingName: null,
+    colorDraft: "",
+    iconDraft: "",
+    toast: "",
+    games: [
+      { id: "fruktfusjon", name: "Fruktfusjon", is_daily_game: true, hidden: false, description: "Slipp frukt oppi og slå sammen like for å lage større frukt.", thumbnail_url: "assets/img/games/fruktfusjon.svg", icon_url: "assets/img/icons/fruktfusjon.svg" },
+      { id: "2048", name: "2048", is_daily_game: false, hidden: false, description: "Skyv brikkene sammen til du når 2048.", thumbnail_url: "assets/img/games/2048.svg", icon_url: "assets/img/icons/2048.svg" },
+      { id: "snake", name: "Snake", is_daily_game: false, hidden: false, description: "Spis, voks og unngå deg selv.", thumbnail_url: "assets/img/games/snake.svg", icon_url: "assets/img/icons/snake.svg" },
+      { id: "tetris", name: "Tetris", is_daily_game: false, hidden: false, description: "Legg brikkene tett og fjern fulle linjer.", thumbnail_url: "assets/img/games/tetris.svg", icon_url: "assets/img/icons/tetris.svg" },
+      { id: "block-blast", name: "Block Blast", is_daily_game: false, hidden: false, description: "Dra blokker inn på brettet og tøm rader.", thumbnail_url: "assets/img/games/block-blast.svg", icon_url: "assets/img/icons/block-blast.svg" },
+      { id: "bubble-shooter", name: "Bubble Shooter", is_daily_game: false, hidden: true, description: "Sikt og skyt bobler i grupper på tre.", thumbnail_url: "assets/img/games/bubble-shooter.svg", icon_url: "assets/img/icons/bubble-shooter.svg" },
+    ],
+    levels: [
+      { level_number: 1, points_required: 0, rewards: [{ brand: "PixelPlay", title: "Velkomstpremie", sub: "Låses opp med én gang" }] },
+      { level_number: 2, points_required: 1000, rewards: [{ brand: "Kaffebrenneriet", title: "20% rabatt", sub: "Gjelder alle kaffedrikker" }] },
+      { level_number: 3, points_required: 2500, rewards: [{ brand: "Kolonial", title: "50 kr avslag", sub: "Over 500 kr" }, { brand: "Kino", title: "2 for 1", sub: "Hverdager" }] },
+      { level_number: 4, points_required: 4500, rewards: [] },
+      { level_number: 5, points_required: 7000, rewards: [{ brand: "Elkjøp", title: "150 kr gavekort", sub: "" }] },
+      { level_number: 6, points_required: 10000, rewards: [] },
+    ],
+    users: [
+      { id: "a1f2-9c33", username: "nikolai_a", email: "nikolai@example.no", xp: 3640, level: 4, is_admin: true, created: "18.08.2026", lastSeen: "i dag", avatar_icon: "🐙", records: [{ game: "Tetris", score: 18400 }, { game: "2048", score: 9210 }] },
+      { id: "b7c1-4410", username: "marte_99", email: "marte99@example.no", xp: 2110, level: 3, is_admin: false, created: "14.08.2026", lastSeen: "2 dager siden", avatar_icon: "🦊", records: [{ game: "Snake", score: 640 }] },
+      { id: "c3d8-2081", username: "sindre_k", email: "sindre.k@example.no", xp: 1480, level: 2, is_admin: false, created: "09.08.2026", lastSeen: "i dag", avatar_icon: "🐝", records: [{ game: "Fruktfusjon", score: 3120 }, { game: "Block Blast", score: 2050 }] },
+      { id: "d5e0-7752", username: "ola_nordmann", email: "ola@example.no", xp: 880, level: 1, is_admin: false, created: "02.08.2026", lastSeen: "5 dager siden", avatar_icon: "🐢", records: [] },
+      { id: "e9f4-1123", username: "kari_b", email: "kari.b@example.no", xp: 5420, level: 6, is_admin: true, created: "28.07.2026", lastSeen: "i dag", avatar_icon: "🦉", records: [{ game: "Bubble Shooter", score: 7700 }] },
+      { id: "f2a6-6634", username: "jonas_dev", email: "jonas@example.no", xp: 4210, level: 5, is_admin: false, created: "21.07.2026", lastSeen: "i går", avatar_icon: "🐬", records: [{ game: "Tetris", score: 15200 }] },
+      { id: "0b3c-8890", username: "emma_l", email: "emma.l@example.no", xp: 320, level: 1, is_admin: false, created: "15.07.2026", lastSeen: "3 uker siden", avatar_icon: "🐌", records: [] },
+      { id: "1c4d-5567", username: "petter_s", email: "petter@example.no", xp: 1960, level: 2, is_admin: false, created: "04.07.2026", lastSeen: "i går", avatar_icon: "🐳", records: [{ game: "2048", score: 6100 }] },
+    ],
+    colors: ["#4287f5", "#f5715c", "#2ee87f", "#c76bff", "#ffb23f"],
+    icons: ["🐙", "🦊", "🐝", "🐢", "🦉", "🐬", "🐌", "🐳"],
+  };
+
+  componentDidMount() {
+    this._key = (e) => {
+      const k = (e.key || "").toLowerCase();
+      if ((e.metaKey || e.ctrlKey) && k === "k") { e.preventDefault(); this.setState((s) => ({ paletteOpen: !s.paletteOpen, paletteQuery: "" })); }
+      if (k === "escape") this.setState({ paletteOpen: false });
+    };
+    window.addEventListener("keydown", this._key);
+  }
+  componentWillUnmount() { window.removeEventListener("keydown", this._key); }
+
+  flash(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: "" }), 2200);
+  }
+  go(view) { this.setState({ view, paletteOpen: false }); }
+  toggleIn(key, id) {
+    this.setState((s) => ({ [key]: s[key].includes(id) ? s[key].filter((x) => x !== id) : s[key].concat(id) }));
+  }
+  patchGame(id, fields) {
+    this.setState((s) => ({ games: s.games.map((g) => (g.id === id ? { ...g, ...fields } : g)) }));
+  }
+  patchLevel(n, fields) {
+    this.setState((s) => ({ levels: s.levels.map((l) => (l.level_number === n ? { ...l, ...fields } : l)) }));
+  }
+  patchUser(id, fields) {
+    this.setState((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, ...fields } : u)) }));
+  }
+
+  sortedUsers() {
+    const { users, query, adminOnly, sort, dir } = this.state;
+    const q = query.trim().toLowerCase();
+    let list = users.filter((u) => (!q || u.username.toLowerCase().includes(q)) && (!adminOnly || u.is_admin));
+    const key = { username: "username", xp: "xp", level: "level", created: "created", admin: "is_admin" }[sort];
+    list = list.slice().sort((a, b) => {
+      let av = a[key], bv = b[key];
+      if (key === "created") { av = av.split(".").reverse().join(""); bv = bv.split(".").reverse().join(""); }
+      if (typeof av === "string") return dir === "asc" ? av.localeCompare(bv, "no") : bv.localeCompare(av, "no");
+      return dir === "asc" ? Number(av) - Number(bv) : Number(bv) - Number(av);
+    });
+    return list;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const view = s.view;
+    const titles = { oversikt: "Oversikt", statistikk: "Statistikk", spill: "Spill", nivaaer: "Nivåer og premier", brukere: "Brukere", avatar: "Standard profilbilde", koder: "Rabattkoder", drift: "Drift" };
+    const hints = {
+      spill: "Dra for rekkefølge. Åpne et spill for navn, beskrivelse og bilder.",
+      nivaaer: "Poengkravet avgjør når nivået låses opp automatisk.",
+      brukere: "Klikk en rad for detaljer. Endringer lagres med én gang.",
+      avatar: "Farger og ikoner nye brukere tildeles tilfeldig.",
+      oversikt: "",
+      koder: "",
+      drift: "",
+    };
+
+    const nav = (id) => ({
+      onClick: () => this.go(id),
+      bg: view === id ? "rgba(46,232,127,.12)" : "transparent",
+      color: view === id ? "#2ee87f" : "#96a3b8",
+    });
+
+    const users = this.sortedUsers();
+    const cols = [
+      ["username", "BRUKER", "flex-start"],
+      ["xp", "POENG", "flex-end"],
+      ["level", "NIVÅ", "flex-end"],
+      ["created", "REGISTRERT", "flex-end"],
+      ["admin", "ADMIN", "flex-end"],
+    ];
+
+    const paletteQ = s.paletteQuery.trim().toLowerCase();
+    const commands = [
+      ...["oversikt", "statistikk", "spill", "nivaaer", "brukere", "avatar", "koder", "drift"].map((v) => ({ label: titles[v], kind: "SEKSJON", icon: "→", onClick: () => this.go(v) })),
+      ...s.games.map((g) => ({ label: g.name, kind: "SPILL", icon: "▸", onClick: () => this.setState({ view: "spill", paletteOpen: false, openGames: [g.id] }) })),
+      ...s.levels.map((l) => ({ label: `Nivå ${l.level_number}`, kind: "NIVÅ", icon: "▸", onClick: () => this.setState({ view: "nivaaer", paletteOpen: false, openLevels: [l.level_number] }) })),
+      ...s.users.map((u) => ({ label: u.username, kind: "BRUKER", icon: "▸", onClick: () => this.setState({ view: "brukere", paletteOpen: false, openUsers: [u.id], query: "" }) })),
+      { label: "Sett nytt dagens spill", kind: "HANDLING", icon: "★", onClick: () => this.go("spill") },
+      { label: "Legg til nivå", kind: "HANDLING", icon: "+", onClick: () => { this.go("nivaaer"); this.addLevel(); } },
+    ];
+    const paletteResults = commands.filter((c) => !paletteQ || c.label.toLowerCase().includes(paletteQ) || c.kind.toLowerCase().includes(paletteQ)).slice(0, 12);
+
+    const hourly = [12, 7, 4, 3, 2, 3, 8, 21, 34, 46, 52, 58, 71, 66, 74, 88, 103, 128, 152, 171, 164, 132, 86, 41];
+    const peak = Math.max(...hourly);
+    const peakHour = hourly.indexOf(peak);
+    const nowHour = 17;
+    const wave = (n, base, amp, seed) => Array.from({ length: n }, (_, i) =>
+      Math.round(base + amp * (0.55 * Math.sin((i + seed) / 2.3) + 0.35 * Math.sin((i + seed) / 5.7) + 0.1 * Math.sin(i * 1.7))));
+    const dayName = (i, n) => ["ma", "ti", "on", "to", "fr", "lø", "sø"][(i + n * 6) % 7];
+    const series = (() => {
+      if (s.range === "24t") return {
+        title: "Aktive brukere per time", sub: "Siste 24 timer", avgLabel: "SNITT PER TIME",
+        values: hourly, labels: hourly.map((_, h) => (h % 3 === 0 ? String(h).padStart(2, "0") : "")),
+        tipPrefix: hourly.map((_, h) => `kl ${String(h).padStart(2, "0")}:00`),
+      };
+      if (s.range === "30d") {
+        const v = wave(30, 520, 190, 4);
+        return { title: "Aktive brukere per dag", sub: "Siste 30 dager", avgLabel: "SNITT PER DAG", values: v,
+          labels: v.map((_, i) => (i % 5 === 0 ? String(30 - i) : "")), tipPrefix: v.map((_, i) => `${30 - i} dager siden`) };
+      }
+      if (s.range === "90d") {
+        const v = wave(13, 3400, 900, 2);
+        return { title: "Aktive brukere per uke", sub: "Siste 90 dager, samlet per uke", avgLabel: "SNITT PER UKE", values: v,
+          labels: v.map((_, i) => `u${21 + i * 1}`), tipPrefix: v.map((_, i) => `uke ${21 + i}`) };
+      }
+      const v = [505, 470, 512, 534, 601, 655, 712];
+      return { title: "Aktive brukere per dag", sub: "Siste 7 dager", avgLabel: "SNITT PER DAG", values: v,
+        labels: v.map((_, i) => dayName(i, 1)), tipPrefix: v.map((_, i) => dayName(i, 1)) };
+    })();
+
+    const daily = s.games.find((g) => g.is_daily_game);
+    const newUsersWeek = 3;
+    const allSelected = users.length > 0 && users.every((u) => s.selected.includes(u.id));
+
+    return {
+      viewTitle: titles[view],
+      viewHint: hints[view] || "",
+      isOversikt: view === "oversikt",
+      isGames: view === "spill",
+      isLevels: view === "nivaaer",
+      isUsers: view === "brukere",
+      isAvatar: view === "avatar",
+      isEmptyView: view === "koder" || view === "drift",
+      emptyIcon: view === "koder" ? "%" : "⚙",
+      emptyTitle: view === "koder" ? "Rabattkoder kommer hit" : "Drift kommer hit",
+      emptyBody: view === "koder"
+        ? "Oversikt over hentede koder per bruker og nivå, med mulighet for å laste opp egne kodelister. Seksjonen er satt av i menyen slik at den kan bygges uten å endre resten av panelet."
+        : "Statusfelt for Supabase, feillogg og vedlikeholdsmodus. Alle nye admin-seksjoner legges inn som ett nytt punkt i sidemenyen med samme radmønster som resten.",
+      toast: s.toast,
+
+      nOversikt: nav("oversikt"),
+      nBrukere: nav("brukere"),
+      nSpill: nav("spill"),
+      nNivaaer: nav("nivaaer"),
+      nAvatar: nav("avatar"),
+      nKoder: nav("koder"),
+      nDrift: nav("drift"),
+
+      openPalette: () => this.setState({ paletteOpen: true, paletteQuery: "" }),
+      closePalette: () => this.setState({ paletteOpen: false }),
+      paletteOpen: s.paletteOpen,
+      paletteQuery: s.paletteQuery,
+      onPaletteQuery: (e) => this.setState({ paletteQuery: e.target.value }),
+      paletteResults: paletteResults,
+      paletteEmpty: paletteResults.length === 0,
+
+      nStatistikk: nav("statistikk"),
+      isStats: view === "statistikk",
+      statsTitle: series.title,
+      statsSub: series.sub,
+      statsAvgLabel: series.avgLabel,
+      ranges: [["24t", "24 timer"], ["7d", "7 dager"], ["30d", "30 dager"], ["90d", "90 dager"]].map(([id, label]) => ({
+        label,
+        bg: s.range === id ? "rgba(46,232,127,.12)" : "transparent",
+        color: s.range === id ? "#2ee87f" : "#96a3b8",
+        onClick: () => this.setState({ range: id }),
+      })),
+      daysAvg: NOK(Math.round(series.values.reduce((a, b) => a + b, 0) / series.values.length)),
+      days: series.values.map((v, i) => ({
+        pct: `${Math.max(2, Math.round((v / Math.max(...series.values)) * 100))}%`,
+        label: series.labels[i],
+        bg: i === series.values.length - 1 ? "#2ee87f" : "rgba(46,232,127,.28)",
+        tip: `${series.tipPrefix[i]} – ${NOK(v)} aktive`,
+      })),
+      pointsTotal: NOK(s.games.reduce((a, _, i) => a + ([248000, 176500, 121000, 94200, 61800, 27400][i] || 12000), 0)),
+      pointsShare: s.games.map((g, i) => {
+        const pts = [248000, 176500, 121000, 94200, 61800, 27400][i] || 12000;
+        return { name: g.name, points: NOK(pts), pct: `${Math.round((pts / 248000) * 100)}%`, bg: i === 0 ? "#2ee87f" : "rgba(46,232,127,.3)" };
+      }),
+      playRanges: [["24t", "24 timer"], ["7d", "7 dager"], ["30d", "30 dager"], ["90d", "90 dager"]].map(([id, label]) => ({
+        label,
+        bg: s.playRange === id ? "rgba(46,232,127,.12)" : "transparent",
+        color: s.playRange === id ? "#2ee87f" : "#96a3b8",
+        onClick: () => this.setState({ playRange: id }),
+      })),
+      gameShare: s.games.map((g, i) => {
+        const mult = { "24t": 0.14, "7d": 1, "30d": 4.1, "90d": 11.6 }[s.playRange] || 1;
+        const plays = Math.round(([1840, 1310, 980, 760, 520, 240][i] || 120) * mult);
+        const top = Math.round(1840 * mult);
+        return { name: g.name, plays: NOK(plays), pct: `${Math.round((plays / top) * 100)}%`, bg: i === 0 ? "#2ee87f" : "rgba(46,232,127,.3)" };
+      }),
+      chartDate: "18. august 2026",
+      chartNow: NOK(hourly[nowHour]),
+      chartPeak: NOK(peak),
+      chartMid: NOK(Math.round(peak / 2)),
+      chartPeakHour: `${String(peakHour).padStart(2, "0")}:00`,
+      hours: hourly.map((v, h) => ({
+        pct: `${Math.max(2, Math.round((v / peak) * 100))}%`,
+        label: h % 3 === 0 ? String(h).padStart(2, "0") : "",
+        labelColor: h === nowHour ? "#2ee87f" : "#6b7b93",
+        bg: h === nowHour ? "#2ee87f" : h === peakHour ? "#5cf5a0" : "rgba(46,232,127,.28)",
+        tip: `kl ${String(h).padStart(2, "0")}:00 – ${NOK(v)} aktive`,
+      })),
+      kpis: [
+        { label: "BRUKERE", value: NOK(s.users.length), delta: `+${newUsersWeek} denne uken`, deltaColor: "#2ee87f" },
+        { label: "POENG UTDELT", value: NOK(s.users.reduce((a, u) => a + u.xp, 0)), delta: "siste 30 dager", deltaColor: "#7c8aa0" },
+      ],
+      dailyGameName: daily ? daily.name : "Ingen valgt",
+      dailyGamePlays: "412 spilte i går",
+      newestUsers: s.users.slice(0, 4),
+      quickActions: [
+        { label: "Nytt spill", icon: "+", onClick: () => { this.go("spill"); this.addGame(); } },
+        { label: "Nytt nivå", icon: "+", onClick: () => { this.go("nivaaer"); this.addLevel(); } },
+        { label: "Finn bruker", icon: "⌕", onClick: () => this.setState({ paletteOpen: true, paletteQuery: "" }) },
+        { label: "Profilbilder", icon: "◔", onClick: () => this.go("avatar") },
+      ],
+      goGames: () => this.go("spill"),
+      goUsers: () => this.go("brukere"),
+
+      gamesCount: `${s.games.length} spill`,
+      addGame: this.addGame,
+      games: s.games.map((g, i) => ({
+        ...g,
+        open: s.openGames.includes(g.id),
+        chev: s.openGames.includes(g.id) ? "▲" : "▼",
+        borderColor: g.is_daily_game ? "rgba(46,232,127,.28)" : "rgba(255,255,255,.06)",
+        opacity: g.hidden ? "0.6" : "1",
+        visibleLabel: g.hidden ? "Skjult" : "Synlig",
+        switchBg: g.hidden ? "rgba(255,255,255,.09)" : "#2ee87f",
+        knob: g.hidden ? "none" : "translateX(16px)",
+        dailyBtnLabel: g.is_daily_game ? "★ Er dagens spill" : "Sett som dagens spill",
+        dailyBtnOpacity: g.is_daily_game ? "0.55" : "1",
+        onToggle: () => this.toggleIn("openGames", g.id),
+        onToggleHidden: (e) => { e.stopPropagation(); this.patchGame(g.id, { hidden: !g.hidden }); this.flash(g.hidden ? "Spillet er synlig igjen" : "Spillet er skjult"); },
+        onName: (e) => this.patchGame(g.id, { name: e.target.value }),
+        onSetDaily: () => { this.setState((st) => ({ games: st.games.map((x) => ({ ...x, is_daily_game: x.id === g.id })) })); this.flash("Dagens spill oppdatert"); },
+        onDelete: () => { this.setState((st) => ({ games: st.games.filter((x) => x.id !== g.id) })); this.flash("Spill slettet"); },
+        onDragStart: () => this.setState({ dragFrom: i }),
+        onDragOver: (e) => {
+          e.preventDefault();
+          const from = this.state.dragFrom;
+          if (from === null || from === i) return;
+          this.setState((st) => {
+            const list = st.games.slice();
+            list.splice(i, 0, list.splice(from, 1)[0]);
+            return { games: list, dragFrom: i };
+          });
+        },
+        onDragEnd: () => { this.setState({ dragFrom: null }); this.flash("Rekkefølgen er lagret"); },
+      })),
+
+      levelsCount: `${s.levels.length} nivåer`,
+      addLevel: this.addLevel,
+      levels: s.levels.map((lv) => ({
+        ...lv,
+        open: s.openLevels.includes(lv.level_number),
+        chev: s.openLevels.includes(lv.level_number) ? "▲" : "▼",
+        pointsLabel: `${NOK(lv.points_required)} poeng kreves`,
+        rewardsLabel: `${(lv.rewards || []).length} premier`,
+        onToggle: () => this.toggleIn("openLevels", lv.level_number),
+        onPoints: (e) => this.patchLevel(lv.level_number, { points_required: Number(e.target.value) || 0 }),
+        onAddReward: () => { this.patchLevel(lv.level_number, { rewards: (lv.rewards || []).concat({ brand: "Ny partner", title: "Ny premie", sub: "" }) }); this.flash("Premie lagt til"); },
+        onDelete: () => { this.setState((st) => ({ levels: st.levels.filter((x) => x.level_number !== lv.level_number) })); this.flash("Nivå slettet"); },
+        rewards: (lv.rewards || []).map((r, ri) => ({
+          ...r,
+          onRemove: () => { this.patchLevel(lv.level_number, { rewards: lv.rewards.filter((_, j) => j !== ri) }); this.flash("Premie fjernet"); },
+        })),
+      })),
+
+      query: s.query,
+      onQuery: (e) => this.setState({ query: e.target.value }),
+      toggleAdminOnly: () => this.setState((st) => ({ adminOnly: !st.adminOnly })),
+      adminChipBg: s.adminOnly ? "rgba(46,232,127,.12)" : "#131a25",
+      adminChipColor: s.adminOnly ? "#2ee87f" : "#96a3b8",
+      adminChipBorder: s.adminOnly ? "rgba(46,232,127,.4)" : "rgba(255,255,255,.09)",
+      usersCount: `${users.length} av ${s.users.length} brukere`,
+      noUsers: users.length === 0,
+      userCols: cols.map(([id, label, justify]) => ({
+        label, justify,
+        color: s.sort === id ? "#2ee87f" : "#6b7b93",
+        arrow: s.sort === id ? (s.dir === "asc" ? "▲" : "▼") : "",
+        onClick: () => this.setState((st) => ({ sort: id, dir: st.sort === id && st.dir === "desc" ? "asc" : "desc" })),
+      })),
+      hasSelection: s.selected.length > 0,
+      selectionLabel: `${s.selected.length} valgt`,
+      clearSelection: () => this.setState({ selected: [] }),
+      bulkAdmin: () => { this.setState((st) => ({ users: st.users.map((u) => (st.selected.includes(u.id) ? { ...u, is_admin: true } : u)), selected: [] })); this.flash("Admin-tilgang gitt"); },
+      bulkUnadmin: () => { this.setState((st) => ({ users: st.users.map((u) => (st.selected.includes(u.id) ? { ...u, is_admin: false } : u)), selected: [] })); this.flash("Admin-tilgang fjernet"); },
+      bulkDelete: () => { this.setState((st) => ({ users: st.users.filter((u) => !st.selected.includes(u.id)), selected: [] })); this.flash("Brukere slettet"); },
+      toggleAll: () => this.setState((st) => ({ selected: allSelected ? [] : users.map((u) => u.id) })),
+      allBoxBg: allSelected ? "#2ee87f" : "transparent",
+      allBoxMark: allSelected ? "✓" : "",
+      users: users.map((u) => ({
+        ...u,
+        open: s.openUsers.includes(u.id),
+        chev: s.openUsers.includes(u.id) ? "▲" : "▼",
+        xpLabel: NOK(u.xp),
+        rowBg: s.selected.includes(u.id) ? "rgba(46,232,127,.05)" : "transparent",
+        boxBg: s.selected.includes(u.id) ? "#2ee87f" : "transparent",
+        boxMark: s.selected.includes(u.id) ? "✓" : "",
+        switchBg: u.is_admin ? "#2ee87f" : "rgba(255,255,255,.09)",
+        knob: u.is_admin ? "translateX(16px)" : "none",
+        profileHref: `spillerprofil.html?bruker=${u.username}`,
+        editingName: s.editingName === u.id,
+        notEditingName: s.editingName !== u.id,
+        renameLabel: s.editingName === u.id ? "Ferdig" : "Endre navn",
+        renameOpacity: s.hoverName === u.id || s.editingName === u.id ? "1" : "0",
+        onHoverName: () => this.setState({ hoverName: u.id }),
+        onLeaveName: () => this.setState({ hoverName: null }),
+        onEditName: () => this.setState((st) => ({ editingName: st.editingName === u.id ? null : u.id })),
+        onRename: (e) => { this.patchUser(u.id, { username: e.target.value }); this.flash("Brukernavn lagret"); },
+        onToggle: () => this.toggleIn("openUsers", u.id),
+        onSelect: (e) => { e.stopPropagation(); this.toggleIn("selected", u.id); },
+        onAdminToggle: (e) => { e.stopPropagation(); this.patchUser(u.id, { is_admin: !u.is_admin }); this.flash(u.is_admin ? "Admin-tilgang fjernet" : "Admin-tilgang gitt"); },
+        onXp: (e) => { this.patchUser(u.id, { xp: Number(e.target.value) || 0 }); this.flash("Poeng lagret"); },
+        onLevel: (e) => { this.patchUser(u.id, { level: Number(e.target.value) || 1 }); this.flash("Nivå lagret"); },
+        onDelete: () => { this.setState((st) => ({ users: st.users.filter((x) => x.id !== u.id) })); this.flash("Bruker slettet"); },
+      })),
+
+      colors: s.colors.map((value, i) => ({ value, onRemove: () => { this.setState((st) => ({ colors: st.colors.filter((_, j) => j !== i) })); this.flash("Farge fjernet"); } })),
+      icons: s.icons.map((value, i) => ({ value, onRemove: () => { this.setState((st) => ({ icons: st.icons.filter((_, j) => j !== i) })); this.flash("Ikon fjernet"); } })),
+      colorDraft: s.colorDraft,
+      iconDraft: s.iconDraft,
+      onColorDraft: (e) => this.setState({ colorDraft: e.target.value }),
+      onIconDraft: (e) => this.setState({ iconDraft: e.target.value }),
+      addColor: () => {
+        const v = s.colorDraft.trim();
+        if (!/^#[0-9a-fA-F]{6}$/.test(v)) return this.flash("Bruk hex-format, f.eks. #4287f5");
+        this.setState((st) => ({ colors: st.colors.concat(v), colorDraft: "" }));
+        this.flash("Farge lagt til");
+      },
+      addIcon: () => {
+        const v = s.iconDraft.trim();
+        if (!v) return;
+        this.setState((st) => ({ icons: st.icons.concat(v), iconDraft: "" }));
+        this.flash("Ikon lagt til");
+      },
+    };
+  }
+
+  addGame = () => {
+    const id = `nytt-spill-${this.state.games.length + 1}`;
+    this.setState((st) => ({
+      games: st.games.concat({ id, name: "Nytt spill", is_daily_game: false, hidden: true, description: "", thumbnail_url: "", icon_url: "" }),
+      openGames: st.openGames.concat(id),
+    }));
+    this.flash("Nytt spill opprettet (skjult)");
+  };
+
+  addLevel = () => {
+    const next = this.state.levels.reduce((a, l) => Math.max(a, l.level_number), 0) + 1;
+    this.setState((st) => ({
+      levels: st.levels.concat({ level_number: next, points_required: next * 2500, rewards: [] }),
+      openLevels: st.openLevels.concat(next),
+    }));
+    this.flash(`Nivå ${next} lagt til`);
+  };
+}
+</script>
+</body>
+</html>
