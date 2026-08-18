@@ -103,7 +103,7 @@
 
   async function loadAll() {
     const [profilesRes, levelsRes, recordsRes, avatarRes, games] = await Promise.all([
-      sb.from("profiles").select("id, username, xp, level, is_admin, created_at, avatar_icon").order("created_at", { ascending: false }),
+      sb.from("profiles").select("id, username, xp, level, is_admin, created_at, avatar_icon, avatar_color").order("created_at", { ascending: false }),
       sb.from("levels").select("level_number, points_required, rewards").order("level_number", { ascending: true }),
       sb.from("game_records").select("user_id, game_id, score, created_at"),
       sb.from("avatar_options").select("colors, icons").eq("id", 1).single(),
@@ -349,7 +349,7 @@
             </div>
             ${newest.length ? newest.map((u) => `
               <div class="admin-newest-row">
-                <span class="admin-icon-badge">${escapeHTML(u.avatar_icon || "")}</span>
+                ${window.PixelPlayAvatars.avatarBadgeHTML(u.avatar_color, u.avatar_icon, 30, { className: "admin-icon-badge" })}
                 <span class="admin-newest-name">${escapeHTML(u.username)}</span>
                 <span class="admin-newest-date">${formatDate(u.created_at)}</span>
               </div>
@@ -745,7 +745,7 @@
           <div class="admin-user-row-main" data-user-toggle="${u.id}">
             <button type="button" class="admin-checkbox${selected ? " is-checked" : ""}" data-user-select="${u.id}">${selected ? "✓" : ""}</button>
             <span class="admin-user-identity">
-              <span class="admin-icon-badge">${escapeHTML(u.avatar_icon || "")}</span>
+              ${window.PixelPlayAvatars.avatarBadgeHTML(u.avatar_color, u.avatar_icon, 30, { className: "admin-icon-badge" })}
               <span class="admin-user-name">${escapeHTML(u.username)}</span>
               ${u.is_admin ? `<span class="admin-pill-admin">ADMIN</span>` : ""}
             </span>
@@ -925,19 +925,13 @@
         </div>
         <div class="admin-card">
           <div>
-            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Ikoner</h2>
-            <span class="admin-card-sub">Kombineres med fargen over ved registrering.</span>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Figurer</h2>
+            <span class="admin-card-sub">Velg hvilke figurer nye brukere kan få tildelt og selv velge mellom.</span>
           </div>
-          <div class="swatch-row">
-            ${icons.map((icon, i) => `
-              <span class="swatch swatch-icon swatch-removable">${escapeHTML(icon)}
-                <button type="button" data-remove-icon="${i}" aria-label="Fjern ikon">×</button>
-              </span>
+          <div class="figure-grid" style="max-width:420px">
+            ${window.PixelPlayAvatars.FIGURE_KEYS.map((key) => `
+              <button type="button" class="figure-swatch ${icons.includes(key) ? "is-selected" : ""}" data-toggle-icon="${key}" title="${window.PixelPlayAvatars.figureLabel(key)}">${window.PixelPlayAvatars.figureSVG(key)}</button>
             `).join("")}
-          </div>
-          <div class="admin-avatar-add">
-            <input type="text" placeholder="🐙" maxlength="4" data-icon-draft>
-            <button type="button" class="btn-start" style="width:auto;padding:11px 20px" data-add-icon>Legg til</button>
           </div>
         </div>
       </div>
@@ -1108,11 +1102,18 @@
       saveAvatarOptions().then((ok) => { if (ok) { renderMain(); flash("Farge fjernet"); } });
       return;
     }
-    const removeIcon = t.closest("[data-remove-icon]");
-    if (removeIcon) {
-      if (state.avatarOptions.icons.length <= 1) return flash("Du må ha minst ett ikon.");
-      state.avatarOptions.icons.splice(Number(removeIcon.dataset.removeIcon), 1);
-      saveAvatarOptions().then((ok) => { if (ok) { renderMain(); flash("Ikon fjernet"); } });
+    const toggleIcon = t.closest("[data-toggle-icon]");
+    if (toggleIcon) {
+      const key = toggleIcon.dataset.toggleIcon;
+      const icons = state.avatarOptions.icons;
+      const idx = icons.indexOf(key);
+      if (idx === -1) {
+        icons.push(key);
+      } else {
+        if (icons.length <= 1) return flash("Du må ha minst én figur.");
+        icons.splice(idx, 1);
+      }
+      saveAvatarOptions().then((ok) => { if (ok) renderMain(); });
       return;
     }
     if (t.closest("[data-add-color]")) {
@@ -1121,14 +1122,6 @@
       if (!/^#[0-9a-fA-F]{6}$/.test(value)) return flash("Bruk hex-format, f.eks. #4287f5.");
       state.avatarOptions.colors.push(value);
       saveAvatarOptions().then((ok) => { if (ok) { renderMain(); flash("Farge lagt til"); } });
-      return;
-    }
-    if (t.closest("[data-add-icon]")) {
-      const input = els.main.querySelector("[data-icon-draft]");
-      const value = input.value.trim();
-      if (!value) return;
-      state.avatarOptions.icons.push(value);
-      saveAvatarOptions().then((ok) => { if (ok) { renderMain(); flash("Ikon lagt til"); } });
       return;
     }
   }
@@ -1243,7 +1236,7 @@
   function fillSidebarUser(profile) {
     const badge = document.querySelector("[data-sidebar-user] .admin-icon-badge");
     const name = document.querySelector("[data-sidebar-user-name]");
-    if (badge) badge.textContent = profile.avatar_icon || "";
+    if (badge) badge.outerHTML = window.PixelPlayAvatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, 30, { className: "admin-icon-badge" });
     if (name) name.textContent = profile.username;
   }
 
