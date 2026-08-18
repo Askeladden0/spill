@@ -165,13 +165,6 @@
   const WHEEL_VALUES = [10, 750, 100, 500, 50, 1000, 250, 400];
   const WHEEL_COLORS = ["#2ee87f", "#1b2434"];
 
-  const FEED_ITEMS = [
-    { initials: "MJ", text: "Mari hentet 25 % hos Nike", time: "2 min siden" },
-    { initials: "SO", text: "Sondre nådde nivå 9", time: "6 min siden" },
-    { initials: "AH", text: "Amina hentet gratis McFlurry", time: "11 min siden" },
-    { initials: "TK", text: "Trym spant 500 poeng", time: "18 min siden" },
-  ];
-
   let profile = null;
   let levels = [];
   let miniRotation = 0;
@@ -357,18 +350,46 @@
   }
 
   // ---------- Sidepanel ----------
-  function renderFeed() {
-    document.querySelector("[data-feed-list]").innerHTML = FEED_ITEMS.map(
-      (f) => `
+  function relativeTime(iso) {
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const min = Math.max(1, Math.round(diffMs / 60000));
+    if (min < 60) return `${min} min siden`;
+    const hrs = Math.round(min / 60);
+    if (hrs < 24) return `${hrs} t siden`;
+    return `${Math.round(hrs / 24)} d siden`;
+  }
+
+  async function renderFeed() {
+    const list = document.querySelector("[data-feed-list]");
+    if (!profile) {
+      list.innerHTML = `<p class="section-sub">Logg inn for å se koder du har låst opp.</p>`;
+      return;
+    }
+    const { data, error } = await sb
+      .from("user_codes")
+      .select("brand, title, created_at")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (error || !data || !data.length) {
+      list.innerHTML = `<p class="section-sub">Ingen koder låst opp ennå.</p>`;
+      return;
+    }
+
+    list.innerHTML = data
+      .map(
+        (c) => `
       <div class="feed-row">
-        <div class="feed-avatar">${f.initials}</div>
+        ${Auth.avatarHTML(profile, 36)}
         <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
-          <span class="feed-text">${f.text}</span>
-          <span class="feed-time">${f.time}</span>
+          <span class="feed-text">Du låste opp ${c.title} hos ${c.brand}</span>
+          <span class="feed-time">${relativeTime(c.created_at)}</span>
         </div>
       </div>
     `
-    ).join("");
+      )
+      .join("");
   }
 
   // ---------- Rabattkode-modal ----------
@@ -398,6 +419,7 @@
     await sb
       .from("user_codes")
       .insert({ user_id: profile.id, brand: reward.brand, title: reward.title, code });
+    renderFeed();
   }
 
   document.querySelector("[data-close-code]").addEventListener("click", closeCodeModal);
