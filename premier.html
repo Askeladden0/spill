@@ -359,10 +359,6 @@
     return `${Math.round(hrs / 24)} d siden`;
   }
 
-  function initialsOf(text) {
-    return (text || "?").slice(0, 2).toUpperCase();
-  }
-
   async function renderFeed() {
     const list = document.querySelector("[data-feed-list]");
     if (!profile) {
@@ -385,7 +381,7 @@
       .map(
         (c) => `
       <div class="feed-row">
-        <div class="feed-avatar">${initialsOf(c.brand)}</div>
+        ${Auth.avatarHTML(profile, 36)}
         <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
           <span class="feed-text">Du låste opp ${c.title} hos ${c.brand}</span>
           <span class="feed-time">${relativeTime(c.created_at)}</span>
