@@ -18,7 +18,6 @@
     return `
       <article class="game-card">
         <a href="player.html?id=${encodeURIComponent(g.id)}" class="game-thumb" aria-label="Åpne ${g.name}">
-          <span class="game-genre-badge">${g.genre}</span>
           <span class="game-rating">${starIcon()} ${g.rating}</span>
           <span class="game-thumb-slot">[ spillbilde ]</span>
           <div class="game-thumb-gradient"></div>
