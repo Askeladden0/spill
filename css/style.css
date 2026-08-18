@@ -2737,6 +2737,13 @@ main {
 /* ---------- Toast ---------- */
 .admin-toast { position: fixed; bottom: 24px; right: 26px; z-index: 120; display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 12px; background: var(--accent-soft); border: 1px solid rgba(46, 232, 127, .3); color: var(--accent); font-size: 13px; font-weight: 700; box-shadow: 0 12px 32px rgba(0, 0, 0, .4); }
 
+/* `display: flex` on the rules above beats the browser's default
+   `[hidden] { display: none }` (author styles always win over the
+   user-agent stylesheet, regardless of selector order/specificity), so the
+   native `hidden` attribute alone can't hide these – it needs an explicit,
+   higher-specificity override here. */
+.admin-shell[hidden], .admin-guard[hidden], .admin-palette-overlay[hidden], .admin-toast[hidden] { display: none; }
+
 @media (max-width: 960px) {
   .admin-sidebar { width: 210px; }
   .admin-main { padding: 24px 20px 50px; }
