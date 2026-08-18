@@ -486,6 +486,42 @@ $$;
 revoke all on function public.set_daily_game(text) from public;
 grant execute on function public.set_daily_game(text) to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 16. games.hidden – lar admin skjule et spill fra rutenettet på forsiden og
+--     andre lister uten å slette det (nyttig for spill som fortsatt bygges).
+--     Et skjult spill er fortsatt tilgjengelig direkte via
+--     player.html?id=<id>, det vises bare ikke i lister. Redigeres fra
+--     adminpanelet (admin.html) under "Spill".
+-- ---------------------------------------------------------------------------
+alter table public.games add column if not exists hidden boolean not null default false;
+
+-- ---------------------------------------------------------------------------
+-- 17. RPC: la en admin slette en annen brukers konto fra adminpanelet.
+--     SECURITY DEFINER slik at klienten ikke trenger direkte tilgang til
+--     auth.users. Sletter auth.users-raden, som via ON DELETE CASCADE også
+--     fjerner profil, spillrekorder og rabattkoder. En admin kan ikke slette
+--     sin egen konto herfra (bruk "Slett konto" på profilsiden for det).
+-- ---------------------------------------------------------------------------
+create or replace function public.admin_delete_user(p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Kun admin kan slette andre brukere';
+  end if;
+  if p_user_id = auth.uid() then
+    raise exception 'Kan ikke slette din egen konto herfra';
+  end if;
+  delete from auth.users where id = p_user_id;
+end;
+$$;
+
+revoke all on function public.admin_delete_user(uuid) from public;
+grant execute on function public.admin_delete_user(uuid) to authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

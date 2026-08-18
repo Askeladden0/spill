@@ -14,13 +14,14 @@ spill/
 │                          Det lages IKKE én fil per spill; alle spill går gjennom denne malen.
 ├── login.html             Logg inn / registrer deg (e-post+passord eller Google)
 ├── profil.html            Profilside – avatar, brukernavn, nivå, rekorder, slett konto
-├── admin.html             Adminpanel – standard avatarfarger/-ikoner, brukerliste, gi admin-tilgang
+├── admin.html             Adminpanel – eget sidemeny-dashbord (se under), krever admin-status
 ├── css/
 │   └── style.css          Alt av delt CSS (farger, header, footer, kort, skjemaer, adminpanel osv.)
 │                          Brukes av alle sider – endringer her slår ut overalt.
 ├── js/
 │   ├── games-data.js      Midlertidig "database" med spillobjekter (se under)
 │   ├── main.js            Rendrer heltefelt, spillrutenett, aktiv meny og spillside
+│   ├── admin.js           All logikk for adminpanelet (admin.html)
 │   ├── supabase-config.js Supabase-nøkler (må fylles inn, se SUPABASE_SETUP.md)
 │   └── auth.js            Delt innloggingslogikk: header-avatar, admin-lenke, tilgangssjekk
 ├── supabase/
@@ -53,9 +54,15 @@ Kort oppsummert:
   brukernavn, viser dine beste rekorder per spill (tom liste inntil spillene
   faktisk rapporterer poeng), og har en "Slett konto"-knapp som sletter
   brukeren permanent.
-- **Adminpanelet** (`admin.html`, lenket i bunnmenyen kun for admins) lar deg
-  redigere fargene/ikonene som tildeles automatisk, se alle brukere, og gjøre
-  andre til admin.
+- **Adminpanelet** (`admin.html`, lenket i bunnmenyen kun for admins) er et
+  eget sidemeny-dashbord med seksjonene Oversikt, Statistikk, Spill, Nivåer og
+  premier, Brukere og Profilbilder (samt "Rabattkoder"/"Drift" som tomme
+  plassholdere for fremtidige seksjoner). Alt leser/skriver direkte mot de
+  samme Supabase-tabellene som resten av siden bruker, så en endring i
+  adminpanelet (nytt dagens spill, nytt nivå, ny farge, admin-tilgang osv.)
+  slår ut på forsiden/premier/rangering/profiler med én gang, og omvendt.
+  Har en kommandopalett (Ctrl/⌘+K) for å hoppe rett til en seksjon, et spill,
+  et nivå eller en bruker.
 
 ## Hvordan legge til et nytt spill
 
@@ -102,10 +109,13 @@ sette en brukers poeng og nivå manuelt direkte i brukerlisten.
   opp under "Mine koder".
 - Hold musepekeren over nivåhjulet i heltefeltet for å se totalt antall poeng.
 
-## Fremtidig admin for selve spillistene
+## Spilladministrasjon
 
-`js/games-data.js` er fortsatt en statisk fil. Når spilladministrasjon skal
-inn i `admin.html`, er tanken å flytte denne listen til en egen Supabase-tabell
-(samme mønster som `avatar_options`) slik at `main.js` kan hente den med et
-`fetch`/`supabase.from(...)`-kall i stedet – resten av siden (`css/style.css`,
-kortoppsettet) trenger ikke endres siden de kun er avhengige av dataformatet.
+Spillistene ligger i Supabase-tabellen `games` (se `supabase/schema.sql`) og
+redigeres fra "Spill"-seksjonen i adminpanelet: bytt navn/beskrivelse/bilder,
+sett hvilket spill som er "dagens spill", skjul et spill fra lister uten å
+slette det (`hidden`-kolonnen – et skjult spill er fortsatt tilgjengelig
+direkte via `player.html?id=...`), dra for å endre rekkefølgen, eller slett
+det helt. `js/games-data.js` henter denne tabellen ved sidelasting og fyller
+`window.PIXELPLAY_GAMES` i place; den statiske listen øverst i filen er kun en
+fallback hvis Supabase er utilgjengelig.
