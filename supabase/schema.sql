@@ -408,6 +408,84 @@ $$;
 revoke all on function public.user_codes_count(uuid) from public;
 grant execute on function public.user_codes_count(uuid) to anon, authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 14. games – spilldatabasen. Erstatter etter hvert den statiske listen i
+--     js/games-data.js (som fremdeles brukes som offline-fallback). id skal
+--     matche filnavnet på bildene: assets/img/games/<id>.svg (cover) og
+--     assets/img/icons/<id>.svg (ikon). Redigeres fra adminpanelet
+--     (admin.html): admin kan bytte ikon/cover (URL) per spill, og velge
+--     hvilket spill som er "dagens spill". Cover-/ikonbytte slår automatisk
+--     ut alle steder som leser fra denne tabellen (forside, rangering, mine
+--     rekorder, spillerprofil), siden alle bruker samme rad.
+-- ---------------------------------------------------------------------------
+create table if not exists public.games (
+  id text primary key,
+  name text not null,
+  genre text not null default '',
+  rating text not null default '',
+  points text not null default '',
+  time_estimate text not null default '',
+  description text not null default '',
+  thumbnail_url text,
+  icon_url text,
+  points_multiplier text,
+  is_daily_game boolean not null default false,
+  sort_order int not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+-- Kun ett spill kan være "dagens spill" om gangen.
+create unique index if not exists games_single_daily_idx
+  on public.games (is_daily_game)
+  where is_daily_game;
+
+insert into public.games (id, name, genre, rating, points, time_estimate, description, thumbnail_url, icon_url, is_daily_game, sort_order) values
+  ('fruktfusjon', 'Fruktfusjon', 'Puslespill', '4,7', 'Din skår = dine poeng', '~10 min', 'Slipp frukt ned i krukken og slå sammen like frukter til større og større frukter, uten at haugen renner over.', 'assets/img/games/fruktfusjon.svg', 'assets/img/icons/fruktfusjon.svg', false, 1),
+  ('2048', '2048', 'Puslespill', '4,9', 'Din skår = dine poeng', '~5 min', 'Slå sammen brikker med like tall og jag den store 2048-brikken. Skåren din legges rett til poengsummen og nivået ditt.', 'assets/img/games/2048.svg', 'assets/img/icons/2048.svg', true, 2),
+  ('tetris', 'Tetris', 'Puslespill', '4,9', 'Din skår = dine poeng', '~15 min', 'Styr de fargerike klossene mens de faller, fyll hele rader for å sprenge dem, og jag din egen rekord i det klassiske puslespillet.', 'assets/img/games/tetris.svg', 'assets/img/icons/tetris.svg', false, 3),
+  ('block-blast', 'Block Blast', 'Puslespill', '4,8', 'Din skår = dine poeng', '~10 min', 'Dra fargerike klosser fra hånden din over på brettet og fyll hele rader eller kolonner for å sprenge dem og score poeng.', 'assets/img/games/block-blast.svg', 'assets/img/icons/block-blast.svg', false, 4),
+  ('snake', 'Snake', 'Arkade', '4,6', 'Din skår = dine poeng', '~8 min', 'Styr slangen rundt brettet, spis prikkene og voks deg lengst mulig uten å treffe deg selv eller veggen.', 'assets/img/games/snake.svg', 'assets/img/icons/snake.svg', false, 5),
+  ('bubble-shooter', 'Bubble Shooter', 'Puslespill', '4,7', 'Din skår = dine poeng', '~10 min', 'Sikt og skyt kuler for å matche tre eller flere med samme farge. Tøm hele brettet for maks poeng før kulene når bunnen.', 'assets/img/games/bubble-shooter.svg', 'assets/img/icons/bubble-shooter.svg', false, 6)
+on conflict (id) do nothing;
+
+alter table public.games enable row level security;
+
+drop policy if exists "games_select_all" on public.games;
+create policy "games_select_all" on public.games
+  for select using (true);
+
+drop policy if exists "games_admin_write" on public.games;
+create policy "games_admin_write" on public.games
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 15. RPC: sett hvilket spill som er "dagens spill". Nullstiller alle andre
+--     rader atomisk (unngår at unikindeksen over kortvarig brytes) og krever
+--     admin. Brukes av adminpanelet (admin.html).
+-- ---------------------------------------------------------------------------
+create or replace function public.set_daily_game(p_game_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Kun admin kan endre dagens spill';
+  end if;
+
+  if not exists (select 1 from public.games where id = p_game_id) then
+    raise exception 'Fant ikke spillet %', p_game_id;
+  end if;
+
+  update public.games set is_daily_game = false where is_daily_game and id <> p_game_id;
+  update public.games set is_daily_game = true where id = p_game_id;
+end;
+$$;
+
+revoke all on function public.set_daily_game(text) from public;
+grant execute on function public.set_daily_game(text) to authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

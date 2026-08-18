@@ -68,6 +68,17 @@
 
     <section>
       <div class="section-heading spread">
+        <h2>Spill</h2>
+        <span class="section-sub" data-games-count></span>
+      </div>
+      <p class="section-sub" style="margin:-8px 0 0">Velg hvilket spill som vises i "Dagens spill" på forsiden, og bytt cover-/ikonbilde per spill. Et byttet bilde slår automatisk ut alle steder spillet vises (forside, rangering, mine rekorder, spillerprofil).</p>
+      <div style="display:flex;flex-direction:column;gap:14px" data-games-list>Laster spill …</div>
+      <p class="auth-error" data-games-error hidden></p>
+      <p class="auth-success" data-games-success hidden></p>
+    </section>
+
+    <section>
+      <div class="section-heading spread">
         <h2>Nivåer og premier</h2>
         <span class="section-sub" data-level-count></span>
       </div>
@@ -118,6 +129,7 @@
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/games-data.js"></script>
 <script>
 (function () {
   "use strict";
@@ -126,6 +138,98 @@
 
   let currentUserId = null;
   let avatarOptions = { colors: [], icons: [] };
+
+  // ---------- Spill ----------
+  let games = [];
+
+  function showGamesMessage(kind, msg) {
+    const errorEl = document.querySelector("[data-games-error]");
+    const successEl = document.querySelector("[data-games-success]");
+    errorEl.hidden = kind !== "error";
+    successEl.hidden = kind !== "success";
+    if (kind === "error") errorEl.textContent = msg;
+    if (kind === "success") successEl.textContent = msg;
+  }
+
+  async function loadGames() {
+    const { data, error } = await sb
+      .from("games")
+      .select("id, name, thumbnail_url, icon_url, is_daily_game")
+      .order("sort_order", { ascending: true });
+    if (error) {
+      document.querySelector("[data-games-list]").innerHTML = "<p class=\"section-sub\">Kunne ikke laste spill.</p>";
+      return;
+    }
+    games = data;
+    document.querySelector("[data-games-count]").textContent = `${games.length} spill`;
+    renderGamesAdmin();
+  }
+
+  function renderGamesAdmin() {
+    const el = document.querySelector("[data-games-list]");
+    if (!games.length) {
+      el.innerHTML = "<p class=\"section-sub\">Ingen spill ennå.</p>";
+      return;
+    }
+
+    el.innerHTML = games
+      .map(
+        (g) => `
+        <div class="level-admin-card" data-game-card="${g.id}">
+          <div class="level-admin-head" style="align-items:center">
+            <img src="${g.thumbnail_url || ""}" alt="" style="width:64px;height:40px;border-radius:8px;object-fit:cover;background:var(--surface-2);flex-shrink:0">
+            <img src="${g.icon_url || ""}" alt="" style="width:36px;height:36px;border-radius:9px;object-fit:cover;background:var(--surface-2);flex-shrink:0">
+            <label style="flex:1;min-width:160px">Navn
+              <input type="text" value="${g.name}" disabled>
+            </label>
+            <button type="button" class="btn-start" style="width:auto;padding:8px 14px;align-self:flex-end;${g.is_daily_game ? "opacity:.55;pointer-events:none" : ""}" data-set-daily="${g.id}">
+              ${g.is_daily_game ? "★ Dagens spill" : "Sett som dagens spill"}
+            </button>
+          </div>
+          <label>Cover-bilde (URL)
+            <input type="text" value="${g.thumbnail_url || ""}" placeholder="assets/img/games/${g.id}.svg" data-thumbnail-input="${g.id}">
+          </label>
+          <label>Ikon (URL)
+            <input type="text" value="${g.icon_url || ""}" placeholder="assets/img/icons/${g.id}.svg" data-icon-input="${g.id}">
+          </label>
+        </div>
+      `
+      )
+      .join("");
+
+    el.querySelectorAll("[data-set-daily]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const { error } = await sb.rpc("set_daily_game", { p_game_id: btn.dataset.setDaily });
+        if (error) return showGamesMessage("error", Auth.friendlyAuthError(error));
+        showGamesMessage("success", "Dagens spill oppdatert!");
+        await loadGames();
+      });
+    });
+
+    el.querySelectorAll("[data-thumbnail-input]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        const { error } = await sb
+          .from("games")
+          .update({ thumbnail_url: input.value.trim() || null })
+          .eq("id", input.dataset.thumbnailInput);
+        if (error) return showGamesMessage("error", Auth.friendlyAuthError(error));
+        showGamesMessage("success", "Cover-bilde oppdatert!");
+        await loadGames();
+      });
+    });
+
+    el.querySelectorAll("[data-icon-input]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        const { error } = await sb
+          .from("games")
+          .update({ icon_url: input.value.trim() || null })
+          .eq("id", input.dataset.iconInput);
+        if (error) return showGamesMessage("error", Auth.friendlyAuthError(error));
+        showGamesMessage("success", "Ikon oppdatert!");
+        await loadGames();
+      });
+    });
+  }
 
   function showAvatarMessage(el, msg) {
     const errorEl = document.querySelector("[data-avatar-options-error]");
@@ -459,6 +563,7 @@
       renderAvatarAdmin();
     }
 
+    await loadGames();
     await loadLevels();
     await loadUsers();
   })();

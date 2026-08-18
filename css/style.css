@@ -404,6 +404,31 @@ main {
   color: var(--muted-3);
 }
 
+.game-thumb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-media-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.game-icon-badge {
+  display: inline-block;
+  border-radius: 7px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--surface-2);
+  vertical-align: middle;
+}
+
 .game-thumb-gradient {
   position: absolute;
   left: 0; right: 0; bottom: 0;
@@ -1751,6 +1776,10 @@ main {
 .reward-admin-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: 9px; background: var(--surface); border: 1px solid var(--border); }
 .reward-admin-row input { flex: 1; min-width: 110px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text); font-family: inherit; font-size: 13px; }
 
+.level-admin-card > label { font-size: 12px; font-weight: 700; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.level-admin-card > label input[type="text"] { padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-family: inherit; font-size: 13.5px; font-weight: 400; }
+.level-admin-head input[type="text"]:disabled { padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-family: inherit; font-size: 13.5px; font-weight: 400; opacity: .7; }
+
 /* ---------- Rangering ---------- */
 .rank-search-wrap {
   position: relative;
@@ -1806,6 +1835,9 @@ main {
 .scope-chips { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
 
 .scope-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   padding: 8px 15px;
   border-radius: 99px;
   border: 1px solid var(--border-strong);
@@ -1817,6 +1849,8 @@ main {
   cursor: pointer;
   transition: border-color .15s ease, background .15s ease, color .15s ease;
 }
+
+.scope-chip .game-icon-badge { border-radius: 5px; }
 
 .scope-chip:hover { border-color: rgba(46, 232, 127, .4); }
 

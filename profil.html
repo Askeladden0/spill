@@ -131,8 +131,12 @@
   let profile = null;
   let avatarOptions = { colors: [], icons: [] };
 
+  function findGame(id) {
+    return games.find((x) => x.id === id);
+  }
+
   function gameName(id) {
-    const g = games.find((x) => x.id === id);
+    const g = findGame(id);
     return g ? g.name : id;
   }
 
@@ -236,7 +240,12 @@
         <thead><tr><th>Spill</th><th>Beste poengsum</th></tr></thead>
         <tbody>
           ${Object.entries(bestPerGame)
-            .map(([gameId, score]) => `<tr><td>${gameName(gameId)}</td><td>${score}</td></tr>`)
+            .map(([gameId, score]) => `
+              <tr>
+                <td><span style="display:flex;align-items:center;gap:10px">${window.gameIconHTML(findGame(gameId), 22)}${gameName(gameId)}</span></td>
+                <td>${score}</td>
+              </tr>
+            `)
             .join("")}
         </tbody>
       </table>
@@ -300,6 +309,7 @@
   });
 
   (async function init() {
+    if (window.PIXELPLAY_GAMES_READY) await window.PIXELPLAY_GAMES_READY;
     profile = await Auth.requireAuth();
     if (!profile) return;
     document.querySelector("[data-profile-main]").hidden = false;

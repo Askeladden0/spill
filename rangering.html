@@ -136,12 +136,12 @@
 
   function renderScopeChips() {
     const items = [{ id: "total", label: "Alle spill samlet" }].concat(
-      games.map((g) => ({ id: g.id, label: g.name }))
+      games.map((g) => ({ id: g.id, label: g.name, game: g }))
     );
     document.querySelector("[data-scope-chips]").innerHTML = items
       .map(
         (c) => `
-        <button type="button" class="scope-chip ${scope === c.id ? "is-active" : ""}" data-scope="${c.id}">${c.label}</button>
+        <button type="button" class="scope-chip ${scope === c.id ? "is-active" : ""}" data-scope="${c.id}">${c.game ? window.gameIconHTML(c.game, 16) : ""}${c.label}</button>
       `
       )
       .join("");
@@ -304,7 +304,10 @@
         return `
           <a class="mygame-card" href="player.html?id=${encodeURIComponent(g.id)}">
             <div class="mygame-head">
-              <span class="mygame-name">${g.name}</span>
+              <span style="display:flex;align-items:center;gap:8px">
+                ${window.gameIconHTML(g, 22)}
+                <span class="mygame-name">${g.name}</span>
+              </span>
             </div>
             <div class="mygame-stats">
               <div>
@@ -386,6 +389,7 @@
 
   // ---------- Init ----------
   async function init() {
+    if (window.PIXELPLAY_GAMES_READY) await window.PIXELPLAY_GAMES_READY;
     profile = await Auth.getCurrentProfile();
     const [loadedProfiles, records] = await Promise.all([LB.loadProfiles(), LB.loadRecords()]);
     profiles = loadedProfiles;
