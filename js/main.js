@@ -19,7 +19,9 @@
       <article class="game-card">
         <a href="player.html?id=${encodeURIComponent(g.id)}" class="game-thumb" aria-label="Åpne ${g.name}">
           <span class="game-rating">${starIcon()} ${g.rating}</span>
-          <span class="game-thumb-slot">[ spillbilde ]</span>
+          ${g.thumbnail
+            ? `<img class="game-thumb-img" src="${g.thumbnail}" alt="">`
+            : `<span class="game-thumb-slot">[ spillbilde ]</span>`}
           <div class="game-thumb-gradient"></div>
           <h3 class="game-title">${g.name}</h3>
         </a>
@@ -56,7 +58,9 @@
           ${daily.pointsMultiplier}
         </div>` : ""}
       <div class="hero-media">
-        <span class="hero-placeholder-label">[ hero-bilde: dagens spill 1600×880 ]</span>
+        ${daily.thumbnail
+          ? `<img class="hero-media-img" src="${daily.thumbnail}" alt="">`
+          : `<span class="hero-placeholder-label">[ hero-bilde: dagens spill 1600×880 ]</span>`}
         <div class="hero-gradient"></div>
         <div class="hero-content">
           <h2>${daily.name}</h2>
@@ -109,8 +113,9 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", async function () {
     initActiveNav();
+    if (window.PIXELPLAY_GAMES_READY) await window.PIXELPLAY_GAMES_READY;
     renderHero("[data-hero]");
     renderGameGrid("[data-game-grid]");
     initPlayerPage();

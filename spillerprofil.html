@@ -119,6 +119,8 @@
   }
 
   async function init() {
+    if (window.PIXELPLAY_GAMES_READY) await window.PIXELPLAY_GAMES_READY;
+
     const params = new URLSearchParams(window.location.search);
     const username = (params.get("u") || "").trim();
 
@@ -169,7 +171,10 @@
         return `
           <a class="mygame-card" href="player.html?id=${encodeURIComponent(g.id)}">
             <div class="mygame-head">
-              <span class="mygame-name">${g.name}</span>
+              <span style="display:flex;align-items:center;gap:8px">
+                ${window.gameIconHTML(g, 22)}
+                <span class="mygame-name">${g.name}</span>
+              </span>
               <span class="mygame-genre">${g.genre}</span>
             </div>
             <div class="mygame-stats">
