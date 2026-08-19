@@ -2743,6 +2743,17 @@ main {
 .admin-field textarea { resize: vertical; }
 .admin-row-actions { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
 
+.admin-upload-row { display: block; margin-top: 6px; }
+.admin-upload-btn {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 7px 12px; border-radius: 8px; border: 1px dashed var(--border-strong);
+  background: var(--surface-2); color: var(--muted); font-size: 11.5px; font-weight: 700;
+  letter-spacing: .02em; transition: border-color .15s ease, color .15s ease;
+}
+.admin-upload-btn:hover { border-color: var(--accent); color: var(--text); }
+.admin-upload-btn.is-busy { opacity: .6; cursor: default; }
+.admin-upload-btn input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+
 /* ---------- Nivåer: premier ---------- */
 .admin-level-detail { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 18px 68px; border-top: 1px solid var(--border); }
 @media (max-width: 720px) { .admin-level-detail { padding-left: 16px; } }

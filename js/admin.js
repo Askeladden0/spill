@@ -58,6 +58,7 @@
     // Spill
     openGames: new Set(),
     dragFromId: null,
+    gameUploadBusy: new Set(),
 
     // Nivåer
     openLevels: new Set(),
@@ -549,6 +550,47 @@
     flash(next ? "Spillet er skjult" : "Spillet er synlig igjen");
   }
 
+  const GAME_IMAGE_BUCKET = "game-images";
+
+  function uploadRowHTML(g, field) {
+    const busy = state.gameUploadBusy.has(`${g.id}:${field}`);
+    return `
+      <span class="admin-upload-row">
+        <label class="admin-upload-btn${busy ? " is-busy" : ""}">
+          ${busy ? "Laster opp …" : "Last opp PNG/JPG"}
+          <input type="file" accept="image/png,image/jpeg" data-game-upload="${field}" data-game-id="${g.id}" ${busy ? "disabled" : ""}>
+        </label>
+      </span>
+    `;
+  }
+
+  async function uploadGameImage(g, field, file) {
+    if (!file) return;
+    const allowed = { "image/png": "png", "image/jpeg": "jpg" };
+    const ext = allowed[file.type];
+    if (!ext) return flash("Kun PNG og JPG er støttet.");
+    if (file.size > 5 * 1024 * 1024) return flash("Bildet er for stort (maks 5 MB).");
+
+    const busyKey = `${g.id}:${field}`;
+    state.gameUploadBusy.add(busyKey);
+    renderMain();
+
+    const path = `${g.id}/${field}-${Date.now()}.${ext}`;
+    const { error: uploadError } = await sb.storage
+      .from(GAME_IMAGE_BUCKET)
+      .upload(path, file, { contentType: file.type, upsert: true });
+
+    if (uploadError) {
+      state.gameUploadBusy.delete(busyKey);
+      renderMain();
+      return flash(Auth.friendlyAuthError(uploadError));
+    }
+
+    const { data: pub } = sb.storage.from(GAME_IMAGE_BUCKET).getPublicUrl(path);
+    state.gameUploadBusy.delete(busyKey);
+    await saveGameField(g, field, pub.publicUrl);
+  }
+
   async function saveGameField(g, field, value) {
     const { error } = await sb.from("games").update({ [field]: value }).eq("id", g.id);
     if (error) return flash(Auth.friendlyAuthError(error));
@@ -603,12 +645,14 @@
               </label>
               <label class="admin-field">COVER-BILDE (URL)
                 <input type="text" value="${escapeHTML(g.thumbnail_url || "")}" placeholder="assets/img/games/${g.id}.svg" data-game-field="thumbnail_url" data-game-id="${g.id}">
+                ${uploadRowHTML(g, "thumbnail_url")}
               </label>
               <label class="admin-field is-wide">BESKRIVELSE
                 <textarea rows="2" data-game-field="description" data-game-id="${g.id}">${escapeHTML(g.description || "")}</textarea>
               </label>
               <label class="admin-field">IKON (URL)
                 <input type="text" value="${escapeHTML(g.icon_url || "")}" placeholder="assets/img/icons/${g.id}.svg" data-game-field="icon_url" data-game-id="${g.id}">
+                ${uploadRowHTML(g, "icon_url")}
               </label>
               <div class="admin-row-actions">
                 <button type="button" class="btn-start" style="width:auto;padding:10px 15px;opacity:${g.is_daily_game ? ".55" : "1"}" data-game-set-daily="${g.id}">${g.is_daily_game ? "★ Er dagens spill" : "Sett som dagens spill"}</button>
@@ -1328,6 +1372,13 @@
 
   function onMainChange(e) {
     const t = e.target;
+    const gameUpload = t.closest("[data-game-upload]");
+    if (gameUpload) {
+      const g = findGame(gameUpload.dataset.gameId);
+      const file = gameUpload.files && gameUpload.files[0];
+      if (g && file) uploadGameImage(g, gameUpload.dataset.gameUpload, file);
+      return;
+    }
     const gameField = t.closest("[data-game-field]");
     if (gameField) {
       const g = findGame(gameField.dataset.gameId);
