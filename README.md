@@ -78,8 +78,8 @@ Kort oppsummert:
   time: "~15 min",
   thumbnail: null,             // sett til "assets/img/games/mitt-nye-spill.jpg" når bilde finnes
   description: "Kort beskrivelse av spillet.",
-  isDailyGame: false,          // sett til true for å vise det som "Dagens spill"
-  pointsMultiplier: null
+  isDailyGame: false,          // settes automatisk av 24-timersrotasjonen (se under)
+  pointsMultiplier: null       // settes automatisk til "1,5X POENG" når isDailyGame er true
 }
 ```
 
@@ -100,10 +100,14 @@ sette en brukers poeng og nivå manuelt direkte i brukerlisten.
 - **Lykkehjulet**: å trykke "Spinn hjulet" åpner et modalvindu med et stort
   hjul (konkrete verdier 10–1000) og en nedtonet bakgrunn. Et nytt trykk
   spinner hjulet, og resultatet legges til poengsummen via RPC-funksjonen
-  `add_points` (som også oppdaterer nivået automatisk). Ikke innloggede
+  `spin_wheel` (som også oppdaterer nivået automatisk). Ikke innloggede
   besøkende samler i stedet poeng lokalt i nettleseren
   (`localStorage`), og ser dette igjen som "poeng du hadde hatt" i headeren
-  sammen med en logg inn-knapp. Det er ingen grense på antall spinn ennå.
+  sammen med en logg inn-knapp. Alle unntatt admins kan bare spinne én gang
+  per 24 timer – innloggede brukere håndheves server-side via
+  `profiles.last_spin_at`, utloggede besøkende håndheves lokalt i
+  nettleseren. Knappen viser en nedtelling til neste spinn når man har brukt
+  opp dagens spinn.
 - **Hent rabattkode**: åpner et modalvindu med nedtonet bakgrunn og en
   tilfeldig generert placeholder-kode, som lagres i `user_codes` og dukker
   opp under "Mine koder".
@@ -119,3 +123,14 @@ direkte via `player.html?id=...`), dra for å endre rekkefølgen, eller slett
 det helt. `js/games-data.js` henter denne tabellen ved sidelasting og fyller
 `window.PIXELPLAY_GAMES` i place; den statiske listen øverst i filen er kun en
 fallback hvis Supabase er utilgjengelig.
+
+**Dagens spill roterer automatisk hver 24. time.** Rekkefølgen følger
+`sort_order` i `games`-tabellen. Rotasjonen håndheves av SQL-funksjonen
+`ensure_daily_game_rotated()` (kalt fra `js/games-data.js` ved hver
+sidelasting), som bytter til neste spill for hver hele 24-timersperiode som
+har gått siden forrige bytte – uavhengig av om noen har hatt siden åpen i
+mellomtiden. Admin kan når som helst overstyre valget manuelt fra
+adminpanelet (`set_daily_game`), noe som nullstiller 24-timersklokken.
+Dagens spill vises med en "1,5X POENG"-tag øverst til høyre i heltefeltet på
+forsiden, sammen med en nedtelling til neste bytte, og gir faktisk 1,5x
+poeng når man spiller det (håndhevet i `js/game-runtime.js`).

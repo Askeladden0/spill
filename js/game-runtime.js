@@ -58,11 +58,26 @@
     return Number(data.score) || 0;
   }
 
+  /**
+   * Dagens spill gir 1,5x poeng (matcher badgen i heltefeltet på forsiden,
+   * se js/main.js og js/games-data.js). Selve skåren som lagres i
+   * game_records (rekorder/rangering) er alltid den rå, uforsterkede
+   * skåren – kun poengene som legges til xp/gjestepoeng multipliseres.
+   */
+  function pointsForGame(gameId, rawPoints) {
+    const games = window.PIXELPLAY_GAMES || [];
+    const game = games.find((g) => g.id === gameId);
+    const multiplier = game && game.isDailyGame ? (window.PIXELPLAY_DAILY_GAME_MULTIPLIER || 1) : 1;
+    return Math.round(rawPoints * multiplier);
+  }
+
   async function submitScore(gameId, score, profile) {
     const rounded = Math.round(score);
     if (!Number.isFinite(rounded) || rounded <= 0) {
       return { saved: false, best: await loadBest(gameId, profile), profile: null };
     }
+
+    const awardedPoints = pointsForGame(gameId, rounded);
 
     if (profile) {
       const { error: insertError } = await sb
@@ -75,7 +90,7 @@
       // add_points returnerer den oppdaterte profilraden direkte, så vi
       // slipper å hente den på nytt i et eget kall etterpå (som kan gi
       // race/cache-problemer og vise gammel xp/nivå i UIen).
-      const { data: updatedProfile, error: rpcError } = await sb.rpc("add_points", { p_delta: rounded });
+      const { data: updatedProfile, error: rpcError } = await sb.rpc("add_points", { p_delta: awardedPoints });
       if (rpcError) {
         console.error("[PixelPlay] Klarte ikke oppdatere xp/nivå:", rpcError.message);
       }
@@ -84,14 +99,15 @@
       return {
         saved: true,
         best: Math.max(best, rounded),
+        awardedPoints,
         profile: updatedProfile ? { ...updatedProfile, email: profile.email } : null,
       };
     }
 
-    Auth.addGuestPoints(rounded);
+    Auth.addGuestPoints(awardedPoints);
     const best = Math.max(getGuestBest(gameId), rounded);
     setGuestBest(gameId, best);
-    return { saved: true, best, profile: null };
+    return { saved: true, best, awardedPoints, profile: null };
   }
 
   function shellHTML() {
@@ -303,10 +319,13 @@
 
         const isNewBest = result.saved && score > prevBest;
         const roundedScore = Math.max(0, Math.round(score));
+        const awardedPoints = result.awardedPoints != null ? result.awardedPoints : roundedScore;
         const leveledUp = !!(newProfile && prevProfile && newProfile.level > prevProfile.level);
 
         els.overlayTitle.textContent = opts.title || "Spillet er over";
-        els.overlayScore.textContent = `Du fikk ${roundedScore.toLocaleString("no-NO")} poeng.`;
+        els.overlayScore.textContent = awardedPoints > roundedScore
+          ? `Du fikk ${awardedPoints.toLocaleString("no-NO")} poeng (1,5x dagens spill-bonus)!`
+          : `Du fikk ${roundedScore.toLocaleString("no-NO")} poeng.`;
         els.overlayBest.textContent = isNewBest
           ? "Ny personlig rekord! 🎉"
           : `Rekord: ${best.toLocaleString("no-NO")} poeng.`;

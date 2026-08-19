@@ -22,7 +22,13 @@
  *   icon             - sti/URL til ikon (vises til venstre for spillnavn i rangering/rekorder)
  *   description      - kort beskrivelse brukt på spillsiden
  *   isDailyGame      - true for spillet som vises i "Dagens spill"-heltefeltet
- *   pointsMultiplier - valgfri tekst for badge i heltefeltet, f.eks. "1,5X POENG"
+ *   pointsMultiplier - tekst for badge i heltefeltet, satt automatisk til
+ *                       "1,5X POENG" for dagens spill (se loadGames under)
+ *
+ * "Dagens spill" roterer automatisk til neste spill (i sort_order-rekkefølge)
+ * hver 24. time – se public.ensure_daily_game_rotated() i supabase/schema.sql,
+ * som kalles rett før spillene hentes under. Spilling av dagens spill gir
+ * 1,5x poeng, håndhevet i js/game-runtime.js.
  */
 
 window.PIXELPLAY_GAMES = [
@@ -105,6 +111,9 @@ window.PIXELPLAY_GAMES = [
  * window.PIXELPLAY_GAMES i place (samme array-referanse). Feiler stille og
  * beholder fallback-listen over hvis Supabase ikke er tilgjengelig ennå.
  */
+window.PIXELPLAY_DAILY_GAME_MULTIPLIER = 1.5;
+window.PIXELPLAY_DAILY_ROTATION = null; // { rotatedAt: Date, nextRotationAt: Date } når kjent
+
 window.PIXELPLAY_GAMES_READY = (async function loadGames() {
   const sb = window.supabaseClient;
   if (!sb) return window.PIXELPLAY_GAMES;
@@ -113,21 +122,48 @@ window.PIXELPLAY_GAMES_READY = (async function loadGames() {
   // etter 5 sekunder gir vi opp og viser fallback-listen i stedet.
   const timeout = new Promise((resolve) => setTimeout(() => resolve({ timedOut: true }), 5000));
 
-  const result = await Promise.race([
-    sb
-      .from("games")
-      .select("id, name, genre, rating, points, time_estimate, description, thumbnail_url, icon_url, points_multiplier, is_daily_game")
-      .eq("hidden", false)
-      .order("sort_order", { ascending: true }),
+  // Kjører 24-timers-rotasjonen (bytter automatisk "dagens spill" til neste
+  // spill for hver hele 24-timersperiode som har gått) før spillene hentes,
+  // slik at is_daily_game alltid er oppdatert idet vi leser listen under.
+  // Feiler stille (f.eks. hvis funksjonen ikke finnes ennå i databasen) –
+  // da beholdes bare det som allerede står lagret på spillene.
+  const rotation = await Promise.race([
+    sb.rpc("ensure_daily_game_rotated").catch(() => null),
     timeout
   ]);
+  if (!rotation || rotation.timedOut) {
+    console.error("[PixelPlay] Klarte ikke kjøre rotasjon av dagens spill.");
+  }
 
-  if (result.timedOut) {
+  const [gamesResult, rotationStateResult] = await Promise.all([
+    Promise.race([
+      sb
+        .from("games")
+        .select("id, name, genre, rating, points, time_estimate, description, thumbnail_url, icon_url, points_multiplier, is_daily_game")
+        .eq("hidden", false)
+        .order("sort_order", { ascending: true }),
+      timeout
+    ]),
+    Promise.race([
+      sb.from("daily_rotation").select("rotated_at").eq("id", 1).maybeSingle().catch(() => null),
+      timeout
+    ])
+  ]);
+
+  if (rotationStateResult && !rotationStateResult.timedOut && rotationStateResult.data && rotationStateResult.data.rotated_at) {
+    const rotatedAt = new Date(rotationStateResult.data.rotated_at);
+    window.PIXELPLAY_DAILY_ROTATION = {
+      rotatedAt,
+      nextRotationAt: new Date(rotatedAt.getTime() + 24 * 60 * 60 * 1000)
+    };
+  }
+
+  if (gamesResult.timedOut) {
     console.error("[PixelPlay] Tidsavbrudd ved henting av spill, bruker fallback-liste.");
     return window.PIXELPLAY_GAMES;
   }
 
-  const { data, error } = result;
+  const { data, error } = gamesResult;
   if (error || !data || !data.length) {
     if (error) console.error("[PixelPlay] Klarte ikke hente spill, bruker fallback-liste:", error.message);
     return window.PIXELPLAY_GAMES;
@@ -144,7 +180,10 @@ window.PIXELPLAY_GAMES_READY = (async function loadGames() {
     icon: g.icon_url,
     description: g.description,
     isDailyGame: g.is_daily_game,
-    pointsMultiplier: g.points_multiplier || undefined
+    // Dagens spill gir alltid 1,5x poeng (se PIXELPLAY_DAILY_GAME_MULTIPLIER
+    // og js/game-runtime.js) – badgen skal derfor alltid vise dette, uansett
+    // hva som evt. står i points_multiplier-kolonnen.
+    pointsMultiplier: g.is_daily_game ? "1,5X POENG" : undefined
   }));
 
   window.PIXELPLAY_GAMES.length = 0;

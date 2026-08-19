@@ -85,7 +85,7 @@
           <p class="spin-card-sub">Spinn hjulet og vinn mellom 10 og 1000 poeng.</p>
         </div>
         <button class="btn-primary" type="button" style="width:100%" data-open-spin>Spinn hjulet</button>
-        <span class="spin-card-note">Ingen grense på antall spinn ennå</span>
+        <span class="spin-card-note" data-spin-note>1 spinn per 24 timer</span>
       </div>
     </section>
 
@@ -436,7 +436,82 @@
   }
 
   // ---------- Lykkehjul-modal ----------
+  // Alle unntatt admins kan bare spinne hjulet én gang per 24 timer.
+  // Innloggede brukere håndheves server-side (profiles.last_spin_at +
+  // RPC-en spin_wheel, se supabase/schema.sql), som er den reelle sperren –
+  // klientlogikken her er kun til å vise riktig UI/nedtelling og unngå
+  // unødvendige feilende kall. Utloggede besøkende har ingen profilrad, så
+  // for dem håndheves sperren kun lokalt i nettleseren (localStorage).
+  const SPIN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+  const GUEST_LAST_SPIN_KEY = "pixelplay_guest_last_spin_at";
+  let spinCountdownTimer = null;
+
+  function isAdmin() {
+    return !!(profile && profile.is_admin);
+  }
+
+  function lastSpinAt() {
+    if (profile) return profile.last_spin_at ? new Date(profile.last_spin_at).getTime() : null;
+    const raw = window.localStorage.getItem(GUEST_LAST_SPIN_KEY);
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function spinCooldownRemainingMs() {
+    if (isAdmin()) return 0;
+    const last = lastSpinAt();
+    if (!last) return 0;
+    return Math.max(0, SPIN_COOLDOWN_MS - (Date.now() - last));
+  }
+
+  function formatCooldown(ms) {
+    const total = Math.max(0, Math.ceil(ms / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  function refreshSpinAvailability() {
+    const note = document.querySelector("[data-spin-note]");
+    const openBtn = document.querySelector("[data-open-spin]");
+    const remaining = spinCooldownRemainingMs();
+
+    if (spinCountdownTimer) {
+      window.clearInterval(spinCountdownTimer);
+      spinCountdownTimer = null;
+    }
+
+    if (isAdmin()) {
+      note.textContent = "Admin: ingen grense på antall spinn";
+      openBtn.disabled = false;
+      return;
+    }
+
+    if (remaining <= 0) {
+      note.textContent = "1 spinn per 24 timer";
+      openBtn.disabled = false;
+      return;
+    }
+
+    openBtn.disabled = true;
+    const tick = () => {
+      const left = spinCooldownRemainingMs();
+      if (left <= 0) {
+        note.textContent = "1 spinn per 24 timer";
+        openBtn.disabled = false;
+        window.clearInterval(spinCountdownTimer);
+        spinCountdownTimer = null;
+        return;
+      }
+      note.textContent = `Neste spinn om ${formatCooldown(left)}`;
+    };
+    tick();
+    spinCountdownTimer = window.setInterval(tick, 1000);
+  }
+
   function openSpinModal() {
+    if (spinCooldownRemainingMs() > 0) return;
     document.querySelector("[data-spin-modal]").hidden = false;
     document.querySelector("[data-spin-result]").textContent = "";
     document.querySelector("[data-spin-hint]").textContent = "Trykk på knappen for å spinne hjulet.";
@@ -451,6 +526,7 @@
 
   async function doSpin() {
     if (spinning) return;
+    if (spinCooldownRemainingMs() > 0) return;
     spinning = true;
     const actionBtn = document.querySelector("[data-spin-action]");
     actionBtn.disabled = true;
@@ -473,27 +549,33 @@
 
     let newTotal;
     if (profile) {
-      const { data, error } = await sb.rpc("add_points", { p_delta: value });
+      const { data, error } = await sb.rpc("spin_wheel", { p_delta: value });
       if (!error && data) {
         profile.xp = data.xp;
         profile.level = data.level;
+        profile.last_spin_at = data.last_spin_at;
         newTotal = data.xp;
       } else {
+        // Kunne skje hvis to faner spinner "samtidig" og serveren avviser det
+        // andre forsøket – vis dagens poengsum uendret og la nedtellingen
+        // (satt av refreshSpinAvailability under) forklare hvorfor.
         newTotal = currentPoints();
       }
     } else {
+      window.localStorage.setItem(GUEST_LAST_SPIN_KEY, String(Date.now()));
       newTotal = Auth.addGuestPoints(value);
     }
 
     document.querySelector("[data-spin-result]").textContent = `Du vant ${fmt(value)} poeng!`;
     document.querySelector("[data-spin-hint]").textContent = `Du har nå ${fmt(newTotal)} poeng totalt.`;
     actionBtn.textContent = "Spinn igjen";
-    actionBtn.disabled = false;
     spinning = false;
 
     renderLevelCard();
     renderLadder();
     Auth.renderHeaderAuth();
+    refreshSpinAvailability();
+    actionBtn.disabled = spinCooldownRemainingMs() > 0;
   }
 
   document.querySelector("[data-open-spin]").addEventListener("click", openSpinModal);
@@ -521,6 +603,7 @@
     spinMiniForever();
     setInterval(spinMiniForever, 12000);
     renderFeed();
+    refreshSpinAvailability();
 
     await loadLevels();
     renderLevelCard();
@@ -531,6 +614,7 @@
     profile = await Auth.getCurrentProfile();
     renderLevelCard();
     renderLadder();
+    refreshSpinAvailability();
   });
 })();
 </script>

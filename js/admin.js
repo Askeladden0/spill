@@ -336,7 +336,7 @@
               <div class="admin-daily-cover">${daily && daily.thumbnail_url ? `<img src="${escapeHTML(daily.thumbnail_url)}" alt="">` : ""}</div>
               <div class="admin-daily-meta">
                 <span class="admin-daily-name">${daily ? escapeHTML(daily.name) : "Ingen valgt"}</span>
-                <span class="admin-daily-note">Vises i heltefeltet på forsiden akkurat nå</span>
+                <span class="admin-daily-note">Vises i heltefeltet på forsiden akkurat nå, gir 1,5x poeng · roterer automatisk til neste spill hver 24. time</span>
                 <span class="admin-daily-plays">${NOK(dailyPlaysDay)} runder siste 24 timer</span>
               </div>
             </div>

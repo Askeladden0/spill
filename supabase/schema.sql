@@ -487,7 +487,9 @@ create policy "games_admin_write" on public.games
 -- ---------------------------------------------------------------------------
 -- 15. RPC: sett hvilket spill som er "dagens spill". Nullstiller alle andre
 --     rader atomisk (unngår at unikindeksen over kortvarig brytes) og krever
---     admin. Brukes av adminpanelet (admin.html).
+--     admin. Brukes av adminpanelet (admin.html). Nullstiller også
+--     rotasjonsklokken i daily_rotation (se punkt 18), slik at neste
+--     automatiske bytte skjer 24 timer etter det manuelle valget.
 -- ---------------------------------------------------------------------------
 create or replace function public.set_daily_game(p_game_id text)
 returns void
@@ -506,6 +508,12 @@ begin
 
   update public.games set is_daily_game = false where is_daily_game and id <> p_game_id;
   update public.games set is_daily_game = true where id = p_game_id;
+
+  insert into public.daily_rotation (id, current_game_id, rotated_at)
+  values (1, p_game_id, now())
+  on conflict (id) do update
+    set current_game_id = excluded.current_game_id,
+        rotated_at = excluded.rotated_at;
 end;
 $$;
 
@@ -547,6 +555,158 @@ $$;
 
 revoke all on function public.admin_delete_user(uuid) from public;
 grant execute on function public.admin_delete_user(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 18. daily_rotation – singleton-rad som holder styr på hvilket spill som er
+--     "dagens spill" akkurat nå, og når den siste rotasjonen skjedde.
+--     Rotasjonen skjer ikke via en server-side cron-jobb (Supabase har ingen
+--     innebygd scheduler i dette prosjektet), men "lat" via funksjonen
+--     ensure_daily_game_rotated() under: hver gang en klient henter
+--     spillisten (js/games-data.js) kalles denne funksjonen først, og den
+--     bytter automatisk til neste spill (i sort_order-rekkefølge, med
+--     wrap-around) for hver hele 24-timersperiode som har gått siden forrige
+--     bytte. Dette gir en reell, alltid korrekt rotasjon uansett hvor lenge
+--     det er siden siste besøk (bytter flere hakk om nødvendig), uten å
+--     kreve at noen har siden åpen kontinuerlig.
+-- ---------------------------------------------------------------------------
+create table if not exists public.daily_rotation (
+  id smallint primary key default 1,
+  current_game_id text references public.games (id),
+  rotated_at timestamptz not null default now(),
+  constraint daily_rotation_singleton check (id = 1)
+);
+
+insert into public.daily_rotation (id, current_game_id, rotated_at)
+select 1, (select id from public.games where is_daily_game limit 1), now()
+where not exists (select 1 from public.daily_rotation where id = 1);
+
+alter table public.daily_rotation enable row level security;
+
+-- Alle kan lese rotasjonstilstanden (trengs for å vise nedtelling til neste
+-- bytte i heltefeltet på forsiden). Skriving skjer kun via SECURITY DEFINER-
+-- funksjonene under/over, aldri direkte fra klienten.
+drop policy if exists "daily_rotation_select_all" on public.daily_rotation;
+create policy "daily_rotation_select_all" on public.daily_rotation
+  for select using (true);
+
+create or replace function public.ensure_daily_game_rotated()
+returns text
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  state public.daily_rotation;
+  ids text[];
+  n int;
+  periods int;
+  cur_idx int;
+  next_idx int;
+begin
+  select * into state from public.daily_rotation where id = 1 for update;
+  if state is null then
+    insert into public.daily_rotation (id, rotated_at) values (1, now())
+      returning * into state;
+  end if;
+
+  select array_agg(id order by sort_order, id) into ids
+    from public.games where hidden = false;
+  n := coalesce(array_length(ids, 1), 0);
+  if n = 0 then
+    return state.current_game_id;
+  end if;
+
+  -- Nåværende valg finnes ikke (aldri satt, eller spillet ble skjult/slettet
+  -- siden sist): start rotasjonen på nytt fra det første spillet.
+  if state.current_game_id is null or not (state.current_game_id = any(ids)) then
+    update public.daily_rotation
+       set current_game_id = ids[1], rotated_at = now()
+     where id = 1
+     returning * into state;
+  end if;
+
+  periods := floor(extract(epoch from (now() - state.rotated_at)) / 86400)::int;
+  if periods > 0 then
+    cur_idx := coalesce(array_position(ids, state.current_game_id), 1);
+    next_idx := ((cur_idx - 1 + periods) % n) + 1;
+
+    update public.daily_rotation
+       set current_game_id = ids[next_idx],
+           -- fremskriver klokken med nøyaktig periods*24t i stedet for å
+           -- sette den til now(), slik at rotasjonen aldri "driver" av
+           -- forsinkelser mellom besøk.
+           rotated_at = state.rotated_at + (periods || ' days')::interval
+     where id = 1
+     returning * into state;
+  end if;
+
+  update public.games set is_daily_game = (id = state.current_game_id);
+
+  return state.current_game_id;
+end;
+$$;
+
+revoke all on function public.ensure_daily_game_rotated() from public;
+grant execute on function public.ensure_daily_game_rotated() to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 19. profiles.last_spin_at + RPC spin_wheel: lykkehjulet på premier.html kan
+--     kun spinnes én gang per 24 timer per bruker, med unntak for admins som
+--     kan spinne fritt. Innloggede brukere håndheves server-side her (klienten
+--     kan ikke omgå dette); utloggede besøkende håndheves separat på
+--     klientsiden (localStorage), siden de ikke har en rad i profiles.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists last_spin_at timestamptz;
+
+create or replace function public.spin_wheel(p_delta int)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_row public.profiles;
+  updated public.profiles;
+  best_level int;
+begin
+  if p_delta is null or p_delta <= 0 then
+    raise exception 'p_delta må være et positivt tall';
+  end if;
+
+  select * into current_row from public.profiles where id = auth.uid();
+  if current_row is null then
+    raise exception 'Fant ingen profil for innlogget bruker';
+  end if;
+
+  if not current_row.is_admin
+     and current_row.last_spin_at is not null
+     and now() - current_row.last_spin_at < interval '24 hours' then
+    raise exception 'Du har allerede spinnet i dag. Prøv igjen om 24 timer.';
+  end if;
+
+  perform set_config('pixelplay.trusted_profile_write', 'on', true);
+  update public.profiles
+     set xp = xp + p_delta,
+         last_spin_at = now()
+   where id = auth.uid()
+   returning * into updated;
+
+  select max(level_number) into best_level
+    from public.levels
+   where points_required <= updated.xp;
+
+  if best_level is not null and best_level > updated.level then
+    perform set_config('pixelplay.trusted_profile_write', 'on', true);
+    update public.profiles set level = best_level where id = auth.uid()
+      returning * into updated;
+  end if;
+
+  return updated;
+end;
+$$;
+
+revoke all on function public.spin_wheel(int) from public;
+grant execute on function public.spin_wheel(int) to authenticated;
 
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din

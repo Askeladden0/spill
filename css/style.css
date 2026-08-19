@@ -345,6 +345,14 @@ main {
   gap: 22px;
 }
 
+.hero-rotation-note {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--muted-2);
+}
+
 .hero-content h2 {
   margin: 0;
   font-size: 52px;

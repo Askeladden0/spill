@@ -45,6 +45,16 @@
     if (countEl) countEl.textContent = `${games.length} triks tilgjengelig`;
   }
 
+  function formatCountdown(ms) {
+    const total = Math.max(0, Math.round(ms / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  let heroCountdownTimer = null;
+
   function renderHero(selector) {
     const el = document.querySelector(selector);
     if (!el) return;
@@ -67,9 +77,27 @@
           <a href="player.html?id=${encodeURIComponent(daily.id)}">
             <button class="btn-primary" type="button">Spill nå</button>
           </a>
+          <span class="hero-rotation-note" data-hero-countdown hidden></span>
         </div>
       </div>
     `;
+
+    if (heroCountdownTimer) window.clearInterval(heroCountdownTimer);
+    const rotation = window.PIXELPLAY_DAILY_ROTATION;
+    const countdownEl = el.querySelector("[data-hero-countdown]");
+    if (rotation && rotation.nextRotationAt && countdownEl) {
+      const tick = () => {
+        const remaining = rotation.nextRotationAt.getTime() - Date.now();
+        if (remaining <= 0) {
+          countdownEl.textContent = "Nytt dagens spill snart …";
+        } else {
+          countdownEl.textContent = `Nytt dagens spill om ${formatCountdown(remaining)}`;
+        }
+        countdownEl.hidden = false;
+      };
+      tick();
+      heroCountdownTimer = window.setInterval(tick, 1000);
+    }
   }
 
   function initActiveNav() {
