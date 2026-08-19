@@ -37,6 +37,9 @@
     profiles: [],
     games: [],
     levels: [],
+    rewards: [],
+    rewardCodes: [],
+    claims: [],
     gameRecords: [],
     avatarOptions: { colors: [], icons: [] },
     gamesNeedMigration: false,
@@ -58,6 +61,7 @@
 
     // Nivåer
     openLevels: new Set(),
+    openCodeLists: new Set(),
 
     // Statistikk
     signupRange: "7d",
@@ -102,9 +106,12 @@
   }
 
   async function loadAll() {
-    const [profilesRes, levelsRes, recordsRes, avatarRes, games] = await Promise.all([
+    const [profilesRes, levelsRes, rewardsRes, rewardCodesRes, claimsRes, recordsRes, avatarRes, games] = await Promise.all([
       sb.from("profiles").select("id, username, xp, level, is_admin, created_at, avatar_icon, avatar_color").order("created_at", { ascending: false }),
-      sb.from("levels").select("level_number, points_required, rewards").order("level_number", { ascending: true }),
+      sb.from("levels").select("level_number, points_required").order("level_number", { ascending: true }),
+      sb.from("rewards").select("id, level_number, brand, title, sub, code_type, general_code, expires_at, sort_order").order("level_number", { ascending: true }).order("sort_order", { ascending: true }),
+      sb.from("reward_codes").select("id, reward_id, code, claimed_by, claimed_at"),
+      sb.from("user_codes").select("user_id, reward_id, brand, title, code, created_at").order("created_at", { ascending: false }),
       sb.from("game_records").select("user_id, game_id, score, created_at"),
       sb.from("avatar_options").select("colors, icons").eq("id", 1).single(),
       loadGames(),
@@ -112,14 +119,45 @@
 
     if (profilesRes.error) console.error("[PixelPlay admin] Klarte ikke hente brukere:", profilesRes.error.message);
     if (levelsRes.error) console.error("[PixelPlay admin] Klarte ikke hente nivåer:", levelsRes.error.message);
+    if (rewardsRes.error) console.error("[PixelPlay admin] Klarte ikke hente premier:", rewardsRes.error.message);
+    if (rewardCodesRes.error) console.error("[PixelPlay admin] Klarte ikke hente kodelister:", rewardCodesRes.error.message);
+    if (claimsRes.error) console.error("[PixelPlay admin] Klarte ikke hente rabattlogg:", claimsRes.error.message);
     if (recordsRes.error) console.error("[PixelPlay admin] Klarte ikke hente spillrekorder:", recordsRes.error.message);
     if (avatarRes.error) console.error("[PixelPlay admin] Klarte ikke hente profilbilde-valg:", avatarRes.error.message);
 
     state.profiles = profilesRes.data || [];
     state.levels = levelsRes.data || [];
+    state.rewards = rewardsRes.data || [];
+    state.rewardCodes = rewardCodesRes.data || [];
+    state.claims = claimsRes.data || [];
     state.gameRecords = recordsRes.data || [];
     state.avatarOptions = avatarRes.data || { colors: [], icons: [] };
     state.games = games;
+  }
+
+  function rewardCodeStats(rewardId) {
+    const codes = state.rewardCodes.filter((c) => c.reward_id === rewardId);
+    const remaining = codes.filter((c) => !c.claimed_by).length;
+    return { total: codes.length, remaining };
+  }
+
+  function usernameFor(userId) {
+    const u = state.profiles.find((p) => p.id === userId);
+    return u ? u.username : userId;
+  }
+
+  function downloadCSV(filename, header, rows) {
+    const escape = (v) => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
+    const csv = [header, ...rows].map((row) => row.map(escape).join(";")).join("\r\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   // ---------------------------------------------------------------------
@@ -136,6 +174,7 @@
     nivaaer: "Poengkravet avgjør når nivået låses opp automatisk.",
     brukere: "Klikk en rad for detaljer. Endringer lagres med én gang.",
     avatar: "Farger og ikoner nye brukere tildeles tilfeldig ved registrering.",
+    koder: "Status og logg. Koder redigeres under «Nivåer og premier».",
   };
 
   function goView(view) {
@@ -605,7 +644,7 @@
     const next = state.levels.reduce((max, l) => Math.max(max, l.level_number), 0) + 1;
     const prevPoints = state.levels.reduce((max, l) => Math.max(max, l.points_required), 0);
     const points = prevPoints + 1000;
-    const { data, error } = await sb.from("levels").insert({ level_number: next, points_required: points, rewards: [] }).select().single();
+    const { data, error } = await sb.from("levels").insert({ level_number: next, points_required: points }).select().single();
     if (error) return flash(Auth.friendlyAuthError(error));
     state.levels.push(data);
     state.openLevels.add(next);
@@ -625,23 +664,110 @@
     const { error } = await sb.from("levels").delete().eq("level_number", lv.level_number);
     if (error) return flash(Auth.friendlyAuthError(error));
     state.levels = state.levels.filter((l) => l.level_number !== lv.level_number);
+    state.rewards = state.rewards.filter((r) => r.level_number !== lv.level_number);
     state.openLevels.delete(lv.level_number);
     renderMain();
     flash("Nivå slettet");
   }
 
-  function collectRewards(card) {
-    return Array.from(card.querySelectorAll(".admin-reward-row")).map((row) => ({
-      brand: row.querySelector('[data-reward-field="brand"]').value.trim(),
-      title: row.querySelector('[data-reward-field="title"]').value.trim(),
-      sub: row.querySelector('[data-reward-field="sub"]').value.trim(),
-    }));
+  async function addReward(levelNumber) {
+    const { data, error } = await sb
+      .from("rewards")
+      .insert({ level_number: levelNumber, brand: "Ny partner", title: "Ny premie", sub: "", code_type: "general", general_code: "BYTT-MEG" })
+      .select()
+      .single();
+    if (error) return flash(Auth.friendlyAuthError(error));
+    state.rewards.push(data);
+    renderMain();
+    flash("Premie lagt til");
+  }
+
+  async function saveReward(r, fields) {
+    const { error } = await sb.from("rewards").update(fields).eq("id", r.id);
+    if (error) { flash(Auth.friendlyAuthError(error)); return false; }
+    Object.assign(r, fields);
+    return true;
+  }
+
+  async function deleteReward(r) {
+    if (!window.confirm(`Slette premien "${r.title}"? Dette sletter også eventuelle kodelister og fjerner den fra brukeres "Mine koder". Kan ikke angres.`)) return;
+    const { error } = await sb.from("rewards").delete().eq("id", r.id);
+    if (error) return flash(Auth.friendlyAuthError(error));
+    state.rewards = state.rewards.filter((x) => x.id !== r.id);
+    state.rewardCodes = state.rewardCodes.filter((c) => c.reward_id !== r.id);
+    state.openCodeLists.delete(r.id);
+    renderMain();
+    flash("Premie fjernet");
+  }
+
+  async function addRewardCodes(rewardId, raw) {
+    const codes = Array.from(new Set(raw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)));
+    if (!codes.length) return flash("Ingen koder å legge til.");
+    const { data, error } = await sb.from("reward_codes").insert(codes.map((code) => ({ reward_id: rewardId, code }))).select();
+    if (error) return flash(Auth.friendlyAuthError(error));
+    state.rewardCodes.push(...(data || []));
+    renderMain();
+    flash(`${codes.length} kode${codes.length === 1 ? "" : "r"} lagt til`);
+  }
+
+  function downloadRewardCodes(r) {
+    const codes = state.rewardCodes.filter((c) => c.reward_id === r.id);
+    if (!codes.length) return flash("Ingen koder å laste ned ennå.");
+    const rows = codes.map((c) => [
+      c.code,
+      c.claimed_by ? "Brukt" : "Ledig",
+      c.claimed_by ? usernameFor(c.claimed_by) : "",
+      c.claimed_at ? new Date(c.claimed_at).toLocaleString("no-NO") : "",
+    ]);
+    const safeName = `${r.brand}-${r.title}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "premie";
+    downloadCSV(`koder-${safeName}.csv`, ["Kode", "Status", "Brukernavn", "Hentet"], rows);
+  }
+
+  function findReward(id) { return state.rewards.find((r) => r.id === id); }
+  function rewardsForLevel(n) { return state.rewards.filter((r) => r.level_number === n); }
+
+  function rewardRowHTML(r) {
+    const isList = r.code_type === "list";
+    const stats = isList ? rewardCodeStats(r.id) : null;
+    const codesOpen = state.openCodeLists.has(r.id);
+    const expiresValue = r.expires_at ? r.expires_at.slice(0, 10) : "";
+    return `
+      <div class="admin-reward-row" data-reward-id="${r.id}">
+        <input type="text" value="${escapeHTML(r.brand)}" placeholder="Merke" data-reward-field="brand">
+        <input type="text" value="${escapeHTML(r.title)}" placeholder="Tittel" data-reward-field="title">
+        <input type="text" value="${escapeHTML(r.sub || "")}" placeholder="Undertekst" data-reward-field="sub">
+        <span class="admin-reward-info" title="Undertekst: kort forklaring som vises under premien på Premier-siden">i</span>
+        <select data-reward-field="code_type" title="Kodetype">
+          <option value="general" ${!isList ? "selected" : ""}>Én kode til alle</option>
+          <option value="list" ${isList ? "selected" : ""}>Kodeliste (én kode per bruker)</option>
+        </select>
+        ${isList
+          ? `<span class="admin-reward-info" style="width:auto;border-radius:12px;padding:0 10px;font-weight:700" title="Antall ledige koder av totalt">${stats.remaining}/${stats.total} igjen</span>
+             <button type="button" class="admin-btn-ghost" data-reward-codes-toggle="${r.id}">${codesOpen ? "Lukk kodeliste" : "Kodeliste"}</button>`
+          : `<input type="text" value="${escapeHTML(r.general_code || "")}" placeholder="Rabattkode" data-reward-field="general_code">`}
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap">
+          Utløper
+          <input type="date" value="${expiresValue}" data-reward-field="expires_at" style="flex:none;width:auto">
+        </label>
+        <button type="button" class="admin-btn-ghost is-danger" data-reward-remove="${r.id}">Fjern</button>
+        ${isList && codesOpen ? `
+          <div class="admin-field is-wide" style="padding-top:8px;flex-basis:100%">
+            <span>LEGG TIL KODER (ÉN PER LINJE)</span>
+            <textarea rows="4" placeholder="F.eks.&#10;NIKE-25-AB12&#10;NIKE-25-CD34" data-reward-codes-input="${r.id}"></textarea>
+            <div style="display:flex;gap:10px;padding-top:4px">
+              <button type="button" class="btn-start" style="width:auto;padding:9px 14px" data-reward-codes-add="${r.id}">Legg til koder</button>
+              <button type="button" class="admin-btn-ghost" data-reward-codes-download="${r.id}">Last ned oversikt (CSV)</button>
+            </div>
+          </div>
+        ` : ""}
+      </div>
+    `;
   }
 
   function renderNivaaer() {
     const rows = state.levels.map((lv) => {
       const open = state.openLevels.has(lv.level_number);
-      const rewards = lv.rewards || [];
+      const rewards = rewardsForLevel(lv.level_number);
       return `
         <div class="admin-row-card" data-level-card="${lv.level_number}">
           <div class="admin-row-head" data-level-toggle="${lv.level_number}">
@@ -660,15 +786,7 @@
               </label>
               <span style="font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--muted)">PREMIER</span>
               <div class="admin-reward-list">
-                ${rewards.map((r, ri) => `
-                  <div class="admin-reward-row">
-                    <input type="text" value="${escapeHTML(r.brand)}" placeholder="Merke" data-reward-field="brand" data-reward-level="${lv.level_number}" data-reward-index="${ri}">
-                    <input type="text" value="${escapeHTML(r.title)}" placeholder="Tittel" data-reward-field="title" data-reward-level="${lv.level_number}" data-reward-index="${ri}">
-                    <input type="text" value="${escapeHTML(r.sub || "")}" placeholder="Undertekst" data-reward-field="sub" data-reward-level="${lv.level_number}" data-reward-index="${ri}">
-                    <span class="admin-reward-info" title="Undertekst: kort forklaring som vises under premien på Premier-siden">i</span>
-                    <button type="button" class="admin-btn-ghost is-danger" data-reward-remove="${ri}" data-reward-level="${lv.level_number}">Fjern</button>
-                  </div>
-                `).join("")}
+                ${rewards.map((r) => rewardRowHTML(r)).join("")}
               </div>
               <div style="display:flex;gap:10px">
                 <button type="button" class="btn-start" style="width:auto;padding:10px 15px" data-level-add-reward="${lv.level_number}">+ Legg til premie</button>
@@ -943,16 +1061,86 @@
   // ---------------------------------------------------------------------
 
   function renderEmptyView() {
-    const isKoder = state.view === "koder";
     return `
       <div class="admin-empty-view">
-        <span class="admin-empty-icon">${isKoder ? "%" : "⚙"}</span>
-        <h2>${isKoder ? "Rabattkoder kommer hit" : "Drift kommer hit"}</h2>
-        <p>${isKoder
-          ? "Oversikt over hentede koder per bruker og nivå, med mulighet for å laste opp egne kodelister. Seksjonen er satt av i menyen slik at den kan bygges videre uten å endre resten av panelet."
-          : "Statusfelt for Supabase, feillogg og vedlikeholdsmodus. Nye admin-seksjoner legges inn som ett nytt punkt i sidemenyen med samme mønster som resten."}</p>
+        <span class="admin-empty-icon">⚙</span>
+        <h2>Drift kommer hit</h2>
+        <p>Statusfelt for Supabase, feillogg og vedlikeholdsmodus. Nye admin-seksjoner legges inn som ett nytt punkt i sidemenyen med samme mønster som resten.</p>
       </div>
     `;
+  }
+
+  function renderKoder() {
+    const rewardRows = state.rewards.map((r) => {
+      const isList = r.code_type === "list";
+      const stats = isList ? rewardCodeStats(r.id) : null;
+      const statusLabel = isList
+        ? `${stats.remaining}/${stats.total} ledig`
+        : `Én kode til alle: ${escapeHTML(r.general_code || "–")}`;
+      const expired = r.expires_at && new Date(r.expires_at) < new Date();
+      return `
+        <tr>
+          <td>${r.level_number}</td>
+          <td>${escapeHTML(r.brand)} – ${escapeHTML(r.title)}</td>
+          <td>${statusLabel}</td>
+          <td>${r.expires_at ? formatDate(r.expires_at) : "–"}${expired ? ' <span style="color:#ff9385">(utløpt)</span>' : ""}</td>
+          <td>${isList ? `<button type="button" class="admin-btn-ghost" data-reward-codes-download="${r.id}">Last ned CSV</button>` : ""}</td>
+        </tr>
+      `;
+    }).join("");
+
+    const claimRows = state.claims.map((c) => `
+      <tr>
+        <td>${escapeHTML(usernameFor(c.user_id))}</td>
+        <td>${escapeHTML(c.brand)} – ${escapeHTML(c.title)}</td>
+        <td>${escapeHTML(c.code)}</td>
+        <td>${new Date(c.created_at).toLocaleString("no-NO")}</td>
+      </tr>
+    `).join("");
+
+    return `
+      <div class="admin-section">
+        <div class="admin-toolbar">
+          <span class="admin-toolbar-count">${state.rewards.length} premier</span>
+          <span class="admin-card-spacer"></span>
+          <button type="button" class="admin-btn-ghost" data-koder-download-all>Last ned full oversikt (CSV)</button>
+        </div>
+        <div class="admin-card" style="overflow-x:auto">
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Premier og kampanjer</h2>
+          <span class="admin-card-sub">Koder redigeres under «Nivåer og premier». Her ser du status og kan laste ned lister.</span>
+          <table class="records-table">
+            <thead><tr><th>Nivå</th><th>Premie</th><th>Status</th><th>Utløper</th><th></th></tr></thead>
+            <tbody>${rewardRows || `<tr><td colspan="5">Ingen premier ennå.</td></tr>`}</tbody>
+          </table>
+        </div>
+        <div class="admin-card" style="overflow-x:auto">
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Logg – hvem har fått hvilken kode</h2>
+          <span class="admin-card-sub">${state.claims.length} hentede koder totalt, nyeste øverst.</span>
+          <table class="records-table">
+            <thead><tr><th>Bruker</th><th>Premie</th><th>Kode</th><th>Hentet</th></tr></thead>
+            <tbody>${claimRows || `<tr><td colspan="4">Ingen koder hentet ennå.</td></tr>`}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function downloadAllCodesOverview() {
+    if (!state.rewards.length) return flash("Ingen premier å laste ned ennå.");
+    const rows = state.rewards.map((r) => {
+      const isList = r.code_type === "list";
+      const stats = isList ? rewardCodeStats(r.id) : null;
+      return [
+        r.level_number,
+        r.brand,
+        r.title,
+        isList ? "Kodeliste" : "Én kode til alle",
+        isList ? stats.total : 1,
+        isList ? stats.remaining : "–",
+        r.expires_at ? new Date(r.expires_at).toLocaleDateString("no-NO") : "",
+      ];
+    });
+    downloadCSV("rabattkoder-oversikt.csv", ["Nivå", "Merke", "Tittel", "Type", "Totalt", "Ledige", "Utløper"], rows);
   }
 
   // ---------------------------------------------------------------------
@@ -967,7 +1155,7 @@
       nivaaer: renderNivaaer,
       brukere: renderBrukere,
       avatar: renderAvatar,
-      koder: renderEmptyView,
+      koder: renderKoder,
       drift: renderEmptyView,
     };
     const fn = renderers[state.view] || renderOversikt;
@@ -1003,6 +1191,8 @@
       if (quick.dataset.quick === "new-level") return addLevel();
     }
 
+    if (t.closest("[data-koder-download-all]")) return downloadAllCodesOverview();
+
     // Spill
     const gameToggle = t.closest("[data-game-toggle]");
     if (gameToggle && !t.closest("[data-game-hidden-toggle]")) {
@@ -1024,22 +1214,32 @@
       state.openLevels.has(n) ? state.openLevels.delete(n) : state.openLevels.add(n);
       return renderMain();
     }
-    const addReward = t.closest("[data-level-add-reward]");
-    if (addReward) {
-      const lv = findLevel(Number(addReward.dataset.levelAddReward));
-      if (!lv) return;
-      const rewards = (lv.rewards || []).concat({ brand: "Ny partner", title: "Ny premie", sub: "" });
-      saveLevel(lv, { rewards }).then((ok) => { if (ok) { renderMain(); flash("Premie lagt til"); } });
-      return;
-    }
+    const addRewardBtn = t.closest("[data-level-add-reward]");
+    if (addRewardBtn) return addReward(Number(addRewardBtn.dataset.levelAddReward));
+
     const removeReward = t.closest("[data-reward-remove]");
     if (removeReward) {
-      const lv = findLevel(Number(removeReward.dataset.rewardLevel));
-      if (!lv) return;
-      const card = removeReward.closest("[data-level-card]");
-      const rewards = collectRewards(card);
-      rewards.splice(Number(removeReward.dataset.rewardRemove), 1);
-      saveLevel(lv, { rewards }).then((ok) => { if (ok) { renderMain(); flash("Premie fjernet"); } });
+      const r = findReward(Number(removeReward.dataset.rewardRemove));
+      if (r) deleteReward(r);
+      return;
+    }
+    const codesToggle = t.closest("[data-reward-codes-toggle]");
+    if (codesToggle) {
+      const id = Number(codesToggle.dataset.rewardCodesToggle);
+      state.openCodeLists.has(id) ? state.openCodeLists.delete(id) : state.openCodeLists.add(id);
+      return renderMain();
+    }
+    const codesAdd = t.closest("[data-reward-codes-add]");
+    if (codesAdd) {
+      const id = Number(codesAdd.dataset.rewardCodesAdd);
+      const textarea = els.main.querySelector(`[data-reward-codes-input="${id}"]`);
+      if (textarea) addRewardCodes(id, textarea.value);
+      return;
+    }
+    const codesDownload = t.closest("[data-reward-codes-download]");
+    if (codesDownload) {
+      const r = findReward(Number(codesDownload.dataset.rewardCodesDownload));
+      if (r) downloadRewardCodes(r);
       return;
     }
     const delLevel = t.closest("[data-level-delete]");
@@ -1148,11 +1348,24 @@
     }
     const rewardField = t.closest("[data-reward-field]");
     if (rewardField) {
-      const lv = findLevel(Number(rewardField.dataset.rewardLevel));
-      if (!lv) return;
-      const card = rewardField.closest("[data-level-card]");
-      const rewards = collectRewards(card);
-      saveLevel(lv, { rewards }).then((ok) => { if (ok) flash("Lagret!"); });
+      const row = rewardField.closest("[data-reward-id]");
+      const r = findReward(Number(row.dataset.rewardId));
+      if (!r) return;
+      const field = rewardField.dataset.rewardField;
+      let value = t.value.trim();
+      const fields = {};
+      if (field === "code_type") {
+        fields.code_type = value;
+        if (value === "general" && !r.general_code) fields.general_code = "BYTT-MEG";
+      } else if (field === "expires_at") {
+        fields.expires_at = value ? new Date(value + "T23:59:59").toISOString() : null;
+      } else if (field === "general_code") {
+        if (r.code_type === "general" && !value) return flash("Kode kan ikke være tom for «Én kode til alle».");
+        fields.general_code = value || null;
+      } else {
+        fields[field] = value;
+      }
+      saveReward(r, fields).then((ok) => { if (ok) { renderMain(); flash("Lagret!"); } });
       return;
     }
     const rename = t.closest("[data-user-rename]");

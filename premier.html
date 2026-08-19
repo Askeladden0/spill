@@ -173,6 +173,8 @@
 
   let profile = null;
   let levels = [];
+  let rewards = [];
+  let claimedRewardIds = new Set();
   let miniRotation = 0;
   let bigRotation = 0;
   let spinning = false;
@@ -271,9 +273,7 @@
     document.querySelector("[data-stat-points]").textContent = fmt(points);
     document.querySelector("[data-level-tooltip]").textContent = `${fmt(points)} poeng totalt`;
 
-    const availableCodes = levels
-      .filter((lv) => lv.level_number <= dl)
-      .reduce((sum, lv) => sum + (lv.rewards ? lv.rewards.length : 0), 0);
+    const availableCodes = rewards.filter((r) => r.level_number <= dl).length;
     document.querySelector('[data-stat-codes]').textContent = availableCodes;
   }
 
@@ -304,10 +304,27 @@
         const labelColor = state === "locked" ? "#7c8aa0" : "#2ee87f";
         const lineColor = unlocked ? "rgba(46,232,127,.35)" : "rgba(255,255,255,.08)";
 
-        const rewardsHTML = (lv.rewards || [])
-          .map(
-            (r, ri) => `
-            <article class="reward-card" style="opacity:${unlocked ? 1 : 0.55}">
+        const rewardsHTML = rewards
+          .filter((r) => r.level_number === lv.level_number)
+          .map((r) => {
+            const claimed = claimedRewardIds.has(r.id);
+            const expired = r.expires_at && new Date(r.expires_at) < new Date();
+            let label = "Låses på nivå " + lv.level_number;
+            let btnClass = "is-locked";
+            let disabled = true;
+            if (unlocked && expired) {
+              label = "Utløpt";
+            } else if (unlocked && claimed) {
+              label = "Innløst";
+              btnClass = "is-unlocked";
+              disabled = false;
+            } else if (unlocked) {
+              label = "Hent rabattkode";
+              btnClass = "is-unlocked";
+              disabled = false;
+            }
+            return `
+            <article class="reward-card" style="opacity:${unlocked && !expired ? 1 : 0.55}">
               <div class="reward-thumb">
                 <span class="reward-thumb-slot">[ partnerbilde ]</span>
                 <span class="reward-brand-tag">${r.brand}</span>
@@ -317,14 +334,14 @@
                   <h3 class="reward-title">${r.title}</h3>
                   <span class="reward-sub">${r.sub || ""}</span>
                 </div>
-                <button type="button" class="btn-reward ${unlocked ? "is-unlocked" : "is-locked"}"
-                  ${unlocked ? `data-redeem="${lv.level_number}:${ri}"` : "disabled"}>
-                  ${unlocked ? "Hent rabattkode" : "Låses på nivå " + lv.level_number}
+                <button type="button" class="btn-reward ${btnClass}"
+                  ${disabled ? "disabled" : `data-redeem="${r.id}"`}>
+                  ${label}
                 </button>
               </div>
             </article>
-          `
-          )
+          `;
+          })
           .join("");
 
         return `
@@ -346,12 +363,7 @@
       .join("");
 
     el.querySelectorAll("[data-redeem]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const [levelNumber, rewardIndex] = btn.dataset.redeem.split(":").map(Number);
-        const lv = levels.find((l) => l.level_number === levelNumber);
-        const reward = lv && lv.rewards[rewardIndex];
-        if (reward) openCodeModal(reward);
-      });
+      btn.addEventListener("click", () => openCodeModal(Number(btn.dataset.redeem)));
     });
   }
 
@@ -399,32 +411,37 @@
   }
 
   // ---------- Rabattkode-modal ----------
-  function randomCode(brand, title) {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let suffix = "";
-    for (let i = 0; i < 4; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
-    const pctMatch = (title || "").match(/(\d+)\s*%/);
-    const num = pctMatch ? pctMatch[1] : String(Math.floor(Math.random() * 90 + 10));
-    const brandSlug = (brand || "KODE").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) || "KODE";
-    return `${brandSlug}-${num}-${suffix}`;
-  }
-
-  async function openCodeModal(reward) {
+  async function openCodeModal(rewardId) {
     if (!profile) {
       window.location.href = "login.html";
       return;
     }
     const modal = document.querySelector("[data-code-modal]");
-    const code = randomCode(reward.brand, reward.title);
+    const brandEl = document.querySelector("[data-code-brand]");
+    const titleEl = document.querySelector("[data-code-title]");
+    const valueEl = document.querySelector("[data-code-value]");
 
-    document.querySelector("[data-code-brand]").textContent = reward.brand;
-    document.querySelector("[data-code-title]").textContent = reward.title;
-    document.querySelector("[data-code-value]").textContent = code;
+    brandEl.textContent = "Henter kode …";
+    titleEl.textContent = "";
+    valueEl.textContent = "–";
     modal.hidden = false;
 
-    await sb
-      .from("user_codes")
-      .insert({ user_id: profile.id, brand: reward.brand, title: reward.title, code });
+    const { data, error } = await sb.rpc("claim_reward", { p_reward_id: rewardId }).single();
+
+    if (error) {
+      brandEl.textContent = "Kunne ikke hente kode";
+      titleEl.textContent = error.message.includes("Ingen flere koder")
+        ? "Alle kodene for denne premien er dessverre delt ut. Sjekk igjen senere."
+        : error.message;
+      valueEl.textContent = "–";
+      return;
+    }
+
+    brandEl.textContent = data.brand;
+    titleEl.textContent = data.title;
+    valueEl.textContent = data.code;
+    claimedRewardIds.add(rewardId);
+    renderLadder();
     renderFeed();
   }
 
@@ -511,8 +528,18 @@
 
   // ---------- Init ----------
   async function loadLevels() {
-    const { data, error } = await sb.from("levels").select("level_number, points_required, rewards").order("level_number");
-    if (!error && data) levels = data;
+    const [levelsRes, rewardsRes] = await Promise.all([
+      sb.from("levels").select("level_number, points_required").order("level_number"),
+      sb.from("rewards").select("id, level_number, brand, title, sub, expires_at").order("level_number").order("sort_order"),
+    ]);
+    if (!levelsRes.error && levelsRes.data) levels = levelsRes.data;
+    if (!rewardsRes.error && rewardsRes.data) rewards = rewardsRes.data;
+  }
+
+  async function loadClaimedRewards() {
+    if (!profile) { claimedRewardIds = new Set(); return; }
+    const { data, error } = await sb.from("user_codes").select("reward_id").eq("user_id", profile.id).not("reward_id", "is", null);
+    claimedRewardIds = new Set(!error && data ? data.map((c) => c.reward_id) : []);
   }
 
   (async function init() {
@@ -522,13 +549,14 @@
     setInterval(spinMiniForever, 12000);
     renderFeed();
 
-    await loadLevels();
+    await Promise.all([loadLevels(), loadClaimedRewards()]);
     renderLevelCard();
     renderLadder();
   })();
 
   sb.auth.onAuthStateChange(async () => {
     profile = await Auth.getCurrentProfile();
+    await loadClaimedRewards();
     renderLevelCard();
     renderLadder();
   });

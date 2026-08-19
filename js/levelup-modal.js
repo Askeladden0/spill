@@ -141,14 +141,13 @@
   async function loadLevels() {
     if (levelsCache) return levelsCache;
     if (!sb) return [];
-    const { data, error } = await sb.from("levels").select("level_number, points_required, rewards").order("level_number");
+    const { data, error } = await sb.from("rewards").select("level_number, brand, title").order("level_number");
     levelsCache = !error && data ? data : [];
     return levelsCache;
   }
 
-  function rewardForLevel(levels, level) {
-    const lv = levels.find((l) => l.level_number === level);
-    const rewards = lv && lv.rewards ? lv.rewards : [];
+  function rewardForLevel(allRewards, level) {
+    const rewards = allRewards.filter((r) => r.level_number === level);
     if (!rewards.length) return null;
     if (rewards.length === 1) return `${rewards[0].brand} – ${rewards[0].title}`;
     return `${rewards.length} nye premier hos ${rewards[0].brand} og flere`;
