@@ -549,7 +549,200 @@ revoke all on function public.admin_delete_user(uuid) from public;
 grant execute on function public.admin_delete_user(uuid) to authenticated;
 
 -- ---------------------------------------------------------------------------
--- 18. Storage-bucket for spillbilder (cover/ikon), lastet opp fra
+-- 18. rewards – erstatter det tidligere frie jsonb-feltet levels.rewards.
+--     Hver rad er én premie/kampanje knyttet til et nivå. code_type avgjør
+--     hvordan koden tildeles ved claim:
+--       'general' – alle med opplåsing bruker samme kode (general_code).
+--       'list'    – hver bruker får tildelt én unik kode fra reward_codes
+--                    (seksjon 19), og den koden er deretter brukt opp.
+--     expires_at (valgfri) gjør at premien ikke lenger kan claimes etter en
+--     gitt dato. Redigeres fra adminpanelet (admin.html, "Nivåer og premier").
+-- ---------------------------------------------------------------------------
+create table if not exists public.rewards (
+  id bigint generated always as identity primary key,
+  level_number int not null references public.levels (level_number) on delete cascade,
+  brand text not null default '',
+  title text not null default '',
+  sub text not null default '',
+  code_type text not null default 'general' check (code_type in ('general', 'list')),
+  general_code text,
+  expires_at timestamptz,
+  sort_order int not null default 0,
+  created_at timestamptz not null default now(),
+  constraint rewards_general_code_required
+    check (code_type <> 'general' or general_code is not null)
+);
+
+create index if not exists rewards_level_idx on public.rewards (level_number);
+
+-- Engangsmigrering: overfør eksisterende premier fra levels.rewards (jsonb)
+-- til den nye tabellen, med en tydelig placeholder-kode som admin må bytte
+-- ut med en ekte kode (eller endre til kodeliste) i adminpanelet.
+insert into public.rewards (level_number, brand, title, sub, code_type, general_code, sort_order)
+select lv.level_number,
+       coalesce(elem ->> 'brand', ''),
+       coalesce(elem ->> 'title', ''),
+       coalesce(elem ->> 'sub', ''),
+       'general',
+       'SETT-KODE-I-ADMIN',
+       (ord - 1)::int
+  from public.levels lv,
+       lateral jsonb_array_elements(coalesce(lv.rewards, '[]'::jsonb)) with ordinality as t (elem, ord)
+ where not exists (select 1 from public.rewards r where r.level_number = lv.level_number);
+
+alter table public.rewards enable row level security;
+
+drop policy if exists "rewards_select_all" on public.rewards;
+create policy "rewards_select_all" on public.rewards
+  for select using (true);
+
+drop policy if exists "rewards_admin_write" on public.rewards;
+create policy "rewards_admin_write" on public.rewards
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 19. reward_codes – kodepool for premier med code_type = 'list'. Admin laster
+--     opp koder her (én per rad); claim_reward (seksjon 21) tildeler atomisk
+--     én ledig rad (claimed_by is null) per bruker og markerer den brukt opp.
+--     Kun admin har direkte lesetilgang – claim_reward er SECURITY DEFINER og
+--     omgår RLS, så vanlige brukere ser aldri hele kodelisten, kun sin egen
+--     tildelte kode (via user_codes).
+-- ---------------------------------------------------------------------------
+create table if not exists public.reward_codes (
+  id bigint generated always as identity primary key,
+  reward_id bigint not null references public.rewards (id) on delete cascade,
+  code text not null,
+  claimed_by uuid references auth.users (id) on delete set null,
+  claimed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists reward_codes_reward_idx on public.reward_codes (reward_id);
+create index if not exists reward_codes_unclaimed_idx on public.reward_codes (reward_id) where claimed_by is null;
+create unique index if not exists reward_codes_reward_code_idx on public.reward_codes (reward_id, code);
+
+alter table public.reward_codes enable row level security;
+
+drop policy if exists "reward_codes_admin_all" on public.reward_codes;
+create policy "reward_codes_admin_all" on public.reward_codes
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 20. user_codes – kobles nå til rewards (reward_id) slik at vi kan håndheve
+--     at hver premie kun kan claimes én gang per bruker. Direkte innsetting
+--     fra klienten stenges: koden skal ikke havne i user_codes før claim er
+--     bekreftet server-side av claim_reward (seksjon 21), aldri via en rå
+--     insert fra klienten.
+-- ---------------------------------------------------------------------------
+alter table public.user_codes add column if not exists reward_id bigint references public.rewards (id) on delete cascade;
+
+create unique index if not exists user_codes_user_reward_idx
+  on public.user_codes (user_id, reward_id)
+  where reward_id is not null;
+
+drop policy if exists "user_codes_insert_own" on public.user_codes;
+
+drop policy if exists "user_codes_select_admin" on public.user_codes;
+create policy "user_codes_select_admin" on public.user_codes
+  for select using (public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 21. RPC: claim_reward – eneste måte en bruker kan hente ut en rabattkode
+--     på. Kjøres server-side (SECURITY DEFINER) slik at:
+--       - nivåkravet sjekkes mot profiles.level (kan ikke jukses fra klienten)
+--       - en 'list'-premie tildeles atomisk via UPDATE ... FOR UPDATE SKIP
+--         LOCKED, så to samtidige claims aldri kan få tildelt samme kode
+--       - koden aldri sendes til klienten før den er skrevet til user_codes
+--       - en bruker som claimer samme premie på nytt får tilbake koden sin
+--         igjen (already_claimed = true) i stedet for en ny tildeling
+--       - en tom kodeliste gir en tydelig feilmelding klienten kan vise,
+--         ikke en krasj
+-- ---------------------------------------------------------------------------
+create or replace function public.claim_reward(p_reward_id bigint)
+returns table (brand text, title text, sub text, code text, already_claimed boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  r public.rewards;
+  my_level int;
+  existing public.user_codes;
+  picked_code text;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å hente en rabattkode';
+  end if;
+
+  select * into r from public.rewards where id = p_reward_id;
+  if r is null then
+    raise exception 'Fant ikke premien';
+  end if;
+
+  if r.expires_at is not null and r.expires_at < now() then
+    raise exception 'Denne premien er utløpt';
+  end if;
+
+  select level into my_level from public.profiles where id = auth.uid();
+  if my_level is null or my_level < r.level_number then
+    raise exception 'Du har ikke låst opp denne premien ennå';
+  end if;
+
+  select * into existing from public.user_codes where user_id = auth.uid() and reward_id = p_reward_id;
+  if existing is not null then
+    return query select r.brand, r.title, r.sub, existing.code, true;
+    return;
+  end if;
+
+  if r.code_type = 'general' then
+    picked_code := r.general_code;
+  else
+    update public.reward_codes
+       set claimed_by = auth.uid(), claimed_at = now()
+     where id = (
+       select id from public.reward_codes
+        where reward_id = p_reward_id and claimed_by is null
+        order by id
+        limit 1
+        for update skip locked
+     )
+     returning code into picked_code;
+
+    if picked_code is null then
+      raise exception 'Ingen flere koder igjen for denne premien akkurat nå';
+    end if;
+  end if;
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, p_reward_id);
+
+  return query select r.brand, r.title, r.sub, picked_code, false;
+end;
+$$;
+
+revoke all on function public.claim_reward(bigint) from public;
+grant execute on function public.claim_reward(bigint) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 22. RPC: reward_codes_remaining – antall ledige koder igjen for en
+--     'list'-premie, uten å eksponere selve kodene. Brukes av adminpanelet
+--     for å vise "X koder igjen" per premie/kampanje.
+-- ---------------------------------------------------------------------------
+create or replace function public.reward_codes_remaining(p_reward_id bigint)
+returns bigint
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select count(*) from public.reward_codes where reward_id = p_reward_id and claimed_by is null;
+$$;
+
+revoke all on function public.reward_codes_remaining(bigint) from public;
+grant execute on function public.reward_codes_remaining(bigint) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 23. Storage-bucket for spillbilder (cover/ikon), lastet opp fra
 --     adminpanelet (admin.html) under "Spill". Bildene er offentlig lesbare
 --     (samme som resten av forsiden), men kun admin kan laste opp/endre/
 --     slette. Kjør denne delen i Supabase SQL-editoren (evt. hele filen på
