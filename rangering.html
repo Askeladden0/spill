@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PixelPlay · Rangering</title>
+<title>SpareTriks · Rangering</title>
+<meta name="description" content="Se hvem som topper poenglisten og har låst opp flest rabattkoder hos SpareTriks.">
+<meta property="og:title" content="SpareTriks · Rangering">
+<meta property="og:description" content="Se hvem som topper poenglisten og har låst opp flest rabattkoder hos SpareTriks.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SpareTriks">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,13 +20,13 @@
   <header class="site-header">
     <div class="header-left">
       <a href="index.html" class="logo">
-        <span class="logo-mark">P</span>
-        <span class="logo-text">PIXEL<span>PLAY</span></span>
+        <span class="logo-mark">S</span>
+        <span class="logo-text">SPARE<span>TRIKS</span></span>
       </a>
       <nav class="main-nav">
         <a href="index.html#spill" class="nav-link" data-page="spill">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
-          Spill
+          Triks
         </a>
         <a href="premier.html" class="nav-link" data-page="premier">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
@@ -65,7 +70,7 @@
           <span>PLASS</span><span>SPILLER</span><span>NIVÅ</span><span>KAMPER</span><span>POENG</span>
         </div>
         <div class="leaderboard-body" data-leaderboard-body>
-          <div class="leaderboard-empty">Laster spillere …</div>
+          <div class="leaderboard-empty">Laster brukere …</div>
         </div>
         <div class="leaderboard-foot">
           <span class="section-sub" data-shown-label></span>
@@ -75,15 +80,15 @@
     </section>
 
     <section data-mygames-section hidden>
-      <div class="section-heading"><h2>Din score per spill</h2></div>
+      <div class="section-heading"><h2>Din score per triks</h2></div>
       <div class="mygames-grid" data-mygames-grid></div>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="footer-brand">
-      <span class="footer-logo-mark">P</span>
-      <span class="footer-copy">© 2026 PixelPlay</span>
+      <span class="footer-logo-mark">S</span>
+      <span class="footer-copy">© 2026 SpareTriks</span>
     </div>
     <nav class="footer-nav">
       <a href="#kontakt">Kontakt</a>
@@ -122,7 +127,7 @@
   }
 
   function scopeLabel(s) {
-    if (s === "total") return "Alle spill samlet";
+    if (s === "total") return "Alle triks samlet";
     const g = games.find((x) => x.id === s);
     return g ? g.name : s;
   }
@@ -136,7 +141,7 @@
   }
 
   function renderScopeChips() {
-    const items = [{ id: "total", label: "Alle spill samlet" }].concat(
+    const items = [{ id: "total", label: "Alle triks samlet" }].concat(
       games.map((g) => ({ id: g.id, label: g.name, game: g }))
     );
     document.querySelector("[data-scope-chips]").innerHTML = items
@@ -175,7 +180,7 @@
       slot.innerHTML = `
         <div class="rank-me-guest">
           <span class="section-sub">Du har ikke spilt «${scopeLabel(scope)}» ennå, så du er ikke rangert her.</span>
-          <a href="index.html#spill"><button class="btn-primary" type="button">Finn et spill</button></a>
+          <a href="index.html#spill"><button class="btn-primary" type="button">Finn et triks</button></a>
         </div>
       `;
       return;
@@ -224,7 +229,7 @@
     const list = document.querySelector("[data-podium-list]");
 
     if (!board.length) {
-      list.innerHTML = `<span class="rank-podium-empty">Ingen spillere ennå.</span>`;
+      list.innerHTML = `<span class="rank-podium-empty">Ingen brukere ennå.</span>`;
       return;
     }
 
@@ -376,7 +381,7 @@
           `
           )
           .join("")
-      : `<div class="rank-search-empty">Fant ingen spillere som matcher «${query}».</div>`;
+      : `<div class="rank-search-empty">Fant ingen brukere som matcher «${query}».</div>`;
 
     searchResults.hidden = false;
   }
