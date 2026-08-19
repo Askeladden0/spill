@@ -548,6 +548,34 @@ $$;
 revoke all on function public.admin_delete_user(uuid) from public;
 grant execute on function public.admin_delete_user(uuid) to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 18. Storage-bucket for spillbilder (cover/ikon), lastet opp fra
+--     adminpanelet (admin.html) under "Spill". Bildene er offentlig lesbare
+--     (samme som resten av forsiden), men kun admin kan laste opp/endre/
+--     slette. Kjør denne delen i Supabase SQL-editoren (evt. hele filen på
+--     nytt) for å ta i bruk bildeopplasting.
+-- ---------------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('game-images', 'game-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "game_images_select_all" on storage.objects;
+create policy "game_images_select_all" on storage.objects
+  for select using (bucket_id = 'game-images');
+
+drop policy if exists "game_images_admin_write" on storage.objects;
+create policy "game_images_admin_write" on storage.objects
+  for insert to authenticated with check (bucket_id = 'game-images' and public.is_admin());
+
+drop policy if exists "game_images_admin_update" on storage.objects;
+create policy "game_images_admin_update" on storage.objects
+  for update to authenticated using (bucket_id = 'game-images' and public.is_admin())
+  with check (bucket_id = 'game-images' and public.is_admin());
+
+drop policy if exists "game_images_admin_delete" on storage.objects;
+create policy "game_images_admin_delete" on storage.objects
+  for delete to authenticated using (bucket_id = 'game-images' and public.is_admin());
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
