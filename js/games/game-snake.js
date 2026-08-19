@@ -21,6 +21,7 @@
     let over = false;
     let timer = null;
     let session = null;
+    let cellEls = null;
 
     window.PixelPlayGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -89,7 +90,9 @@
 
       snake.unshift({ r, c });
 
+      let ateAt = null;
       if (food && r === food.r && c === food.c) {
+        ateAt = { r, c };
         score += 10;
         session.setScore(score);
         placeFood();
@@ -97,7 +100,7 @@
         snake.pop();
       }
 
-      render();
+      render(ateAt);
     }
 
     function endGame() {
@@ -106,14 +109,35 @@
       session.finish(score);
     }
 
-    function render() {
+    // Rutene bygges kun én gang og gjenbrukes videre (i stedet for å bygges
+    // helt på nytt hvert eneste tikk). Slik kan CSS-overganger og
+    // pop-animasjonen på nytt hode faktisk spille av i stedet for å bli
+    // avbrutt av at elementene stadig erstattes med helt nye.
+    function buildBoard() {
       const boardEl = session.playArea.querySelector("[data-board-snake]");
-      if (!boardEl) return;
+      if (!boardEl) return null;
       boardEl.innerHTML = "";
       boardEl.style.setProperty("--snake-size", SIZE);
+      cellEls = [];
       for (let r = 0; r < SIZE; r++) {
+        const rowEls = [];
         for (let c = 0; c < SIZE; c++) {
           const cell = document.createElement("div");
+          cell.className = "cell-snake";
+          boardEl.appendChild(cell);
+          rowEls.push(cell);
+        }
+        cellEls.push(rowEls);
+      }
+      return boardEl;
+    }
+
+    function render(ateAt) {
+      if (!session.playArea.querySelector("[data-board-snake]")) return;
+      if (!cellEls) buildBoard();
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          const cell = cellEls[r][c];
           cell.className = "cell-snake";
           if (food && food.r === r && food.c === c) {
             cell.classList.add("is-food");
@@ -121,10 +145,10 @@
           const segIndex = snake.findIndex((seg) => seg.r === r && seg.c === c);
           if (segIndex === 0) {
             cell.classList.add("is-head");
+            if (ateAt && ateAt.r === r && ateAt.c === c) cell.classList.add("is-eating");
           } else if (segIndex > 0) {
             cell.classList.add("is-body");
           }
-          boardEl.appendChild(cell);
         }
       }
     }

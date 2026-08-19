@@ -12,6 +12,13 @@
   const GAME_ID = "block-blast";
   const SIZE = 8;
   const COLORS = ["a", "b", "c", "d", "e", "f"];
+  // Poeng per rute som legges ned, og poeng per rad/kolonne som sprenges.
+  // Justert opp fra de opprinnelige (1 poeng/rute, 8 poeng/linje) slik at et
+  // typisk parti gir omtrent like mange poeng som de andre spillene på
+  // siden, i stedet for å ligge langt bak dem.
+  const POINTS_PER_CELL = 3;
+  const POINTS_PER_CLEARED_LINE = 20;
+  const MULTI_CLEAR_BONUS = 1.5;
 
   const SHAPES = [
     [[0, 0]],
@@ -34,10 +41,8 @@
     [[0, 0], [0, 1], [1, 0]],
   ];
 
-  function randomShape() {
-    const cells = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-    return { id: Math.random().toString(36).slice(2), cells, color };
+  function randomColor() {
+    return COLORS[Math.floor(Math.random() * COLORS.length)];
   }
 
   function shapeSize(cells) {
@@ -71,7 +76,7 @@
 
     function initGame() {
       grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
-      tray = [randomShape(), randomShape(), randomShape()];
+      tray = newTray();
       score = 0;
       over = false;
       session.setScore(0);
@@ -96,11 +101,43 @@
       return false;
     }
 
+    function boardFillRatio() {
+      let filled = 0;
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (grid[r][c]) filled++;
+        }
+      }
+      return filled / (SIZE * SIZE);
+    }
+
+    // Ekte Block Blast unngår sjelden-rettferdige tap ved å tilpasse hvilke
+    // klosser som deles ut etter hvor fullt brettet er, og ved (nesten)
+    // alltid å sørge for at minst én av de tre klossene faktisk passer et
+    // sted. Vi gjør det samme her i stedet for å trekke helt uvektet.
+    function weightedShape(fillRatio) {
+      const maxCells = fillRatio > 0.72 ? 3 : fillRatio > 0.5 ? 4 : SHAPES.reduce((m, s) => Math.max(m, s.length), 0);
+      const pool = SHAPES.filter((cells) => cells.length <= maxCells);
+      const cells = (pool.length ? pool : SHAPES)[Math.floor(Math.random() * (pool.length || SHAPES.length))];
+      return { id: Math.random().toString(36).slice(2), cells, color: randomColor() };
+    }
+
+    function newTray() {
+      const fillRatio = boardFillRatio();
+      const pieces = [weightedShape(fillRatio), weightedShape(fillRatio), weightedShape(fillRatio)];
+      if (!pieces.some((p) => anyFit(p))) {
+        pieces[2] = { id: Math.random().toString(36).slice(2), cells: SHAPES[0], color: randomColor() };
+      }
+      return pieces;
+    }
+
     function placePiece(piece, row, col) {
+      const justPlaced = [];
       for (const [dr, dc] of piece.cells) {
         grid[row + dr][col + dc] = piece.color;
+        justPlaced.push(`${row + dr},${col + dc}`);
       }
-      score += piece.cells.length;
+      score += piece.cells.length * POINTS_PER_CELL;
 
       const fullRows = [];
       const fullCols = [];
@@ -111,19 +148,25 @@
         if (grid.every((row) => row[c])) fullCols.push(c);
       }
 
-      if (fullRows.length || fullCols.length) {
-        for (const r of fullRows) grid[r].fill(null);
-        for (const c of fullCols) for (let r = 0; r < SIZE; r++) grid[r][c] = null;
-        const cleared = fullRows.length + fullCols.length;
-        score += cleared * SIZE * (cleared > 1 ? 1.5 : 1);
-      }
-
       tray = tray.filter((p) => p.id !== piece.id);
-      if (tray.length === 0) tray = [randomShape(), randomShape(), randomShape()];
+      if (tray.length === 0) tray = newTray();
 
       session.setScore(Math.round(score));
-      render();
-      checkGameOver();
+      render(justPlaced, fullRows, fullCols);
+
+      if (fullRows.length || fullCols.length) {
+        window.setTimeout(() => {
+          for (const r of fullRows) grid[r].fill(null);
+          for (const c of fullCols) for (let r = 0; r < SIZE; r++) grid[r][c] = null;
+          const cleared = fullRows.length + fullCols.length;
+          score += cleared * POINTS_PER_CLEARED_LINE * (cleared > 1 ? MULTI_CLEAR_BONUS : 1);
+          session.setScore(Math.round(score));
+          render();
+          checkGameOver();
+        }, 190);
+      } else {
+        checkGameOver();
+      }
     }
 
     function checkGameOver() {
@@ -134,7 +177,10 @@
       }
     }
 
-    function render() {
+    function render(justPlaced, flashRows, flashCols) {
+      justPlaced = justPlaced || [];
+      flashRows = flashRows || [];
+      flashCols = flashCols || [];
       boardEl.innerHTML = "";
       boardEl.style.setProperty("--blast-size", SIZE);
       for (let r = 0; r < SIZE; r++) {
@@ -143,7 +189,12 @@
           cell.className = "cell-blast";
           cell.dataset.row = String(r);
           cell.dataset.col = String(c);
-          if (grid[r][c]) cell.classList.add("is-filled", `is-${grid[r][c]}`);
+          if (grid[r][c]) {
+            cell.classList.add("is-filled", `is-${grid[r][c]}`);
+            const key = `${r},${c}`;
+            if (flashRows.includes(r) || flashCols.includes(c)) cell.classList.add("is-clearing");
+            else if (justPlaced.includes(key)) cell.classList.add("is-just-placed");
+          }
           boardEl.appendChild(cell);
         }
       }

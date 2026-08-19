@@ -33,6 +33,7 @@
   function start(container) {
     let grid = [];
     let piece = null;
+    let pendingNextKey = null;
     let bag = [];
     let score = 0;
     let linesCleared = 0;
@@ -155,13 +156,32 @@
     }
 
     function lockPiece() {
+      const justLocked = [];
       for (const [dr, dc] of piece.cells) {
         const r = piece.row + dr;
         const c = piece.col + dc;
-        if (r >= 0 && r < ROWS && c >= 0 && c < COLS) grid[r][c] = piece.color;
+        if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+          grid[r][c] = piece.color;
+          justLocked.push(`${r},${c}`);
+        }
       }
-      clearLines();
-      spawnNext();
+      pendingNextKey = piece.nextKey;
+      piece = null;
+
+      const fullRows = [];
+      for (let r = 0; r < ROWS; r++) {
+        if (grid[r].every((cell) => cell)) fullRows.push(r);
+      }
+
+      render(fullRows, justLocked);
+
+      // Liten forsinkelse før neste brikke spawner, slik at spilleren rekker
+      // å se at rader faktisk blitser/tømmes (eller at brikken poppet fast)
+      // før brettet tegnes på nytt.
+      window.setTimeout(() => {
+        if (fullRows.length) clearLines();
+        spawnNext();
+      }, fullRows.length ? 160 : 90);
     }
 
     function clearLines() {
@@ -184,7 +204,8 @@
     }
 
     function spawnNext() {
-      const key = piece.nextKey || nextFromBag();
+      const key = pendingNextKey || nextFromBag();
+      pendingNextKey = null;
       piece = spawnPiece(key);
       piece.nextKey = nextFromBag();
       if (occupied(piece.cells, piece.row, piece.col)) {
@@ -209,7 +230,16 @@
       if (!piece || over) return;
       let dist = 0;
       while (tryMove(1, 0)) dist++;
-      if (dist > 0) score += dist * 2;
+      if (dist > 0) {
+        score += dist * 2;
+        const boardEl = session.playArea.querySelector("[data-board-tetris]");
+        if (boardEl) {
+          boardEl.classList.remove("is-impact");
+          // eslint-disable-next-line no-unused-expressions
+          boardEl.offsetWidth;
+          boardEl.classList.add("is-impact");
+        }
+      }
       lockPiece();
       session.setScore(score);
     }
@@ -226,7 +256,9 @@
       return r;
     }
 
-    function render() {
+    function render(flashRows, justLockedKeys) {
+      flashRows = flashRows || [];
+      justLockedKeys = justLockedKeys || [];
       const boardEl = session.playArea.querySelector("[data-board-tetris]");
       if (!boardEl) return;
       boardEl.innerHTML = "";
@@ -252,6 +284,8 @@
             cell.classList.add("is-filled", `is-${piece.color}`);
           } else if (grid[r][c]) {
             cell.classList.add("is-filled", `is-${grid[r][c]}`);
+            if (flashRows.includes(r)) cell.classList.add("is-clearing");
+            else if (justLockedKeys.includes(key)) cell.classList.add("is-locked-new");
           } else if (ghostCells.has(key)) {
             cell.classList.add("is-ghost", `is-${piece.color}`);
           }
