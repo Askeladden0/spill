@@ -185,6 +185,7 @@
   let records = [];
   let codes = [];
   let levels = [];
+  let rewards = [];
   let tab = "oversikt";
 
   function fmt(n) {
@@ -252,7 +253,8 @@
     const span = next.points_required - currentThreshold;
     const pct = span > 0 ? Math.min(100, Math.round(((xp - currentThreshold) / span) * 100)) : 100;
     const pointsLeft = Math.max(0, next.points_required - xp);
-    const rewardTitle = next.rewards && next.rewards[0] ? `${next.rewards[0].title} hos ${next.rewards[0].brand}` : null;
+    const nextReward = rewards.find((r) => r.level_number === next.level_number);
+    const rewardTitle = nextReward ? `${nextReward.title} hos ${nextReward.brand}` : null;
 
     title.textContent = `Vei til nivå ${next.level_number}`;
     sub.textContent = `${fmt(pointsLeft)} poeng igjen`;
@@ -520,15 +522,17 @@
 
   // ---------- Init ----------
   async function loadRecordsAndCodes() {
-    const [recordsRes, codesRes, levelsRes] = await Promise.all([
+    const [recordsRes, codesRes, levelsRes, rewardsRes] = await Promise.all([
       sb.from("game_records").select("game_id, score, created_at").eq("user_id", profile.id).order("score", { ascending: false }),
       sb.from("user_codes").select("brand, title, code, created_at").eq("user_id", profile.id).order("created_at", { ascending: false }),
-      sb.from("levels").select("level_number, points_required, rewards").order("points_required", { ascending: true }),
+      sb.from("levels").select("level_number, points_required").order("points_required", { ascending: true }),
+      sb.from("rewards").select("level_number, brand, title"),
     ]);
 
     records = recordsRes.data || [];
     codes = codesRes.data || [];
     levels = levelsRes.data || [];
+    rewards = rewardsRes.data || [];
 
     bestPerGame = {};
     records.forEach((r) => {
