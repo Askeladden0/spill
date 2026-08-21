@@ -26,10 +26,6 @@
           <h3 class="game-title">${g.name}</h3>
         </a>
         <div class="game-body">
-          <div class="game-meta">
-            <span class="game-points">${g.points}</span>
-            <span class="game-time">${g.time}</span>
-          </div>
           <a href="player.html?id=${encodeURIComponent(g.id)}"><button class="btn-start" type="button">Start</button></a>
         </div>
       </article>
@@ -94,15 +90,11 @@
     const titleEl = document.querySelector("[data-player-title]");
     const genreEl = document.querySelector("[data-player-genre]");
     const ratingEl = document.querySelector("[data-player-rating]");
-    const pointsEl = document.querySelector("[data-player-points]");
-    const timeEl = document.querySelector("[data-player-time]");
     const descEl = document.querySelector("[data-player-description]");
 
     if (titleEl) titleEl.textContent = game.name;
     if (genreEl) genreEl.textContent = game.genre;
     if (ratingEl) ratingEl.innerHTML = `${starIcon()} ${game.rating}`;
-    if (pointsEl) pointsEl.textContent = game.points;
-    if (timeEl) timeEl.textContent = game.time;
     if (descEl) descEl.textContent = game.description || "";
 
     const module = window.DILLA_GAME_MODULES && window.DILLA_GAME_MODULES[game.id];
