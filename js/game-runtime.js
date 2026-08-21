@@ -235,10 +235,9 @@
       requestAnimationFrame(() => {
         els.overlayLevelFill.style.width = "100%";
       });
-      // Tidsavbrudd i stedet for "transitionend": hvis stolpen allerede sto
-      // på 100% (typisk for alle over nivå 1, siden fremdriften regnes ut
-      // fra total xp uten per-nivå-terskel), skjer det ingen visuell
-      // endring, og "transitionend" fyres da aldri.
+      // Tidsavbrudd i stedet for "transitionend": stolpen kan allerede stå
+      // på 100% når nivået økte, og da skjer det ingen visuell endring, så
+      // "transitionend" fyres aldri.
       window.setTimeout(() => {
         els.overlayLevelFill.style.transition = "none";
         els.overlayLevelFill.style.width = "0%";
@@ -284,7 +283,7 @@
       async finish(score, opts) {
         opts = opts || {};
         const prevBest = best;
-        const prevProfile = await Auth.getCurrentProfile();
+        const [prevProfile] = await Promise.all([Auth.getCurrentProfile(), Auth.loadLevels()]);
         const result = await submitScore(gameId, score, prevProfile);
         best = Math.max(best, result.best);
         els.best.textContent = best.toLocaleString("no-NO");
