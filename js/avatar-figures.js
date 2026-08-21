@@ -1,5 +1,5 @@
 /**
- * PixelPlay – delt figur-avatar-system.
+ * Dilla – delt figur-avatar-system.
  * Erstatter de gamle emoji-avatarene med tegnede figurer (samme sett som i
  * Profil ny.dc.html). avatar_icon i profiles lagrer nå en av FIGURE_KEYS
  * (f.eks. "robot") i stedet for et emoji-tegn, og avatar_color er fortsatt
@@ -148,7 +148,7 @@
     return `<span class="avatar-badge${extraClass}" style="width:${px}px;height:${px}px;background:${color};border:1px solid ${color}66;color:${HOLE_FILL};padding:${pad}px" ${extraAttrs}>${figureSVG(figureKey)}</span>`;
   }
 
-  window.PixelPlayAvatars = {
+  window.DillaAvatars = {
     FIGURES,
     FIGURE_KEYS,
     DEFAULT_FIGURE,

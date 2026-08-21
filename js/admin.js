@@ -1,5 +1,5 @@
 /**
- * PixelPlay – adminpanel (admin.html).
+ * Dilla – adminpanel (admin.html).
  *
  * Sidemeny-dashbord med egne seksjoner (Oversikt/Statistikk/Spill/Nivåer og
  * premier/Brukere/Profilbilder). Alt lagres direkte i Supabase (samme
@@ -16,7 +16,7 @@
   "use strict";
 
   const sb = window.supabaseClient;
-  const Auth = window.PixelPlayAuth;
+  const Auth = window.DillaAuth;
   const NOK = (n) => Number(n || 0).toLocaleString("no-NO");
   const DAY_MS = 86400000;
 
@@ -100,7 +100,7 @@
       .select("id, name, genre, rating, points, time_estimate, description, thumbnail_url, icon_url, points_multiplier, is_daily_game, sort_order")
       .order("sort_order", { ascending: true });
     if (fallback.error) {
-      console.error("[PixelPlay admin] Klarte ikke hente spill:", fallback.error.message);
+      console.error("[Dilla admin] Klarte ikke hente spill:", fallback.error.message);
       return [];
     }
     return (fallback.data || []).map((g) => ({ ...g, hidden: false }));
@@ -118,13 +118,13 @@
       loadGames(),
     ]);
 
-    if (profilesRes.error) console.error("[PixelPlay admin] Klarte ikke hente brukere:", profilesRes.error.message);
-    if (levelsRes.error) console.error("[PixelPlay admin] Klarte ikke hente nivåer:", levelsRes.error.message);
-    if (rewardsRes.error) console.error("[PixelPlay admin] Klarte ikke hente premier:", rewardsRes.error.message);
-    if (rewardCodesRes.error) console.error("[PixelPlay admin] Klarte ikke hente kodelister:", rewardCodesRes.error.message);
-    if (claimsRes.error) console.error("[PixelPlay admin] Klarte ikke hente rabattlogg:", claimsRes.error.message);
-    if (recordsRes.error) console.error("[PixelPlay admin] Klarte ikke hente spillrekorder:", recordsRes.error.message);
-    if (avatarRes.error) console.error("[PixelPlay admin] Klarte ikke hente profilbilde-valg:", avatarRes.error.message);
+    if (profilesRes.error) console.error("[Dilla admin] Klarte ikke hente brukere:", profilesRes.error.message);
+    if (levelsRes.error) console.error("[Dilla admin] Klarte ikke hente nivåer:", levelsRes.error.message);
+    if (rewardsRes.error) console.error("[Dilla admin] Klarte ikke hente premier:", rewardsRes.error.message);
+    if (rewardCodesRes.error) console.error("[Dilla admin] Klarte ikke hente kodelister:", rewardCodesRes.error.message);
+    if (claimsRes.error) console.error("[Dilla admin] Klarte ikke hente rabattlogg:", claimsRes.error.message);
+    if (recordsRes.error) console.error("[Dilla admin] Klarte ikke hente spillrekorder:", recordsRes.error.message);
+    if (avatarRes.error) console.error("[Dilla admin] Klarte ikke hente profilbilde-valg:", avatarRes.error.message);
 
     state.profiles = profilesRes.data || [];
     state.levels = levelsRes.data || [];
@@ -389,7 +389,7 @@
             </div>
             ${newest.length ? newest.map((u) => `
               <div class="admin-newest-row">
-                ${window.PixelPlayAvatars.avatarBadgeHTML(u.avatar_color, u.avatar_icon, 30, { className: "admin-icon-badge" })}
+                ${window.DillaAvatars.avatarBadgeHTML(u.avatar_color, u.avatar_icon, 30, { className: "admin-icon-badge" })}
                 <span class="admin-newest-name">${escapeHTML(u.username)}</span>
                 <span class="admin-newest-date">${formatDate(u.created_at)}</span>
               </div>
@@ -907,7 +907,7 @@
           <div class="admin-user-row-main" data-user-toggle="${u.id}">
             <button type="button" class="admin-checkbox${selected ? " is-checked" : ""}" data-user-select="${u.id}">${selected ? "✓" : ""}</button>
             <span class="admin-user-identity">
-              ${window.PixelPlayAvatars.avatarBadgeHTML(u.avatar_color, u.avatar_icon, 30, { className: "admin-icon-badge" })}
+              ${window.DillaAvatars.avatarBadgeHTML(u.avatar_color, u.avatar_icon, 30, { className: "admin-icon-badge" })}
               <span class="admin-user-name">${escapeHTML(u.username)}</span>
               ${u.is_admin ? `<span class="admin-pill-admin">ADMIN</span>` : ""}
             </span>
@@ -1091,8 +1091,8 @@
             <span class="admin-card-sub">Velg hvilke figurer nye brukere kan få tildelt og selv velge mellom.</span>
           </div>
           <div class="figure-grid" style="max-width:420px">
-            ${window.PixelPlayAvatars.FIGURE_KEYS.map((key) => `
-              <button type="button" class="figure-swatch ${icons.includes(key) ? "is-selected" : ""}" data-toggle-icon="${key}" title="${window.PixelPlayAvatars.figureLabel(key)}">${window.PixelPlayAvatars.figureSVG(key)}</button>
+            ${window.DillaAvatars.FIGURE_KEYS.map((key) => `
+              <button type="button" class="figure-swatch ${icons.includes(key) ? "is-selected" : ""}" data-toggle-icon="${key}" title="${window.DillaAvatars.figureLabel(key)}">${window.DillaAvatars.figureSVG(key)}</button>
             `).join("")}
           </div>
         </div>
@@ -1500,7 +1500,7 @@
   function fillSidebarUser(profile) {
     const badge = document.querySelector("[data-sidebar-user] .admin-icon-badge");
     const name = document.querySelector("[data-sidebar-user-name]");
-    if (badge) badge.outerHTML = window.PixelPlayAvatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, 30, { className: "admin-icon-badge" });
+    if (badge) badge.outerHTML = window.DillaAvatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, 30, { className: "admin-icon-badge" });
     if (name) name.textContent = profile.username;
   }
 

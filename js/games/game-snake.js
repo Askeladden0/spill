@@ -1,5 +1,5 @@
 /**
- * PixelPlay – Snake.
+ * Dilla – Snake.
  * Klassisk slange-spill på et rutenett: styr med piltaster/WASD (eller
  * sveip på mobil), spis prikkene og voks deg lengst mulig uten å treffe
  * veggen eller deg selv. Bruker den delte spill-kjøretiden
@@ -23,7 +23,7 @@
     let session = null;
     let cellEls = null;
 
-    window.PixelPlayGameRuntime.mount(container, GAME_ID).then((s) => {
+    window.DillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
         <p class="game-snake-hint">Bruk piltastene/WASD (eller sveip på mobil) for å styre slangen. Spis prikkene og unngå veggen og deg selv!</p>
@@ -211,6 +211,6 @@
     }
   }
 
-  window.PIXELPLAY_GAME_MODULES = window.PIXELPLAY_GAME_MODULES || {};
-  window.PIXELPLAY_GAME_MODULES[GAME_ID] = { start };
+  window.DILLA_GAME_MODULES = window.DILLA_GAME_MODULES || {};
+  window.DILLA_GAME_MODULES[GAME_ID] = { start };
 })();

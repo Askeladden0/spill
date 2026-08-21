@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PixelPlay – delt stilark for hele spillnettsiden
+   Dilla – delt stilark for hele spillnettsiden
    Alle sider (index, premier, rangering, spill.html) bruker denne filen.
    ========================================================================== */
 
@@ -83,13 +83,11 @@ button { font-family: inherit; }
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  background: var(--accent);
+  background: var(--surface-2);
+  border: 1px solid rgba(255,255,255,.06);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--bg);
-  font-weight: 800;
-  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -1106,13 +1104,11 @@ main {
   width: 24px;
   height: 24px;
   border-radius: 7px;
-  background: var(--accent);
+  background: var(--surface-2);
+  border: 1px solid rgba(255,255,255,.06);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--bg);
-  font-weight: 800;
-  font-size: 13px;
 }
 
 .footer-copy {

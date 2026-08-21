@@ -1,5 +1,5 @@
 /**
- * PixelPlay – Bubble Shooter.
+ * Dilla – Bubble Shooter.
  * Sikt med mus/pekefinger og skyt kuler oppover mot et sekskantrutenett.
  * Treffer kulen tre eller flere av samme farge, spretter de bort og gir
  * poeng; kuler som mister kontakt med resten av brettet faller også bort
@@ -63,7 +63,7 @@
     let lastTime = 0;
     let effects = [];
 
-    window.PixelPlayGameRuntime.mount(container, GAME_ID).then((s) => {
+    window.DillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
         <p class="game-bubble-hint">Sikt med mus/finger og trykk/klikk for å skyte. Match tre eller flere kuler med samme farge!</p>
@@ -402,6 +402,6 @@
     }
   }
 
-  window.PIXELPLAY_GAME_MODULES = window.PIXELPLAY_GAME_MODULES || {};
-  window.PIXELPLAY_GAME_MODULES[GAME_ID] = { start };
+  window.DILLA_GAME_MODULES = window.DILLA_GAME_MODULES || {};
+  window.DILLA_GAME_MODULES[GAME_ID] = { start };
 })();
