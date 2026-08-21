@@ -94,10 +94,38 @@
     return window.PixelPlayAvatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, size);
   }
 
+  // Nivåene har ulikt poengkrav (se public.levels), ikke et fast antall
+  // poeng per nivå. Hentes én gang og caches, slik at xpProgress() kan
+  // regne ut riktig fremdrift *innenfor* gjeldende nivå i stedet for å anta
+  // at hvert nivå koster like mye (det ga en stolpe som hoppet feil, eller
+  // så ut som den "nullstilte" seg, ved nivå opp).
+  let levelsCache = null;
+
+  async function loadLevels() {
+    if (levelsCache) return levelsCache;
+    const { data, error } = await sb
+      .from("levels")
+      .select("level_number, points_required")
+      .order("points_required", { ascending: true });
+    levelsCache = !error && data ? data : [];
+    return levelsCache;
+  }
+
   function xpProgress(profile) {
-    const XP_PER_LEVEL = 1000;
-    const pct = Math.min(100, Math.round((profile.xp / XP_PER_LEVEL) * 100));
-    return { pct, xp: profile.xp, threshold: XP_PER_LEVEL };
+    const xp = profile.xp;
+    const levels = levelsCache || [];
+    const passed = levels.filter((l) => l.points_required <= xp).sort((a, b) => b.points_required - a.points_required);
+    const upcoming = levels.filter((l) => l.points_required > xp).sort((a, b) => a.points_required - b.points_required);
+    const currentThreshold = passed.length ? passed[0].points_required : 0;
+    const next = upcoming[0];
+
+    if (!next) {
+      return { pct: 100, xp, threshold: xp };
+    }
+
+    const span = next.points_required - currentThreshold;
+    const pct = span > 0 ? Math.min(100, Math.round(((xp - currentThreshold) / span) * 100)) : 100;
+    return { pct, xp: xp - currentThreshold, threshold: span };
   }
 
   function xpWidgetHTML(profile) {
@@ -144,7 +172,7 @@
   }
 
   async function renderHeaderAuth() {
-    const profile = await getCurrentProfile();
+    const [profile] = await Promise.all([getCurrentProfile(), loadLevels()]);
     renderHeaderWithProfile(profile);
   }
 
@@ -192,10 +220,9 @@
     requestAnimationFrame(() => {
       fill.style.width = "100%";
     });
-    // Bruker en tidsavbrudd i stedet for å vente på "transitionend": hvis
-    // stolpen allerede sto på 100% (skjer for alle over nivå 1, siden
-    // fremdriften er regnet ut fra total xp uten per-nivå-terskel), skjer
-    // det ingen visuell endring og "transitionend" fyres da aldri.
+    // Bruker en tidsavbrudd i stedet for å vente på "transitionend": stolpen
+    // kan allerede stå på 100% når nivået økte (f.eks. rett før terskelen),
+    // og da skjer det ingen visuell endring, så "transitionend" fyres aldri.
     window.setTimeout(() => {
       fill.style.transition = "none";
       fill.style.width = "0%";
@@ -247,6 +274,7 @@
     getCurrentProfile,
     avatarHTML,
     xpProgress,
+    loadLevels,
     getGuestPoints,
     addGuestPoints,
     renderHeaderAuth,
