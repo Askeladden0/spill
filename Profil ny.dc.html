@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>body{margin:0;background:#0a0d12;font-family:'Poppins',system-ui,sans-serif}a{color:#2ee87f;text-decoration:none}a:hover{color:#5cf5a0}*{box-sizing:border-box}.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(255,255,255,.07);scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#2ee87f;color:#0d1117;border-radius:4px;text-decoration:none}.dv-tname{font:600 13px/1.2 'Poppins',system-ui,sans-serif;color:#e8edf5}.dv-opts{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(255,255,255,.09);color:#e8edf5;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.3 'Poppins',system-ui,sans-serif;color:#7c8aa0}.dv-card{max-width:100%;background:#0d1117;border:1px solid rgba(255,255,255,.09);border-radius:8px;overflow:hidden}.dv-opt:target .dv-oid{background:#2ee87f;color:#0d1117}.dv-next{margin:22px 0 0;font:12px/1.5 'Poppins',system-ui,sans-serif;color:#7c8aa0}</style></helmet>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Ny profilside · statistikkort + faner, egne innstillinger, kupongkoder, nye figurikoner</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a"><div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Profilside — toppkort med statistikk + faner (fanene virker: klikk dem)</div>
+<div class="dv-card" style="width:1240px">
+<div style="min-height:900px;background:#0d1117;color:#e8edf5;display:flex;flex-direction:column">
+
+<header style="display:flex;align-items:center;justify-content:space-between;gap:32px;padding:0 32px;height:72px;background:#131a25;border-bottom:1px solid rgba(255,255,255,.06)">
+<div style="display:flex;align-items:center;gap:36px">
+<span style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:9px;background:#2ee87f;display:flex;align-items:center;justify-content:center;color:#0d1117;font-weight:800;font-size:16px">P</span><span style="font-size:20px;font-weight:800;letter-spacing:-.02em;color:#fff">PIXEL<span style="color:#2ee87f">PLAY</span></span></span>
+<nav style="display:flex;align-items:center;gap:8px">
+<span style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>Spill</span>
+<span style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>Premier</span>
+<span style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>Rangering</span>
+</nav>
+</div>
+<div style="display:flex;align-items:center;gap:14px">
+<div style="display:flex;align-items:center;gap:12px;padding:8px 14px 8px 12px;border-radius:12px;background:#0d1117;border:1px solid rgba(255,255,255,.09)">
+<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:rgba(46,232,127,.12);color:#2ee87f;font-size:12px;font-weight:800">7</div>
+<div style="display:flex;flex-direction:column;gap:5px;width:132px">
+<div style="display:flex;justify-content:space-between;font-size:10.5px;font-weight:600;color:#96a3b8;letter-spacing:.02em"><span>NIVÅ 7</span><span style="color:#e8edf5">640/1000</span></div>
+<div style="height:6px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden"><div style="height:100%;width:64%;border-radius:99px;background:linear-gradient(90deg,#2ee87f,#5cf5a0)"></div></div>
+</div>
+</div>
+<span style="display:flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:14px;font-weight:600"><span style="width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;background:#2ee87f;border:1px solid rgba(46,232,127,.6);color:#0d1117"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="18.4" width="20" height="8" rx="4"></rect><rect x="3.4" y="3" width="17.2" height="14.6" rx="5"></rect><rect x="11.3" y="0.2" width="1.4" height="3.2" rx="0.7"></rect><circle cx="12" cy="0.9" r="1.3"></circle><rect x="7" y="8" width="3.6" height="3.6" rx="1.2" fill="#2ee87f"></rect><rect x="13.4" y="8" width="3.6" height="3.6" rx="1.2" fill="#2ee87f"></rect><rect x="8.8" y="13.6" width="6.4" height="1.7" rx="0.85" fill="#2ee87f"></rect></svg></span><span>spillmester</span></span>
+</div>
+</header>
+
+<main style="max-width:1240px;margin:0 auto;padding:32px 32px 0;display:flex;flex-direction:column;gap:26px;width:100%;flex:1">
+
+<div style="display:flex;align-items:center;gap:26px;padding:26px 28px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+<button type="button" onClick="{{ openModal }}" style="position:relative;border:none;padding:0;background:none;cursor:pointer;display:block">
+<span style="width:86px;height:86px;border-radius:22px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:{{ avatarColor }};border:1px solid {{ previewBorder }};color:#0d1117">{{ previewFigureLg }}</span>
+<span style="position:absolute;bottom:-6px;right:-6px;width:30px;height:30px;border-radius:10px;background:#2ee87f;color:#0d1117;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></span>
+</button>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:10px"><h1 style="margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em;color:#fff">spillmester</h1><span style="padding:4px 10px;border-radius:99px;background:rgba(46,232,127,.12);color:#2ee87f;font-size:11px;font-weight:800;letter-spacing:.04em">NIVÅ 7</span></div>
+<span style="font-size:13.5px;font-weight:500;color:#7c8aa0">nikolai@example.com · medlem siden mars 2026</span>
+<a href="#1a" style="font-size:13px;font-weight:600">Se din offentlige spillerprofil →</a>
+</div>
+<div style="margin-left:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden">
+<div style="display:flex;flex-direction:column;gap:3px;padding:14px 20px;background:#0d1117"><span style="font-size:20px;font-weight:800;color:#2ee87f">6 640</span><span style="font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#7c8aa0">POENG TOTALT</span></div>
+<div style="display:flex;flex-direction:column;gap:3px;padding:14px 20px;background:#0d1117"><span style="font-size:20px;font-weight:800;color:#fff">#12</span><span style="font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#7c8aa0">PLASSERING</span></div>
+<div style="display:flex;flex-direction:column;gap:3px;padding:14px 20px;background:#0d1117"><span style="font-size:20px;font-weight:800;color:#fff">148</span><span style="font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#7c8aa0">KAMPER</span></div>
+<div style="display:flex;flex-direction:column;gap:3px;padding:14px 20px;background:#0d1117"><span style="font-size:20px;font-weight:800;color:#fff">3</span><span style="font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#7c8aa0">RABATTKODER</span></div>
+</div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;gap:20px">
+<div style="display:flex;gap:6px;background:#131a25;padding:5px;border-radius:14px;border:1px solid rgba(255,255,255,.06)">
+<button type="button" data-tab="Oversikt" onClick="{{ pickTab }}" style="padding:10px 22px;border:none;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;background:{{ tabBg1 }};color:{{ tabFg1 }}">Oversikt</button>
+<button type="button" data-tab="Rekorder" onClick="{{ pickTab }}" style="padding:10px 22px;border:none;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;background:{{ tabBg2 }};color:{{ tabFg2 }}">Mine rekorder</button>
+<button type="button" data-tab="Koder" onClick="{{ pickTab }}" style="padding:10px 22px;border:none;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;background:{{ tabBg3 }};color:{{ tabFg3 }}">Rabattkoder <span style="opacity:.6">3</span></button>
+</div>
+<a href="#1d" style="display:flex;align-items:center;gap:9px;padding:11px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:#131a25;color:#e8edf5;font-size:13.5px;font-weight:700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>Innstillinger</a>
+</div>
+
+<sc-if value="{{ isOversikt }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:1.35fr 1fr;gap:22px;align-items:stretch">
+<div style="display:flex;flex-direction:column;gap:20px;padding:24px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+<div style="display:flex;align-items:baseline;justify-content:space-between"><h2 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.01em;color:#fff">Vei til nivå 8</h2><span style="font-size:12.5px;font-weight:600;color:#7c8aa0">360 poeng igjen</span></div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="height:10px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden"><div style="height:100%;width:64%;border-radius:99px;background:linear-gradient(90deg,#2ee87f,#5cf5a0)"></div></div>
+<div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;color:#7c8aa0"><span>640 / 1000 poeng i dette nivået</span><span style="color:#e8edf5">Neste premie: 25% hos PixelStore</span></div>
+</div>
+<div style="height:1px;background:rgba(255,255,255,.07)"></div>
+<h2 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.01em;color:#fff">Dine tre beste</h2>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:13px;background:#0d1117;border:1px solid rgba(255,255,255,.06)"><img src="assets/img/icons/2048.svg" alt="" width="26" height="26" style="width:26px;height:26px"><span style="flex:1;font-size:14px;font-weight:700;color:#e8edf5">2048</span><span style="font-size:12px;font-weight:600;color:#7c8aa0">#4 totalt</span><span style="font-size:15px;font-weight:800;color:#2ee87f">2 480</span></div>
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:13px;background:#0d1117;border:1px solid rgba(255,255,255,.06)"><img src="assets/img/icons/tetris.svg" alt="" width="26" height="26" style="width:26px;height:26px"><span style="flex:1;font-size:14px;font-weight:700;color:#e8edf5">Tetris</span><span style="font-size:12px;font-weight:600;color:#7c8aa0">#9 totalt</span><span style="font-size:15px;font-weight:800;color:#2ee87f">1 920</span></div>
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:13px;background:#0d1117;border:1px solid rgba(255,255,255,.06)"><img src="assets/img/icons/snake.svg" alt="" width="26" height="26" style="width:26px;height:26px"><span style="flex:1;font-size:14px;font-weight:700;color:#e8edf5">Snake</span><span style="font-size:12px;font-weight:600;color:#7c8aa0">#21 totalt</span><span style="font-size:15px;font-weight:800;color:#2ee87f">840</span></div>
+</div>
+<button type="button" data-tab="Rekorder" onClick="{{ pickTab }}" style="align-self:flex-start;padding:10px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8edf5;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Se alle rekorder</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;padding:24px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+<div style="display:flex;align-items:baseline;justify-content:space-between"><h2 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.01em;color:#fff">Nyeste rabattkode</h2><span style="font-size:12.5px;font-weight:600;color:#7c8aa0">2 flere</span></div>
+<div style="position:relative;padding:18px 20px;border-radius:14px;background:#0d1117;border:1px dashed rgba(46,232,127,.45);display:flex;flex-direction:column;gap:12px">
+<span style="position:absolute;left:0;top:50%;width:7px;height:14px;border-radius:0 8px 8px 0;background:#131a25;border:1px dashed rgba(46,232,127,.45);border-left:none;transform:translateY(-50%)"></span>
+<span style="position:absolute;right:0;top:50%;width:7px;height:14px;border-radius:8px 0 0 8px;background:#131a25;border:1px dashed rgba(46,232,127,.45);border-right:none;transform:translateY(-50%)"></span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="font-size:13px;font-weight:700;letter-spacing:.04em;color:#e8edf5">PIXELSTORE</span><span style="font-size:11.5px;font-weight:600;color:#7c8aa0">Gyldig til 12.09.2026</span></div>
+<span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff">20% rabatt</span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="font-size:12.5px;font-weight:600;color:#7c8aa0">Koden kopieres til utsjekk</span><button type="button" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8edf5;font-family:inherit;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer">Kopier</button></div>
+</div>
+<div style="height:1px;background:rgba(255,255,255,.07)"></div>
+<h2 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.01em;color:#fff">Siste aktivitet</h2>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:12px"><span style="width:8px;height:8px;border-radius:50%;background:#2ee87f;box-shadow:0 0 0 4px rgba(46,232,127,.16)"></span><span style="flex:1;font-size:13.5px;font-weight:600;color:#e8edf5">Ny rekord i 2048 · 2 480</span><span style="font-size:11.5px;color:#7c8aa0">i dag</span></div>
+<div style="display:flex;align-items:center;gap:12px"><span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2)"></span><span style="flex:1;font-size:13.5px;font-weight:600;color:#e8edf5">Hentet rabattkode hos PixelStore</span><span style="font-size:11.5px;color:#7c8aa0">i går</span></div>
+<div style="display:flex;align-items:center;gap:12px"><span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2)"></span><span style="flex:1;font-size:13.5px;font-weight:600;color:#e8edf5">Nådde nivå 7</span><span style="font-size:11.5px;color:#7c8aa0">3 dager siden</span></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRekorder }}" hint-placeholder-val="{{ false }}">
+<div style="padding:8px 24px 24px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+<table style="width:100%;border-collapse:collapse;font-size:14px">
+<thead><tr>
+<th style="text-align:left;padding:14px 12px;color:#96a3b8;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid rgba(255,255,255,.09)">Spill</th>
+<th style="text-align:left;padding:14px 12px;color:#96a3b8;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid rgba(255,255,255,.09)">Beste poengsum</th>
+<th style="text-align:left;padding:14px 12px;color:#96a3b8;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid rgba(255,255,255,.09)">Plassering</th>
+<th style="text-align:left;padding:14px 12px;color:#96a3b8;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid rgba(255,255,255,.09)">Kamper</th>
+<th style="text-align:right;padding:14px 12px;color:#96a3b8;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid rgba(255,255,255,.09)"></th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600"><span style="display:flex;align-items:center;gap:10px"><img src="assets/img/icons/2048.svg" alt="" width="22" height="22" style="width:22px;height:22px">2048</span></td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:800;color:#2ee87f">2 480</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600">#4</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600;color:#7c8aa0">52</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right"><a href="#1a" style="font-size:13px;font-weight:700">Spill igjen</a></td></tr>
+<tr><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600"><span style="display:flex;align-items:center;gap:10px"><img src="assets/img/icons/tetris.svg" alt="" width="22" height="22" style="width:22px;height:22px">Tetris</span></td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:800;color:#2ee87f">1 920</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600">#9</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600;color:#7c8aa0">31</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right"><a href="#1a" style="font-size:13px;font-weight:700">Spill igjen</a></td></tr>
+<tr><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600"><span style="display:flex;align-items:center;gap:10px"><img src="assets/img/icons/snake.svg" alt="" width="22" height="22" style="width:22px;height:22px">Snake</span></td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:800;color:#2ee87f">840</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600">#21</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600;color:#7c8aa0">24</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right"><a href="#1a" style="font-size:13px;font-weight:700">Spill igjen</a></td></tr>
+<tr><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600"><span style="display:flex;align-items:center;gap:10px"><img src="assets/img/icons/block-blast.svg" alt="" width="22" height="22" style="width:22px;height:22px">Block Blast</span></td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:800;color:#2ee87f">610</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600">#33</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600;color:#7c8aa0">18</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right"><a href="#1a" style="font-size:13px;font-weight:700">Spill igjen</a></td></tr>
+<tr><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600;opacity:.55"><span style="display:flex;align-items:center;gap:10px"><img src="assets/img/icons/fruktfusjon.svg" alt="" width="22" height="22" style="width:22px;height:22px">Fruktfusjon</span></td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600;color:#7c8aa0">–</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600;color:#7c8aa0">Ikke spilt</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:600;color:#7c8aa0">0</td><td style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right"><a href="#1a" style="font-size:13px;font-weight:700">Prøv nå</a></td></tr>
+<tr><td style="padding:14px 12px;font-weight:600;opacity:.55"><span style="display:flex;align-items:center;gap:10px"><img src="assets/img/icons/bubble-shooter.svg" alt="" width="22" height="22" style="width:22px;height:22px">Bubble Shooter</span></td><td style="padding:14px 12px;font-weight:600;color:#7c8aa0">–</td><td style="padding:14px 12px;font-weight:600;color:#7c8aa0">Ikke spilt</td><td style="padding:14px 12px;font-weight:600;color:#7c8aa0">0</td><td style="padding:14px 12px;text-align:right"><a href="#1a" style="font-size:13px;font-weight:700">Prøv nå</a></td></tr>
+</tbody>
+</table>
+</div>
+</sc-if>
+
+<sc-if value="{{ isKoder }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:22px">
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px">
+<div style="position:relative;padding:18px 20px;border-radius:14px;background:#131a25;border:1px dashed rgba(46,232,127,.45);display:flex;flex-direction:column;gap:12px">
+<span style="position:absolute;left:0;top:50%;width:7px;height:14px;border-radius:0 8px 8px 0;background:#0d1117;border:1px dashed rgba(46,232,127,.45);border-left:none;transform:translateY(-50%)"></span>
+<span style="position:absolute;right:0;top:50%;width:7px;height:14px;border-radius:8px 0 0 8px;background:#0d1117;border:1px dashed rgba(46,232,127,.45);border-right:none;transform:translateY(-50%)"></span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="font-size:13px;font-weight:700;letter-spacing:.04em;color:#e8edf5">PIXELSTORE</span><span style="font-size:11.5px;font-weight:600;color:#7c8aa0">Gyldig til 12.09.2026</span></div>
+<span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff">20% rabatt</span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="font-size:12.5px;font-weight:600;color:#7c8aa0">Koden kopieres til utsjekk</span><button type="button" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8edf5;font-family:inherit;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer">Kopier</button></div>
+</div>
+<div style="position:relative;padding:18px 20px;border-radius:14px;background:#131a25;border:1px dashed rgba(46,232,127,.45);display:flex;flex-direction:column;gap:12px">
+<span style="position:absolute;left:0;top:50%;width:7px;height:14px;border-radius:0 8px 8px 0;background:#0d1117;border:1px dashed rgba(46,232,127,.45);border-left:none;transform:translateY(-50%)"></span>
+<span style="position:absolute;right:0;top:50%;width:7px;height:14px;border-radius:8px 0 0 8px;background:#0d1117;border:1px dashed rgba(46,232,127,.45);border-right:none;transform:translateY(-50%)"></span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="font-size:13px;font-weight:700;letter-spacing:.04em;color:#e8edf5">SNACKBOKS</span><span style="font-size:11.5px;font-weight:600;color:#7c8aa0">Utløper 21.08.2026</span></div>
+<span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff">50 kr avslag</span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="font-size:12.5px;font-weight:600;color:#7c8aa0">Koden kopieres til utsjekk</span><button type="button" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8edf5;font-family:inherit;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer">Kopier</button></div>
+</div>
+<div style="position:relative;padding:18px 20px;border-radius:14px;background:#131a25;border:1px dashed rgba(255,255,255,.12);display:flex;flex-direction:column;gap:12px;opacity:.5">
+<span style="position:absolute;left:0;top:50%;width:7px;height:14px;border-radius:0 8px 8px 0;background:#0d1117;border:1px dashed rgba(255,255,255,.12);border-left:none;transform:translateY(-50%)"></span>
+<span style="position:absolute;right:0;top:50%;width:7px;height:14px;border-radius:8px 0 0 8px;background:#0d1117;border:1px dashed rgba(255,255,255,.12);border-right:none;transform:translateY(-50%)"></span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="font-size:13px;font-weight:700;letter-spacing:.04em;color:#e8edf5">GAMERGEAR</span><span style="font-size:11.5px;font-weight:600;color:#7c8aa0">Utløpt 09.07.2026</span></div>
+<span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff;text-decoration:line-through">15% rabatt</span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="font-size:12.5px;font-weight:600;color:#7c8aa0">Innløst 09.07.2026</span><span style="font-size:12.5px;font-weight:700;color:#7c8aa0">Brukt</span></div>
+</div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;border-radius:16px;background:#131a25;border:1px solid rgba(255,255,255,.06)">
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14.5px;font-weight:700;color:#fff">Du har 6 640 poeng å bruke</span><span style="font-size:12.5px;font-weight:500;color:#7c8aa0">Hent nye rabattkoder på premier-siden</span></div>
+<a href="#1a" style="padding:12px 22px;border-radius:10px;background:#2ee87f;color:#0d1117;font-size:13.5px;font-weight:800">Hent ny kode</a>
+</div>
+</div>
+</sc-if>
+
+</main>
+
+<footer style="max-width:1240px;margin:56px auto 0;padding:24px 32px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px;border-top:1px solid rgba(255,255,255,.09);width:100%">
+<div style="display:flex;align-items:center;gap:10px"><span style="width:24px;height:24px;border-radius:7px;background:#2ee87f;display:flex;align-items:center;justify-content:center;color:#0d1117;font-weight:800;font-size:13px">P</span><span style="font-size:13px;font-weight:500;color:#7c8aa0">© 2026 PixelPlay</span></div>
+<nav style="display:flex;align-items:center;gap:28px"><a href="#1a" style="font-size:13.5px;font-weight:600;color:#96a3b8">Kontakt</a><a href="#1a" style="font-size:13.5px;font-weight:600;color:#96a3b8">Personvern</a><a href="#1a" style="font-size:13.5px;font-weight:600;color:#96a3b8">Vilkår</a></nav>
+</footer>
+
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1c"><div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Alternativ: innebygd panel under avataren (samme valg, ingen modal)</div>
+<div class="dv-card" style="width:600px">
+<div style="padding:26px;background:#0d1117">
+<div style="display:flex;flex-direction:column;gap:0;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px;overflow:hidden">
+<div style="display:flex;align-items:center;gap:20px;padding:24px">
+<span style="width:78px;height:78px;border-radius:20px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:{{ avatarColor }};border:1px solid {{ previewBorder }};color:#0d1117">{{ previewFigureLg2 }}</span>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:18px;font-weight:800;color:#fff">spillmester</span></div>
+<button type="button" style="margin-left:auto;display:flex;align-items:center;gap:8px;padding:11px 16px;border-radius:10px;border:1px solid rgba(46,232,127,.4);background:rgba(46,232,127,.12);color:#2ee87f;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Lukk redigering<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg></button>
+</div>
+<div style="padding:22px 24px 24px;background:#0d1117;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:20px">
+<div>
+<p style="margin:0 0 12px;font-size:12.5px;font-weight:700;color:#96a3b8;text-transform:uppercase;letter-spacing:.04em">Figur</p>
+<div onClick="{{ pickFigure }}" style="display:grid;grid-template-columns:repeat(8,1fr);gap:9px">
+<button type="button" data-figure="robot" title="Robo" style="aspect-ratio:1;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:#131a25;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#2ee87f;box-shadow:{{ ringRobot }}"><svg width="100%" height="100%" viewBox="1.5 1 21 21" fill="currentColor" style="display:block"><rect x="2" y="18.4" width="20" height="8" rx="4"></rect><rect x="3.4" y="3" width="17.2" height="14.6" rx="5"></rect><rect x="11.3" y="0.2" width="1.4" height="3.2" rx="0.7"></rect><circle cx="12" cy="0.9" r="1.3"></circle><rect x="7" y="8" width="3.6" height="3.6" rx="1.2" fill="#131a25"></rect><rect x="13.4" y="8" width="3.6" height="3.6" rx="1.2" fill="#131a25"></rect><rect x="8.8" y="13.6" width="6.4" height="1.7" rx="0.85" fill="#131a25"></rect></svg></button>
+<button type="button" data-figure="katt" title="Katt" style="aspect-ratio:1;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:#131a25;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#5cf5a0;box-shadow:{{ ringKatt }}"><svg width="100%" height="100%" viewBox="1.5 1 21 21" fill="currentColor" style="display:block"><rect x="2" y="18.4" width="20" height="8" rx="4"></rect><polygon points="4.4,7.6 6.2,0.6 11.4,5.4"></polygon><polygon points="19.6,7.6 17.8,0.6 12.6,5.4"></polygon><circle cx="12" cy="10.2" r="8"></circle><circle cx="8.9" cy="9.4" r="1.7" fill="#131a25"></circle><circle cx="15.1" cy="9.4" r="1.7" fill="#131a25"></circle><polygon points="10.8,12.6 13.2,12.6 12,14.4" fill="#131a25"></polygon><rect x="9.4" y="15" width="5.2" height="1.3" rx="0.65" fill="#131a25"></rect></svg></button>
+<button type="button" data-figure="spoke" title="Spøkelse" style="aspect-ratio:1;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:#131a25;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#7dd3fc;box-shadow:{{ ringSpoke }}"><svg width="100%" height="100%" viewBox="1.5 1 21 21" fill="currentColor" style="display:block"><rect x="2" y="18.4" width="20" height="8" rx="4"></rect><circle cx="12" cy="10.2" r="8"></circle><ellipse cx="8.9" cy="9.2" rx="1.8" ry="2.4" fill="#131a25"></ellipse><ellipse cx="15.1" cy="9.2" rx="1.8" ry="2.4" fill="#131a25"></ellipse><ellipse cx="12" cy="14.4" rx="2.4" ry="1.9" fill="#131a25"></ellipse></svg></button>
+<button type="button" data-figure="alien" title="Romvesen" style="aspect-ratio:1;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:#131a25;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#a78bfa;box-shadow:{{ ringAlien }}"><svg width="100%" height="100%" viewBox="1.5 1 21 21" fill="currentColor" style="display:block"><rect x="4" y="19" width="16" height="7.5" rx="3.5"></rect><ellipse cx="12" cy="10.4" rx="7.8" ry="8.6"></ellipse><rect x="11.4" y="0.2" width="1.2" height="2.6" rx="0.6"></rect><ellipse cx="8.4" cy="10.2" rx="2.1" ry="3.4" fill="#131a25"></ellipse><ellipse cx="15.6" cy="10.2" rx="2.1" ry="3.4" fill="#131a25"></ellipse><rect x="10.6" y="15.6" width="2.8" height="1.2" rx="0.6" fill="#131a25"></rect></svg></button>
+<button type="button" data-figure="fugl" title="Fugl" style="aspect-ratio:1;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:#131a25;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#ffd166;box-shadow:{{ ringFugl }}"><svg width="100%" height="100%" viewBox="1.5 1 21 21" fill="currentColor" style="display:block"><rect x="2" y="18.4" width="20" height="8" rx="4"></rect><circle cx="12" cy="10.2" r="8"></circle><circle cx="9" cy="8.6" r="2.6" fill="#131a25"></circle><circle cx="15.4" cy="9.2" r="1.3" fill="#131a25"></circle><polygon points="11.6,11.6 16.4,13.4 11.6,15.4" fill="#131a25"></polygon></svg></button>
+<button type="button" data-figure="bjorn" title="Bjørn" style="aspect-ratio:1;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:#131a25;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fb923c;box-shadow:{{ ringBjorn }}"><svg width="100%" height="100%" viewBox="1.5 1 21 21" fill="currentColor" style="display:block"><rect x="2" y="18.4" width="20" height="8" rx="4"></rect><circle cx="5.4" cy="4.6" r="3.4"></circle><circle cx="18.6" cy="4.6" r="3.4"></circle><circle cx="12" cy="10.6" r="8"></circle><circle cx="9" cy="9.4" r="1.5" fill="#131a25"></circle><circle cx="15" cy="9.4" r="1.5" fill="#131a25"></circle><ellipse cx="12" cy="14" rx="3.2" ry="2.4" fill="#131a25"></ellipse><ellipse cx="12" cy="13.2" rx="1.1" ry="0.8"></ellipse></svg></button>
+<button type="button" data-figure="krystall" title="Tulling" style="aspect-ratio:1;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:#131a25;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#f472b6;box-shadow:{{ ringKrystall }}"><svg width="100%" height="100%" viewBox="1.5 1 21 21" fill="currentColor" style="display:block"><rect x="2" y="18.4" width="20" height="8" rx="4"></rect><circle cx="12" cy="10.2" r="8"></circle><circle cx="8.8" cy="8.8" r="1.9" fill="#131a25"></circle><rect x="12.8" y="8.4" width="4" height="1.6" rx="0.8" fill="#131a25"></rect><rect x="8.4" y="12.6" width="7" height="1.9" rx="0.95" fill="#131a25"></rect><rect x="10.6" y="13.6" width="2.8" height="4" rx="1.4" fill="#131a25"></rect></svg></button>
+<button type="button" data-figure="blekk" title="Monster" style="aspect-ratio:1;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:#131a25;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#38bdf8;box-shadow:{{ ringBlekk }}"><svg width="100%" height="100%" viewBox="1.5 1 21 21" fill="currentColor" style="display:block"><rect x="2" y="18.4" width="20" height="8" rx="4"></rect><polygon points="5.6,4 8.8,5.4 6.6,1.4"></polygon><polygon points="18.4,4 15.2,5.4 17.4,1.4"></polygon><circle cx="12" cy="10.8" r="8"></circle><circle cx="8.3" cy="9.4" r="1.8" fill="#131a25"></circle><circle cx="12" cy="7.4" r="1.4" fill="#131a25"></circle><circle cx="15.7" cy="9.4" r="1.8" fill="#131a25"></circle><rect x="8.2" y="13" width="7.6" height="2.4" rx="1.2" fill="#131a25"></rect><rect x="10" y="13" width="1.3" height="1.1"></rect><rect x="12.7" y="13" width="1.3" height="1.1"></rect></svg></button>
+</div>
+</div>
+<div>
+<p style="margin:0 0 12px;font-size:12.5px;font-weight:700;color:#96a3b8;text-transform:uppercase;letter-spacing:.04em">Farge</p>
+<div onClick="{{ pickColor }}" style="display:flex;flex-wrap:wrap;gap:9px">
+<button type="button" data-color="#2ee87f" style="width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;background:#2ee87f;box-shadow:{{ cring1 }}"></button>
+<button type="button" data-color="#38bdf8" style="width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;background:#38bdf8;box-shadow:{{ cring2 }}"></button>
+<button type="button" data-color="#a78bfa" style="width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;background:#a78bfa;box-shadow:{{ cring3 }}"></button>
+<button type="button" data-color="#f472b6" style="width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;background:#f472b6;box-shadow:{{ cring4 }}"></button>
+<button type="button" data-color="#ffd166" style="width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;background:#ffd166;box-shadow:{{ cring5 }}"></button>
+<button type="button" data-color="#fb923c" style="width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;background:#fb923c;box-shadow:{{ cring6 }}"></button>
+<button type="button" data-color="#ff9385" style="width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;background:#ff9385;box-shadow:{{ cring7 }}"></button>
+<button type="button" data-color="#e8edf5" style="width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;background:#e8edf5;box-shadow:{{ cring8 }}"></button>
+</div>
+</div>
+<span style="font-size:12px;font-weight:500;color:#7c8aa0">Lagres automatisk — som i dagens profilside.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1d"><div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>innstillinger.html — brukernavn, avatar, personvern, konto</div>
+<div class="dv-card" style="width:1240px">
+<div style="min-height:820px;background:#0d1117;color:#e8edf5;display:flex;flex-direction:column">
+
+<header style="display:flex;align-items:center;justify-content:space-between;gap:32px;padding:0 32px;height:72px;background:#131a25;border-bottom:1px solid rgba(255,255,255,.06)">
+<div style="display:flex;align-items:center;gap:36px">
+<span style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:9px;background:#2ee87f;display:flex;align-items:center;justify-content:center;color:#0d1117;font-weight:800;font-size:16px">P</span><span style="font-size:20px;font-weight:800;letter-spacing:-.02em;color:#fff">PIXEL<span style="color:#2ee87f">PLAY</span></span></span>
+<nav style="display:flex;align-items:center;gap:8px">
+<span style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600">Spill</span>
+<span style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600">Premier</span>
+<span style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600">Rangering</span>
+</nav>
+</div>
+<span style="display:flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:14px;font-weight:600"><span style="width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;background:{{ avatarColor }};border:1px solid {{ previewBorder }};color:#0d1117">{{ previewFigureSm2 }}</span><span>spillmester</span></span>
+</header>
+
+<main style="max-width:1240px;margin:0 auto;padding:30px 32px 0;display:flex;flex-direction:column;gap:24px;width:100%;flex:1">
+<div style="display:flex;flex-direction:column;gap:6px">
+<a href="#1a" style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#96a3b8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Tilbake til profilen</a>
+<h1 style="margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em;color:#fff">Innstillinger</h1>
+</div>
+
+<div style="display:grid;grid-template-columns:220px 1fr;gap:26px;align-items:start">
+<nav style="position:sticky;top:24px;display:flex;flex-direction:column;gap:4px;padding:12px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:16px">
+<a href="#1d" style="padding:11px 14px;border-radius:10px;background:rgba(46,232,127,.12);color:#2ee87f;font-size:13.5px;font-weight:700">Profil</a>
+<a href="#1d" style="padding:11px 14px;border-radius:10px;color:#96a3b8;font-size:13.5px;font-weight:600">Personvern</a>
+<a href="#1d" style="padding:11px 14px;border-radius:10px;color:#96a3b8;font-size:13.5px;font-weight:600">Konto</a>
+</nav>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:18px;padding:24px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+<div style="display:flex;flex-direction:column;gap:3px"><h2 style="margin:0;font-size:17px;font-weight:800;color:#fff">Profil</h2><span style="font-size:12.5px;font-weight:500;color:#7c8aa0">Dette er det andre spillere ser på rangeringen.</span></div>
+<div style="display:flex;align-items:center;gap:18px;padding:18px;border-radius:14px;background:#0d1117;border:1px solid rgba(255,255,255,.06)">
+<span style="width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:{{ avatarColor }};border:1px solid {{ previewBorder }};color:#0d1117">{{ previewFigureMd }}</span>
+<div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:700;color:#fff">Profilbilde</span><span style="font-size:12.5px;font-weight:500;color:#7c8aa0">Figur og farge — {{ figureLabel }}</span></div>
+<button type="button" onClick="{{ openModal }}" style="margin-left:auto;padding:11px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8edf5;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Endre</button>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-radius:14px;background:#0d1117;border:1px solid rgba(255,255,255,.06)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px;font-weight:700;color:#e8edf5">Brukernavn</span><span style="font-size:12.5px;font-weight:500;color:#7c8aa0">spillmester</span></div>
+<span style="padding:5px 11px;border-radius:99px;background:rgba(255,255,255,.06);color:#96a3b8;font-size:11px;font-weight:700;letter-spacing:.04em">KAN IKKE ENDRES</span>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-radius:14px;background:#0d1117;border:1px solid rgba(255,255,255,.06)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px;font-weight:700;color:#e8edf5">E-post</span><span style="font-size:12.5px;font-weight:500;color:#7c8aa0">nikolai@example.com · innlogget med Google</span></div>
+<span style="padding:5px 11px;border-radius:99px;background:rgba(255,255,255,.06);color:#96a3b8;font-size:11px;font-weight:700;letter-spacing:.04em">KAN IKKE ENDRES</span>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px;padding:24px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+<div style="display:flex;flex-direction:column;gap:3px"><h2 style="margin:0;font-size:17px;font-weight:800;color:#fff">Personvern</h2><span style="font-size:12.5px;font-weight:500;color:#7c8aa0">Styr hvor du dukker opp på nettsiden.</span></div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-radius:14px;background:#0d1117;border:1px solid rgba(255,255,255,.06)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px;font-weight:700;color:#e8edf5">Skjul meg fra rangeringen</span><span style="font-size:12.5px;font-weight:500;color:#7c8aa0">Du samler poeng som før, men vises ikke offentlig.</span></div>
+<button type="button" onClick="{{ toggleHidden }}" style="position:relative;width:46px;height:26px;border-radius:99px;border:none;cursor:pointer;flex:none;background:{{ hiddenTrack }}"><span style="position:absolute;top:3px;left:{{ hiddenKnob }};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .16s ease"></span></button>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-radius:14px;background:#0d1117;border:1px solid rgba(255,255,255,.06)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px;font-weight:700;color:#e8edf5">Offentlig spillerprofil</span><span style="font-size:12.5px;font-weight:500;color:#7c8aa0">spillerprofil.html?u=spillmester</span></div>
+<a href="#1a" style="padding:10px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.09);font-size:13px;font-weight:700;color:#e8edf5">Åpne</a>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px;padding:24px;background:#131a25;border:1px solid rgba(255,255,255,.06);border-radius:20px">
+<div style="display:flex;flex-direction:column;gap:3px"><h2 style="margin:0;font-size:17px;font-weight:800;color:#fff">Konto</h2><span style="font-size:12.5px;font-weight:500;color:#7c8aa0">Logg ut av denne enheten, eller slett kontoen permanent.</span></div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-radius:14px;background:#0d1117;border:1px solid rgba(255,255,255,.06)">
+<span style="font-size:13.5px;font-weight:700;color:#e8edf5">Logg ut</span>
+<button type="button" style="padding:11px 20px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8edf5;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Logg ut</button>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-radius:14px;background:rgba(245,113,92,.08);border:1px solid rgba(245,113,92,.3)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px;font-weight:700;color:#ff9385">Slett konto</span><span style="font-size:12.5px;font-weight:500;color:#7c8aa0">Profil, poeng, rekorder og rabattkoder slettes permanent.</span></div>
+<button type="button" style="padding:11px 20px;border-radius:10px;border:1px solid rgba(245,113,92,.4);background:rgba(245,113,92,.12);color:#ff9385;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Slett konto</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+<footer style="max-width:1240px;margin:48px auto 0;padding:24px 32px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px;border-top:1px solid rgba(255,255,255,.09);width:100%">
+<div style="display:flex;align-items:center;gap:10px"><span style="width:24px;height:24px;border-radius:7px;background:#2ee87f;display:flex;align-items:center;justify-content:center;color:#0d1117;font-weight:800;font-size:13px">P</span><span style="font-size:13px;font-weight:500;color:#7c8aa0">© 2026 PixelPlay</span></div>
+<nav style="display:flex;align-items:center;gap:28px"><a href="#1d" style="font-size:13.5px;font-weight:600;color:#96a3b8">Kontakt</a><a href="#1d" style="font-size:13.5px;font-weight:600;color:#96a3b8">Personvern</a><a href="#1d" style="font-size:13.5px;font-weight:600;color:#96a3b8">Vilkår</a></nav>
+</footer>
+
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Prøv videre: «behold <a class="dv-oid" href="#1c">1c</a>, men legg figurene i kategorier» · «gjør <a class="dv-oid" href="#1a">1a</a> til to kolonner uten faner» · «legg til prestasjoner/merker i oversikten» · «vis mobilversjon av <a class="dv-oid" href="#1a">1a</a>»</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const FIGS = {"robot":{"label":"Robo","color":"#2ee87f","d":[["rect",{"x":2,"y":18.4,"width":20,"height":8,"rx":4}],["rect",{"x":3.4,"y":3,"width":17.2,"height":14.6,"rx":5}],["rect",{"x":11.3,"y":0.2,"width":1.4,"height":3.2,"rx":0.7}],["circle",{"cx":12,"cy":0.9,"r":1.3}],["rect",{"x":7,"y":8,"width":3.6,"height":3.6,"rx":1.2,"hole":1}],["rect",{"x":13.4,"y":8,"width":3.6,"height":3.6,"rx":1.2,"hole":1}],["rect",{"x":8.8,"y":13.6,"width":6.4,"height":1.7,"rx":0.85,"hole":1}]]},"katt":{"label":"Katt","color":"#5cf5a0","d":[["rect",{"x":2,"y":18.4,"width":20,"height":8,"rx":4}],["polygon",{"points":"4.4,7.6 6.2,0.6 11.4,5.4"}],["polygon",{"points":"19.6,7.6 17.8,0.6 12.6,5.4"}],["circle",{"cx":12,"cy":10.2,"r":8}],["circle",{"cx":8.9,"cy":9.4,"r":1.7,"hole":1}],["circle",{"cx":15.1,"cy":9.4,"r":1.7,"hole":1}],["polygon",{"points":"10.8,12.6 13.2,12.6 12,14.4","hole":1}],["rect",{"x":9.4,"y":15,"width":5.2,"height":1.3,"rx":0.65,"hole":1}]]},"spoke":{"label":"Spøkelse","color":"#7dd3fc","d":[["rect",{"x":2,"y":18.4,"width":20,"height":8,"rx":4}],["circle",{"cx":12,"cy":10.2,"r":8}],["ellipse",{"cx":8.9,"cy":9.2,"rx":1.8,"ry":2.4,"hole":1}],["ellipse",{"cx":15.1,"cy":9.2,"rx":1.8,"ry":2.4,"hole":1}],["ellipse",{"cx":12,"cy":14.4,"rx":2.4,"ry":1.9,"hole":1}]]},"alien":{"label":"Romvesen","color":"#a78bfa","d":[["rect",{"x":4,"y":19,"width":16,"height":7.5,"rx":3.5}],["ellipse",{"cx":12,"cy":10.4,"rx":7.8,"ry":8.6}],["rect",{"x":11.4,"y":0.2,"width":1.2,"height":2.6,"rx":0.6}],["ellipse",{"cx":8.4,"cy":10.2,"rx":2.1,"ry":3.4,"hole":1}],["ellipse",{"cx":15.6,"cy":10.2,"rx":2.1,"ry":3.4,"hole":1}],["rect",{"x":10.6,"y":15.6,"width":2.8,"height":1.2,"rx":0.6,"hole":1}]]},"fugl":{"label":"Fugl","color":"#ffd166","d":[["rect",{"x":2,"y":18.4,"width":20,"height":8,"rx":4}],["circle",{"cx":12,"cy":10.2,"r":8}],["circle",{"cx":9,"cy":8.6,"r":2.6,"hole":1}],["circle",{"cx":15.4,"cy":9.2,"r":1.3,"hole":1}],["polygon",{"points":"11.6,11.6 16.4,13.4 11.6,15.4","hole":1}]]},"bjorn":{"label":"Bjørn","color":"#fb923c","d":[["rect",{"x":2,"y":18.4,"width":20,"height":8,"rx":4}],["circle",{"cx":5.4,"cy":4.6,"r":3.4}],["circle",{"cx":18.6,"cy":4.6,"r":3.4}],["circle",{"cx":12,"cy":10.6,"r":8}],["circle",{"cx":9,"cy":9.4,"r":1.5,"hole":1}],["circle",{"cx":15,"cy":9.4,"r":1.5,"hole":1}],["ellipse",{"cx":12,"cy":14,"rx":3.2,"ry":2.4,"hole":1}],["ellipse",{"cx":12,"cy":13.2,"rx":1.1,"ry":0.8}]]},"krystall":{"label":"Tulling","color":"#f472b6","d":[["rect",{"x":2,"y":18.4,"width":20,"height":8,"rx":4}],["circle",{"cx":12,"cy":10.2,"r":8}],["circle",{"cx":8.8,"cy":8.8,"r":1.9,"hole":1}],["rect",{"x":12.8,"y":8.4,"width":4,"height":1.6,"rx":0.8,"hole":1}],["rect",{"x":8.4,"y":12.6,"width":7,"height":1.9,"rx":0.95,"hole":1}],["rect",{"x":10.6,"y":13.6,"width":2.8,"height":4,"rx":1.4,"hole":1}]]},"blekk":{"label":"Monster","color":"#38bdf8","d":[["rect",{"x":2,"y":18.4,"width":20,"height":8,"rx":4}],["polygon",{"points":"5.6,4 8.8,5.4 6.6,1.4"}],["polygon",{"points":"18.4,4 15.2,5.4 17.4,1.4"}],["circle",{"cx":12,"cy":10.8,"r":8}],["circle",{"cx":8.3,"cy":9.4,"r":1.8,"hole":1}],["circle",{"cx":12,"cy":7.4,"r":1.4,"hole":1}],["circle",{"cx":15.7,"cy":9.4,"r":1.8,"hole":1}],["rect",{"x":8.2,"y":13,"width":7.6,"height":2.4,"rx":1.2,"hole":1}],["rect",{"x":10,"y":13,"width":1.3,"height":1.1}],["rect",{"x":12.7,"y":13,"width":1.3,"height":1.1}]]}};
+const COLORS = ["#2ee87f", "#38bdf8", "#a78bfa", "#f472b6", "#ffd166", "#fb923c", "#ff9385", "#e8edf5"];
+const KEYS = Object.keys(FIGS);
+
+class Component extends DCLogic {
+  state = { tab: "Oversikt", figure: "robot", color: "#2ee87f", hidden: false };
+
+  fig(size, holeFill) {
+    const spec = FIGS[this.state.figure] || FIGS.robot;
+    return React.createElement(
+      "svg",
+      { width: "100%", height: "100%", viewBox: "1.5 1 21 21", fill: "currentColor", style: { display: "block" } },
+      spec.d.map(([tag, attrs], i) => {
+        const { hole, ...rest } = attrs;
+        return React.createElement(tag, Object.assign({ key: i }, rest, hole ? { fill: holeFill || "#0d1117" } : null));
+      })
+    );
+  }
+
+  ring(on, color) {
+    return on ? "0 0 0 2px " + (color || "#ffffff") : "0 0 0 1px rgba(255,255,255,.06)";
+  }
+
+  renderVals() {
+    const t = this.state.tab;
+    const tab = (name) => ({
+      bg: t === name ? "rgba(46,232,127,.12)" : "transparent",
+      fg: t === name ? "#2ee87f" : "#96a3b8"
+    });
+    const t1 = tab("Oversikt"), t2 = tab("Rekorder"), t3 = tab("Koder");
+    const c = this.state.color;
+    const rings = {};
+    KEYS.forEach((k) => {
+      const key = "ring" + k.charAt(0).toUpperCase() + k.slice(1);
+      rings[key] = this.ring(this.state.figure === k, c);
+    });
+    const cr = {};
+    COLORS.forEach((col, i) => { cr["cring" + (i + 1)] = this.ring(c === col, "#ffffff"); });
+
+    return Object.assign({
+      isOversikt: t === "Oversikt",
+      isRekorder: t === "Rekorder",
+      isKoder: t === "Koder",
+      tabBg1: t1.bg, tabFg1: t1.fg,
+      tabBg2: t2.bg, tabFg2: t2.fg,
+      tabBg3: t3.bg, tabFg3: t3.fg,
+      avatarColor: c,
+      previewSoft: c + "22",
+      previewBorder: c + "66",
+      figureLabel: (FIGS[this.state.figure] || FIGS.robot).label,
+      previewFigureXl: this.fig(82, c),
+      previewFigureLg: this.fig(46, c),
+      previewFigureLg2: this.fig(42, c),
+      previewFigureMd: this.fig(34, c),
+      previewFigureSm: this.fig(20, c),
+      previewFigureSm2: this.fig(19, c),
+      hiddenTrack: this.state.hidden ? "#2ee87f" : "rgba(255,255,255,.14)",
+      hiddenKnob: this.state.hidden ? "23px" : "3px",
+      pickTab: (e) => {
+        const b = e.target.closest("[data-tab]");
+        if (b) this.setState({ tab: b.dataset.tab });
+      },
+      pickFigure: (e) => {
+        const b = e.target.closest("[data-figure]");
+        if (b) this.setState({ figure: b.dataset.figure });
+      },
+      pickColor: (e) => {
+        const b = e.target.closest("[data-color]");
+        if (b) this.setState({ color: b.dataset.color });
+      },
+      randomize: () => this.setState({
+        figure: KEYS[Math.floor(Math.random() * KEYS.length)],
+        color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      }),
+      toggleHidden: () => this.setState((s) => ({ hidden: !s.hidden })),
+      openModal: () => { window.location.hash = "#1c"; }
+    }, rings, cr);
+  }
+}
+</script>
+</body>
+</html>

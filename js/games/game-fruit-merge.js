@@ -49,6 +49,7 @@
     let canDrop = true;
     let dangerSince = null;
     let bodySeq = 1;
+    let mergeEffects = [];
 
     window.PixelPlayGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -80,6 +81,7 @@
       score = 0;
       over = false;
       dangerSince = null;
+      mergeEffects = [];
       nextFruitIndex = randomDropIndex();
       currentDropX = WIDTH / 2;
       canDrop = true;
@@ -175,6 +177,7 @@
 
         score += (nextIndex + 1) * 4;
         session.setScore(score);
+        mergeEffects.push({ x: midX, y: midY, color: FRUITS[nextIndex].color, start: performance.now() });
       }
     }
 
@@ -204,6 +207,20 @@
     function drawOverlay() {
       const ctx = render.context;
       ctx.save();
+
+      const now = performance.now();
+      const MERGE_EFFECT_MS = 380;
+      mergeEffects = mergeEffects.filter((e) => now - e.start < MERGE_EFFECT_MS);
+      for (const e of mergeEffects) {
+        const t = (now - e.start) / MERGE_EFFECT_MS;
+        ctx.globalAlpha = 1 - t;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, 10 + t * 46, 0, Math.PI * 2);
+        ctx.strokeStyle = e.color;
+        ctx.lineWidth = 4 * (1 - t) + 1;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
 
       // Fareindikator: en stiplet linje som viser "over kanten"-grensen.
       ctx.strokeStyle = dangerSince ? "rgba(230,57,80,0.55)" : "rgba(0,0,0,0.15)";

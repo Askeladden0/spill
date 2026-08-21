@@ -3,571 +3,120 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PixelPlay · Admin</title>
+<title>SpareTriks · Adminpanel</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-page="admin">
-<div class="page">
 
-  <header class="site-header">
-    <div class="header-left">
-      <a href="index.html" class="logo">
-        <span class="logo-mark">P</span>
-        <span class="logo-text">PIXEL<span>PLAY</span></span>
-      </a>
-      <nav class="main-nav">
-        <a href="index.html#spill" class="nav-link" data-page="spill">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
-          Spill
-        </a>
-        <a href="premier.html" class="nav-link" data-page="premier">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
-          Premier
-        </a>
-        <a href="rangering.html" class="nav-link" data-page="rangering">
+<div class="admin-guard" data-admin-guard>Sjekker admin-tilgang …</div>
+
+<div class="admin-shell" data-admin-shell hidden>
+
+  <aside class="admin-sidebar">
+    <a href="index.html" class="admin-sidebar-logo">
+      <span class="logo-mark">S</span>
+      <span class="logo-text">SPARE<span>TRIKS</span></span>
+      <span class="admin-pill">ADMIN</span>
+    </a>
+
+    <button type="button" class="admin-search-trigger" data-open-palette>
+      <span>⌕</span><span class="admin-search-label">Søk eller hopp til …</span>
+      <span class="admin-kbd" data-palette-kbd>Ctrl K</span>
+    </button>
+
+    <nav class="admin-nav" data-admin-nav>
+      <div class="admin-nav-group">
+        <span class="admin-nav-label">OVERSIKT</span>
+        <button type="button" class="admin-nav-link" data-nav="oversikt">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
-          Rangering
-        </a>
-      </nav>
-    </div>
-    <div class="header-right" data-auth-slot></div>
-  </header>
-
-  <main data-admin-main hidden>
-    <section>
-      <div class="section-heading"><h1>Adminpanel</h1></div>
-      <p class="section-sub" style="margin:-8px 0 0">Kun synlig for administratorer.</p>
-    </section>
-
-    <section>
-      <div class="section-heading"><h2>Standard profilbilde – farger</h2></div>
-      <div class="settings-card">
-        <div class="swatch-row" data-admin-colors></div>
-        <form class="inline-form" data-add-color-form>
-          <input type="text" name="color" placeholder="#4287f5" pattern="^#[0-9a-fA-F]{6}$" required>
-          <button type="submit" class="btn-start" style="width:auto;padding:12px 24px">Legg til farge</button>
-        </form>
+          <span class="admin-nav-link-label">Oversikt</span>
+        </button>
       </div>
-    </section>
 
-    <section>
-      <div class="section-heading"><h2>Standard profilbilde – ikoner</h2></div>
-      <div class="settings-card">
-        <div class="swatch-row" data-admin-icons></div>
-        <form class="inline-form" data-add-icon-form>
-          <input type="text" name="icon" placeholder="🐙" maxlength="4" required>
-          <button type="submit" class="btn-start" style="width:auto;padding:12px 24px">Legg til ikon</button>
-        </form>
+      <div class="admin-nav-group">
+        <span class="admin-nav-label">ADMINISTRER</span>
+        <button type="button" class="admin-nav-link" data-nav="statistikk">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 4 4-7 5 5"></path><line x1="3" y1="21" x2="21" y2="21"></line></svg>
+          <span class="admin-nav-link-label">Statistikk</span>
+        </button>
+        <button type="button" class="admin-nav-link" data-nav="brukere">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
+          <span class="admin-nav-link-label">Brukere</span>
+        </button>
+        <button type="button" class="admin-nav-link" data-nav="spill">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
+          <span class="admin-nav-link-label">Triks</span>
+        </button>
+        <button type="button" class="admin-nav-link" data-nav="nivaaer">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
+          <span class="admin-nav-link-label">Nivåer og premier</span>
+        </button>
+        <button type="button" class="admin-nav-link" data-nav="avatar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="10" r="3"></circle><path d="M6.6 19c1.2-2.1 3.1-3.1 5.4-3.1s4.2 1 5.4 3.1"></path></svg>
+          <span class="admin-nav-link-label">Profilbilder</span>
+        </button>
+        <button type="button" class="admin-nav-link" data-nav="koder">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="3"></rect><line x1="9" y1="7" x2="9" y2="17"></line></svg>
+          <span class="admin-nav-link-label">Rabattkoder</span>
+        </button>
       </div>
-      <p class="auth-error" data-avatar-options-error hidden></p>
-      <p class="auth-success" data-avatar-options-success hidden></p>
-    </section>
 
-    <section>
-      <div class="section-heading spread">
-        <h2>Spill</h2>
-        <span class="section-sub" data-games-count></span>
+      <div class="admin-nav-group">
+        <span class="admin-nav-label">SENERE</span>
+        <button type="button" class="admin-nav-link" data-nav="drift">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><circle cx="15" cy="9" r="2.2"></circle><line x1="4" y1="16" x2="20" y2="16"></line><circle cx="9" cy="16" r="2.2"></circle></svg>
+          <span class="admin-nav-link-label">Drift</span>
+          <span class="admin-nav-soon">Snart</span>
+        </button>
       </div>
-      <p class="section-sub" style="margin:-8px 0 0">Velg hvilket spill som vises i "Dagens spill" på forsiden, og bytt cover-/ikonbilde per spill. Et byttet bilde slår automatisk ut alle steder spillet vises (forside, rangering, mine rekorder, spillerprofil).</p>
-      <div style="display:flex;flex-direction:column;gap:14px" data-games-list>Laster spill …</div>
-      <p class="auth-error" data-games-error hidden></p>
-      <p class="auth-success" data-games-success hidden></p>
-    </section>
-
-    <section>
-      <div class="section-heading spread">
-        <h2>Nivåer og premier</h2>
-        <span class="section-sub" data-level-count></span>
-      </div>
-      <p class="section-sub" style="margin:-8px 0 0">Poengkravet avgjør når et nivå låses opp automatisk. Legg til premier (rabattkoder) per nivå – koden selv genereres tilfeldig når en bruker henter den.</p>
-      <div style="display:flex;flex-direction:column;gap:14px" data-levels-list>Laster nivåer …</div>
-      <form class="inline-form" data-add-level-form>
-        <input type="number" name="level_number" placeholder="Nivånummer" min="1" required style="max-width:160px">
-        <input type="number" name="points_required" placeholder="Poeng krevd" min="0" required style="max-width:180px">
-        <button type="submit" class="btn-start" style="width:auto;padding:12px 24px">Legg til nivå</button>
-      </form>
-      <p class="auth-error" data-levels-error hidden></p>
-      <p class="auth-success" data-levels-success hidden></p>
-    </section>
-
-    <section>
-      <div class="section-heading spread">
-        <h2>Brukere</h2>
-        <span class="section-sub" data-user-count></span>
-      </div>
-      <p class="section-sub" style="margin:-8px 0 0">Endre en brukers poeng eller nivå manuelt – trykk Enter eller klikk utenfor feltet for å lagre.</p>
-      <div class="settings-card">
-        <table class="records-table" data-users-table>
-          <thead>
-            <tr><th>Brukernavn</th><th>Poeng</th><th>Nivå</th><th>Registrert</th><th>Admin</th></tr>
-          </thead>
-          <tbody data-users-tbody>
-            <tr><td colspan="5">Laster brukere …</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="footer-brand">
-      <span class="footer-logo-mark">P</span>
-      <span class="footer-copy">© 2026 PixelPlay</span>
-    </div>
-    <nav class="footer-nav">
-      <a href="#kontakt">Kontakt</a>
-      <a href="#personvern">Personvern</a>
-      <a href="#vilkar">Vilkår</a>
-      <a href="admin.html" data-admin-only style="display:none">Admin</a>
     </nav>
-  </footer>
+
+    <div class="admin-sidebar-user" data-sidebar-user>
+      <span class="admin-icon-badge">…</span>
+      <span class="admin-sidebar-user-meta">
+        <span class="admin-sidebar-user-name" data-sidebar-user-name>—</span>
+        <span class="admin-sidebar-user-role">Administrator</span>
+      </span>
+      <a href="index.html" class="admin-sidebar-user-link">Til siden ↗</a>
+    </div>
+  </aside>
+
+  <div class="admin-content">
+    <header class="admin-topbar">
+      <div class="admin-topbar-titles">
+        <span class="admin-topbar-eyebrow">ADMIN</span>
+        <h1 data-view-title>Oversikt</h1>
+      </div>
+      <span class="admin-topbar-hint" data-view-hint></span>
+    </header>
+
+    <main class="admin-main" data-admin-main>Laster …</main>
+  </div>
 </div>
+
+<div class="admin-palette-overlay" data-palette-overlay hidden>
+  <button type="button" class="admin-palette-backdrop" data-close-palette aria-label="Lukk"></button>
+  <div class="admin-palette">
+    <div class="admin-palette-head">
+      <span>⌕</span>
+      <input type="text" placeholder="Hopp til seksjon, spill, nivå eller bruker …" data-palette-input autocomplete="off">
+      <span class="admin-kbd">ESC</span>
+    </div>
+    <div class="admin-palette-results" data-palette-results></div>
+  </div>
+</div>
+
+<div class="admin-toast" data-toast hidden></div>
 
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/games-data.js"></script>
-<script>
-(function () {
-  "use strict";
-  const sb = window.supabaseClient;
-  const Auth = window.PixelPlayAuth;
-
-  let currentUserId = null;
-  let avatarOptions = { colors: [], icons: [] };
-
-  // ---------- Spill ----------
-  let games = [];
-
-  function showGamesMessage(kind, msg) {
-    const errorEl = document.querySelector("[data-games-error]");
-    const successEl = document.querySelector("[data-games-success]");
-    errorEl.hidden = kind !== "error";
-    successEl.hidden = kind !== "success";
-    if (kind === "error") errorEl.textContent = msg;
-    if (kind === "success") successEl.textContent = msg;
-  }
-
-  async function loadGames() {
-    const { data, error } = await sb
-      .from("games")
-      .select("id, name, thumbnail_url, icon_url, is_daily_game")
-      .order("sort_order", { ascending: true });
-    if (error) {
-      document.querySelector("[data-games-list]").innerHTML = "<p class=\"section-sub\">Kunne ikke laste spill.</p>";
-      return;
-    }
-    games = data;
-    document.querySelector("[data-games-count]").textContent = `${games.length} spill`;
-    renderGamesAdmin();
-  }
-
-  function renderGamesAdmin() {
-    const el = document.querySelector("[data-games-list]");
-    if (!games.length) {
-      el.innerHTML = "<p class=\"section-sub\">Ingen spill ennå.</p>";
-      return;
-    }
-
-    el.innerHTML = games
-      .map(
-        (g) => `
-        <div class="level-admin-card" data-game-card="${g.id}">
-          <div class="level-admin-head" style="align-items:center">
-            <img src="${g.thumbnail_url || ""}" alt="" style="width:64px;height:40px;border-radius:8px;object-fit:cover;background:var(--surface-2);flex-shrink:0">
-            <img src="${g.icon_url || ""}" alt="" style="width:36px;height:36px;border-radius:9px;object-fit:cover;background:var(--surface-2);flex-shrink:0">
-            <label style="flex:1;min-width:160px">Navn
-              <input type="text" value="${g.name}" disabled>
-            </label>
-            <button type="button" class="btn-start" style="width:auto;padding:8px 14px;align-self:flex-end;${g.is_daily_game ? "opacity:.55;pointer-events:none" : ""}" data-set-daily="${g.id}">
-              ${g.is_daily_game ? "★ Dagens spill" : "Sett som dagens spill"}
-            </button>
-          </div>
-          <label>Cover-bilde (URL)
-            <input type="text" value="${g.thumbnail_url || ""}" placeholder="assets/img/games/${g.id}.svg" data-thumbnail-input="${g.id}">
-          </label>
-          <label>Ikon (URL)
-            <input type="text" value="${g.icon_url || ""}" placeholder="assets/img/icons/${g.id}.svg" data-icon-input="${g.id}">
-          </label>
-        </div>
-      `
-      )
-      .join("");
-
-    el.querySelectorAll("[data-set-daily]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const { error } = await sb.rpc("set_daily_game", { p_game_id: btn.dataset.setDaily });
-        if (error) return showGamesMessage("error", Auth.friendlyAuthError(error));
-        showGamesMessage("success", "Dagens spill oppdatert!");
-        await loadGames();
-      });
-    });
-
-    el.querySelectorAll("[data-thumbnail-input]").forEach((input) => {
-      input.addEventListener("change", async () => {
-        const { error } = await sb
-          .from("games")
-          .update({ thumbnail_url: input.value.trim() || null })
-          .eq("id", input.dataset.thumbnailInput);
-        if (error) return showGamesMessage("error", Auth.friendlyAuthError(error));
-        showGamesMessage("success", "Cover-bilde oppdatert!");
-        await loadGames();
-      });
-    });
-
-    el.querySelectorAll("[data-icon-input]").forEach((input) => {
-      input.addEventListener("change", async () => {
-        const { error } = await sb
-          .from("games")
-          .update({ icon_url: input.value.trim() || null })
-          .eq("id", input.dataset.iconInput);
-        if (error) return showGamesMessage("error", Auth.friendlyAuthError(error));
-        showGamesMessage("success", "Ikon oppdatert!");
-        await loadGames();
-      });
-    });
-  }
-
-  function showAvatarMessage(el, msg) {
-    const errorEl = document.querySelector("[data-avatar-options-error]");
-    const successEl = document.querySelector("[data-avatar-options-success]");
-    errorEl.hidden = el !== "error";
-    successEl.hidden = el !== "success";
-    if (el === "error") errorEl.textContent = msg;
-    if (el === "success") successEl.textContent = msg;
-  }
-
-  async function saveAvatarOptions() {
-    const { error } = await sb
-      .from("avatar_options")
-      .update({ colors: avatarOptions.colors, icons: avatarOptions.icons, updated_at: new Date().toISOString() })
-      .eq("id", 1);
-    if (error) {
-      showAvatarMessage("error", Auth.friendlyAuthError(error));
-      return false;
-    }
-    showAvatarMessage("success", "Lagret!");
-    return true;
-  }
-
-  function renderAvatarAdmin() {
-    document.querySelector("[data-admin-colors]").innerHTML = avatarOptions.colors
-      .map(
-        (c, i) => `
-        <span class="swatch swatch-removable" style="background:${c}">
-          <button type="button" data-remove-color="${i}" aria-label="Fjern farge">×</button>
-        </span>
-      `
-      )
-      .join("");
-
-    document.querySelector("[data-admin-icons]").innerHTML = avatarOptions.icons
-      .map(
-        (icon, i) => `
-        <span class="swatch swatch-icon swatch-removable">
-          ${icon}
-          <button type="button" data-remove-icon="${i}" aria-label="Fjern ikon">×</button>
-        </span>
-      `
-      )
-      .join("");
-
-    document.querySelectorAll("[data-remove-color]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (avatarOptions.colors.length <= 1) return showAvatarMessage("error", "Du må ha minst én farge.");
-        avatarOptions.colors.splice(Number(btn.dataset.removeColor), 1);
-        if (await saveAvatarOptions()) renderAvatarAdmin();
-      });
-    });
-    document.querySelectorAll("[data-remove-icon]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (avatarOptions.icons.length <= 1) return showAvatarMessage("error", "Du må ha minst ett ikon.");
-        avatarOptions.icons.splice(Number(btn.dataset.removeIcon), 1);
-        if (await saveAvatarOptions()) renderAvatarAdmin();
-      });
-    });
-  }
-
-  document.querySelector("[data-add-color-form]").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const input = e.target.elements.color;
-    const value = input.value.trim();
-    if (!/^#[0-9a-fA-F]{6}$/.test(value)) return showAvatarMessage("error", "Fargen må være et gyldig hex-format, f.eks. #4287f5.");
-    avatarOptions.colors.push(value);
-    if (await saveAvatarOptions()) {
-      renderAvatarAdmin();
-      e.target.reset();
-    }
-  });
-
-  document.querySelector("[data-add-icon-form]").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const input = e.target.elements.icon;
-    const value = input.value.trim();
-    if (!value) return;
-    avatarOptions.icons.push(value);
-    if (await saveAvatarOptions()) {
-      renderAvatarAdmin();
-      e.target.reset();
-    }
-  });
-
-  async function loadUsers() {
-    const { data, error } = await sb
-      .from("profiles")
-      .select("id, username, xp, level, is_admin, created_at")
-      .order("created_at", { ascending: false });
-
-    const tbody = document.querySelector("[data-users-tbody]");
-    if (error) {
-      tbody.innerHTML = `<tr><td colspan="5">Kunne ikke laste brukere.</td></tr>`;
-      return;
-    }
-
-    document.querySelector("[data-user-count]").textContent = `${data.length} bruker${data.length === 1 ? "" : "e"}`;
-
-    tbody.innerHTML = data
-      .map(
-        (u) => `
-        <tr>
-          <td>${u.username}</td>
-          <td><input type="number" min="0" value="${u.xp}" data-points-input="${u.id}" style="width:100px;padding:6px 8px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);font-family:inherit"></td>
-          <td><input type="number" min="1" value="${u.level}" data-level-input="${u.id}" style="width:70px;padding:6px 8px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);font-family:inherit"></td>
-          <td>${new Date(u.created_at).toLocaleDateString("no-NO")}</td>
-          <td>
-            <label class="admin-toggle">
-              <input type="checkbox" data-admin-toggle="${u.id}" ${u.is_admin ? "checked" : ""} ${u.id === currentUserId ? "disabled" : ""}>
-              <span></span>
-            </label>
-          </td>
-        </tr>
-      `
-      )
-      .join("");
-
-    tbody.querySelectorAll("[data-admin-toggle]").forEach((toggle) => {
-      toggle.addEventListener("change", async () => {
-        const { error: updateError } = await sb
-          .from("profiles")
-          .update({ is_admin: toggle.checked })
-          .eq("id", toggle.dataset.adminToggle);
-        if (updateError) {
-          alert("Kunne ikke oppdatere admin-status: " + Auth.friendlyAuthError(updateError));
-          toggle.checked = !toggle.checked;
-        }
-      });
-    });
-
-    async function saveField(input, field) {
-      const value = Number(input.value);
-      if (!Number.isFinite(value) || value < (field === "level" ? 1 : 0)) return;
-      const id = field === "level" ? input.dataset.levelInput : input.dataset.pointsInput;
-      const { error: updateError } = await sb
-        .from("profiles")
-        .update({ [field]: value })
-        .eq("id", id);
-      if (updateError) {
-        alert(`Kunne ikke oppdatere ${field === "level" ? "nivå" : "poeng"}: ` + Auth.friendlyAuthError(updateError));
-      }
-    }
-
-    tbody.querySelectorAll("[data-points-input]").forEach((input) => {
-      input.addEventListener("change", () => saveField(input, "xp"));
-    });
-    tbody.querySelectorAll("[data-level-input]").forEach((input) => {
-      input.addEventListener("change", () => saveField(input, "level"));
-    });
-  }
-
-  // ---------- Nivåer og premier ----------
-  let levels = [];
-
-  function showLevelsMessage(kind, msg) {
-    const errorEl = document.querySelector("[data-levels-error]");
-    const successEl = document.querySelector("[data-levels-success]");
-    errorEl.hidden = kind !== "error";
-    successEl.hidden = kind !== "success";
-    if (kind === "error") errorEl.textContent = msg;
-    if (kind === "success") successEl.textContent = msg;
-  }
-
-  async function loadLevels() {
-    const { data, error } = await sb.from("levels").select("level_number, points_required, rewards").order("level_number");
-    if (error) {
-      document.querySelector("[data-levels-list]").innerHTML = "<p class=\"section-sub\">Kunne ikke laste nivåer.</p>";
-      return;
-    }
-    levels = data;
-    document.querySelector("[data-level-count]").textContent = `${levels.length} nivå${levels.length === 1 ? "" : "er"}`;
-    renderLevelsAdmin();
-  }
-
-  async function saveLevel(levelNumber, fields) {
-    const { error } = await sb.from("levels").update(fields).eq("level_number", levelNumber);
-    if (error) {
-      showLevelsMessage("error", Auth.friendlyAuthError(error));
-      return false;
-    }
-    showLevelsMessage("success", "Lagret!");
-    return true;
-  }
-
-  function renderLevelsAdmin() {
-    const el = document.querySelector("[data-levels-list]");
-    if (!levels.length) {
-      el.innerHTML = "<p class=\"section-sub\">Ingen nivåer ennå.</p>";
-      return;
-    }
-
-    el.innerHTML = levels
-      .map(
-        (lv) => `
-        <div class="level-admin-card" data-level-card="${lv.level_number}">
-          <div class="level-admin-head">
-            <label>Nivå
-              <input type="number" min="1" value="${lv.level_number}" disabled>
-            </label>
-            <label>Poeng krevd
-              <input type="number" min="0" value="${lv.points_required}" data-points-required="${lv.level_number}">
-            </label>
-            <button type="button" class="btn-danger" style="padding:8px 14px;align-self:flex-end" data-delete-level="${lv.level_number}">Slett nivå</button>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:8px" data-rewards-list="${lv.level_number}">
-            ${(lv.rewards || [])
-              .map(
-                (r, ri) => `
-              <div class="reward-admin-row">
-                <input type="text" value="${r.brand}" placeholder="Merke" data-reward-field="brand" data-reward-index="${ri}">
-                <input type="text" value="${r.title}" placeholder="Tittel" data-reward-field="title" data-reward-index="${ri}">
-                <input type="text" value="${r.sub || ""}" placeholder="Undertekst" data-reward-field="sub" data-reward-index="${ri}">
-                <button type="button" class="btn-danger" style="padding:6px 10px" data-remove-reward="${ri}">Fjern</button>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-          <button type="button" class="btn-start" style="width:auto;padding:10px 18px;align-self:flex-start" data-add-reward>+ Legg til premie</button>
-        </div>
-      `
-      )
-      .join("");
-
-    el.querySelectorAll("[data-points-required]").forEach((input) => {
-      input.addEventListener("change", async () => {
-        const levelNumber = Number(input.dataset.pointsRequired);
-        const value = Number(input.value);
-        if (!Number.isFinite(value) || value < 0) return;
-        if (await saveLevel(levelNumber, { points_required: value })) {
-          const lv = levels.find((l) => l.level_number === levelNumber);
-          if (lv) lv.points_required = value;
-        }
-      });
-    });
-
-    el.querySelectorAll("[data-delete-level]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const levelNumber = Number(btn.dataset.deleteLevel);
-        if (!confirm(`Slette nivå ${levelNumber}? Dette kan ikke angres.`)) return;
-        const { error } = await sb.from("levels").delete().eq("level_number", levelNumber);
-        if (error) return showLevelsMessage("error", Auth.friendlyAuthError(error));
-        levels = levels.filter((l) => l.level_number !== levelNumber);
-        showLevelsMessage("success", "Nivå slettet.");
-        renderLevelsAdmin();
-      });
-    });
-
-    el.querySelectorAll("[data-level-card]").forEach((card) => {
-      const levelNumber = Number(card.dataset.levelCard);
-      const lv = levels.find((l) => l.level_number === levelNumber);
-
-      function collectRewards() {
-        const rows = card.querySelectorAll("[data-rewards-list] .reward-admin-row");
-        return Array.from(rows).map((row) => ({
-          brand: row.querySelector('[data-reward-field="brand"]').value.trim(),
-          title: row.querySelector('[data-reward-field="title"]').value.trim(),
-          sub: row.querySelector('[data-reward-field="sub"]').value.trim(),
-        }));
-      }
-
-      card.querySelectorAll('[data-reward-field]').forEach((input) => {
-        input.addEventListener("change", async () => {
-          const rewards = collectRewards();
-          if (await saveLevel(levelNumber, { rewards })) lv.rewards = rewards;
-        });
-      });
-
-      card.querySelectorAll("[data-remove-reward]").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          const rewards = collectRewards();
-          rewards.splice(Number(btn.dataset.removeReward), 1);
-          if (await saveLevel(levelNumber, { rewards })) {
-            lv.rewards = rewards;
-            renderLevelsAdmin();
-          }
-        });
-      });
-
-      card.querySelector("[data-add-reward]").addEventListener("click", async () => {
-        const rewards = collectRewards();
-        rewards.push({ brand: "Ny partner", title: "Ny premie", sub: "" });
-        if (await saveLevel(levelNumber, { rewards })) {
-          lv.rewards = rewards;
-          renderLevelsAdmin();
-        }
-      });
-    });
-  }
-
-  document.querySelector("[data-add-level-form]").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const form = new FormData(e.target);
-    const levelNumber = Number(form.get("level_number"));
-    const pointsRequired = Number(form.get("points_required"));
-    if (!Number.isFinite(levelNumber) || levelNumber < 1) return showLevelsMessage("error", "Ugyldig nivånummer.");
-    if (!Number.isFinite(pointsRequired) || pointsRequired < 0) return showLevelsMessage("error", "Ugyldig poengkrav.");
-    if (levels.some((l) => l.level_number === levelNumber)) return showLevelsMessage("error", "Dette nivået finnes allerede.");
-
-    const { data, error } = await sb
-      .from("levels")
-      .insert({ level_number: levelNumber, points_required: pointsRequired, rewards: [] })
-      .select()
-      .single();
-
-    if (error) return showLevelsMessage("error", Auth.friendlyAuthError(error));
-
-    levels.push(data);
-    levels.sort((a, b) => a.level_number - b.level_number);
-    document.querySelector("[data-level-count]").textContent = `${levels.length} nivå${levels.length === 1 ? "" : "er"}`;
-    renderLevelsAdmin();
-    showLevelsMessage("success", "Nivå lagt til!");
-    e.target.reset();
-  });
-
-  (async function init() {
-    // Midlertidig: admin-sjekken er slått av på klientsiden slik at siden
-    // kan besøkes/testes uten å ha kjørt supabase/schema.sql og satt
-    // is_admin ennå. Skru dette tilbake til Auth.requireAdmin() når det er
-    // gjort, ellers kan hvem som helst se panelet (lagring vil uansett
-    // feile med en RLS-feilmelding for ikke-admins helt til de er admin i
-    // databasen).
-    const profile = await Auth.getCurrentProfile();
-    if (profile) currentUserId = profile.id;
-    document.querySelector("[data-admin-main]").hidden = false;
-
-    const { data, error } = await sb.from("avatar_options").select("colors, icons").eq("id", 1).single();
-    if (!error) {
-      avatarOptions = data;
-      renderAvatarAdmin();
-    }
-
-    await loadGames();
-    await loadLevels();
-    await loadUsers();
-  })();
-})();
-</script>
+<script src="js/admin.js"></script>
 </body>
 </html>

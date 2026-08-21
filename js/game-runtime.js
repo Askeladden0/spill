@@ -16,6 +16,20 @@
   const sb = window.supabaseClient;
   const Auth = window.PixelPlayAuth;
 
+  // Poengterskler som viser en kort "Block Blast"-aktig tekst midt i
+  // spillflaten når spilleren når dem i én økt. Delt på tvers av alle spill
+  // (samme terskler for alle) fordi poenggivningen er balansert til å ligge
+  // på omtrent samme skala uansett hvilket spill man spiller.
+  const MILESTONES = [
+    { score: 100, text: "Fin start!" },
+    { score: 300, text: "Bra jobbet!" },
+    { score: 700, text: "Nice!" },
+    { score: 1500, text: "Awesome!" },
+    { score: 3000, text: "Fantastisk!" },
+    { score: 6000, text: "Utrolig!" },
+    { score: 12000, text: "Legendarisk!" },
+  ];
+
   function guestBestKey(gameId) {
     return `pixelplay_guest_best_${gameId}`;
   }
@@ -95,6 +109,7 @@
           <button type="button" class="btn-hud-restart" data-hud-restart>Nytt spill</button>
         </div>
         <div class="game-play-area" data-game-play-area></div>
+        <div class="game-milestone-toast" data-game-milestone></div>
         <div class="game-over-overlay" data-game-over hidden>
           <div class="game-over-card">
             <h3 data-game-over-title>Spillet er over</h3>
@@ -129,6 +144,7 @@
       best: container.querySelector("[data-hud-best]"),
       restartBtn: container.querySelector("[data-hud-restart]"),
       playArea: container.querySelector("[data-game-play-area]"),
+      milestone: container.querySelector("[data-game-milestone]"),
       overlay: container.querySelector("[data-game-over]"),
       overlayTitle: container.querySelector("[data-game-over-title]"),
       overlayScore: container.querySelector("[data-game-over-score]"),
@@ -146,9 +162,29 @@
 
     let restartHandler = null;
     let pendingHeaderAnimation = null;
+    let lastScoreValue = 0;
+    let nextMilestoneIndex = 0;
+    let milestoneTimer = null;
+
+    function showMilestone(text) {
+      if (milestoneTimer) window.clearTimeout(milestoneTimer);
+      els.milestone.classList.remove("is-shown");
+      // Tving reflow slik at animasjonen starter på nytt selv om samme
+      // element allerede var midt i en visning.
+      // eslint-disable-next-line no-unused-expressions
+      els.milestone.offsetWidth;
+      els.milestone.textContent = text;
+      els.milestone.classList.add("is-shown");
+      milestoneTimer = window.setTimeout(() => {
+        els.milestone.classList.remove("is-shown");
+      }, 1100);
+    }
 
     function fireRestart() {
       els.overlay.hidden = true;
+      lastScoreValue = 0;
+      nextMilestoneIndex = 0;
+      els.milestone.classList.remove("is-shown");
       if (pendingHeaderAnimation) {
         Auth.animateHeaderLevelUp(pendingHeaderAnimation.prevProfile, pendingHeaderAnimation.newProfile);
         pendingHeaderAnimation = null;
@@ -217,7 +253,20 @@
       playArea: els.playArea,
 
       setScore(score) {
-        els.score.textContent = Math.max(0, Math.round(score)).toLocaleString("no-NO");
+        const rounded = Math.max(0, Math.round(score));
+        if (rounded === lastScoreValue) return;
+        els.score.textContent = rounded.toLocaleString("no-NO");
+        if (rounded > lastScoreValue) {
+          els.score.classList.remove("is-bump");
+          // eslint-disable-next-line no-unused-expressions
+          els.score.offsetWidth;
+          els.score.classList.add("is-bump");
+          while (nextMilestoneIndex < MILESTONES.length && rounded >= MILESTONES[nextMilestoneIndex].score) {
+            showMilestone(MILESTONES[nextMilestoneIndex].text);
+            nextMilestoneIndex++;
+          }
+        }
+        lastScoreValue = rounded;
       },
 
       onRestart(cb) {

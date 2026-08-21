@@ -61,6 +61,7 @@
     let ctx = null;
     let rafId = null;
     let lastTime = 0;
+    let effects = [];
 
     window.PixelPlayGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -85,6 +86,7 @@
       score = 0;
       over = false;
       moving = null;
+      effects = [];
       aimAngle = 0;
       current = randomColor();
       next = randomColor();
@@ -105,8 +107,19 @@
       const dt = Math.min(0.033, (time - lastTime) / 1000);
       lastTime = time;
       if (!over) updateMoving(dt);
+      effects = effects.filter((e) => time - e.start < e.duration);
       render();
       rafId = requestAnimationFrame(loop);
+    }
+
+    function popEffect(r, c, color) {
+      const { x, y } = cellCenter(r, c);
+      effects.push({ type: "pop", x, y, color, start: performance.now(), duration: 260 });
+    }
+
+    function fallEffect(r, c, color) {
+      const { x, y } = cellCenter(r, c);
+      effects.push({ type: "fall", x, y, color, start: performance.now(), duration: 600 });
     }
 
     function updateMoving(dt) {
@@ -180,7 +193,10 @@
       }
 
       if (group.length >= 3) {
-        for (const [r, c] of group) grid[r][c] = null;
+        for (const [r, c] of group) {
+          popEffect(r, c, grid[r][c]);
+          grid[r][c] = null;
+        }
         score += group.length * 10;
         removeFloating();
         session.setScore(score);
@@ -217,6 +233,7 @@
       for (let r = 0; r < TOTAL_ROWS; r++) {
         for (let c = 0; c < colsInRow(r); c++) {
           if (grid[r][c] && !reachable.has(`${r},${c}`)) {
+            fallEffect(r, c, grid[r][c]);
             grid[r][c] = null;
             removed++;
           }
@@ -338,6 +355,22 @@
           drawBubble(x, y, grid[r][c]);
         }
       }
+
+      const now = performance.now();
+      for (const e of effects) {
+        const t = Math.min(1, (now - e.start) / e.duration);
+        ctx.globalAlpha = Math.max(0, 1 - t);
+        if (e.type === "pop") {
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, RADIUS * (1 + t * 0.9), 0, Math.PI * 2);
+          ctx.fillStyle = e.color;
+          ctx.fill();
+        } else {
+          const y = e.y + 900 * t * t * 0.5 + 40 * t;
+          drawBubble(e.x, y, e.color);
+        }
+      }
+      ctx.globalAlpha = 1;
 
       if (moving) drawBubble(moving.x, moving.y, moving.color);
 

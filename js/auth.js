@@ -91,8 +91,7 @@
   }
 
   function avatarHTML(profile, size) {
-    const px = size || 30;
-    return `<span class="avatar-badge" style="width:${px}px;height:${px}px;font-size:${Math.round(px * 0.55)}px;background:${profile.avatar_color}22;border:1px solid ${profile.avatar_color}66">${profile.avatar_icon}</span>`;
+    return window.PixelPlayAvatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, size);
   }
 
   function xpProgress(profile) {

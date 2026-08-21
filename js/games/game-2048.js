@@ -9,6 +9,12 @@
 
   const SIZE = 4;
   const GAME_ID = "2048";
+  // Poeng per "nivå" en sammenslått brikke når (2=nivå 1, 4=nivå 2, ...).
+  // Rå brikkeverdi ville gitt eksponentielt større poengsummer enn de andre
+  // spillene på siden (en enkelt 2048-sammenslåing ville alene gitt 2048
+  // poeng), så vi bruker log2-nivået i stedet for å holde skåren på samme
+  // skala som de andre spillene.
+  const POINTS_PER_MERGE_LEVEL = 20;
 
   function emptyBoard() {
     return Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
@@ -30,7 +36,7 @@
         const value = filtered[i] * 2;
         merged.push(value);
         mergedFlags.push(true);
-        scoreGained += value;
+        scoreGained += Math.round(Math.log2(value)) * POINTS_PER_MERGE_LEVEL;
         i += 2;
       } else {
         merged.push(filtered[i]);

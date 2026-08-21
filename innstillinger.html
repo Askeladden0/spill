@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpareTriks · Innstillinger</title>
+<meta name="description" content="Administrer kontoen og innstillingene dine hos SpareTriks.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="profil">
+<div class="page">
+
+  <header class="site-header">
+    <div class="header-left">
+      <a href="index.html" class="logo">
+        <span class="logo-mark">S</span>
+        <span class="logo-text">SPARE<span>TRIKS</span></span>
+      </a>
+      <nav class="main-nav">
+        <a href="index.html#spill" class="nav-link" data-page="spill">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
+          Triks
+        </a>
+        <a href="premier.html" class="nav-link" data-page="premier">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
+          Premier
+        </a>
+        <a href="rangering.html" class="nav-link" data-page="rangering">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
+          Rangering
+        </a>
+      </nav>
+    </div>
+    <div class="header-right" data-auth-slot></div>
+  </header>
+
+  <main data-settings-main hidden>
+    <section>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <a href="profil.html" class="back-to-profile-link">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Tilbake til profilen
+        </a>
+        <div class="section-heading"><h1>Innstillinger</h1></div>
+      </div>
+
+      <div class="settings-layout">
+        <nav class="settings-nav" data-settings-nav>
+          <a href="#profil-seksjon" class="settings-nav-link is-active" data-nav-target="profil-seksjon">Profil</a>
+          <a href="#personvern-seksjon" class="settings-nav-link" data-nav-target="personvern-seksjon">Personvern</a>
+          <a href="#konto-seksjon" class="settings-nav-link" data-nav-target="konto-seksjon">Konto</a>
+        </nav>
+
+        <div style="display:flex;flex-direction:column;gap:20px">
+
+          <div class="settings-card" id="profil-seksjon">
+            <div class="settings-section">
+              <h2>Profil</h2>
+              <span class="settings-section-sub">Dette er det andre brukere ser på rangeringen.</span>
+            </div>
+
+            <div class="settings-row">
+              <div style="display:flex;align-items:center;gap:18px">
+                <span data-settings-avatar-slot></span>
+                <div class="settings-row-label">
+                  <span>Profilbilde</span>
+                  <span>Figur og farge — <span data-figure-label></span></span>
+                </div>
+              </div>
+              <button type="button" class="btn-outline-sm" data-open-avatar-modal>Endre</button>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Brukernavn</span>
+                <span data-username-display>–</span>
+              </div>
+              <button type="button" class="btn-outline-sm" data-toggle-username-form>Endre</button>
+            </div>
+            <form data-username-form class="inline-form" hidden style="margin-top:-6px">
+              <input type="text" name="username" minlength="5" maxlength="20" required>
+              <button type="submit" class="btn-start" style="width:auto;padding:12px 24px">Lagre</button>
+            </form>
+            <p class="auth-error" data-username-error hidden></p>
+            <p class="auth-success" data-username-success hidden></p>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>E-post</span>
+                <span data-email-display>–</span>
+              </div>
+              <span class="badge-locked">KAN IKKE ENDRES</span>
+            </div>
+          </div>
+
+          <div class="settings-card" id="personvern-seksjon">
+            <div class="settings-section">
+              <h2>Personvern</h2>
+              <span class="settings-section-sub">Styr hvor du dukker opp på nettsiden.</span>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Skjul meg fra rangeringen</span>
+                <span>Du samler poeng som før, men vises ikke offentlig.</span>
+              </div>
+              <button type="button" class="toggle-switch" data-toggle-hidden aria-label="Skjul meg fra rangeringen">
+                <span class="toggle-switch-knob"></span>
+              </button>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Offentlig brukerprofil</span>
+                <span data-public-profile-url>–</span>
+              </div>
+              <a class="btn-outline-sm" data-public-profile-link href="#">Åpne</a>
+            </div>
+          </div>
+
+          <div class="settings-card" id="konto-seksjon">
+            <div class="settings-section">
+              <h2>Konto</h2>
+              <span class="settings-section-sub">Logg ut av denne enheten, eller slett kontoen permanent.</span>
+            </div>
+
+            <div class="settings-row">
+              <span style="font-size:13.5px;font-weight:700;color:var(--text)">Logg ut</span>
+              <button type="button" class="btn-outline-sm" data-logout-btn>Logg ut</button>
+            </div>
+
+            <div class="settings-row is-danger">
+              <div class="settings-row-label">
+                <span>Slett konto</span>
+                <span>Profil, poeng, rekorder og rabattkoder slettes permanent.</span>
+              </div>
+              <button type="button" class="btn-danger" data-delete-btn>Slett konto</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-brand">
+      <span class="footer-logo-mark">S</span>
+      <span class="footer-copy">© 2026 SpareTriks</span>
+    </div>
+    <nav class="footer-nav">
+      <a href="#kontakt">Kontakt</a>
+      <a href="#personvern">Personvern</a>
+      <a href="#vilkar">Vilkår</a>
+      <a href="admin.html" data-admin-only style="display:none">Admin</a>
+    </nav>
+  </footer>
+</div>
+
+<div class="modal-overlay" data-avatar-modal hidden>
+  <div class="modal-backdrop" data-avatar-modal-backdrop></div>
+  <div class="modal-card avatar-modal-card">
+    <button type="button" class="modal-close" data-close-avatar-modal aria-label="Lukk">×</button>
+    <h2 class="modal-title">Rediger profilbilde</h2>
+    <div>
+      <p class="settings-label">Figur</p>
+      <div class="figure-grid" data-figure-picker></div>
+    </div>
+    <div>
+      <p class="settings-label">Farge</p>
+      <div class="swatch-row" data-modal-color-picker></div>
+    </div>
+    <p class="auth-error" data-avatar-error hidden></p>
+    <span class="section-sub">Lagres automatisk.</span>
+  </div>
+</div>
+
+<script src="js/vendor/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/avatar-figures.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/games-data.js"></script>
+<script>
+(function () {
+  "use strict";
+  const sb = window.supabaseClient;
+  const Auth = window.PixelPlayAuth;
+  const Avatars = window.PixelPlayAvatars;
+
+  let profile = null;
+  let avatarOptions = { colors: [], icons: [] };
+
+  function renderIdentity() {
+    document.querySelector("[data-settings-avatar-slot]").innerHTML =
+      Avatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, 64);
+    document.querySelector("[data-figure-label]").textContent = Avatars.figureLabel(profile.avatar_icon);
+    document.querySelector("[data-username-display]").textContent = profile.username;
+    document.querySelector('[name="username"]').value = profile.username;
+    document.querySelector("[data-email-display]").textContent = `${profile.email} · innlogget med Google/e-post`;
+    document.querySelector("[data-public-profile-url]").textContent = `spillerprofil.html?u=${profile.username}`;
+    const link = `spillerprofil.html?u=${encodeURIComponent(profile.username)}`;
+    document.querySelector("[data-public-profile-link]").href = link;
+  }
+
+  function renderPrivacy() {
+    const toggle = document.querySelector("[data-toggle-hidden]");
+    toggle.classList.toggle("is-on", !!profile.is_hidden);
+  }
+
+  // ---------- Brukernavn ----------
+  const usernameToggleBtn = document.querySelector("[data-toggle-username-form]");
+  const usernameForm = document.querySelector("[data-username-form]");
+  usernameToggleBtn.addEventListener("click", () => {
+    usernameForm.hidden = !usernameForm.hidden;
+    if (!usernameForm.hidden) usernameForm.querySelector('[name="username"]').focus();
+  });
+
+  usernameForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorEl = document.querySelector("[data-username-error]");
+    const successEl = document.querySelector("[data-username-success]");
+    errorEl.hidden = true;
+    successEl.hidden = true;
+
+    const newUsername = new FormData(e.target).get("username").trim();
+    const usernameError = Auth.validateUsername(newUsername);
+    if (usernameError) {
+      errorEl.textContent = usernameError;
+      errorEl.hidden = false;
+      return;
+    }
+
+    if (newUsername.toLowerCase() !== profile.username.toLowerCase() && (await Auth.isUsernameTaken(newUsername))) {
+      errorEl.textContent = "Dette brukernavnet er allerede tatt.";
+      errorEl.hidden = false;
+      return;
+    }
+
+    const { error } = await sb
+      .from("profiles")
+      .update({ username: newUsername, username_is_default: false })
+      .eq("id", profile.id);
+
+    if (error) {
+      errorEl.textContent = Auth.friendlyAuthError(error);
+      errorEl.hidden = false;
+      return;
+    }
+
+    profile.username = newUsername;
+    profile.username_is_default = false;
+    renderIdentity();
+    usernameForm.hidden = true;
+    successEl.textContent = "Brukernavn oppdatert!";
+    successEl.hidden = false;
+  });
+
+  // ---------- Personvern ----------
+  document.querySelector("[data-toggle-hidden]").addEventListener("click", async () => {
+    const nextValue = !profile.is_hidden;
+    const { error } = await sb.from("profiles").update({ is_hidden: nextValue }).eq("id", profile.id);
+    if (error) {
+      console.error(error);
+      return;
+    }
+    profile.is_hidden = nextValue;
+    renderPrivacy();
+  });
+
+  // ---------- Avatar-modal ----------
+  const avatarModal = document.querySelector("[data-avatar-modal]");
+
+  function openAvatarModal() { avatarModal.hidden = false; }
+  function closeAvatarModal() { avatarModal.hidden = true; }
+
+  function renderAvatarPickers() {
+    const figurePicker = document.querySelector("[data-figure-picker]");
+    const colorPicker = document.querySelector("[data-modal-color-picker]");
+
+    figurePicker.innerHTML = (avatarOptions.icons || [])
+      .map(
+        (key) => `
+        <button type="button" class="figure-swatch ${key === profile.avatar_icon ? "is-selected" : ""}" data-figure="${key}" title="${Avatars.figureLabel(key)}">${Avatars.figureSVG(key)}</button>
+      `
+      )
+      .join("");
+
+    colorPicker.innerHTML = (avatarOptions.colors || [])
+      .map(
+        (c) => `
+        <button type="button" class="swatch ${c === profile.avatar_color ? "is-selected" : ""}" style="background:${c}" data-color="${c}" aria-label="Velg farge ${c}"></button>
+      `
+      )
+      .join("");
+
+    figurePicker.querySelectorAll("[data-figure]").forEach((btn) => {
+      btn.addEventListener("click", () => updateAvatar({ avatar_icon: btn.dataset.figure }));
+    });
+    colorPicker.querySelectorAll("[data-color]").forEach((btn) => {
+      btn.addEventListener("click", () => updateAvatar({ avatar_color: btn.dataset.color }));
+    });
+  }
+
+  async function loadAvatarOptions() {
+    const { data, error } = await sb.from("avatar_options").select("colors, icons").eq("id", 1).single();
+    if (error) {
+      console.error(error);
+      return;
+    }
+    avatarOptions = data;
+    renderAvatarPickers();
+  }
+
+  async function updateAvatar(fields) {
+    const errorEl = document.querySelector("[data-avatar-error]");
+    errorEl.hidden = true;
+    const { error } = await sb.from("profiles").update(fields).eq("id", profile.id);
+    if (error) {
+      errorEl.textContent = Auth.friendlyAuthError(error);
+      errorEl.hidden = false;
+      return;
+    }
+    Object.assign(profile, fields);
+    renderIdentity();
+    renderAvatarPickers();
+  }
+
+  document.querySelectorAll("[data-open-avatar-modal]").forEach((btn) => btn.addEventListener("click", openAvatarModal));
+  document.querySelector("[data-close-avatar-modal]").addEventListener("click", closeAvatarModal);
+  document.querySelector("[data-avatar-modal-backdrop]").addEventListener("click", closeAvatarModal);
+
+  // ---------- Sticky-nav aktiv seksjon ----------
+  document.querySelectorAll("[data-nav-target]").forEach((link) => {
+    link.addEventListener("click", () => {
+      document.querySelectorAll("[data-nav-target]").forEach((l) => l.classList.remove("is-active"));
+      link.classList.add("is-active");
+    });
+  });
+
+  // ---------- Konto ----------
+  document.querySelector("[data-logout-btn]").addEventListener("click", () => Auth.signOut());
+
+  document.querySelector("[data-delete-btn]").addEventListener("click", async () => {
+    const confirmed = window.confirm(
+      "Er du sikker på at du vil slette kontoen din? Dette kan ikke angres, og all data (profil, rekorder) slettes permanent."
+    );
+    if (!confirmed) return;
+
+    const { error } = await sb.rpc("delete_own_account");
+    if (error) {
+      alert("Kunne ikke slette kontoen: " + Auth.friendlyAuthError(error));
+      return;
+    }
+    await sb.auth.signOut();
+    window.location.href = "index.html";
+  });
+
+  // ---------- Init ----------
+  (async function init() {
+    if (window.PIXELPLAY_GAMES_READY) await window.PIXELPLAY_GAMES_READY;
+    profile = await Auth.requireAuth();
+    if (!profile) return;
+    document.querySelector("[data-settings-main]").hidden = false;
+    renderIdentity();
+    renderPrivacy();
+    await loadAvatarOptions();
+  })();
+})();
+</script>
+</body>
+</html>

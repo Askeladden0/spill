@@ -42,7 +42,7 @@
     el.innerHTML = games.map(gameCardHTML).join("");
 
     const countEl = document.querySelector("[data-game-count]");
-    if (countEl) countEl.textContent = `${games.length} spill tilgjengelig`;
+    if (countEl) countEl.textContent = `${games.length} triks tilgjengelig`;
   }
 
   function renderHero(selector) {
@@ -89,7 +89,7 @@
 
     if (!game) return;
 
-    document.title = `${game.name} · PixelPlay`;
+    document.title = `${game.name} · SpareTriks`;
 
     const titleEl = document.querySelector("[data-player-title]");
     const genreEl = document.querySelector("[data-player-genre]");
