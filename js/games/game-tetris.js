@@ -1,5 +1,5 @@
 /**
- * PixelPlay – Tetris.
+ * Dilla – Tetris.
  * Klassisk klossespill: styr fallende brikker med piltaster/WASD (eller
  * knapper på mobil), fyll hele rader for å tømme dem og score poeng.
  * Bruker den delte spill-kjøretiden (js/game-runtime.js) for poeng-HUD,
@@ -41,7 +41,7 @@
     let dropTimer = null;
     let session = null;
 
-    window.PixelPlayGameRuntime.mount(container, GAME_ID).then((s) => {
+    window.DillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
         <p class="game-tetris-hint">Piltaster/WASD for å flytte, opp/W for å rotere, mellomrom for hard drop. Sveip eller bruk knappene på mobil.</p>
@@ -383,6 +383,6 @@
     }
   }
 
-  window.PIXELPLAY_GAME_MODULES = window.PIXELPLAY_GAME_MODULES || {};
-  window.PIXELPLAY_GAME_MODULES[GAME_ID] = { start };
+  window.DILLA_GAME_MODULES = window.DILLA_GAME_MODULES || {};
+  window.DILLA_GAME_MODULES[GAME_ID] = { start };
 })();

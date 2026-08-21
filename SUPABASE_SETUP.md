@@ -1,4 +1,4 @@
-# Supabase-oppsett for PixelPlay
+# Supabase-oppsett for Dilla
 
 Denne siden bruker [Supabase](https://supabase.com) for innlogging (e-post +
 Google), brukerprofiler, adminpanel og fremtidige spillrekorder. Følg disse

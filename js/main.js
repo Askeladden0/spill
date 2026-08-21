@@ -1,6 +1,6 @@
 /**
- * PixelPlay – delt sidelogikk.
- * Bruker window.PIXELPLAY_GAMES (js/games-data.js) som datakilde.
+ * Dilla – delt sidelogikk.
+ * Bruker window.DILLA_GAMES (js/games-data.js) som datakilde.
  * Når backend/admin-panel er klart: bytt ut games-data.js med et
  * fetch-kall som fyller samme globale variabel, resten fungerer uendret.
  */
@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const games = window.PIXELPLAY_GAMES || [];
+  const games = window.DILLA_GAMES || [];
 
   function starIcon() {
     return '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8L5.7 21l1.7-7L2 9.2l7.1-.6z"></path></svg>';
@@ -89,7 +89,7 @@
 
     if (!game) return;
 
-    document.title = `${game.name} · SpareTriks`;
+    document.title = `${game.name} · Dilla`;
 
     const titleEl = document.querySelector("[data-player-title]");
     const genreEl = document.querySelector("[data-player-genre]");
@@ -105,8 +105,8 @@
     if (timeEl) timeEl.textContent = game.time;
     if (descEl) descEl.textContent = game.description || "";
 
-    const module = window.PIXELPLAY_GAME_MODULES && window.PIXELPLAY_GAME_MODULES[game.id];
-    if (module && window.PixelPlayGameRuntime) {
+    const module = window.DILLA_GAME_MODULES && window.DILLA_GAME_MODULES[game.id];
+    if (module && window.DillaGameRuntime) {
       module.start(stage, game);
     } else {
       stage.innerHTML = `<span class="player-stage-slot">[ spillinnhold lastes her: ${game.id} ]</span>`;
@@ -115,7 +115,7 @@
 
   document.addEventListener("DOMContentLoaded", async function () {
     initActiveNav();
-    if (window.PIXELPLAY_GAMES_READY) await window.PIXELPLAY_GAMES_READY;
+    if (window.DILLA_GAMES_READY) await window.DILLA_GAMES_READY;
     renderHero("[data-hero]");
     renderGameGrid("[data-game-grid]");
     initPlayerPage();

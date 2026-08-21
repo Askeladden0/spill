@@ -1,5 +1,5 @@
 /**
- * PixelPlay – delt rangeringslogikk.
+ * Dilla – delt rangeringslogikk.
  *
  * Bygger total-rangering (basert på xp/poeng, samme tall som premier.html
  * bruker til nivå) og per-spill-rangering (basert på beste enkeltrunde i
@@ -11,14 +11,14 @@
   "use strict";
 
   const sb = window.supabaseClient;
-  const games = window.PIXELPLAY_GAMES || [];
+  const games = window.DILLA_GAMES || [];
 
   async function loadProfiles() {
     const { data, error } = await sb
       .from("profiles")
       .select("id, username, avatar_color, avatar_icon, level, xp, is_hidden");
     if (error) {
-      console.error("[PixelPlay] Klarte ikke hente spillere:", error.message);
+      console.error("[Dilla] Klarte ikke hente spillere:", error.message);
       return [];
     }
     return data || [];
@@ -29,7 +29,7 @@
       .from("game_records")
       .select("user_id, game_id, score");
     if (error) {
-      console.error("[PixelPlay] Klarte ikke hente spillrekorder:", error.message);
+      console.error("[Dilla] Klarte ikke hente spillrekorder:", error.message);
       return [];
     }
     return data || [];
@@ -38,7 +38,7 @@
   async function codesCount(userId) {
     const { data, error } = await sb.rpc("user_codes_count", { p_user_id: userId });
     if (error) {
-      console.error("[PixelPlay] Klarte ikke hente antall rabattkoder:", error.message);
+      console.error("[Dilla] Klarte ikke hente antall rabattkoder:", error.message);
       return 0;
     }
     return Number(data) || 0;
@@ -108,5 +108,5 @@
     return list.filter((p) => !p.is_hidden);
   }
 
-  window.PixelPlayLeaderboard = { games, loadProfiles, loadRecords, buildBoards, codesCount, visiblePlayers };
+  window.DillaLeaderboard = { games, loadProfiles, loadRecords, buildBoards, codesCount, visiblePlayers };
 })();

@@ -1,5 +1,5 @@
 /**
- * PixelPlay – 2048.
+ * Dilla – 2048.
  * Klassisk 4x4-brikkespill: skyv brikkene med piltaster/swipe, slå sammen
  * like tall, og jag den store 2048-brikken. Bruker den delte spill-
  * kjøretiden (js/game-runtime.js) for poeng-HUD, rekord og game-over.
@@ -60,7 +60,7 @@
     let newThisRender = [];
     let session = null;
 
-    window.PixelPlayGameRuntime.mount(container, GAME_ID).then((s) => {
+    window.DillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
         <p class="game-2048-hint">Bruk piltastene (eller sveip på mobil) for å flytte brikkene. Like tall slås sammen!</p>
@@ -263,6 +263,6 @@
     }
   }
 
-  window.PIXELPLAY_GAME_MODULES = window.PIXELPLAY_GAME_MODULES || {};
-  window.PIXELPLAY_GAME_MODULES[GAME_ID] = { start };
+  window.DILLA_GAME_MODULES = window.DILLA_GAME_MODULES || {};
+  window.DILLA_GAME_MODULES[GAME_ID] = { start };
 })();

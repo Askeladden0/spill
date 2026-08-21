@@ -1,4 +1,4 @@
-# PixelPlay – spillnettside
+# Dilla – spillnettside
 
 Statisk frontend + Supabase-backend for spillnettsiden, basert på designfilen
 `Spillnettside.dc.html`. Mørkt tema, grønn aksentfarge (`#2ee87f`), Poppins-font.
@@ -66,7 +66,7 @@ Kort oppsummert:
 
 ## Hvordan legge til et nytt spill
 
-Åpne `js/games-data.js` og legg til et nytt objekt i `PIXELPLAY_GAMES`-listen:
+Åpne `js/games-data.js` og legg til et nytt objekt i `DILLA_GAMES`-listen:
 
 ```js
 {
@@ -117,5 +117,5 @@ sett hvilket spill som er "dagens spill", skjul et spill fra lister uten å
 slette det (`hidden`-kolonnen – et skjult spill er fortsatt tilgjengelig
 direkte via `player.html?id=...`), dra for å endre rekkefølgen, eller slett
 det helt. `js/games-data.js` henter denne tabellen ved sidelasting og fyller
-`window.PIXELPLAY_GAMES` i place; den statiske listen øverst i filen er kun en
+`window.DILLA_GAMES` i place; den statiske listen øverst i filen er kun en
 fallback hvis Supabase er utilgjengelig.

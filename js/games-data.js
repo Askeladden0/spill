@@ -1,13 +1,13 @@
 /**
- * Spilldatabase for PixelPlay.
+ * Spilldatabase for Dilla.
  *
- * window.PIXELPLAY_GAMES starter som en statisk fallback-liste (samme format
+ * window.DILLA_GAMES starter som en statisk fallback-liste (samme format
  * som før), men fylles umiddelbart om med ekte data fra Supabase-tabellen
  * `games` når den er tilgjengelig – arrayet muteres i stedet for å byttes ut,
  * slik at kode som har lagret en referanse til det (main.js, leaderboard-data.js
  * osv.) automatisk ser oppdaterte verdier.
  *
- * Vent på window.PIXELPLAY_GAMES_READY før du render noe som er avhengig av
+ * Vent på window.DILLA_GAMES_READY før du render noe som er avhengig av
  * spilldata, slik at siden ikke rekker å tegne fallback-dataene først.
  *
  * Felter per spill:
@@ -25,7 +25,7 @@
  *   pointsMultiplier - valgfri tekst for badge i heltefeltet, f.eks. "1,5X POENG"
  */
 
-window.PIXELPLAY_GAMES = [
+window.DILLA_GAMES = [
   {
     id: "fruktfusjon",
     name: "Fruktfusjon",
@@ -102,12 +102,12 @@ window.PIXELPLAY_GAMES = [
 
 /**
  * Henter spill fra Supabase-tabellen `games` og oppdaterer
- * window.PIXELPLAY_GAMES i place (samme array-referanse). Feiler stille og
+ * window.DILLA_GAMES i place (samme array-referanse). Feiler stille og
  * beholder fallback-listen over hvis Supabase ikke er tilgjengelig ennå.
  */
-window.PIXELPLAY_GAMES_READY = (async function loadGames() {
+window.DILLA_GAMES_READY = (async function loadGames() {
   const sb = window.supabaseClient;
-  if (!sb) return window.PIXELPLAY_GAMES;
+  if (!sb) return window.DILLA_GAMES;
 
   // Ikke la et treigt/utilgjengelig nettverk blokkere siden i det uendelige –
   // etter 5 sekunder gir vi opp og viser fallback-listen i stedet.
@@ -123,14 +123,14 @@ window.PIXELPLAY_GAMES_READY = (async function loadGames() {
   ]);
 
   if (result.timedOut) {
-    console.error("[PixelPlay] Tidsavbrudd ved henting av spill, bruker fallback-liste.");
-    return window.PIXELPLAY_GAMES;
+    console.error("[Dilla] Tidsavbrudd ved henting av spill, bruker fallback-liste.");
+    return window.DILLA_GAMES;
   }
 
   const { data, error } = result;
   if (error || !data || !data.length) {
-    if (error) console.error("[PixelPlay] Klarte ikke hente spill, bruker fallback-liste:", error.message);
-    return window.PIXELPLAY_GAMES;
+    if (error) console.error("[Dilla] Klarte ikke hente spill, bruker fallback-liste:", error.message);
+    return window.DILLA_GAMES;
   }
 
   const mapped = data.map((g) => ({
@@ -147,9 +147,9 @@ window.PIXELPLAY_GAMES_READY = (async function loadGames() {
     pointsMultiplier: g.points_multiplier || undefined
   }));
 
-  window.PIXELPLAY_GAMES.length = 0;
-  window.PIXELPLAY_GAMES.push(...mapped);
-  return window.PIXELPLAY_GAMES;
+  window.DILLA_GAMES.length = 0;
+  window.DILLA_GAMES.push(...mapped);
+  return window.DILLA_GAMES;
 })();
 
 /**
