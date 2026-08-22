@@ -138,19 +138,12 @@
     els.confetti.appendChild(frag);
   }
 
-  async function loadLevels() {
-    if (levelsCache) return levelsCache;
-    if (!sb) return [];
-    const { data, error } = await sb.from("rewards").select("level_number, brand, title").order("level_number");
-    levelsCache = !error && data ? data : [];
+  async function hasActiveRewards() {
+    if (levelsCache != null) return levelsCache;
+    if (!sb) return false;
+    const { count, error } = await sb.from("rewards").select("id", { count: "exact", head: true }).eq("active", true);
+    levelsCache = !error && count > 0;
     return levelsCache;
-  }
-
-  function rewardForLevel(allRewards, level) {
-    const rewards = allRewards.filter((r) => r.level_number === level);
-    if (!rewards.length) return null;
-    if (rewards.length === 1) return `${rewards[0].brand} – ${rewards[0].title}`;
-    return `${rewards.length} nye premier hos ${rewards[0].brand} og flere`;
   }
 
   /**
@@ -191,13 +184,11 @@
 
     // Hentes i parallell med animasjonen under, ikke før den, slik at en
     // treg/mislykket nettforespørsel ikke fryser nivå opp-sekvensen.
-    loadLevels().then((levels) => {
-      if (id !== runId) return;
-      const rewardText = rewardForLevel(levels, newProfile.level);
-      if (!rewardText) return;
+    hasActiveRewards().then((hasRewards) => {
+      if (id !== runId || !hasRewards) return;
       e.reward.hidden = false;
-      e.rewardTitle.textContent = rewardText;
-      e.rewardSub.textContent = `Låst opp på nivå ${newProfile.level} · hent koden under Premier`;
+      e.rewardTitle.textContent = "Ny kasse med en tilfeldig rabatt";
+      e.rewardSub.textContent = `Låst opp på nivå ${newProfile.level} · åpne kassen under Premier`;
       e.rewardLink.hidden = false;
     });
 
