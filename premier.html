@@ -115,15 +115,6 @@
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" data-case-grid></div>
         </div>
 
-        <div>
-          <div class="section-heading spread">
-            <h2>Nivåstigen</h2>
-            <span class="section-sub" data-ladder-range>Nivå 1–15</span>
-          </div>
-          <div class="level-ladder" data-level-ladder>
-            <p class="section-sub">Laster nivåer …</p>
-          </div>
-        </div>
       </div>
 
       <aside class="premier-side">
@@ -346,15 +337,20 @@
       selectedCaseLevel = unopened.length ? Math.min(...unopened) : null;
     }
 
+    panel.hidden = false;
+    empty.style.display = "none";
+
     if (selectedCaseLevel === null) {
-      panel.hidden = true;
-      empty.textContent = unlockedLevels().length === 0
-        ? "Ingen ledige kasser. Nå nivå 1 for å få din første kasse!"
-        : "Alle kassene dine er åpnet. Nå et nytt nivå for å få en ny!";
-      empty.style.display = "block";
+      document.querySelector("[data-case-badge]").textContent = "–";
+      document.querySelector("[data-case-title]").textContent = "Ingen ledige kasser";
+      const openBtn = document.querySelector("[data-case-open]");
+      openBtn.textContent = unlockedLevels().length === 0
+        ? "Nå nivå 1 for å få din første kasse"
+        : "Nå et nytt nivå for å få en ny kasse";
+      openBtn.disabled = true;
+      document.querySelector("[data-case-reveal]").hidden = true;
+      stopReelShuffle();
     } else {
-      panel.hidden = false;
-      empty.style.display = "none";
       document.querySelector("[data-case-badge]").textContent = selectedCaseLevel;
       document.querySelector("[data-case-title]").textContent = `Nivå ${selectedCaseLevel}-kassen`;
       const openBtn = document.querySelector("[data-case-open]");
@@ -438,57 +434,6 @@
     const btn = e.target.closest("[data-case-pick]");
     if (btn) selectCase(Number(btn.dataset.casePick));
   });
-
-  // ---------- Nivåstige ----------
-  function levelBadgeColors(state) {
-    if (state === "now") return { bg: "#2ee87f", fg: "#0d1117", border: "#2ee87f" };
-    if (state === "done") return { bg: "rgba(46,232,127,.14)", fg: "#2ee87f", border: "rgba(46,232,127,.35)" };
-    return { bg: "#131a25", fg: "#7c8aa0", border: "rgba(255,255,255,.09)" };
-  }
-
-  function renderLadder() {
-    const el = document.querySelector("[data-level-ladder]");
-    if (!levels.length) {
-      el.innerHTML = '<p class="section-sub">Ingen nivåer er satt opp ennå.</p>';
-      return;
-    }
-
-    const dl = displayLevel();
-    const nums = levels.map((l) => l.level_number);
-    document.querySelector("[data-ladder-range]").textContent = `Nivå ${Math.min(...nums)}–${Math.max(...nums)}`;
-
-    el.innerHTML = levels
-      .map((lv) => {
-        const state = lv.level_number < dl ? "done" : lv.level_number === dl ? "now" : "locked";
-        const unlocked = lv.level_number <= dl;
-        const colors = levelBadgeColors(state);
-        const opened = openedCases.get(lv.level_number);
-        let label = state === "done" ? "LÅST OPP" : state === "now" ? "DITT NIVÅ" : "LÅST";
-        if (unlocked) label = opened ? "KASSE ÅPNET" : "KASSE VENTER";
-        const labelColor = state === "locked" ? "#7c8aa0" : "#2ee87f";
-        const lineColor = unlocked ? "rgba(46,232,127,.35)" : "rgba(255,255,255,.08)";
-        const caseNote = unlocked
-          ? (opened ? `${opened.title} hos ${opened.brand}` : "Åpne kassen for å få en tilfeldig rabatt")
-          : "Låses opp på dette nivået";
-
-        return `
-          <div class="level-row">
-            <div class="level-badge-col">
-              <div class="level-badge" style="background:${colors.bg};color:${colors.fg};border-color:${colors.border}">${lv.level_number}</div>
-              <div class="level-badge-line" style="background:${lineColor}"></div>
-            </div>
-            <div class="level-row-body">
-              <div class="level-row-heading">
-                <span class="level-row-status" style="color:${labelColor}">${label}</span>
-                <span class="level-row-req">${fmt(lv.points_required)} poeng</span>
-              </div>
-              <span class="section-sub" style="margin:0">${caseNote}</span>
-            </div>
-          </div>
-        `;
-      })
-      .join("");
-  }
 
   // ---------- Sidepanel ----------
   function relativeTime(iso) {
@@ -590,7 +535,6 @@
     spinning = false;
 
     renderLevelCard();
-    renderLadder();
     renderCasePanel();
     Auth.renderHeaderAuth();
   }
@@ -647,7 +591,6 @@
 
     await Promise.all([loadLevels(), loadOpenedCases()]);
     renderLevelCard();
-    renderLadder();
     renderCasePanel();
   })();
 
@@ -656,7 +599,6 @@
     selectedCaseLevel = null;
     await loadOpenedCases();
     renderLevelCard();
-    renderLadder();
     renderCasePanel();
   });
 })();
