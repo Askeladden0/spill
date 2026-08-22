@@ -845,6 +845,13 @@ drop function if exists public.claim_reward(bigint);
 --     som den gamle claim_reward); går kodene tomme etter tildelingen,
 --     deaktiveres rabatten automatisk (active = false) slik at den ikke kan
 --     trekkes igjen før admin legger til flere koder.
+--
+--     Admins er unntatt "én gang per nivå"-sperren: for dem er kassen "evig"
+--     og kan åpnes på nytt i det uendelige (samme premier.html-flyt som
+--     vanlige brukere ser). Hvert admin-åpne trekker en ny vektet premie som
+--     en ren forhåndsvisning – akkurat som admin_preview_case (seksjon 32) –
+--     uten å claime en ekte kode eller skrive til user_level_cases/
+--     user_codes, slik at ekte brukeres beholdning og koder aldri påvirkes.
 -- ---------------------------------------------------------------------------
 create or replace function public.open_level_case(p_level_number int)
 returns table (brand text, title text, sub text, rarity text, image_url text, code text, already_opened boolean)
@@ -858,6 +865,7 @@ declare
   r public.rewards;
   picked_code text;
   remaining bigint;
+  am_admin boolean;
 begin
   if auth.uid() is null then
     raise exception 'Du må være innlogget for å åpne en kasse';
@@ -868,17 +876,21 @@ begin
     raise exception 'Du har ikke låst opp dette nivået ennå';
   end if;
 
-  select * into existing from public.user_level_cases
-   where user_id = auth.uid() and level_number = p_level_number;
+  am_admin := public.is_admin();
 
-  if existing is not null then
-    select * into r from public.rewards where id = existing.reward_id;
-    if r is null then
-      return query select null::text, null::text, null::text, null::text, null::text, existing.code, true;
+  if not am_admin then
+    select * into existing from public.user_level_cases
+     where user_id = auth.uid() and level_number = p_level_number;
+
+    if existing is not null then
+      select * into r from public.rewards where id = existing.reward_id;
+      if r is null then
+        return query select null::text, null::text, null::text, null::text, null::text, existing.code, true;
+        return;
+      end if;
+      return query select r.brand, r.title, r.sub, r.rarity, r.image_url, existing.code, true;
       return;
     end if;
-    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, existing.code, true;
-    return;
   end if;
 
   select rw.* into r
@@ -890,6 +902,25 @@ begin
 
   if r is null then
     raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if am_admin then
+    if r.code_type = 'general' then
+      picked_code := r.general_code;
+    else
+      select code into picked_code
+        from public.reward_codes
+       where reward_id = r.id and claimed_by is null
+       order by random()
+       limit 1;
+
+      if picked_code is null then
+        raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+      end if;
+    end if;
+
+    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, picked_code, false;
+    return;
   end if;
 
   if r.code_type = 'general' then

@@ -285,6 +285,7 @@
   }
 
   function unopenedLevels() {
+    if (profile && profile.is_admin) return unlockedLevels();
     return unlockedLevels().filter((n) => !openedCases.has(n));
   }
 
@@ -378,6 +379,7 @@
   async function openSelectedCase() {
     if (caseOpening || selectedCaseLevel === null) return;
     if (!profile) { window.location.href = "login.html"; return; }
+    const isAdminEternal = !!profile.is_admin;
     caseOpening = true;
     renderCasePanel();
 
@@ -395,16 +397,22 @@
       return;
     }
 
-    openedCases.set(selectedCaseLevel, data);
-    showCaseReveal(data);
+    if (!isAdminEternal) openedCases.set(selectedCaseLevel, data);
+    showCaseReveal(data, isAdminEternal);
     renderLevelCard();
     renderFeed();
   }
 
-  function showCaseReveal(data) {
+  function showCaseReveal(data, isAdminEternal) {
     const rar = RARITY[data.rarity] || RARITY.vanlig;
-    document.querySelector("[data-case-open]").textContent = "Kassen er åpnet";
-    document.querySelector("[data-case-open]").disabled = true;
+    const openBtn = document.querySelector("[data-case-open]");
+    if (isAdminEternal) {
+      openBtn.textContent = `Åpne nivå ${selectedCaseLevel}-kassen`;
+      openBtn.disabled = false;
+    } else {
+      openBtn.textContent = "Kassen er åpnet";
+      openBtn.disabled = true;
+    }
     const reveal = document.querySelector("[data-case-reveal]");
     reveal.hidden = false;
     reveal.style.border = `1px solid ${rar.color}80`;
@@ -416,7 +424,9 @@
     rarityEl.style.color = rar.color;
     document.querySelector("[data-case-reveal-info]").title = data.sub || "";
     document.querySelector("[data-case-reveal-value]").textContent = `${data.title} hos ${data.brand}`;
-    document.querySelector("[data-case-reveal-code]").textContent = `Kode: ${data.code} · lagret i «Mine koder»`;
+    document.querySelector("[data-case-reveal-code]").textContent = isAdminEternal
+      ? `Kode: ${data.code} · admin-forhåndsvisning, ikke lagret`
+      : `Kode: ${data.code} · lagret i «Mine koder»`;
     document.querySelector("[data-case-reveal-copy]").onclick = () => {
       navigator.clipboard && navigator.clipboard.writeText(data.code).then(() => flashCopy());
     };
