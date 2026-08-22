@@ -573,22 +573,42 @@ create table if not exists public.rewards (
     check (code_type <> 'general' or general_code is not null)
 );
 
-create index if not exists rewards_level_idx on public.rewards (level_number);
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+     where table_schema = 'public' and table_name = 'rewards' and column_name = 'level_number'
+  ) then
+    create index if not exists rewards_level_idx on public.rewards (level_number);
+  end if;
+end $$;
 
 -- Engangsmigrering: overfør eksisterende premier fra levels.rewards (jsonb)
 -- til den nye tabellen, med en tydelig placeholder-kode som admin må bytte
 -- ut med en ekte kode (eller endre til kodeliste) i adminpanelet.
-insert into public.rewards (level_number, brand, title, sub, code_type, general_code, sort_order)
-select lv.level_number,
-       coalesce(elem ->> 'brand', ''),
-       coalesce(elem ->> 'title', ''),
-       coalesce(elem ->> 'sub', ''),
-       'general',
-       'SETT-KODE-I-ADMIN',
-       (ord - 1)::int
-  from public.levels lv,
-       lateral jsonb_array_elements(coalesce(lv.rewards, '[]'::jsonb)) with ordinality as t (elem, ord)
- where not exists (select 1 from public.rewards r where r.level_number = lv.level_number);
+-- Kun relevant første gang skjemaet kjøres (seksjon 26 fjerner senere
+-- rewards.level_number helt) – hoppes over ved re-kjøring på en database
+-- som allerede er migrert, ellers feiler denne med "column level_number
+-- does not exist".
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+     where table_schema = 'public' and table_name = 'rewards' and column_name = 'level_number'
+  ) then
+    insert into public.rewards (level_number, brand, title, sub, code_type, general_code, sort_order)
+    select lv.level_number,
+           coalesce(elem ->> 'brand', ''),
+           coalesce(elem ->> 'title', ''),
+           coalesce(elem ->> 'sub', ''),
+           'general',
+           'SETT-KODE-I-ADMIN',
+           (ord - 1)::int
+      from public.levels lv,
+           lateral jsonb_array_elements(coalesce(lv.rewards, '[]'::jsonb)) with ordinality as t (elem, ord)
+     where not exists (select 1 from public.rewards r where r.level_number = lv.level_number);
+  end if;
+end $$;
 
 alter table public.rewards enable row level security;
 
