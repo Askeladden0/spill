@@ -349,7 +349,7 @@
         : "Nå et nytt nivå for å få en ny kasse";
       openBtn.disabled = true;
       document.querySelector("[data-case-reveal]").hidden = true;
-      stopReelShuffle();
+      startReelShuffle();
     } else {
       document.querySelector("[data-case-badge]").textContent = selectedCaseLevel;
       document.querySelector("[data-case-title]").textContent = `Nivå ${selectedCaseLevel}-kassen`;
@@ -587,6 +587,7 @@
     renderWheels();
     spinMiniForever();
     setInterval(spinMiniForever, 12000);
+    setInterval(() => { if (selectedCaseLevel === null && !caseOpening) startReelShuffle(); }, 2000);
     renderFeed();
 
     await Promise.all([loadLevels(), loadOpenedCases()]);

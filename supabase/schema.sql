@@ -1005,6 +1005,63 @@ drop policy if exists "reward_images_admin_delete" on storage.objects;
 create policy "reward_images_admin_delete" on storage.objects
   for delete to authenticated using (bucket_id = 'reward-images' and public.is_admin());
 
+-- ---------------------------------------------------------------------------
+-- 32. RPC: admin_preview_case – lar en admin spinne kassen et ubegrenset
+--     antall ganger for å forhåndsvise hva den kan gi, uten at det påvirker
+--     ordinære brukere. Bruker samme vektede trekning som open_level_case
+--     (seksjon 30, rewards er ikke lenger nivå-bundet – se seksjon 26), men
+--     er kun en "peek": den claimer ALDRI en rad i reward_codes
+--     (claimed_by/claimed_at røres ikke), og skriver ALDRI til
+--     user_level_cases eller user_codes. Koden som vises er derfor fortsatt
+--     ledig for en ekte bruker etterpå, og admins egen ekte kasse (via
+--     open_level_case) påvirkes heller ikke.
+-- ---------------------------------------------------------------------------
+create or replace function public.admin_preview_case()
+returns table (brand text, title text, sub text, rarity text, image_url text, code text)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  r public.rewards;
+  peeked_code text;
+begin
+  if not public.is_admin() then
+    raise exception 'Kun admin kan forhåndsvise kasser';
+  end if;
+
+  select rw.* into r
+    from public.rewards rw
+    join public.rarity_weights ww on ww.rarity = rw.rarity
+   where rw.active and ww.weight > 0
+   order by -ln(random()) / ww.weight
+   limit 1;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    peeked_code := r.general_code;
+  else
+    select code into peeked_code
+      from public.reward_codes
+     where reward_id = r.id and claimed_by is null
+     order by random()
+     limit 1;
+
+    if peeked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+  end if;
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, peeked_code;
+end;
+$$;
+
+revoke all on function public.admin_preview_case() from public;
+grant execute on function public.admin_preview_case() to authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
