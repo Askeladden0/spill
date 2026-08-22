@@ -807,6 +807,204 @@ insert into public.levels (level_number, points_required) values
   (14, 14500)
 on conflict (level_number) do nothing;
 
+-- ---------------------------------------------------------------------------
+-- 26. Rabatt-redesign: rabattene (rewards) er ikke lenger knyttet til et
+--     bestemt nivå. Hvert nivå gir i stedet én "kasse" som – når den åpnes –
+--     tildeler brukeren én tilfeldig aktiv rabatt, vektet etter
+--     sjeldenhetsgrad (rarity_weights, seksjon 27). Rabattene redigeres nå på
+--     egen "Rabatter"-side i adminpanelet (admin.html), og er fortsatt
+--     knyttet til premiesiden gjennom kassene (åpnes via open_level_case,
+--     seksjon 30). "sub" brukes som beskrivelsen bak infosymbolet på
+--     premier.html.
+-- ---------------------------------------------------------------------------
+drop index if exists public.rewards_level_idx;
+
+alter table public.rewards add column if not exists rarity text not null default 'vanlig'
+  check (rarity in ('vanlig', 'sjelden', 'episk', 'legendarisk'));
+alter table public.rewards add column if not exists image_url text;
+alter table public.rewards add column if not exists active boolean not null default true;
+
+alter table public.rewards drop constraint if exists rewards_level_number_fkey;
+alter table public.rewards alter column level_number drop not null;
+alter table public.rewards drop column if exists level_number;
+alter table public.rewards drop column if exists expires_at;
+
+-- ---------------------------------------------------------------------------
+-- 27. rarity_weights – hvor sannsynlig hver sjeldenhetsgrad er når en kasse
+--     åpnes. Vektene er relative til hverandre (de trenger ikke summere til
+--     100). Redigeres fra adminpanelet under "Rabatter".
+-- ---------------------------------------------------------------------------
+create table if not exists public.rarity_weights (
+  rarity text primary key check (rarity in ('vanlig', 'sjelden', 'episk', 'legendarisk')),
+  weight int not null default 25 check (weight >= 0)
+);
+
+insert into public.rarity_weights (rarity, weight) values
+  ('vanlig', 60), ('sjelden', 25), ('episk', 11), ('legendarisk', 4)
+on conflict (rarity) do nothing;
+
+alter table public.rarity_weights enable row level security;
+
+drop policy if exists "rarity_weights_select_all" on public.rarity_weights;
+create policy "rarity_weights_select_all" on public.rarity_weights
+  for select using (true);
+
+drop policy if exists "rarity_weights_admin_write" on public.rarity_weights;
+create policy "rarity_weights_admin_write" on public.rarity_weights
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 28. user_level_cases – holder styr på hvilke nivå-kasser en bruker har
+--     åpnet, og hvilken rabatt kassen ga. Én kasse per nivå per bruker.
+--     Skrives kun av open_level_case (seksjon 29), aldri direkte fra
+--     klienten.
+-- ---------------------------------------------------------------------------
+create table if not exists public.user_level_cases (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  level_number int not null references public.levels (level_number) on delete cascade,
+  reward_id bigint references public.rewards (id) on delete set null,
+  code text,
+  opened_at timestamptz not null default now(),
+  unique (user_id, level_number)
+);
+
+create index if not exists user_level_cases_user_idx on public.user_level_cases (user_id);
+
+alter table public.user_level_cases enable row level security;
+
+drop policy if exists "user_level_cases_select_own" on public.user_level_cases;
+create policy "user_level_cases_select_own" on public.user_level_cases
+  for select using (auth.uid() = user_id or public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 29. RPC: claim_reward (den gamle, nivå-bundne modellen) er erstattet av
+--     open_level_case og gir ikke lenger mening siden rewards.level_number er
+--     fjernet over.
+-- ---------------------------------------------------------------------------
+drop function if exists public.claim_reward(bigint);
+
+-- ---------------------------------------------------------------------------
+-- 30. RPC: open_level_case – åpner en brukers kasse for et gitt nivå. Kan kun
+--     åpnes én gang per nivå per bruker (SECURITY DEFINER, sjekker nivået
+--     server-side). Trekker én tilfeldig aktiv rabatt vektet etter
+--     rarity_weights (Efraimidis–Spirakis-vekting: order by -ln(random()) /
+--     vekt gir korrekt sannsynlighetsfordeling uten å måtte normalisere).
+--     For en 'list'-rabatt tildeles én kode atomisk (samme SKIP LOCKED-mønster
+--     som den gamle claim_reward); går kodene tomme etter tildelingen,
+--     deaktiveres rabatten automatisk (active = false) slik at den ikke kan
+--     trekkes igjen før admin legger til flere koder.
+-- ---------------------------------------------------------------------------
+create or replace function public.open_level_case(p_level_number int)
+returns table (brand text, title text, sub text, rarity text, image_url text, code text, already_opened boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  my_level int;
+  existing public.user_level_cases;
+  r public.rewards;
+  picked_code text;
+  remaining bigint;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å åpne en kasse';
+  end if;
+
+  select level into my_level from public.profiles where id = auth.uid();
+  if my_level is null or my_level < p_level_number then
+    raise exception 'Du har ikke låst opp dette nivået ennå';
+  end if;
+
+  select * into existing from public.user_level_cases
+   where user_id = auth.uid() and level_number = p_level_number;
+
+  if existing is not null then
+    select * into r from public.rewards where id = existing.reward_id;
+    if r is null then
+      return query select null::text, null::text, null::text, null::text, null::text, existing.code, true;
+      return;
+    end if;
+    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, existing.code, true;
+    return;
+  end if;
+
+  select rw.* into r
+    from public.rewards rw
+    join public.rarity_weights ww on ww.rarity = rw.rarity
+   where rw.active and ww.weight > 0
+   order by -ln(random()) / ww.weight
+   limit 1;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    picked_code := r.general_code;
+  else
+    update public.reward_codes
+       set claimed_by = auth.uid(), claimed_at = now()
+     where id = (
+       select id from public.reward_codes
+        where reward_id = r.id and claimed_by is null
+        order by id
+        limit 1
+        for update skip locked
+     )
+     returning code into picked_code;
+
+    if picked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+
+    select count(*) into remaining from public.reward_codes
+     where reward_id = r.id and claimed_by is null;
+    if remaining = 0 then
+      update public.rewards set active = false where id = r.id;
+    end if;
+  end if;
+
+  insert into public.user_level_cases (user_id, level_number, reward_id, code)
+  values (auth.uid(), p_level_number, r.id, picked_code);
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, r.id);
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, picked_code, false;
+end;
+$$;
+
+revoke all on function public.open_level_case(int) from public;
+grant execute on function public.open_level_case(int) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 31. Storage-bucket for rabattbilder, lastet opp fra adminpanelet
+--     (admin.html) under "Rabatter". Samme mønster som game-images
+--     (seksjon 23).
+-- ---------------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('reward-images', 'reward-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "reward_images_select_all" on storage.objects;
+create policy "reward_images_select_all" on storage.objects
+  for select using (bucket_id = 'reward-images');
+
+drop policy if exists "reward_images_admin_write" on storage.objects;
+create policy "reward_images_admin_write" on storage.objects
+  for insert to authenticated with check (bucket_id = 'reward-images' and public.is_admin());
+
+drop policy if exists "reward_images_admin_update" on storage.objects;
+create policy "reward_images_admin_update" on storage.objects
+  for update to authenticated using (bucket_id = 'reward-images' and public.is_admin())
+  with check (bucket_id = 'reward-images' and public.is_admin());
+
+drop policy if exists "reward_images_admin_delete" on storage.objects;
+create policy "reward_images_admin_delete" on storage.objects
+  for delete to authenticated using (bucket_id = 'reward-images' and public.is_admin());
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

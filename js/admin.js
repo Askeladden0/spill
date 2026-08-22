@@ -38,6 +38,7 @@
     games: [],
     levels: [],
     rewards: [],
+    rarityWeights: [],
     rewardCodes: [],
     claims: [],
     gameRecords: [],
@@ -62,7 +63,10 @@
 
     // Nivåer
     openLevels: new Set(),
+
+    // Rabatter
     openCodeLists: new Set(),
+    rewardUploadBusy: new Set(),
 
     // Statistikk
     signupRange: "7d",
@@ -107,10 +111,11 @@
   }
 
   async function loadAll() {
-    const [profilesRes, levelsRes, rewardsRes, rewardCodesRes, claimsRes, recordsRes, avatarRes, games] = await Promise.all([
+    const [profilesRes, levelsRes, rewardsRes, rarityRes, rewardCodesRes, claimsRes, recordsRes, avatarRes, games] = await Promise.all([
       sb.from("profiles").select("id, username, xp, level, is_admin, created_at, avatar_icon, avatar_color").order("created_at", { ascending: false }),
       sb.from("levels").select("level_number, points_required").order("level_number", { ascending: true }),
-      sb.from("rewards").select("id, level_number, brand, title, sub, code_type, general_code, expires_at, sort_order").order("level_number", { ascending: true }).order("sort_order", { ascending: true }),
+      sb.from("rewards").select("id, brand, title, sub, rarity, image_url, active, code_type, general_code, sort_order").order("sort_order", { ascending: true }),
+      sb.from("rarity_weights").select("rarity, weight"),
       sb.from("reward_codes").select("id, reward_id, code, claimed_by, claimed_at"),
       sb.from("user_codes").select("user_id, reward_id, brand, title, code, created_at").order("created_at", { ascending: false }),
       sb.from("game_records").select("user_id, game_id, score, created_at"),
@@ -120,7 +125,8 @@
 
     if (profilesRes.error) console.error("[Studilla admin] Klarte ikke hente brukere:", profilesRes.error.message);
     if (levelsRes.error) console.error("[Studilla admin] Klarte ikke hente nivåer:", levelsRes.error.message);
-    if (rewardsRes.error) console.error("[Studilla admin] Klarte ikke hente premier:", rewardsRes.error.message);
+    if (rewardsRes.error) console.error("[Studilla admin] Klarte ikke hente rabatter:", rewardsRes.error.message);
+    if (rarityRes.error) console.error("[Studilla admin] Klarte ikke hente sjeldenhetsvekter:", rarityRes.error.message);
     if (rewardCodesRes.error) console.error("[Studilla admin] Klarte ikke hente kodelister:", rewardCodesRes.error.message);
     if (claimsRes.error) console.error("[Studilla admin] Klarte ikke hente rabattlogg:", claimsRes.error.message);
     if (recordsRes.error) console.error("[Studilla admin] Klarte ikke hente spillrekorder:", recordsRes.error.message);
@@ -129,6 +135,7 @@
     state.profiles = profilesRes.data || [];
     state.levels = levelsRes.data || [];
     state.rewards = rewardsRes.data || [];
+    state.rarityWeights = rarityRes.data || [];
     state.rewardCodes = rewardCodesRes.data || [];
     state.claims = claimsRes.data || [];
     state.gameRecords = recordsRes.data || [];
@@ -167,15 +174,16 @@
 
   const VIEW_TITLES = {
     oversikt: "Oversikt", statistikk: "Statistikk", spill: "Spill",
-    nivaaer: "Nivåer og premier", brukere: "Brukere", avatar: "Profilbilder",
+    nivaaer: "Nivåer", rabatter: "Rabatter", brukere: "Brukere", avatar: "Profilbilder",
     koder: "Rabattkoder", drift: "Drift",
   };
   const VIEW_HINTS = {
     spill: "Dra ⠿ for rekkefølge. Åpne et spill for navn, beskrivelse og bilder.",
-    nivaaer: "Poengkravet avgjør når nivået låses opp automatisk.",
+    nivaaer: "Poengkravet avgjør når nivået låses opp automatisk og gir en kasse på premiesiden.",
+    rabatter: "Hver rabatt har en sjeldenhetsgrad. Tweak sannsynligheten øverst, rediger rabattene under.",
     brukere: "Klikk en rad for detaljer. Endringer lagres med én gang.",
     avatar: "Farger og ikoner nye brukere tildeles tilfeldig ved registrering.",
-    koder: "Status og logg. Koder redigeres under «Nivåer og premier».",
+    koder: "Status og logg. Rabattene redigeres under «Rabatter».",
   };
 
   function goView(view) {
@@ -208,6 +216,10 @@
       label: `Nivå ${lv.level_number}`, kind: "NIVÅ", icon: "▸",
       go: () => { state.openLevels.add(lv.level_number); goView("nivaaer"); },
     }));
+    const rewards = state.rewards.map((r) => ({
+      label: `${r.brand} – ${r.title}`, kind: "RABATT", icon: "▸",
+      go: () => { state.openCodeLists.add(r.id); goView("rabatter"); },
+    }));
     const users = state.profiles.map((u) => ({
       label: u.username, kind: "BRUKER", icon: "▸",
       go: () => { state.query = ""; state.openUsers.add(u.id); goView("brukere"); },
@@ -215,8 +227,9 @@
     const actions = [
       { label: "Nytt spill", kind: "HANDLING", icon: "+", go: () => { goView("spill"); addGame(); } },
       { label: "Nytt nivå", kind: "HANDLING", icon: "+", go: () => { goView("nivaaer"); addLevel(); } },
+      { label: "Ny rabatt", kind: "HANDLING", icon: "+", go: () => { goView("rabatter"); addReward(); } },
     ];
-    return [...sections, ...games, ...levels, ...users, ...actions];
+    return [...sections, ...games, ...levels, ...rewards, ...users, ...actions];
   }
 
   function renderPaletteResults() {
@@ -708,110 +721,14 @@
     const { error } = await sb.from("levels").delete().eq("level_number", lv.level_number);
     if (error) return flash(Auth.friendlyAuthError(error));
     state.levels = state.levels.filter((l) => l.level_number !== lv.level_number);
-    state.rewards = state.rewards.filter((r) => r.level_number !== lv.level_number);
     state.openLevels.delete(lv.level_number);
     renderMain();
     flash("Nivå slettet");
   }
 
-  async function addReward(levelNumber) {
-    const { data, error } = await sb
-      .from("rewards")
-      .insert({ level_number: levelNumber, brand: "Ny partner", title: "Ny premie", sub: "", code_type: "general", general_code: "BYTT-MEG" })
-      .select()
-      .single();
-    if (error) return flash(Auth.friendlyAuthError(error));
-    state.rewards.push(data);
-    renderMain();
-    flash("Premie lagt til");
-  }
-
-  async function saveReward(r, fields) {
-    const { error } = await sb.from("rewards").update(fields).eq("id", r.id);
-    if (error) { flash(Auth.friendlyAuthError(error)); return false; }
-    Object.assign(r, fields);
-    return true;
-  }
-
-  async function deleteReward(r) {
-    if (!window.confirm(`Slette premien "${r.title}"? Dette sletter også eventuelle kodelister og fjerner den fra brukeres "Mine koder". Kan ikke angres.`)) return;
-    const { error } = await sb.from("rewards").delete().eq("id", r.id);
-    if (error) return flash(Auth.friendlyAuthError(error));
-    state.rewards = state.rewards.filter((x) => x.id !== r.id);
-    state.rewardCodes = state.rewardCodes.filter((c) => c.reward_id !== r.id);
-    state.openCodeLists.delete(r.id);
-    renderMain();
-    flash("Premie fjernet");
-  }
-
-  async function addRewardCodes(rewardId, raw) {
-    const codes = Array.from(new Set(raw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)));
-    if (!codes.length) return flash("Ingen koder å legge til.");
-    const { data, error } = await sb.from("reward_codes").insert(codes.map((code) => ({ reward_id: rewardId, code }))).select();
-    if (error) return flash(Auth.friendlyAuthError(error));
-    state.rewardCodes.push(...(data || []));
-    renderMain();
-    flash(`${codes.length} kode${codes.length === 1 ? "" : "r"} lagt til`);
-  }
-
-  function downloadRewardCodes(r) {
-    const codes = state.rewardCodes.filter((c) => c.reward_id === r.id);
-    if (!codes.length) return flash("Ingen koder å laste ned ennå.");
-    const rows = codes.map((c) => [
-      c.code,
-      c.claimed_by ? "Brukt" : "Ledig",
-      c.claimed_by ? usernameFor(c.claimed_by) : "",
-      c.claimed_at ? new Date(c.claimed_at).toLocaleString("no-NO") : "",
-    ]);
-    const safeName = `${r.brand}-${r.title}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "premie";
-    downloadCSV(`koder-${safeName}.csv`, ["Kode", "Status", "Brukernavn", "Hentet"], rows);
-  }
-
-  function findReward(id) { return state.rewards.find((r) => r.id === id); }
-  function rewardsForLevel(n) { return state.rewards.filter((r) => r.level_number === n); }
-
-  function rewardRowHTML(r) {
-    const isList = r.code_type === "list";
-    const stats = isList ? rewardCodeStats(r.id) : null;
-    const codesOpen = state.openCodeLists.has(r.id);
-    const expiresValue = r.expires_at ? r.expires_at.slice(0, 10) : "";
-    return `
-      <div class="admin-reward-row" data-reward-id="${r.id}">
-        <input type="text" value="${escapeHTML(r.brand)}" placeholder="Merke" data-reward-field="brand">
-        <input type="text" value="${escapeHTML(r.title)}" placeholder="Tittel" data-reward-field="title">
-        <input type="text" value="${escapeHTML(r.sub || "")}" placeholder="Undertekst" data-reward-field="sub">
-        <span class="admin-reward-info" title="Undertekst: kort forklaring som vises under premien på Premier-siden">i</span>
-        <select data-reward-field="code_type" title="Kodetype">
-          <option value="general" ${!isList ? "selected" : ""}>Én kode til alle</option>
-          <option value="list" ${isList ? "selected" : ""}>Kodeliste (én kode per bruker)</option>
-        </select>
-        ${isList
-          ? `<span class="admin-reward-info" style="width:auto;border-radius:12px;padding:0 10px;font-weight:700" title="Antall ledige koder av totalt">${stats.remaining}/${stats.total} igjen</span>
-             <button type="button" class="admin-btn-ghost" data-reward-codes-toggle="${r.id}">${codesOpen ? "Lukk kodeliste" : "Kodeliste"}</button>`
-          : `<input type="text" value="${escapeHTML(r.general_code || "")}" placeholder="Rabattkode" data-reward-field="general_code">`}
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap">
-          Utløper
-          <input type="date" value="${expiresValue}" data-reward-field="expires_at" style="flex:none;width:auto">
-        </label>
-        <button type="button" class="admin-btn-ghost is-danger" data-reward-remove="${r.id}">Fjern</button>
-        ${isList && codesOpen ? `
-          <div class="admin-field is-wide" style="padding-top:8px;flex-basis:100%">
-            <span>LEGG TIL KODER (ÉN PER LINJE)</span>
-            <textarea rows="4" placeholder="F.eks.&#10;NIKE-25-AB12&#10;NIKE-25-CD34" data-reward-codes-input="${r.id}"></textarea>
-            <div style="display:flex;gap:10px;padding-top:4px">
-              <button type="button" class="btn-start" style="width:auto;padding:9px 14px" data-reward-codes-add="${r.id}">Legg til koder</button>
-              <button type="button" class="admin-btn-ghost" data-reward-codes-download="${r.id}">Last ned oversikt (CSV)</button>
-            </div>
-          </div>
-        ` : ""}
-      </div>
-    `;
-  }
-
   function renderNivaaer() {
     const rows = state.levels.map((lv) => {
       const open = state.openLevels.has(lv.level_number);
-      const rewards = rewardsForLevel(lv.level_number);
       return `
         <div class="admin-row-card" data-level-card="${lv.level_number}">
           <div class="admin-row-head" data-level-toggle="${lv.level_number}">
@@ -820,7 +737,7 @@
               <span class="admin-row-title">Nivå ${lv.level_number}</span>
               <span class="admin-row-sub" style="font-family:inherit">${NOK(lv.points_required)} poeng kreves</span>
             </span>
-            <span class="admin-row-side-label">${rewards.length} premie${rewards.length === 1 ? "" : "r"}</span>
+            <span class="admin-row-side-label">Gir én kasse</span>
             <span class="admin-chevron">${open ? "▲" : "▼"}</span>
           </div>
           ${open ? `
@@ -828,12 +745,8 @@
               <label class="admin-field" style="max-width:200px">POENG KREVD
                 <input type="number" min="0" value="${lv.points_required}" data-level-points="${lv.level_number}">
               </label>
-              <span style="font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--muted)">PREMIER</span>
-              <div class="admin-reward-list">
-                ${rewards.map((r) => rewardRowHTML(r)).join("")}
-              </div>
+              <p class="admin-card-sub" style="margin:0">Rabatten brukeren får ved å åpne kassen på dette nivået trekkes tilfeldig blant alle aktive rabatter – rediger dem under «Rabatter».</p>
               <div style="display:flex;gap:10px">
-                <button type="button" class="btn-start" style="width:auto;padding:10px 15px" data-level-add-reward="${lv.level_number}">+ Legg til premie</button>
                 <button type="button" class="btn-danger" style="padding:10px 15px" data-level-delete="${lv.level_number}">Slett nivå</button>
               </div>
             </div>
@@ -850,6 +763,234 @@
           <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-quick="new-level">+ Nytt nivå</button>
         </div>
         <div class="admin-row-list">${rows || `<p class="admin-card-sub">Ingen nivåer ennå.</p>`}</div>
+      </div>
+    `;
+  }
+
+  // ---------------------------------------------------------------------
+  // Rabatter
+  // ---------------------------------------------------------------------
+
+  const RARITY_LABELS = { vanlig: "Vanlig", sjelden: "Sjelden", episk: "Episk", legendarisk: "Legendarisk" };
+  const RARITY_ORDER = ["vanlig", "sjelden", "episk", "legendarisk"];
+  const REWARD_IMAGE_BUCKET = "reward-images";
+
+  async function addReward() {
+    const { data, error } = await sb
+      .from("rewards")
+      .insert({ brand: "Ny partner", title: "Ny rabatt", sub: "", rarity: "vanlig", code_type: "general", general_code: "BYTT-MEG" })
+      .select()
+      .single();
+    if (error) return flash(Auth.friendlyAuthError(error));
+    state.rewards.push(data);
+    state.openCodeLists.add(data.id);
+    goView("rabatter");
+    flash("Rabatt lagt til");
+  }
+
+  async function saveReward(r, fields) {
+    const { error } = await sb.from("rewards").update(fields).eq("id", r.id);
+    if (error) { flash(Auth.friendlyAuthError(error)); return false; }
+    Object.assign(r, fields);
+    return true;
+  }
+
+  async function toggleRewardActive(r) {
+    return saveReward(r, { active: !r.active });
+  }
+
+  async function deleteReward(r) {
+    if (!window.confirm(`Slette rabatten "${r.title}"? Dette sletter også eventuelle kodelister og fjerner den fra brukeres "Mine koder". Kan ikke angres.`)) return;
+    const { error } = await sb.from("rewards").delete().eq("id", r.id);
+    if (error) return flash(Auth.friendlyAuthError(error));
+    state.rewards = state.rewards.filter((x) => x.id !== r.id);
+    state.rewardCodes = state.rewardCodes.filter((c) => c.reward_id !== r.id);
+    state.openCodeLists.delete(r.id);
+    renderMain();
+    flash("Rabatt fjernet");
+  }
+
+  async function addRewardCodes(rewardId, raw) {
+    const codes = Array.from(new Set(raw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)));
+    if (!codes.length) return flash("Ingen koder å legge til.");
+    const { data, error } = await sb.from("reward_codes").insert(codes.map((code) => ({ reward_id: rewardId, code }))).select();
+    if (error) return flash(Auth.friendlyAuthError(error));
+    state.rewardCodes.push(...(data || []));
+    const r = findReward(rewardId);
+    if (r && !r.active) await saveReward(r, { active: true });
+    renderMain();
+    flash(`${codes.length} kode${codes.length === 1 ? "" : "r"} lagt til`);
+  }
+
+  function downloadRewardCodes(r) {
+    const codes = state.rewardCodes.filter((c) => c.reward_id === r.id);
+    if (!codes.length) return flash("Ingen koder å laste ned ennå.");
+    const rows = codes.map((c) => [
+      c.code,
+      c.claimed_by ? "Brukt" : "Ledig",
+      c.claimed_by ? usernameFor(c.claimed_by) : "",
+      c.claimed_at ? new Date(c.claimed_at).toLocaleString("no-NO") : "",
+    ]);
+    const safeName = `${r.brand}-${r.title}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "rabatt";
+    downloadCSV(`koder-${safeName}.csv`, ["Kode", "Status", "Brukernavn", "Hentet"], rows);
+  }
+
+  function findReward(id) { return state.rewards.find((r) => r.id === id); }
+
+  function rewardUploadRowHTML(r) {
+    const busy = state.rewardUploadBusy.has(r.id);
+    return `
+      <label class="admin-upload-btn${busy ? " is-busy" : ""}">
+        ${busy ? "Laster opp …" : "Last opp bilde"}
+        <input type="file" accept="image/png,image/jpeg" data-reward-upload="${r.id}" ${busy ? "disabled" : ""}>
+      </label>
+    `;
+  }
+
+  async function uploadRewardImage(r, file) {
+    if (!file) return;
+    const allowed = { "image/png": "png", "image/jpeg": "jpg" };
+    const ext = allowed[file.type];
+    if (!ext) return flash("Kun PNG og JPG er støttet.");
+    if (file.size > 5 * 1024 * 1024) return flash("Bildet er for stort (maks 5 MB).");
+
+    state.rewardUploadBusy.add(r.id);
+    renderMain();
+
+    const path = `${r.id}/bilde-${Date.now()}.${ext}`;
+    const { error: uploadError } = await sb.storage
+      .from(REWARD_IMAGE_BUCKET)
+      .upload(path, file, { contentType: file.type, upsert: true });
+
+    if (uploadError) {
+      state.rewardUploadBusy.delete(r.id);
+      renderMain();
+      return flash(Auth.friendlyAuthError(uploadError));
+    }
+
+    const { data: pub } = sb.storage.from(REWARD_IMAGE_BUCKET).getPublicUrl(path);
+    state.rewardUploadBusy.delete(r.id);
+    const ok = await saveReward(r, { image_url: pub.publicUrl });
+    if (ok) { renderMain(); flash("Bilde lagret"); }
+  }
+
+  function rewardRowHTML(r) {
+    const isList = r.code_type === "list";
+    const stats = isList ? rewardCodeStats(r.id) : null;
+    const codesOpen = state.openCodeLists.has(r.id);
+    return `
+      <div class="admin-row-card" data-reward-id="${r.id}">
+        <div class="admin-row-head" data-reward-toggle="${r.id}">
+          <span class="admin-row-thumb">${r.image_url ? `<img src="${escapeHTML(r.image_url)}" alt="">` : ""}</span>
+          <span class="admin-row-titles">
+            <span class="admin-row-title-line">
+              <span class="admin-row-title">${escapeHTML(r.brand)} – ${escapeHTML(r.title)}</span>
+              <span class="admin-pill-daily" style="background:rgba(157,107,245,.14);color:#9d6bf5">${RARITY_LABELS[r.rarity] || r.rarity}</span>
+              ${!r.active ? `<span class="admin-pill-hidden">DEAKTIVERT</span>` : ""}
+            </span>
+            <span class="admin-row-sub">${isList ? `${stats.remaining}/${stats.total} koder igjen` : `Én kode til alle: ${escapeHTML(r.general_code || "–")}`}</span>
+          </span>
+          <span class="admin-row-side-label">${r.active ? "Aktiv" : "Inaktiv"}</span>
+          <button type="button" class="admin-switch${r.active ? " is-on" : ""}" data-reward-active-toggle="${r.id}" aria-label="Aktiver/deaktiver rabatt">
+            <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
+          </button>
+          <span class="admin-chevron">${codesOpen ? "▲" : "▼"}</span>
+        </div>
+        ${codesOpen ? `
+          <div class="admin-row-detail">
+            <label class="admin-field">MERKE
+              <input type="text" value="${escapeHTML(r.brand)}" placeholder="Merke" data-reward-field="brand">
+            </label>
+            <label class="admin-field">NAVN PÅ RABATTEN
+              <input type="text" value="${escapeHTML(r.title)}" placeholder="F.eks. 25 % på sko" data-reward-field="title">
+            </label>
+            <label class="admin-field is-wide">BESKRIVELSE (VISES BAK INFOSYMBOLET)
+              <textarea rows="2" placeholder="Vilkår, hva rabatten gjelder for …" data-reward-field="sub">${escapeHTML(r.sub || "")}</textarea>
+            </label>
+            <label class="admin-field">SJELDENHET
+              <select data-reward-field="rarity">
+                ${RARITY_ORDER.map((k) => `<option value="${k}" ${r.rarity === k ? "selected" : ""}>${RARITY_LABELS[k]}</option>`).join("")}
+              </select>
+            </label>
+            <label class="admin-field">BILDE
+              ${rewardUploadRowHTML(r)}
+            </label>
+            <label class="admin-field">KODETYPE
+              <select data-reward-field="code_type" title="Kodetype">
+                <option value="general" ${!isList ? "selected" : ""}>Generell (én kode til alle)</option>
+                <option value="list" ${isList ? "selected" : ""}>Ikke generell (kodeliste, én kode per bruker)</option>
+              </select>
+            </label>
+            ${!isList ? `
+              <label class="admin-field">RABATTKODE
+                <input type="text" value="${escapeHTML(r.general_code || "")}" placeholder="Rabattkode" data-reward-field="general_code">
+              </label>
+            ` : `
+              <div class="admin-field is-wide">
+                <span>LEGG TIL KODER (ÉN PER LINJE)</span>
+                <textarea rows="4" placeholder="F.eks.&#10;NIKE-25-AB12&#10;NIKE-25-CD34" data-reward-codes-input="${r.id}"></textarea>
+                <div style="display:flex;gap:10px;padding-top:4px">
+                  <button type="button" class="btn-start" style="width:auto;padding:9px 14px" data-reward-codes-add="${r.id}">Legg til koder</button>
+                  <button type="button" class="admin-btn-ghost" data-reward-codes-download="${r.id}">Last ned oversikt (CSV)</button>
+                </div>
+                <p class="admin-card-sub" style="margin:6px 0 0">${stats.remaining}/${stats.total} koder igjen. Går kodene tomme deaktiveres rabatten automatisk.</p>
+              </div>
+            `}
+            <div style="display:flex;gap:10px;flex-basis:100%">
+              <button type="button" class="btn-danger" style="padding:10px 15px" data-reward-remove="${r.id}">Slett rabatt</button>
+            </div>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }
+
+  async function saveRarityWeight(rarity, weight) {
+    const { error } = await sb.from("rarity_weights").upsert({ rarity, weight });
+    if (error) return flash(Auth.friendlyAuthError(error));
+    const row = state.rarityWeights.find((w) => w.rarity === rarity);
+    if (row) row.weight = weight; else state.rarityWeights.push({ rarity, weight });
+  }
+
+  function renderRarityWeights() {
+    const total = RARITY_ORDER.reduce((sum, k) => {
+      const w = state.rarityWeights.find((x) => x.rarity === k);
+      return sum + (w ? w.weight : 0);
+    }, 0) || 1;
+
+    return `
+      <div class="admin-card">
+        <div>
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Sannsynlighet per sjeldenhet</h2>
+          <span class="admin-card-sub">Vekter relativt til hverandre – de trenger ikke summere til 100. Gjelder alle kasser.</span>
+        </div>
+        <div class="admin-stat-grid" style="grid-template-columns:repeat(4,1fr)">
+          ${RARITY_ORDER.map((k) => {
+            const w = state.rarityWeights.find((x) => x.rarity === k);
+            const weight = w ? w.weight : 0;
+            const pct = Math.round((weight / total) * 1000) / 10;
+            return `
+              <label class="admin-stat-box">${RARITY_LABELS[k]} (${pct} %)
+                <input type="number" min="0" value="${weight}" data-rarity-weight="${k}">
+              </label>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderRabatter() {
+    const rows = state.rewards.map((r) => rewardRowHTML(r)).join("");
+    return `
+      <div class="admin-section">
+        ${renderRarityWeights()}
+        <div class="admin-toolbar">
+          <span class="admin-toolbar-count">${state.rewards.length} rabatter</span>
+          <span class="admin-card-spacer"></span>
+          <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-quick="new-reward">+ Ny rabatt</button>
+        </div>
+        <div class="admin-row-list">${rows || `<p class="admin-card-sub">Ingen rabatter ennå.</p>`}</div>
       </div>
     `;
   }
@@ -1121,13 +1262,12 @@
       const statusLabel = isList
         ? `${stats.remaining}/${stats.total} ledig`
         : `Én kode til alle: ${escapeHTML(r.general_code || "–")}`;
-      const expired = r.expires_at && new Date(r.expires_at) < new Date();
       return `
         <tr>
-          <td>${r.level_number}</td>
           <td>${escapeHTML(r.brand)} – ${escapeHTML(r.title)}</td>
+          <td>${RARITY_LABELS[r.rarity] || r.rarity}</td>
           <td>${statusLabel}</td>
-          <td>${r.expires_at ? formatDate(r.expires_at) : "–"}${expired ? ' <span style="color:#ff9385">(utløpt)</span>' : ""}</td>
+          <td>${r.active ? "Aktiv" : '<span style="color:#ff9385">Deaktivert</span>'}</td>
           <td>${isList ? `<button type="button" class="admin-btn-ghost" data-reward-codes-download="${r.id}">Last ned CSV</button>` : ""}</td>
         </tr>
       `;
@@ -1145,23 +1285,23 @@
     return `
       <div class="admin-section">
         <div class="admin-toolbar">
-          <span class="admin-toolbar-count">${state.rewards.length} premier</span>
+          <span class="admin-toolbar-count">${state.rewards.length} rabatter</span>
           <span class="admin-card-spacer"></span>
           <button type="button" class="admin-btn-ghost" data-koder-download-all>Last ned full oversikt (CSV)</button>
         </div>
         <div class="admin-card" style="overflow-x:auto">
-          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Premier og kampanjer</h2>
-          <span class="admin-card-sub">Koder redigeres under «Nivåer og premier». Her ser du status og kan laste ned lister.</span>
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Rabatter</h2>
+          <span class="admin-card-sub">Rediger rabattene under «Rabatter». Her ser du status og kan laste ned lister.</span>
           <table class="records-table">
-            <thead><tr><th>Nivå</th><th>Premie</th><th>Status</th><th>Utløper</th><th></th></tr></thead>
-            <tbody>${rewardRows || `<tr><td colspan="5">Ingen premier ennå.</td></tr>`}</tbody>
+            <thead><tr><th>Rabatt</th><th>Sjeldenhet</th><th>Status</th><th>Aktiv</th><th></th></tr></thead>
+            <tbody>${rewardRows || `<tr><td colspan="5">Ingen rabatter ennå.</td></tr>`}</tbody>
           </table>
         </div>
         <div class="admin-card" style="overflow-x:auto">
           <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Logg – hvem har fått hvilken kode</h2>
           <span class="admin-card-sub">${state.claims.length} hentede koder totalt, nyeste øverst.</span>
           <table class="records-table">
-            <thead><tr><th>Bruker</th><th>Premie</th><th>Kode</th><th>Hentet</th></tr></thead>
+            <thead><tr><th>Bruker</th><th>Rabatt</th><th>Kode</th><th>Hentet</th></tr></thead>
             <tbody>${claimRows || `<tr><td colspan="4">Ingen koder hentet ennå.</td></tr>`}</tbody>
           </table>
         </div>
@@ -1170,21 +1310,21 @@
   }
 
   function downloadAllCodesOverview() {
-    if (!state.rewards.length) return flash("Ingen premier å laste ned ennå.");
+    if (!state.rewards.length) return flash("Ingen rabatter å laste ned ennå.");
     const rows = state.rewards.map((r) => {
       const isList = r.code_type === "list";
       const stats = isList ? rewardCodeStats(r.id) : null;
       return [
-        r.level_number,
         r.brand,
         r.title,
+        RARITY_LABELS[r.rarity] || r.rarity,
         isList ? "Kodeliste" : "Én kode til alle",
         isList ? stats.total : 1,
         isList ? stats.remaining : "–",
-        r.expires_at ? new Date(r.expires_at).toLocaleDateString("no-NO") : "",
+        r.active ? "Aktiv" : "Deaktivert",
       ];
     });
-    downloadCSV("rabattkoder-oversikt.csv", ["Nivå", "Merke", "Tittel", "Type", "Totalt", "Ledige", "Utløper"], rows);
+    downloadCSV("rabattkoder-oversikt.csv", ["Merke", "Tittel", "Sjeldenhet", "Type", "Totalt", "Ledige", "Status"], rows);
   }
 
   // ---------------------------------------------------------------------
@@ -1197,6 +1337,7 @@
       statistikk: renderStatistikk,
       spill: renderSpill,
       nivaaer: renderNivaaer,
+      rabatter: renderRabatter,
       brukere: renderBrukere,
       avatar: renderAvatar,
       koder: renderKoder,
@@ -1233,6 +1374,7 @@
     if (quick) {
       if (quick.dataset.quick === "new-game") return addGame();
       if (quick.dataset.quick === "new-level") return addLevel();
+      if (quick.dataset.quick === "new-reward") return addReward();
     }
 
     if (t.closest("[data-koder-download-all]")) return downloadAllCodesOverview();
@@ -1258,20 +1400,25 @@
       state.openLevels.has(n) ? state.openLevels.delete(n) : state.openLevels.add(n);
       return renderMain();
     }
-    const addRewardBtn = t.closest("[data-level-add-reward]");
-    if (addRewardBtn) return addReward(Number(addRewardBtn.dataset.levelAddReward));
+    const rewardToggle = t.closest("[data-reward-toggle]");
+    if (rewardToggle) {
+      const id = Number(rewardToggle.dataset.rewardToggle);
+      state.openCodeLists.has(id) ? state.openCodeLists.delete(id) : state.openCodeLists.add(id);
+      return renderMain();
+    }
+    const rewardActiveToggle = t.closest("[data-reward-active-toggle]");
+    if (rewardActiveToggle) {
+      e.stopPropagation();
+      const r = findReward(Number(rewardActiveToggle.dataset.rewardActiveToggle));
+      if (r) toggleRewardActive(r).then((ok) => { if (ok) { renderMain(); flash(r.active ? "Rabatt aktivert" : "Rabatt deaktivert"); } });
+      return;
+    }
 
     const removeReward = t.closest("[data-reward-remove]");
     if (removeReward) {
       const r = findReward(Number(removeReward.dataset.rewardRemove));
       if (r) deleteReward(r);
       return;
-    }
-    const codesToggle = t.closest("[data-reward-codes-toggle]");
-    if (codesToggle) {
-      const id = Number(codesToggle.dataset.rewardCodesToggle);
-      state.openCodeLists.has(id) ? state.openCodeLists.delete(id) : state.openCodeLists.add(id);
-      return renderMain();
     }
     const codesAdd = t.closest("[data-reward-codes-add]");
     if (codesAdd) {
@@ -1372,6 +1519,21 @@
 
   function onMainChange(e) {
     const t = e.target;
+    const rewardUpload = t.closest("[data-reward-upload]");
+    if (rewardUpload) {
+      const r = findReward(Number(rewardUpload.dataset.rewardUpload));
+      const file = rewardUpload.files && rewardUpload.files[0];
+      if (r && file) uploadRewardImage(r, file);
+      return;
+    }
+    const rarityWeight = t.closest("[data-rarity-weight]");
+    if (rarityWeight) {
+      const rarity = rarityWeight.dataset.rarityWeight;
+      const value = Number(t.value);
+      if (!Number.isFinite(value) || value < 0) return flash("Ugyldig vekt.");
+      saveRarityWeight(rarity, value).then(() => flash("Lagret!"));
+      return;
+    }
     const gameUpload = t.closest("[data-game-upload]");
     if (gameUpload) {
       const g = findGame(gameUpload.dataset.gameId);
@@ -1408,10 +1570,8 @@
       if (field === "code_type") {
         fields.code_type = value;
         if (value === "general" && !r.general_code) fields.general_code = "BYTT-MEG";
-      } else if (field === "expires_at") {
-        fields.expires_at = value ? new Date(value + "T23:59:59").toISOString() : null;
       } else if (field === "general_code") {
-        if (r.code_type === "general" && !value) return flash("Kode kan ikke være tom for «Én kode til alle».");
+        if (r.code_type === "general" && !value) return flash("Kode kan ikke være tom for «Generell».");
         fields.general_code = value || null;
       } else {
         fields[field] = value;
