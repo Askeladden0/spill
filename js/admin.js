@@ -67,6 +67,7 @@
     // Rabatter
     openCodeLists: new Set(),
     rewardUploadBusy: new Set(),
+    adminPreview: { spinning: false, result: null, error: null },
 
     // Statistikk
     signupRange: "7d",
@@ -945,6 +946,24 @@
     `;
   }
 
+  async function adminPreviewSpin() {
+    if (state.adminPreview.spinning) return;
+    state.adminPreview.spinning = true;
+    state.adminPreview.error = null;
+    renderMain();
+    const { data, error } = await sb.rpc("admin_preview_case").single();
+    state.adminPreview.spinning = false;
+    if (error) {
+      state.adminPreview.error = error.message.includes("Ingen rabatter")
+        ? "Ingen rabatter er tilgjengelige akkurat nå."
+        : error.message;
+      state.adminPreview.result = null;
+    } else {
+      state.adminPreview.result = data;
+    }
+    renderMain();
+  }
+
   async function saveRarityWeight(rarity, weight) {
     const { error } = await sb.from("rarity_weights").upsert({ rarity, weight });
     if (error) return flash(Auth.friendlyAuthError(error));
@@ -980,10 +999,41 @@
     `;
   }
 
+  function renderAdminCasePreview() {
+    const p = state.adminPreview;
+    const result = p.result;
+    return `
+      <div class="admin-card">
+        <div>
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Test-spinn (kun admin)</h2>
+          <span class="admin-card-sub">Spinn kassen så mange ganger du vil for å se hva den kan gi. Dette er kun en forhåndsvisning – ingen kode blir reservert eller trukket fra puljen, og det påvirker ikke hva du selv eller andre brukere kan få når dere åpner en ekte kasse.</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+          <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-admin-preview-spin ${p.spinning ? "disabled" : ""}>${p.spinning ? "Spinner …" : "Spinn testkasse"}</button>
+        </div>
+        ${p.error ? `<p class="admin-card-sub" style="color:#ff6b6b;margin-top:10px">${escapeHTML(p.error)}</p>` : ""}
+        ${result ? `
+          <div style="display:flex;align-items:center;gap:16px;margin-top:16px;padding:16px 18px;border-radius:14px;background:var(--bg);border:1px solid var(--border-strong)">
+            <span style="width:56px;height:56px;flex:none;border-radius:12px;background:#1b2434;display:flex;align-items:center;justify-content:center;overflow:hidden">
+              ${result.image_url ? `<img src="${result.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#6b7b93">[ logo ]</span>`}
+            </span>
+            <div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent)">${(RARITY_LABELS[result.rarity] || result.rarity).toUpperCase()} RABATT</span>
+              <span style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:#fff">${escapeHTML(result.title)} hos ${escapeHTML(result.brand)}</span>
+              <span style="font-size:12px;font-weight:500;color:var(--muted)">Kode: ${escapeHTML(result.code)}</span>
+            </div>
+            <button type="button" class="admin-btn-ghost" data-admin-preview-copy>Kopier koden</button>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }
+
   function renderRabatter() {
     const rows = state.rewards.map((r) => rewardRowHTML(r)).join("");
     return `
       <div class="admin-section">
+        ${renderAdminCasePreview()}
         ${renderRarityWeights()}
         <div class="admin-toolbar">
           <span class="admin-toolbar-count">${state.rewards.length} rabatter</span>
@@ -1378,6 +1428,20 @@
     }
 
     if (t.closest("[data-koder-download-all]")) return downloadAllCodesOverview();
+
+    if (t.closest("[data-admin-preview-spin]")) return adminPreviewSpin();
+    const previewCopy = t.closest("[data-admin-preview-copy]");
+    if (previewCopy) {
+      const code = state.adminPreview.result && state.adminPreview.result.code;
+      if (code && navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(() => {
+          const original = previewCopy.textContent;
+          previewCopy.textContent = "Kopiert!";
+          setTimeout(() => { previewCopy.textContent = original; }, 1500);
+        });
+      }
+      return;
+    }
 
     // Spill
     const gameToggle = t.closest("[data-game-toggle]");
