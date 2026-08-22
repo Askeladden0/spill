@@ -69,13 +69,60 @@
 
     <section style="display:grid;grid-template-columns:1fr 340px;gap:32px;align-items:start" class="premier-layout">
 
-      <div>
-        <div class="section-heading spread">
-          <h2>Nivåstigen</h2>
-          <span class="section-sub" data-ladder-range>Nivå 1–15</span>
+      <div style="display:flex;flex-direction:column;gap:32px;min-width:0">
+
+        <div>
+          <div class="section-heading spread">
+            <h2>Åpne kasse</h2>
+          </div>
+
+          <div style="border-radius:20px;border:1px solid var(--border-strong);background:linear-gradient(160deg,#18222f,#131a25);overflow:hidden" data-case-panel hidden>
+            <div style="padding:22px 24px 16px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border)">
+              <span style="width:44px;height:44px;flex:none;border-radius:12px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.35);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--accent)" data-case-badge>–</span>
+              <h3 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#fff" data-case-title>–</h3>
+            </div>
+            <div style="position:relative;padding:26px 0;background:radial-gradient(120% 100% at 50% 0%,rgba(46,232,127,.07),transparent 70%);overflow:hidden">
+              <div style="position:relative;overflow:hidden;height:130px" data-case-reel-viewport>
+                <div style="display:flex;gap:12px;position:absolute;left:0;top:0" data-case-reel></div>
+              </div>
+              <div style="position:absolute;top:16px;bottom:16px;left:50%;width:2px;transform:translateX(-1px);background:var(--accent);box-shadow:0 0 18px rgba(46,232,127,.6);pointer-events:none"></div>
+            </div>
+            <div style="padding:0 24px 24px;display:flex;flex-direction:column;gap:16px">
+              <button type="button" class="btn-primary" style="width:100%" data-case-open>Åpne kassen</button>
+              <div data-case-reveal hidden style="display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:16px;background:var(--bg);border:1px solid var(--border-strong)">
+                <span style="width:70px;height:70px;flex:none;border-radius:12px;background:#1b2434;display:flex;align-items:center;justify-content:center;overflow:hidden" data-case-reveal-thumb></span>
+                <div style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:.12em" data-case-reveal-rarity></span>
+                    <button type="button" aria-label="Mer info om rabatten" title="" style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;border:none;background:transparent;color:var(--muted);cursor:help" data-case-reveal-info>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </button>
+                  </div>
+                  <span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.1" data-case-reveal-value></span>
+                  <span style="font-size:12px;font-weight:500;color:var(--muted)" data-case-reveal-code></span>
+                </div>
+                <button type="button" class="btn-primary" style="padding:13px 18px;font-size:13.5px" data-case-reveal-copy>Kopier koden</button>
+              </div>
+            </div>
+          </div>
+          <p class="section-sub" data-case-empty>Ingen ledige kasser. Nå et nytt nivå for å få en kasse!</p>
         </div>
-        <div class="level-ladder" data-level-ladder>
-          <p class="section-sub">Laster nivåer …</p>
+
+        <div data-case-grid-wrap hidden>
+          <div class="section-heading spread">
+            <h2 style="font-size:16px">Andre kasser</h2>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" data-case-grid></div>
+        </div>
+
+        <div>
+          <div class="section-heading spread">
+            <h2>Nivåstigen</h2>
+            <span class="section-sub" data-ladder-range>Nivå 1–15</span>
+          </div>
+          <div class="level-ladder" data-level-ladder>
+            <p class="section-sub">Laster nivåer …</p>
+          </div>
         </div>
       </div>
 
@@ -112,19 +159,6 @@
   </div>
 </div>
 
-<!-- Rabattkode-modal -->
-<div class="modal-overlay" data-code-modal hidden>
-  <div class="modal-backdrop" data-code-backdrop></div>
-  <div class="modal-card">
-    <button type="button" class="modal-close" data-close-code aria-label="Lukk">×</button>
-    <h2 class="modal-title" data-code-brand>Din rabattkode</h2>
-    <p class="modal-sub" data-code-title></p>
-    <div class="code-value" data-code-value>–</div>
-    <p class="modal-sub">Koden er lagret i profilen din under «Mine koder».</p>
-    <button class="btn-primary" type="button" style="width:100%" data-close-code-btn>Lukk</button>
-  </div>
-</div>
-
 <script src="js/layout.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
@@ -139,13 +173,22 @@
   const WHEEL_VALUES = [10, 750, 100, 500, 50, 1000, 250, 400];
   const WHEEL_COLORS = ["#2ee87f", "#1b2434"];
 
+  const RARITY = {
+    vanlig: { label: "VANLIG", color: "#7c8aa0" },
+    sjelden: { label: "SJELDEN", color: "#4b8ef0" },
+    episk: { label: "EPISK", color: "#9d6bf5" },
+    legendarisk: { label: "LEGENDARISK", color: "#f0b429" },
+  };
+
   let profile = null;
   let levels = [];
   let rewards = [];
-  let claimedRewardIds = new Set();
+  let openedCases = new Map(); // level_number -> { brand, title, sub, rarity, image_url, code }
+  let selectedCaseLevel = null;
   let miniRotation = 0;
   let bigRotation = 0;
   let spinning = false;
+  let caseOpening = false;
 
   function fmt(n) {
     return Math.round(n).toLocaleString("no-NO");
@@ -241,9 +284,160 @@
     document.querySelector("[data-stat-points]").textContent = fmt(points);
     document.querySelector("[data-level-tooltip]").textContent = `${fmt(points)} poeng totalt`;
 
-    const availableCodes = rewards.filter((r) => r.level_number <= dl).length;
-    document.querySelector('[data-stat-codes]').textContent = availableCodes;
+    document.querySelector('[data-stat-codes]').textContent = unlockedLevels().length;
   }
+
+  // ---------- Kasser ----------
+  function unlockedLevels() {
+    const dl = displayLevel();
+    return levels.filter((lv) => lv.level_number <= dl).map((lv) => lv.level_number);
+  }
+
+  function unopenedLevels() {
+    return unlockedLevels().filter((n) => !openedCases.has(n));
+  }
+
+  function randomReelTile() {
+    const pool = rewards.length ? rewards : [{ brand: "?", title: "?", rarity: "vanlig" }];
+    const item = pool[Math.floor(Math.random() * pool.length)];
+    const rar = RARITY[item.rarity] || RARITY.vanlig;
+    return `
+      <span style="flex:none;width:112px;height:130px;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:${item.rarity === "vanlig" ? "#131a25" : `linear-gradient(180deg,${rar.color}1f,#131a25 62%)`};border:1px solid ${item.rarity === "vanlig" ? "var(--border)" : rar.color + "55"}">
+        <span style="position:relative;height:78px;background:repeating-linear-gradient(135deg,#1b2434 0 12px,#202b3d 12px 24px);display:flex;align-items:center;justify-content:center">
+          ${item.image_url ? `<img src="${item.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#6b7b93">[ logo ]</span>`}
+        </span>
+        <span style="flex:1;padding:8px 9px;display:flex;flex-direction:column;gap:2px;justify-content:center">
+          <span style="font-size:13px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.title}</span>
+          <span style="font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--muted)">${item.brand}</span>
+        </span>
+      </span>
+    `;
+  }
+
+  function startReelShuffle() {
+    const reel = document.querySelector("[data-case-reel]");
+    reel.innerHTML = Array.from({ length: 20 }, randomReelTile).join("");
+    reel.style.transition = "none";
+    reel.style.transform = "translateX(0px)";
+    void reel.offsetWidth;
+    reel.style.transition = "transform 1.6s linear";
+    reel.style.transform = "translateX(-620px)";
+  }
+
+  function stopReelShuffle() {
+    const reel = document.querySelector("[data-case-reel]");
+    reel.style.transition = "none";
+    reel.style.transform = "translateX(0px)";
+  }
+
+  function selectCase(levelNumber) {
+    selectedCaseLevel = levelNumber;
+    renderCasePanel();
+  }
+
+  function renderCasePanel() {
+    const panel = document.querySelector("[data-case-panel]");
+    const empty = document.querySelector("[data-case-empty]");
+    const gridWrap = document.querySelector("[data-case-grid-wrap]");
+    const grid = document.querySelector("[data-case-grid]");
+    const unopened = unopenedLevels();
+
+    if (selectedCaseLevel === null || !unopened.includes(selectedCaseLevel)) {
+      selectedCaseLevel = unopened.length ? Math.min(...unopened) : null;
+    }
+
+    if (selectedCaseLevel === null) {
+      panel.hidden = true;
+      empty.textContent = unlockedLevels().length === 0
+        ? "Ingen ledige kasser. Nå nivå 1 for å få din første kasse!"
+        : "Alle kassene dine er åpnet. Nå et nytt nivå for å få en ny!";
+      empty.style.display = "block";
+    } else {
+      panel.hidden = false;
+      empty.style.display = "none";
+      document.querySelector("[data-case-badge]").textContent = selectedCaseLevel;
+      document.querySelector("[data-case-title]").textContent = `Nivå ${selectedCaseLevel}-kassen`;
+      const openBtn = document.querySelector("[data-case-open]");
+      openBtn.textContent = caseOpening ? "Åpner kassen …" : `Åpne nivå ${selectedCaseLevel}-kassen`;
+      openBtn.disabled = caseOpening;
+      document.querySelector("[data-case-reveal]").hidden = true;
+      if (!caseOpening) startReelShuffle();
+    }
+
+    const others = unopened.filter((n) => n !== selectedCaseLevel);
+    if (!others.length) {
+      gridWrap.hidden = true;
+      grid.innerHTML = "";
+    } else {
+      gridWrap.hidden = false;
+      grid.innerHTML = others.map((n) => `
+        <button type="button" data-case-pick="${n}" style="cursor:pointer;border-radius:14px;border:1px solid var(--border-strong);background:#131a25;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font-family:inherit">
+          <span style="width:34px;height:34px;border-radius:10px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.35);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent)">${n}</span>
+          <span style="font-size:11.5px;font-weight:600;color:var(--muted)">Nivå ${n}</span>
+        </button>
+      `).join("");
+    }
+  }
+
+  async function openSelectedCase() {
+    if (caseOpening || selectedCaseLevel === null) return;
+    if (!profile) { window.location.href = "login.html"; return; }
+    caseOpening = true;
+    renderCasePanel();
+
+    const shuffleStart = Date.now();
+    const { data, error } = await sb.rpc("open_level_case", { p_level_number: selectedCaseLevel }).single();
+    const elapsed = Date.now() - shuffleStart;
+    if (elapsed < 1500) await new Promise((r) => setTimeout(r, 1500 - elapsed));
+    stopReelShuffle();
+    caseOpening = false;
+
+    if (error) {
+      document.querySelector("[data-case-open]").textContent = `Åpne nivå ${selectedCaseLevel}-kassen`;
+      document.querySelector("[data-case-open]").disabled = false;
+      window.alert(error.message.includes("Ingen rabatter") ? "Ingen rabatter er tilgjengelige akkurat nå. Prøv igjen senere." : error.message);
+      return;
+    }
+
+    openedCases.set(selectedCaseLevel, data);
+    showCaseReveal(data);
+    renderLevelCard();
+    renderFeed();
+  }
+
+  function showCaseReveal(data) {
+    const rar = RARITY[data.rarity] || RARITY.vanlig;
+    document.querySelector("[data-case-open]").textContent = "Kassen er åpnet";
+    document.querySelector("[data-case-open]").disabled = true;
+    const reveal = document.querySelector("[data-case-reveal]");
+    reveal.hidden = false;
+    reveal.style.border = `1px solid ${rar.color}80`;
+    reveal.style.boxShadow = `0 0 0 4px ${rar.color}1a`;
+    const thumb = document.querySelector("[data-case-reveal-thumb]");
+    thumb.innerHTML = data.image_url ? `<img src="${data.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#6b7b93">[ logo ]</span>`;
+    const rarityEl = document.querySelector("[data-case-reveal-rarity]");
+    rarityEl.textContent = `${rar.label} RABATT`;
+    rarityEl.style.color = rar.color;
+    document.querySelector("[data-case-reveal-info]").title = data.sub || "";
+    document.querySelector("[data-case-reveal-value]").textContent = `${data.title} hos ${data.brand}`;
+    document.querySelector("[data-case-reveal-code]").textContent = `Kode: ${data.code} · lagret i «Mine koder»`;
+    document.querySelector("[data-case-reveal-copy]").onclick = () => {
+      navigator.clipboard && navigator.clipboard.writeText(data.code).then(() => flashCopy());
+    };
+  }
+
+  function flashCopy() {
+    const btn = document.querySelector("[data-case-reveal-copy]");
+    const original = btn.textContent;
+    btn.textContent = "Kopiert!";
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  }
+
+  document.querySelector("[data-case-open]").addEventListener("click", openSelectedCase);
+  document.querySelector("[data-case-grid]").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-case-pick]");
+    if (btn) selectCase(Number(btn.dataset.casePick));
+  });
 
   // ---------- Nivåstige ----------
   function levelBadgeColors(state) {
@@ -268,49 +462,14 @@
         const state = lv.level_number < dl ? "done" : lv.level_number === dl ? "now" : "locked";
         const unlocked = lv.level_number <= dl;
         const colors = levelBadgeColors(state);
-        const label = state === "done" ? "LÅST OPP" : state === "now" ? "DITT NIVÅ" : "LÅST";
+        const opened = openedCases.get(lv.level_number);
+        let label = state === "done" ? "LÅST OPP" : state === "now" ? "DITT NIVÅ" : "LÅST";
+        if (unlocked) label = opened ? "KASSE ÅPNET" : "KASSE VENTER";
         const labelColor = state === "locked" ? "#7c8aa0" : "#2ee87f";
         const lineColor = unlocked ? "rgba(46,232,127,.35)" : "rgba(255,255,255,.08)";
-
-        const rewardsHTML = rewards
-          .filter((r) => r.level_number === lv.level_number)
-          .map((r) => {
-            const claimed = claimedRewardIds.has(r.id);
-            const expired = r.expires_at && new Date(r.expires_at) < new Date();
-            let label = "Låses på nivå " + lv.level_number;
-            let btnClass = "is-locked";
-            let disabled = true;
-            if (unlocked && expired) {
-              label = "Utløpt";
-            } else if (unlocked && claimed) {
-              label = "Innløst";
-              btnClass = "is-unlocked";
-              disabled = false;
-            } else if (unlocked) {
-              label = "Hent rabattkode";
-              btnClass = "is-unlocked";
-              disabled = false;
-            }
-            return `
-            <article class="reward-card" style="opacity:${unlocked && !expired ? 1 : 0.55}">
-              <div class="reward-thumb">
-                <span class="reward-thumb-slot">[ partnerbilde ]</span>
-                <span class="reward-brand-tag">${r.brand}</span>
-              </div>
-              <div class="reward-body">
-                <div style="display:flex;flex-direction:column;gap:3px">
-                  <h3 class="reward-title">${r.title}</h3>
-                  <span class="reward-sub">${r.sub || ""}</span>
-                </div>
-                <button type="button" class="btn-reward ${btnClass}"
-                  ${disabled ? "disabled" : `data-redeem="${r.id}"`}>
-                  ${label}
-                </button>
-              </div>
-            </article>
-          `;
-          })
-          .join("");
+        const caseNote = unlocked
+          ? (opened ? `${opened.title} hos ${opened.brand}` : "Åpne kassen for å få en tilfeldig rabatt")
+          : "Låses opp på dette nivået";
 
         return `
           <div class="level-row">
@@ -323,16 +482,12 @@
                 <span class="level-row-status" style="color:${labelColor}">${label}</span>
                 <span class="level-row-req">${fmt(lv.points_required)} poeng</span>
               </div>
-              <div class="reward-grid">${rewardsHTML}</div>
+              <span class="section-sub" style="margin:0">${caseNote}</span>
             </div>
           </div>
         `;
       })
       .join("");
-
-    el.querySelectorAll("[data-redeem]").forEach((btn) => {
-      btn.addEventListener("click", () => openCodeModal(Number(btn.dataset.redeem)));
-    });
   }
 
   // ---------- Sidepanel ----------
@@ -376,48 +531,6 @@
     `
       )
       .join("");
-  }
-
-  // ---------- Rabattkode-modal ----------
-  async function openCodeModal(rewardId) {
-    if (!profile) {
-      window.location.href = "login.html";
-      return;
-    }
-    const modal = document.querySelector("[data-code-modal]");
-    const brandEl = document.querySelector("[data-code-brand]");
-    const titleEl = document.querySelector("[data-code-title]");
-    const valueEl = document.querySelector("[data-code-value]");
-
-    brandEl.textContent = "Henter kode …";
-    titleEl.textContent = "";
-    valueEl.textContent = "–";
-    modal.hidden = false;
-
-    const { data, error } = await sb.rpc("claim_reward", { p_reward_id: rewardId }).single();
-
-    if (error) {
-      brandEl.textContent = "Kunne ikke hente kode";
-      titleEl.textContent = error.message.includes("Ingen flere koder")
-        ? "Alle kodene for denne premien er dessverre delt ut. Sjekk igjen senere."
-        : error.message;
-      valueEl.textContent = "–";
-      return;
-    }
-
-    brandEl.textContent = data.brand;
-    titleEl.textContent = data.title;
-    valueEl.textContent = data.code;
-    claimedRewardIds.add(rewardId);
-    renderLadder();
-    renderFeed();
-  }
-
-  document.querySelector("[data-close-code]").addEventListener("click", closeCodeModal);
-  document.querySelector("[data-close-code-btn]").addEventListener("click", closeCodeModal);
-  document.querySelector("[data-code-backdrop]").addEventListener("click", closeCodeModal);
-  function closeCodeModal() {
-    document.querySelector("[data-code-modal]").hidden = true;
   }
 
   // ---------- Lykkehjul-modal ----------
@@ -478,6 +591,7 @@
 
     renderLevelCard();
     renderLadder();
+    renderCasePanel();
     Auth.renderHeaderAuth();
   }
 
@@ -498,16 +612,30 @@
   async function loadLevels() {
     const [levelsRes, rewardsRes] = await Promise.all([
       sb.from("levels").select("level_number, points_required").order("level_number"),
-      sb.from("rewards").select("id, level_number, brand, title, sub, expires_at").order("level_number").order("sort_order"),
+      sb.from("rewards").select("id, brand, title, sub, rarity, image_url").eq("active", true).order("sort_order"),
     ]);
     if (!levelsRes.error && levelsRes.data) levels = levelsRes.data;
     if (!rewardsRes.error && rewardsRes.data) rewards = rewardsRes.data;
   }
 
-  async function loadClaimedRewards() {
-    if (!profile) { claimedRewardIds = new Set(); return; }
-    const { data, error } = await sb.from("user_codes").select("reward_id").eq("user_id", profile.id).not("reward_id", "is", null);
-    claimedRewardIds = new Set(!error && data ? data.map((c) => c.reward_id) : []);
+  async function loadOpenedCases() {
+    openedCases = new Map();
+    if (!profile) return;
+    const { data, error } = await sb
+      .from("user_level_cases")
+      .select("level_number, code, rewards(brand, title, sub, rarity, image_url)")
+      .eq("user_id", profile.id);
+    if (error || !data) return;
+    data.forEach((row) => {
+      openedCases.set(row.level_number, {
+        code: row.code,
+        brand: row.rewards ? row.rewards.brand : "",
+        title: row.rewards ? row.rewards.title : "",
+        sub: row.rewards ? row.rewards.sub : "",
+        rarity: row.rewards ? row.rewards.rarity : "vanlig",
+        image_url: row.rewards ? row.rewards.image_url : null,
+      });
+    });
   }
 
   (async function init() {
@@ -517,16 +645,19 @@
     setInterval(spinMiniForever, 12000);
     renderFeed();
 
-    await Promise.all([loadLevels(), loadClaimedRewards()]);
+    await Promise.all([loadLevels(), loadOpenedCases()]);
     renderLevelCard();
     renderLadder();
+    renderCasePanel();
   })();
 
   sb.auth.onAuthStateChange(async () => {
     profile = await Auth.getCurrentProfile();
-    await loadClaimedRewards();
+    selectedCaseLevel = null;
+    await loadOpenedCases();
     renderLevelCard();
     renderLadder();
+    renderCasePanel();
   });
 })();
 </script>
