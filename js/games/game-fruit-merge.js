@@ -50,6 +50,7 @@
     let dangerSince = null;
     let bodySeq = 1;
     let mergeEffects = [];
+    let autosaveTimer = null;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -64,14 +65,66 @@
         </div>
       `;
       session.onRestart(() => initGame());
-      initGame();
+
+      // Fortsett en påbegynt runde hvis den ligger lagret, ellers ny runde.
+      const saved = session.savedState();
+      initGame(validSavedGame(saved) ? saved : null);
     });
+
+    // Stillingen som lagres mellom økter: hver frukt i krukken med posisjon,
+    // vinkel og fart, pluss skåren og hvilken frukt som er neste ut. Fysikken
+    // settes opp på nytt fra disse tallene, så krukken ser lik ut når man
+    // kommer tilbake.
+    function snapshotFruits() {
+      return Matter.Composite.allBodies(world)
+        .filter((b) => b.fruitIndex !== undefined)
+        .map((b) => ({
+          i: b.fruitIndex,
+          x: Math.round(b.position.x * 100) / 100,
+          y: Math.round(b.position.y * 100) / 100,
+          a: Math.round(b.angle * 1000) / 1000,
+          vx: Math.round(b.velocity.x * 1000) / 1000,
+          vy: Math.round(b.velocity.y * 1000) / 1000,
+          av: Math.round(b.angularVelocity * 1000) / 1000,
+        }));
+    }
+
+    function saveGame() {
+      if (!session || over || !world) return;
+      session.saveState({ fruits: snapshotFruits(), score, nextFruitIndex });
+    }
+
+    function validSavedGame(saved) {
+      return saved
+        && Array.isArray(saved.fruits)
+        && saved.fruits.length > 0
+        && saved.fruits.every((f) => f && FRUITS[f.i] && Number.isFinite(f.x) && Number.isFinite(f.y));
+    }
+
+    function restoreFruits(saved) {
+      saved.fruits.forEach((f) => {
+        const body = makeFruit(f.i, f.x, f.y);
+        Matter.Body.setAngle(body, Number.isFinite(f.a) ? f.a : 0);
+        Matter.Body.setVelocity(body, { x: Number.isFinite(f.vx) ? f.vx : 0, y: Number.isFinite(f.vy) ? f.vy : 0 });
+        Matter.Body.setAngularVelocity(body, Number.isFinite(f.av) ? f.av : 0);
+        Matter.World.add(world, body);
+      });
+      score = Number(saved.score) || 0;
+      if (FRUITS[saved.nextFruitIndex] && saved.nextFruitIndex <= DROPPABLE_MAX_INDEX) {
+        nextFruitIndex = saved.nextFruitIndex;
+      }
+      updateNextLabel();
+      session.setScore(score);
+      // Fruktene er nettopp lagt inn og kan ligge så vidt over faregrensen –
+      // gi dem hele DANGER_HOLD_MS på å falle på plass før den telles.
+      dangerSince = null;
+    }
 
     function randomDropIndex() {
       return Math.floor(Math.random() * (DROPPABLE_MAX_INDEX + 1));
     }
 
-    function initGame() {
+    function initGame(saved) {
       if (render) {
         Matter.Render.stop(render);
         render.canvas.remove();
@@ -125,6 +178,18 @@
       updateNextLabel();
       session.setScore(0);
       session.hideOverlay();
+
+      if (saved) {
+        restoreFruits(saved);
+      } else {
+        session.clearState();
+      }
+
+      // Fysikken beveger seg hele tiden, så stillingen lagres jevnlig (i
+      // tillegg til ved hvert slipp og hver fusjon) i stedet for bare ved
+      // trekk slik de rutenettbaserte spillene gjør.
+      if (autosaveTimer) clearInterval(autosaveTimer);
+      autosaveTimer = setInterval(saveGame, 2000);
     }
 
     function makeFruit(index, x, y) {
@@ -152,6 +217,7 @@
       }, 420);
       nextFruitIndex = randomDropIndex();
       updateNextLabel();
+      saveGame();
     }
 
     function handleCollisions(event) {
@@ -200,6 +266,7 @@
       if (over) return;
       over = true;
       canDrop = false;
+      if (autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
       Matter.Runner.stop(runner);
       session.finish(score, { title: "Krukken rant over!" });
     }

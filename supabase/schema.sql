@@ -1013,6 +1013,292 @@ $$;
 revoke all on function public.admin_preview_case() from public;
 grant execute on function public.admin_preview_case() to authenticated;
 
+
+-- ---------------------------------------------------------------------------
+-- 33. rewards.expires_at / rewards.link_url
+--     expires_at: valgfri utløpsdato. Når den er passert regnes rabatten som
+--     deaktivert – den trekkes ikke lenger i kasser (open_level_case /
+--     admin_preview_case, se seksjon 38) og vises som «Utgått» i adminpanelet.
+--     Settes til null for å fjerne utløpet igjen.
+--     link_url: valgfri lenke til partneren/tilbudet. Vises som en
+--     «Gå til tilbudet»-knapp når brukeren åpner kassen på premier.html.
+-- ---------------------------------------------------------------------------
+alter table public.rewards add column if not exists expires_at timestamptz;
+alter table public.rewards add column if not exists link_url text;
+
+-- ---------------------------------------------------------------------------
+-- 34. reward_codes.disabled – lar admin deaktivere én enkelt kode i en
+--     kodeliste (f.eks. en kode partneren har trukket tilbake) uten å slette
+--     den eller deaktivere hele rabatten. En deaktivert kode deles aldri ut,
+--     og teller ikke som «ledig» noe sted.
+-- ---------------------------------------------------------------------------
+alter table public.reward_codes add column if not exists disabled boolean not null default false;
+
+-- ---------------------------------------------------------------------------
+-- 35. games.point_rate – hvor mange poeng spilleren får per poeng skår i
+--     spillet. 1 = skåren gis 1:1 (som før), 2 = dobbelt opp, 0,5 = halvparten.
+--     Redigeres per spill fra adminpanelet ("Triks"), og brukes av
+--     js/game-runtime.js når resultatet sendes til add_points. Selve rekorden
+--     i game_records lagres fortsatt som den rå skåren, slik at rekordlistene
+--     ikke endrer seg når faktoren justeres.
+-- ---------------------------------------------------------------------------
+alter table public.games add column if not exists point_rate numeric not null default 1
+  constraint games_point_rate_positive check (point_rate >= 0);
+
+-- ---------------------------------------------------------------------------
+-- 36. app_settings – singleton-rad med globale innstillinger.
+--     level_step: hvor mange poeng hvert nivå øker med. Nivåstigen er lineær –
+--     nivå N krever (N - 1) * level_step poeng – slik at admin kun trenger å
+--     fylle inn ett tall i stedet for et poengkrav per nivå.
+-- ---------------------------------------------------------------------------
+create table if not exists public.app_settings (
+  id int primary key default 1 check (id = 1),
+  level_step int not null default 1000 check (level_step > 0),
+  updated_at timestamptz not null default now()
+);
+
+insert into public.app_settings (id, level_step) values (1, 1000)
+on conflict (id) do nothing;
+
+alter table public.app_settings enable row level security;
+
+drop policy if exists "app_settings_select_all" on public.app_settings;
+create policy "app_settings_select_all" on public.app_settings
+  for select using (true);
+
+drop policy if exists "app_settings_admin_write" on public.app_settings;
+create policy "app_settings_admin_write" on public.app_settings
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 37. Behold brukernes koder når admin rydder i nivåer og rabatter.
+--
+--     user_level_cases.level_number pekte tidligere på levels med
+--     ON DELETE CASCADE: slettet admin et nivå, forsvant også historikken
+--     over hvilke kasser brukerne hadde åpnet på det nivået (og dermed
+--     koblingen mellom bruker og utdelt kode). Nå er level_number en vanlig
+--     int uten fremmednøkkel, slik at raden – og koden – blir liggende.
+--
+--     user_codes.reward_id pekte tilsvarende på rewards med ON DELETE CASCADE,
+--     så en slettet rabatt tømte «Mine koder» hos alle som hadde hentet den.
+--     Nå settes reward_id til null i stedet: koden brukeren allerede har fått
+--     blir stående (brand/title/code ligger på raden selv).
+-- ---------------------------------------------------------------------------
+alter table public.user_level_cases drop constraint if exists user_level_cases_level_number_fkey;
+
+alter table public.user_codes drop constraint if exists user_codes_reward_id_fkey;
+alter table public.user_codes
+  add constraint user_codes_reward_id_fkey
+  foreign key (reward_id) references public.rewards (id) on delete set null;
+
+-- ---------------------------------------------------------------------------
+-- 38. Kassetrekningen tar hensyn til utløpsdato (seksjon 33) og deaktiverte
+--     enkeltkoder (seksjon 34). En rabatt er «tilgjengelig» når den er aktiv
+--     OG ikke utgått; en kode er «ledig» når den verken er hentet eller
+--     deaktivert. Ellers uendret fra seksjon 30/32.
+-- ---------------------------------------------------------------------------
+-- Returtypen har fått en ny kolonne (link_url), og CREATE OR REPLACE kan ikke
+-- endre returtypen på en eksisterende funksjon – derfor droppes den først.
+drop function if exists public.open_level_case(int);
+
+create or replace function public.open_level_case(p_level_number int)
+returns table (brand text, title text, sub text, rarity text, image_url text, link_url text, code text, already_opened boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  my_level int;
+  existing public.user_level_cases;
+  r public.rewards;
+  picked_code text;
+  remaining bigint;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å åpne en kasse';
+  end if;
+
+  select level into my_level from public.profiles where id = auth.uid();
+  if my_level is null or my_level < p_level_number then
+    raise exception 'Du har ikke låst opp dette nivået ennå';
+  end if;
+
+  select * into existing from public.user_level_cases
+   where user_id = auth.uid() and level_number = p_level_number;
+
+  if existing is not null then
+    select * into r from public.rewards where id = existing.reward_id;
+    if r is null then
+      return query select null::text, null::text, null::text, null::text, null::text, null::text, existing.code, true;
+      return;
+    end if;
+    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, existing.code, true;
+    return;
+  end if;
+
+  select rw.* into r
+    from public.rewards rw
+    join public.rarity_weights ww on ww.rarity = rw.rarity
+   where rw.active
+     and (rw.expires_at is null or rw.expires_at > now())
+     and ww.weight > 0
+   order by -ln(random()) / ww.weight
+   limit 1;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    picked_code := r.general_code;
+  else
+    update public.reward_codes
+       set claimed_by = auth.uid(), claimed_at = now()
+     where id = (
+       select id from public.reward_codes
+        where reward_id = r.id and claimed_by is null and not disabled
+        order by id
+        limit 1
+        for update skip locked
+     )
+     returning code into picked_code;
+
+    if picked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+
+    select count(*) into remaining from public.reward_codes
+     where reward_id = r.id and claimed_by is null and not disabled;
+    if remaining = 0 then
+      update public.rewards set active = false where id = r.id;
+    end if;
+  end if;
+
+  insert into public.user_level_cases (user_id, level_number, reward_id, code)
+  values (auth.uid(), p_level_number, r.id, picked_code);
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, r.id);
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, picked_code, false;
+end;
+$$;
+
+revoke all on function public.open_level_case(int) from public;
+grant execute on function public.open_level_case(int) to authenticated;
+
+drop function if exists public.admin_preview_case();
+
+create or replace function public.admin_preview_case()
+returns table (brand text, title text, sub text, rarity text, image_url text, link_url text, code text)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  r public.rewards;
+  peeked_code text;
+begin
+  if not public.is_admin() then
+    raise exception 'Kun admin kan forhåndsvise kasser';
+  end if;
+
+  select rw.* into r
+    from public.rewards rw
+    join public.rarity_weights ww on ww.rarity = rw.rarity
+   where rw.active
+     and (rw.expires_at is null or rw.expires_at > now())
+     and ww.weight > 0
+   order by -ln(random()) / ww.weight
+   limit 1;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    peeked_code := r.general_code;
+  else
+    select code into peeked_code
+      from public.reward_codes
+     where reward_id = r.id and claimed_by is null and not disabled
+     order by random()
+     limit 1;
+
+    if peeked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+  end if;
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, peeked_code;
+end;
+$$;
+
+revoke all on function public.admin_preview_case() from public;
+grant execute on function public.admin_preview_case() to authenticated;
+
+create or replace function public.reward_codes_remaining(p_reward_id bigint)
+returns bigint
+language sql
+security definer
+set search_path = public, pg_temp
+stable
+as $$
+  select count(*)
+    from public.reward_codes
+   where reward_id = p_reward_id
+     and claimed_by is null
+     and not disabled;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 39. RPC: admin_set_level_config – bygger hele nivåstigen ut fra ett tall.
+--     p_step  = hvor mange poeng hvert nivå øker med (nivå N krever
+--               (N - 1) * step poeng, så nivå 1 alltid er 0).
+--     p_count = hvor mange nivåer stigen skal ha.
+--     Nivåer over p_count slettes, manglende nivåer opprettes, og alle
+--     poengkrav skrives om. Brukernes åpnede kasser (user_level_cases) og
+--     hentede koder (user_codes) blir liggende uansett, se seksjon 37.
+-- ---------------------------------------------------------------------------
+create or replace function public.admin_set_level_config(p_step int, p_count int)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Kun admin kan endre nivåstigen';
+  end if;
+  if p_step is null or p_step <= 0 then
+    raise exception 'Poeng per nivå må være større enn 0';
+  end if;
+  if p_count is null or p_count < 1 or p_count > 500 then
+    raise exception 'Antall nivåer må være mellom 1 og 500';
+  end if;
+
+  insert into public.app_settings (id, level_step, updated_at)
+  values (1, p_step, now())
+  on conflict (id) do update set level_step = excluded.level_step, updated_at = now();
+
+  delete from public.levels where level_number > p_count;
+
+  insert into public.levels (level_number, points_required)
+  select n, (n - 1) * p_step from generate_series(1, p_count) as n
+  on conflict (level_number) do update set points_required = excluded.points_required;
+end;
+$$;
+
+revoke all on function public.admin_set_level_config(int, int) from public;
+grant execute on function public.admin_set_level_config(int, int) to authenticated;
+
+-- Førstegangs-oppretting: gjør den eksisterende (ujevne) nivåstigen lineær
+-- med standard 1 000 poeng per nivå, slik at nivåene stemmer med den nye
+-- "poeng per nivå"-boksen i adminpanelet fra første stund.
+update public.levels lv
+   set points_required = (lv.level_number - 1) * (select level_step from public.app_settings where id = 1)
+ where lv.points_required <> (lv.level_number - 1) * (select level_step from public.app_settings where id = 1);
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

@@ -67,13 +67,6 @@
     `;
   }
 
-  function initActiveNav() {
-    const current = (document.body.getAttribute("data-page") || "").toLowerCase();
-    document.querySelectorAll(".nav-link[data-page]").forEach((link) => {
-      link.classList.toggle("is-active", link.getAttribute("data-page") === current);
-    });
-  }
-
   function initPlayerPage() {
     const stage = document.querySelector("[data-player-stage]");
     if (!stage) return;
@@ -105,7 +98,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", async function () {
-    initActiveNav();
+    // Aktivt menypunkt markeres av js/layout.js (kjører på alle sider).
     if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
     if (window.STUDILLA_GAME_SCRIPT_READY) await window.STUDILLA_GAME_SCRIPT_READY;
     renderHero("[data-hero]");

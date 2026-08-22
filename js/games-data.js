@@ -21,6 +21,8 @@
  *   description      - kort beskrivelse brukt på spillsiden
  *   isDailyGame      - true for spillet som vises i "Dagens spill"-heltefeltet
  *   pointsMultiplier - valgfri tekst for badge i heltefeltet, f.eks. "1,5X POENG"
+ *   pointRate        - hvor mange poeng spilleren får per poeng skår i spillet
+ *                       (1 = 1:1, 2 = dobbelt opp). Settes per spill i adminpanelet.
  */
 
 window.STUDILLA_GAMES = [
@@ -99,14 +101,27 @@ window.STUDILLA_GAMES_READY = (async function loadGames() {
   // etter 5 sekunder gir vi opp og viser fallback-listen i stedet.
   const timeout = new Promise((resolve) => setTimeout(() => resolve({ timedOut: true }), 5000));
 
-  const result = await Promise.race([
-    sb
+  const BASE_COLUMNS = "id, name, points, time_estimate, description, thumbnail_url, icon_url, points_multiplier, is_daily_game";
+
+  // point_rate kom inn i schema.sql seksjon 35. Databaser som ikke har kjørt
+  // migrasjonen ennå svarer med en feil på den kolonnen – da henter vi resten
+  // og lar alle spill ligge på faktor 1, i stedet for å falle helt tilbake til
+  // den statiske listen.
+  async function fetchGames() {
+    const withRate = await sb
       .from("games")
-      .select("id, name, points, time_estimate, description, thumbnail_url, icon_url, points_multiplier, is_daily_game")
+      .select(`${BASE_COLUMNS}, point_rate`)
       .eq("hidden", false)
-      .order("sort_order", { ascending: true }),
-    timeout
-  ]);
+      .order("sort_order", { ascending: true });
+    if (!withRate.error) return withRate;
+    return sb
+      .from("games")
+      .select(BASE_COLUMNS)
+      .eq("hidden", false)
+      .order("sort_order", { ascending: true });
+  }
+
+  const result = await Promise.race([fetchGames(), timeout]);
 
   if (result.timedOut) {
     console.error("[Studilla] Tidsavbrudd ved henting av spill, bruker fallback-liste.");
@@ -128,7 +143,9 @@ window.STUDILLA_GAMES_READY = (async function loadGames() {
     icon: g.icon_url,
     description: g.description,
     isDailyGame: g.is_daily_game,
-    pointsMultiplier: g.points_multiplier || undefined
+    pointsMultiplier: g.points_multiplier || undefined,
+    // Hvor mange poeng spilleren får per poeng skår (redigeres i adminpanelet).
+    pointRate: g.point_rate == null ? 1 : Number(g.point_rate)
   }));
 
   window.STUDILLA_GAMES.length = 0;

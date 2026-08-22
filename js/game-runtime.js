@@ -34,6 +34,57 @@
     return `studilla_guest_best_${gameId}`;
   }
 
+  /**
+   * Lagret spillstilling ("husk spillet man er i").
+   *
+   * Spillmodulene kaller session.saveState({...}) etter hvert trekk med en
+   * liten, serialiserbar beskrivelse av brettet sitt, og leser
+   * session.savedState() når de starter opp. Da havner spilleren rett tilbake
+   * i den samme runden neste gang siden åpnes – også etter en refresh eller
+   * en tur innom en annen side. Stillingen ligger lokalt i nettleseren
+   * (localStorage), én nøkkel per spill, og nullstilles når runden er over
+   * eller spilleren starter et nytt spill.
+   *
+   * Formatet er per spill: kjøretiden lagrer bare det den får, og kaster
+   * stillingen hvis den er lagret av en eldre versjon (version-feltet) eller
+   * er eldre enn en uke.
+   */
+  const STATE_VERSION = 1;
+  const STATE_MAX_AGE_MS = 7 * 86400000;
+
+  function stateKey(gameId) {
+    return `studilla_game_state_${gameId}`;
+  }
+
+  function readSavedState(gameId) {
+    try {
+      const raw = window.localStorage.getItem(stateKey(gameId));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || parsed.version !== STATE_VERSION) return null;
+      if (!parsed.savedAt || Date.now() - parsed.savedAt > STATE_MAX_AGE_MS) return null;
+      return parsed.state == null ? null : parsed.state;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeSavedState(gameId, gameState) {
+    try {
+      if (gameState == null) {
+        window.localStorage.removeItem(stateKey(gameId));
+        return;
+      }
+      window.localStorage.setItem(stateKey(gameId), JSON.stringify({
+        version: STATE_VERSION,
+        savedAt: Date.now(),
+        state: gameState,
+      }));
+    } catch (e) {
+      // Full/blokkert localStorage skal aldri velte spillet.
+    }
+  }
+
   function getGuestBest(gameId) {
     const raw = window.localStorage.getItem(guestBestKey(gameId));
     const n = parseInt(raw, 10);
@@ -58,11 +109,30 @@
     return Number(data.score) || 0;
   }
 
+  /**
+   * Hvor mange poeng ett poeng skår er verdt i dette spillet. Settes per spill
+   * i adminpanelet (games.point_rate) og hentes via js/games-data.js. Selve
+   * rekorden lagres alltid som den rå skåren, slik at rekordlistene ikke
+   * endrer seg når faktoren justeres – det er kun xp/nivå som skaleres.
+   */
+  function pointRateFor(gameId) {
+    const games = window.STUDILLA_GAMES || [];
+    const game = games.find((g) => g.id === gameId);
+    const rate = game && game.pointRate != null ? Number(game.pointRate) : 1;
+    return Number.isFinite(rate) && rate >= 0 ? rate : 1;
+  }
+
+  function pointsFor(gameId, score) {
+    return Math.max(0, Math.round(score * pointRateFor(gameId)));
+  }
+
   async function submitScore(gameId, score, profile) {
     const rounded = Math.round(score);
     if (!Number.isFinite(rounded) || rounded <= 0) {
       return { saved: false, best: await loadBest(gameId, profile), profile: null };
     }
+
+    const awarded = pointsFor(gameId, rounded);
 
     if (profile) {
       const { error: insertError } = await sb
@@ -75,7 +145,7 @@
       // add_points returnerer den oppdaterte profilraden direkte, så vi
       // slipper å hente den på nytt i et eget kall etterpå (som kan gi
       // race/cache-problemer og vise gammel xp/nivå i UIen).
-      const { data: updatedProfile, error: rpcError } = await sb.rpc("add_points", { p_delta: rounded });
+      const { data: updatedProfile, error: rpcError } = await sb.rpc("add_points", { p_delta: awarded });
       if (rpcError) {
         console.error("[Studilla] Klarte ikke oppdatere xp/nivå:", rpcError.message);
       }
@@ -88,7 +158,7 @@
       };
     }
 
-    Auth.addGuestPoints(rounded);
+    Auth.addGuestPoints(awarded);
     const best = Math.max(getGuestBest(gameId), rounded);
     setGuestBest(gameId, best);
     return { saved: true, best, profile: null };
@@ -181,6 +251,7 @@
     }
 
     function fireRestart() {
+      writeSavedState(gameId, null);
       els.overlay.hidden = true;
       lastScoreValue = 0;
       nextMilestoneIndex = 0;
@@ -235,8 +306,27 @@
       Auth.animateLevelBarSequence(els.overlayLevelFill, { toPct: to.pct, resetDelayMs: 1150, onFinal: applyFinal });
     }
 
+    // Stillingen leses én gang ved oppstart, slik at spillmodulen kan spørre
+    // etter den både før og etter at den har tegnet brettet sitt.
+    const resumeState = readSavedState(gameId);
+
     return {
       playArea: els.playArea,
+
+      /** Lagret stilling fra forrige økt, eller null. */
+      savedState() {
+        return resumeState;
+      },
+
+      /** Lagre stillingen i denne runden (kalles etter hvert trekk). */
+      saveState(gameState) {
+        writeSavedState(gameId, gameState);
+      },
+
+      /** Glem stillingen – runden er over eller startet på nytt. */
+      clearState() {
+        writeSavedState(gameId, null);
+      },
 
       setScore(score) {
         const rounded = Math.max(0, Math.round(score));
@@ -269,6 +359,8 @@
        */
       async finish(score, opts) {
         opts = opts || {};
+        // Runden er ferdig – den lagrede stillingen skal ikke gjenopptas.
+        writeSavedState(gameId, null);
         const prevBest = best;
         const [prevProfile] = await Promise.all([Auth.getCurrentProfile(), Auth.loadLevels()]);
         const result = await submitScore(gameId, score, prevProfile);
@@ -292,7 +384,10 @@
         const leveledUp = !!(newProfile && prevProfile && newProfile.level > prevProfile.level);
 
         els.overlayTitle.textContent = opts.title || "Spillet er over";
-        els.overlayScore.textContent = `Du fikk ${roundedScore.toLocaleString("no-NO")} poeng.`;
+        const awardedPoints = pointsFor(gameId, roundedScore);
+        els.overlayScore.textContent = awardedPoints === roundedScore
+          ? `Du fikk ${roundedScore.toLocaleString("no-NO")} poeng.`
+          : `Du fikk ${roundedScore.toLocaleString("no-NO")} i skår – det ble ${awardedPoints.toLocaleString("no-NO")} poeng.`;
         els.overlayBest.textContent = isNewBest
           ? "Ny personlig rekord! 🎉"
           : `Rekord: ${best.toLocaleString("no-NO")} poeng.`;

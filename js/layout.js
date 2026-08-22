@@ -54,4 +54,18 @@
 
   const footerSlot = document.getElementById("site-footer");
   if (footerSlot) footerSlot.outerHTML = FOOTER_HTML;
+
+  /**
+   * Marker menypunktet som hører til siden man står på med aksentfargen.
+   * Lå tidligere i js/main.js, som kun lastes på forsiden/spillsiden – derfor
+   * fikk «Premier» og «Rangering» aldri aksentfarge når man stod der. Her
+   * kjører den for alle sider som bruker den delte headeren.
+   *
+   * Spillsiden (player.html) bruker data-page="spill", slik at «Triks» blir
+   * stående markert mens man er inne i et spill.
+   */
+  const current = (document.body.getAttribute("data-page") || "").toLowerCase();
+  document.querySelectorAll(".nav-link[data-page]").forEach((link) => {
+    link.classList.toggle("is-active", link.getAttribute("data-page") === current);
+  });
 })();

@@ -68,8 +68,45 @@
       `;
       session.onRestart(() => initGame());
       attachControls();
-      initGame();
+      // Fortsett der spilleren slapp hvis det ligger en lagret stilling
+      // (js/game-runtime.js), ellers start en ny runde.
+      if (!resumeGame()) initGame();
     });
+
+    // Stillingen som lagres mellom økter: brettet, skåren og om 2048 alt er
+    // nådd (slik at "du nådde 2048"-meldingen ikke kommer på nytt).
+    function saveGame() {
+      if (!session || over) return;
+      session.saveState({ board, score, won });
+    }
+
+    function validBoard(candidate) {
+      return Array.isArray(candidate)
+        && candidate.length === SIZE
+        && candidate.every((row) => Array.isArray(row) && row.length === SIZE && row.every((v) => Number.isFinite(v) && v >= 0));
+    }
+
+    function resumeGame() {
+      const saved = session.savedState();
+      if (!saved || !validBoard(saved.board)) return false;
+
+      board = saved.board.map((row) => row.slice());
+      score = Number(saved.score) || 0;
+      won = !!saved.won;
+      over = false;
+      mergedThisRender = [];
+      newThisRender = [];
+
+      // En lagret stilling uten trekk igjen ville låst spilleren fast.
+      if (!hasMoves()) return false;
+
+      render();
+      session.setScore(score);
+      session.hideOverlay();
+      const boardEl = session.playArea.querySelector("[data-board-2048]");
+      if (boardEl) boardEl.focus({ preventScroll: true });
+      return true;
+    }
 
     function initGame() {
       board = emptyBoard();
@@ -83,6 +120,7 @@
       render();
       session.setScore(0);
       session.hideOverlay();
+      session.clearState();
       const boardEl = session.playArea.querySelector("[data-board-2048]");
       if (boardEl) boardEl.focus({ preventScroll: true });
     }
@@ -185,6 +223,7 @@
 
       render();
       session.setScore(score);
+      saveGame();
 
       if (!hasMoves()) {
         over = true;

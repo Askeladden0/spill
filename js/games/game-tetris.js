@@ -40,6 +40,10 @@
     let over = false;
     let dropTimer = null;
     let session = null;
+    // Satt når en lagret runde er gjenopptatt: brikken står stille til
+    // spilleren gjør sitt første trekk, slik at man ikke mister en brikke i
+    // det siden åpnes igjen.
+    let waitingForResume = false;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -62,8 +66,69 @@
       `;
       session.onRestart(() => initGame());
       attachControls();
-      initGame();
+      // Fortsett en påbegynt runde hvis den ligger lagret, ellers ny runde.
+      if (!resumeGame()) initGame();
     });
+
+    // Stillingen som lagres mellom økter. Brettet er strenger/null, brikken er
+    // rene tall og strenger, så alt kan lagres som JSON.
+    function saveGame() {
+      if (!session || over || !piece) return;
+      session.saveState({
+        grid,
+        piece: { key: piece.key, color: piece.color, cells: piece.cells, row: piece.row, col: piece.col, nextKey: piece.nextKey },
+        bag,
+        score,
+        linesCleared,
+      });
+    }
+
+    function resumeGame() {
+      const saved = session.savedState();
+      const validGrid = saved && Array.isArray(saved.grid) && saved.grid.length === ROWS
+        && saved.grid.every((row) => Array.isArray(row) && row.length === COLS);
+      const p = saved && saved.piece;
+      const validPiece = p && SHAPES[p.key] && Array.isArray(p.cells)
+        && Number.isFinite(p.row) && Number.isFinite(p.col);
+      if (!validGrid || !validPiece) return false;
+
+      grid = saved.grid.map((row) => row.slice());
+      bag = Array.isArray(saved.bag) ? saved.bag.filter((k) => SHAPES[k]) : [];
+      score = Number(saved.score) || 0;
+      linesCleared = Number(saved.linesCleared) || 0;
+      over = false;
+      pendingNextKey = null;
+      piece = {
+        key: p.key,
+        color: p.color || SHAPES[p.key].color,
+        cells: p.cells.map((cell) => cell.slice()),
+        row: p.row,
+        col: p.col,
+        nextKey: SHAPES[p.nextKey] ? p.nextKey : nextFromBag(),
+      };
+
+      session.setScore(score);
+      session.hideOverlay();
+      updateLinesLabel();
+      render();
+
+      if (dropTimer) clearInterval(dropTimer);
+      dropTimer = null;
+      waitingForResume = true;
+
+      const boardEl = session.playArea.querySelector("[data-board-tetris]");
+      if (boardEl) boardEl.focus({ preventScroll: true });
+      return true;
+    }
+
+    // Setter brikken i bevegelse igjen etter en gjenopptatt runde. Kalles fra
+    // alle inndata-veiene (tastatur, knapper, sveip).
+    function resumeIfWaiting() {
+      if (!waitingForResume) return;
+      waitingForResume = false;
+      if (dropTimer) clearInterval(dropTimer);
+      dropTimer = setInterval(() => softDrop(false), DROP_MS);
+    }
 
     function emptyGrid() {
       return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -105,6 +170,8 @@
       bag.unshift(piece.nextKey);
       session.setScore(0);
       session.hideOverlay();
+      session.clearState();
+      waitingForResume = false;
       updateLinesLabel();
       render();
 
@@ -213,6 +280,7 @@
         return;
       }
       render();
+      saveGame();
     }
 
     function softDrop(manual) {
@@ -330,6 +398,7 @@
         const action = KEY_ACTIONS[e.key];
         if (!action) return;
         e.preventDefault();
+        resumeIfWaiting();
         action();
       });
 
@@ -339,6 +408,7 @@
           const btn = e.target.closest("[data-tetris-btn]");
           if (!btn) return;
           const action = btn.getAttribute("data-tetris-btn");
+          resumeIfWaiting();
           if (action === "left") tryMove(0, -1);
           else if (action === "right") tryMove(0, 1);
           else if (action === "down") softDrop(true);
@@ -368,6 +438,7 @@
           const t = e.changedTouches[0];
           const dx = t.clientX - touchStartX;
           const dy = t.clientY - touchStartY;
+          resumeIfWaiting();
           if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) {
             tryRotate();
             return;

@@ -15,12 +15,14 @@ spill/
 ├── login.html             Logg inn / registrer deg (e-post+passord eller Google)
 ├── profil.html            Profilside – avatar, brukernavn, nivå, rekorder, slett konto
 ├── admin.html             Adminpanel – eget sidemeny-dashbord (se under), krever admin-status
+├── assets/img/favicon.svg  Faviconet (Studilla-logoen), lenket inn fra alle sidene
 ├── css/
 │   └── style.css          Alt av delt CSS (farger, header, footer, kort, skjemaer, adminpanel osv.)
 │                          Brukes av alle sider – endringer her slår ut overalt.
 ├── js/
 │   ├── games-data.js      Midlertidig "database" med spillobjekter (se under)
-│   ├── main.js            Rendrer heltefelt, spillrutenett, aktiv meny og spillside
+│   ├── layout.js          Delt topp-nav/bunnmeny + markering av aktivt menypunkt
+│   ├── main.js            Rendrer heltefelt, spillrutenett og spillside
 │   ├── admin.js           All logikk for adminpanelet (admin.html)
 │   ├── supabase-config.js Supabase-nøkler (må fylles inn, se SUPABASE_SETUP.md)
 │   └── auth.js            Delt innloggingslogikk: header-avatar, admin-lenke, tilgangssjekk
@@ -69,6 +71,19 @@ Kort oppsummert:
   slår ut på forsiden/premier/rangering/profiler med én gang, og omvendt.
   Har en kommandopalett (Ctrl/⌘+K) for å hoppe rett til en seksjon, et spill,
   et nivå eller en bruker.
+- **Rabatter** i adminpanelet: hver rabatt kan få bilde (dra bildet rett inn i
+  slippsonen, eller klikk for å velge fil), en lenke til tilbudet, en
+  utløpsdato (etter den datoen deles rabatten ikke ut lenger og merkes
+  «Utgått»), og skrus av/på med en egen «Deaktiver rabatten»-knapp. For
+  kodelister kan hver enkelt kode deaktiveres for seg uten å slette den.
+- **Nivåer** settes med ett tall: «poeng per nivå». Nivåstigen er lineær –
+  nivå N krever `(N - 1) × poeng per nivå` – og regnes om server-side av
+  `admin_set_level_config` når du endrer tallet eller antall nivåer.
+- **Triks** har en «poeng per skår»-faktor (`games.point_rate`): 1 gir skåren
+  1:1, 2 gir dobbelt opp. Rekordene i `game_records` lagres alltid som den rå
+  skåren, så bare xp/nivå skaleres.
+- **Statistikk** viser retention per triks: hvor stor andel av spillerne som
+  kom tilbake til triksen en annen dag, med valgbar periode.
 
 ## Hvordan legge til et nytt spill
 
@@ -85,7 +100,8 @@ Kort oppsummert:
   thumbnail: null,             // sett til "assets/img/games/mitt-nye-spill.jpg" når bilde finnes
   description: "Kort beskrivelse av spillet.",
   isDailyGame: false,          // sett til true for å vise det som "Dagens spill"
-  pointsMultiplier: null
+  pointsMultiplier: null,
+  pointRate: 1                 // poeng per poeng skår (settes i adminpanelet)
 }
 ```
 
@@ -114,6 +130,25 @@ sette en brukers poeng og nivå manuelt direkte i brukerlisten.
   tilfeldig generert placeholder-kode, som lagres i `user_codes` og dukker
   opp under "Mine koder".
 - Hold musepekeren over nivåhjulet i heltefeltet for å se totalt antall poeng.
+- **Kassebåndet** over "Åpne kasse" ruller kontinuerlig med én uendelig
+  CSS-animasjon (`.case-reel` i `css/style.css`). Kortene bygges i tilfeldig
+  rekkefølge og dupliseres, slik at løkken er sømløs; farten settes i js ut
+  fra bredden, så den er lik uansett hvor mange rabatter som finnes.
+- Nederst på siden ligger en FAQ med de vanligste spørsmålene om poeng,
+  kasser, sjeldenhet og hvordan kodene brukes.
+
+## Lagret spillstilling ("husk spillet man er i")
+
+`js/game-runtime.js` gir hver spillmodul `session.saveState(...)`,
+`session.savedState()` og `session.clearState()`. Spillene lagrer stillingen
+sin lokalt (`localStorage`, én nøkkel per spill) etter hvert trekk, og
+gjenopptar den samme runden neste gang siden åpnes – også etter en refresh.
+Stillingen nullstilles når runden er over eller spilleren starter et nytt
+spill, og kastes automatisk hvis den er eldre enn en uke.
+
+Alle seks spillene støtter dette. I sanntidsspillene (Snake og Tetris) står
+brettet stille til spilleren gjør sitt første trekk, slik at man ikke taper
+med en gang siden lastes.
 
 ## Spilladministrasjon
 

@@ -9,6 +9,9 @@
 <meta property="og:description" content="Fullfør dagens triks og tjen poeng du kan bytte inn i rabattkoder fra våre partnere.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Studilla">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
+<meta name="theme-color" content="#0d1117">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -70,7 +73,12 @@
   const id = new URLSearchParams(window.location.search).get("id") || fallbackId;
   const safeId = /^[a-z0-9-]{1,40}$/.test(id) ? id : null;
   const EXTRA_SCRIPTS_BY_ID = { fruktfusjon: ["js/vendor/matter.min.js"] };
-  const scripts = safeId ? (EXTRA_SCRIPTS_BY_ID[safeId] || []).concat([`js/games/game-${safeId}.js`]) : [];
+  // Spillmodulen heter normalt js/games/game-<id>.js. Fruktfusjon er unntaket
+  // (filen heter game-fruit-merge.js), så den slås opp her i stedet – ellers
+  // ber siden om en fil som ikke finnes og spillet laster aldri.
+  const MODULE_BY_ID = { fruktfusjon: "js/games/game-fruit-merge.js" };
+  const moduleSrc = safeId ? (MODULE_BY_ID[safeId] || `js/games/game-${safeId}.js`) : null;
+  const scripts = safeId ? (EXTRA_SCRIPTS_BY_ID[safeId] || []).concat([moduleSrc]) : [];
 
   function loadScript(src) {
     return new Promise((resolve) => {

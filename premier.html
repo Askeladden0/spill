@@ -9,6 +9,9 @@
 <meta property="og:description" content="Se hvilke rabattkoder og premier du kan låse opp med poengene dine hos Studilla.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Studilla">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
+<meta name="theme-color" content="#0d1117">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -83,7 +86,7 @@
             </div>
             <div style="position:relative;padding:26px 0;background:radial-gradient(120% 100% at 50% 0%,rgba(46,232,127,.07),transparent 70%);overflow:hidden">
               <div style="position:relative;overflow:hidden;height:130px" data-case-reel-viewport>
-                <div style="display:flex;gap:12px;position:absolute;left:0;top:0" data-case-reel></div>
+                <div class="case-reel" data-case-reel></div>
               </div>
               <div style="position:absolute;top:16px;bottom:16px;left:50%;width:2px;transform:translateX(-1px);background:var(--accent);box-shadow:0 0 18px rgba(46,232,127,.6);pointer-events:none"></div>
             </div>
@@ -100,6 +103,7 @@
                   </div>
                   <span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.1" data-case-reveal-value></span>
                   <span style="font-size:12px;font-weight:500;color:var(--muted)" data-case-reveal-code></span>
+                  <a class="case-reveal-link" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Gå til tilbudet ↗</a>
                 </div>
                 <button type="button" class="btn-primary" style="padding:13px 18px;font-size:13.5px" data-case-reveal-copy>Kopier koden</button>
               </div>
@@ -126,6 +130,42 @@
           <div data-feed-list></div>
         </div>
       </aside>
+    </section>
+
+    <section class="faq-section" style="margin-top:44px">
+      <div class="section-heading spread">
+        <h2>Ofte stilte spørsmål</h2>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Hvordan tjener jeg poeng?</summary>
+          <p class="faq-answer">Du får poeng av å spille triksene våre – skåren din i et triks legges rett til poengsummen din. I tillegg kan du spinne lykkehjulet her på premiersiden og vinne mellom 10 og 1000 poeng. Poengene samler seg opp og løfter deg oppover nivåene.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Hva er en kasse, og hvordan får jeg en?</summary>
+          <p class="faq-answer">Hver gang du når et nytt nivå får du én kasse. Åpner du kassen, trekkes én tilfeldig rabatt fra partnerne våre – og den koden er din. Hver kasse kan bare åpnes én gang, men kassene forsvinner ikke: har du flere uåpnede kasser, ligger de under «Andre kasser» til du åpner dem.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Hvorfor får noen bedre rabatter enn andre?</summary>
+          <p class="faq-answer">Rabattene har fire sjeldenhetsgrader: vanlig, sjelden, episk og legendarisk. Trekningen er tilfeldig og vektet, så de mest verdifulle rabattene dukker opp sjeldnere enn de vanlige. Alle har akkurat samme sjanse i hver kasse.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Hvor finner jeg kodene jeg har fått?</summary>
+          <p class="faq-answer">Alle koder du har hentet blir liggende under «Mine koder» på profilsiden din. De blir der selv om rabatten senere tas av siden, så du kan hente dem fram igjen når du skal bruke dem.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Kan en rabattkode gå ut på dato?</summary>
+          <p class="faq-answer">Ja. Noen kampanjer fra partnerne våre har en utløpsdato, og etter den datoen kan koden ikke lenger brukes eller trekkes i nye kasser. Rabatten det gjelder står oppgitt i beskrivelsen bak infosymbolet når du åpner kassen.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Hvordan bruker jeg en kode?</summary>
+          <p class="faq-answer">Kopier koden med «Kopier koden», og lim den inn i rabattkodefeltet hos partneren når du handler. Har rabatten en lenke, tar «Gå til tilbudet» deg rett til riktig side.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Må jeg være innlogget?</summary>
+          <p class="faq-answer">Du kan spille og samle poeng uten å være innlogget – poengene lagres midlertidig i nettleseren din og flyttes over på kontoen første gang du logger inn. For å åpne kasser og få rabattkoder må du ha en konto, slik at kodene blir liggende trygt på profilen din.</p>
+        </details>
+      </div>
     </section>
   </main>
 
@@ -288,37 +328,85 @@
     return unlockedLevels().filter((n) => !openedCases.has(n));
   }
 
-  function randomReelTile() {
+  // ---------- Kassebåndet ----------
+  // Båndet ruller kontinuerlig med én uendelig CSS-animasjon (se .case-reel i
+  // css/style.css) i stedet for en ny transition annethvert sekund – det siste
+  // ga et synlig hakk hver gang båndet startet på nytt. Tegningen bygges én
+  // gang, i tilfeldig rekkefølge, og dupliseres så animasjonen kan flytte
+  // båndet nøyaktig ett sett (-50 %) og starte om usynlig.
+  const REEL_TILE_WIDTH = 124;   // 112 px kort + 12 px margin (css)
+  const REEL_SET_SIZE = 14;      // antall kort i ett sett
+  const REEL_SPEED_PX_S = 46;    // rullefart – lavere tall = roligere bånd
+
+  function shuffled(list) {
+    const copy = list.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  // Trekker et sett med kort i helt tilfeldig rekkefølge. Er det færre
+  // rabatter enn plasser i settet, stokkes puljen om på nytt for hver runde,
+  // slik at rekkefølgen varierer i stedet for å gjenta seg selv.
+  function randomReelItems() {
     const pool = rewards.length ? rewards : [{ brand: "?", title: "?", rarity: "vanlig" }];
-    const item = pool[Math.floor(Math.random() * pool.length)];
+    const items = [];
+    while (items.length < REEL_SET_SIZE) items.push(...shuffled(pool));
+    return items.slice(0, REEL_SET_SIZE);
+  }
+
+  function reelTileHTML(item) {
     const rar = RARITY[item.rarity] || RARITY.vanlig;
+    const styled = item.rarity && item.rarity !== "vanlig"
+      ? ` style="background:linear-gradient(180deg,${rar.color}1f,#131a25 62%);border-color:${rar.color}55"`
+      : "";
     return `
-      <span style="flex:none;width:112px;height:130px;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:${item.rarity === "vanlig" ? "#131a25" : `linear-gradient(180deg,${rar.color}1f,#131a25 62%)`};border:1px solid ${item.rarity === "vanlig" ? "var(--border)" : rar.color + "55"}">
-        <span style="position:relative;height:78px;background:repeating-linear-gradient(135deg,#1b2434 0 12px,#202b3d 12px 24px);display:flex;align-items:center;justify-content:center">
-          ${item.image_url ? `<img src="${item.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#6b7b93">[ logo ]</span>`}
+      <span class="case-reel-tile"${styled}>
+        <span class="case-reel-thumb">
+          ${item.image_url ? `<img src="${item.image_url}" alt="">` : `<span>[ logo ]</span>`}
         </span>
-        <span style="flex:1;padding:8px 9px;display:flex;flex-direction:column;gap:2px;justify-content:center">
-          <span style="font-size:13px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.title}</span>
-          <span style="font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--muted)">${item.brand}</span>
+        <span class="case-reel-body">
+          <span class="case-reel-title">${item.title}</span>
+          <span class="case-reel-brand">${item.brand}</span>
         </span>
       </span>
     `;
   }
 
-  function startReelShuffle() {
+  function startReelShuffle(force) {
     const reel = document.querySelector("[data-case-reel]");
-    reel.innerHTML = Array.from({ length: 20 }, randomReelTile).join("");
-    reel.style.transition = "none";
-    reel.style.transform = "translateX(0px)";
-    void reel.offsetWidth;
-    reel.style.transition = "transform 1.6s linear";
-    reel.style.transform = "translateX(-620px)";
+    // Ikke bygg båndet på nytt hvis det allerede ruller: en ny innerHTML
+    // starter animasjonen forfra og gir nettopp hakket vi vil unngå.
+    if (!force && reel.classList.contains("is-rolling")) {
+      reel.classList.remove("is-fast");
+      return;
+    }
+    const set = randomReelItems().map(reelTileHTML).join("");
+    reel.innerHTML = set + set; // to identiske sett = sømløs løkke på -50 %
+    reel.style.transform = "";
+    const setWidth = REEL_SET_SIZE * REEL_TILE_WIDTH;
+    reel.style.animationDuration = `${(setWidth / REEL_SPEED_PX_S).toFixed(2)}s`;
+    reel.style.setProperty("--case-reel-fast", `${(setWidth / (REEL_SPEED_PX_S * 9)).toFixed(2)}s`);
+    reel.classList.remove("is-fast");
+    reel.classList.add("is-rolling");
+  }
+
+  // Skru opp farten mens kassen faktisk åpnes, og stopp båndet når rabatten
+  // er avslørt.
+  function rushReelShuffle() {
+    document.querySelector("[data-case-reel]").classList.add("is-fast");
   }
 
   function stopReelShuffle() {
     const reel = document.querySelector("[data-case-reel]");
-    reel.style.transition = "none";
-    reel.style.transform = "translateX(0px)";
+    // Frys båndet der det faktisk står: fjerner vi animasjonen uten å låse
+    // posisjonen først, spretter båndet tilbake til start med et rykk.
+    const current = window.getComputedStyle(reel).transform;
+    reel.classList.remove("is-rolling", "is-fast");
+    reel.style.animationDuration = "";
+    reel.style.transform = current === "none" ? "" : current;
   }
 
   function selectCase(levelNumber) {
@@ -382,6 +470,7 @@
     renderCasePanel();
 
     const shuffleStart = Date.now();
+    rushReelShuffle();
     const { data, error } = await sb.rpc("open_level_case", { p_level_number: selectedCaseLevel }).single();
     const elapsed = Date.now() - shuffleStart;
     if (elapsed < 1500) await new Promise((r) => setTimeout(r, 1500 - elapsed));
@@ -391,6 +480,7 @@
     if (error) {
       document.querySelector("[data-case-open]").textContent = `Åpne nivå ${selectedCaseLevel}-kassen`;
       document.querySelector("[data-case-open]").disabled = false;
+      startReelShuffle(true);
       window.alert(error.message.includes("Ingen rabatter") ? "Ingen rabatter er tilgjengelige akkurat nå. Prøv igjen senere." : error.message);
       return;
     }
@@ -417,6 +507,16 @@
     document.querySelector("[data-case-reveal-info]").title = data.sub || "";
     document.querySelector("[data-case-reveal-value]").textContent = `${data.title} hos ${data.brand}`;
     document.querySelector("[data-case-reveal-code]").textContent = `Kode: ${data.code} · lagret i «Mine koder»`;
+    const linkEl = document.querySelector("[data-case-reveal-link]");
+    // Lenken er valgfri per rabatt (rewards.link_url) – skjul den helt når
+    // partneren ikke har oppgitt noen.
+    if (data.link_url) {
+      linkEl.href = data.link_url;
+      linkEl.hidden = false;
+    } else {
+      linkEl.removeAttribute("href");
+      linkEl.hidden = true;
+    }
     document.querySelector("[data-case-reveal-copy]").onclick = () => {
       navigator.clipboard && navigator.clipboard.writeText(data.code).then(() => flashCopy());
     };
@@ -553,10 +653,31 @@
   }
 
   // ---------- Init ----------
+  // Utgåtte rabatter (expires_at i fortiden) er deaktivert og skal hverken
+  // vises i båndet eller kunne trekkes – samme regel som open_level_case
+  // bruker server-side. Databaser som ikke har kjørt migrasjonen med
+  // expires_at/link_url ennå (schema.sql, seksjon 33) svarer med en feil på
+  // de kolonnene; da henter vi rabattene uten dem i stedet for å stå igjen
+  // med et tomt bånd.
+  async function fetchRewards() {
+    const withExpiry = await sb
+      .from("rewards")
+      .select("id, brand, title, sub, rarity, image_url, link_url, expires_at")
+      .eq("active", true)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+      .order("sort_order");
+    if (!withExpiry.error) return withExpiry;
+    return sb
+      .from("rewards")
+      .select("id, brand, title, sub, rarity, image_url")
+      .eq("active", true)
+      .order("sort_order");
+  }
+
   async function loadLevels() {
     const [levelsRes, rewardsRes] = await Promise.all([
       sb.from("levels").select("level_number, points_required").order("level_number"),
-      sb.from("rewards").select("id, brand, title, sub, rarity, image_url").eq("active", true).order("sort_order"),
+      fetchRewards(),
     ]);
     if (!levelsRes.error && levelsRes.data) levels = levelsRes.data;
     if (!rewardsRes.error && rewardsRes.data) rewards = rewardsRes.data;
@@ -565,10 +686,17 @@
   async function loadOpenedCases() {
     openedCases = new Map();
     if (!profile) return;
-    const { data, error } = await sb
+    let { data, error } = await sb
       .from("user_level_cases")
-      .select("level_number, code, rewards(brand, title, sub, rarity, image_url)")
+      .select("level_number, code, rewards(brand, title, sub, rarity, image_url, link_url)")
       .eq("user_id", profile.id);
+    if (error) {
+      // Samme fallback som over for databaser uten rewards.link_url.
+      ({ data, error } = await sb
+        .from("user_level_cases")
+        .select("level_number, code, rewards(brand, title, sub, rarity, image_url)")
+        .eq("user_id", profile.id));
+    }
     if (error || !data) return;
     data.forEach((row) => {
       openedCases.set(row.level_number, {
@@ -578,6 +706,7 @@
         sub: row.rewards ? row.rewards.sub : "",
         rarity: row.rewards ? row.rewards.rarity : "vanlig",
         image_url: row.rewards ? row.rewards.image_url : null,
+        link_url: row.rewards ? row.rewards.link_url : null,
       });
     });
   }
@@ -587,11 +716,13 @@
     renderWheels();
     spinMiniForever();
     setInterval(spinMiniForever, 12000);
-    setInterval(() => { if (selectedCaseLevel === null && !caseOpening) startReelShuffle(); }, 2000);
     renderFeed();
 
     await Promise.all([loadLevels(), loadOpenedCases()]);
     renderLevelCard();
+    // force = true: nå kjenner vi de ekte rabattene, så båndet bygges på nytt
+    // med dem i tilfeldig rekkefølge.
+    startReelShuffle(true);
     renderCasePanel();
   })();
 

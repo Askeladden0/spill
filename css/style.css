@@ -27,6 +27,13 @@
 
 * { box-sizing: border-box; }
 
+/* Nettleserens egen regel for hidden-attributtet (`[hidden] { display: none }`)
+   er en user-agent-regel, og taper mot både forfatterstiler og style-attributtet.
+   Elementer som skjules med `hidden` og samtidig har `display` i style-attributtet
+   (f.eks. rabattkortet på premier.html) ble derfor liggende synlige. Denne regelen
+   gjør hidden pålitelig overalt. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -2754,8 +2761,27 @@ main {
   padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border-strong);
   background: var(--bg); color: var(--text); font-family: inherit; font-size: 13.5px; font-weight: 400;
 }
-.admin-field input:focus, .admin-field textarea:focus { outline: none; border-color: var(--accent); }
+.admin-field input:focus, .admin-field textarea:focus, .admin-field select:focus { outline: none; border-color: var(--accent); }
 .admin-field textarea { resize: vertical; }
+
+/* Nedtrekksmenyer skal se ut som resten av feltene i adminpanelet: native
+   <select> tegnes ellers av nettleseren (lys bakgrunn, systemfont) og stikker
+   seg ut fra det mørke designet. -webkit-appearance/appearance slår av den
+   innebygde tegningen, og pilen legges inn som et eget bakgrunnsbilde. */
+.admin-field select {
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
+  padding: 10px 34px 10px 12px; border-radius: 9px; border: 1px solid var(--border-strong);
+  background-color: var(--bg); color: var(--text); font-family: inherit; font-size: 13.5px;
+  font-weight: 400; cursor: pointer; width: 100%;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2396a3b8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center; background-size: 15px 15px;
+}
+.admin-field select:hover { border-color: rgba(255, 255, 255, .16); }
+/* Selve listen som spretter opp tegnes av operativsystemet – den kan kun
+   farges via option, og kun i nettlesere som støtter det (Chrome/Edge/Firefox
+   på Windows/Linux). Safari/macOS bruker uansett systemets egen meny. */
+.admin-field select option { background: var(--surface); color: var(--text); }
+.admin-field input[type="date"], .admin-field input[type="datetime-local"] { color-scheme: dark; }
 .admin-row-actions { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
 
 .admin-upload-row { display: block; margin-top: 6px; }
@@ -3262,3 +3288,169 @@ main {
 .toggle-switch.is-on .toggle-switch-knob { left: 23px; }
 
 .back-to-profile-link { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+
+/* ==========================================================================
+   Kassebåndet på premier.html
+   Båndet ruller kontinuerlig med én CSS-animasjon i stedet for en ny
+   transition annethvert sekund (som ga hakking hver gang den startet på
+   nytt). Tegningen er duplisert to ganger, og animasjonen flytter båndet
+   nøyaktig -50 % – altså ett helt sett – slik at overgangen er usynlig og
+   løkken sømløs. Avstanden mellom kortene ligger på margin-right (ikke gap),
+   ellers blir ikke halve bredden nøyaktig ett sett.
+   Farten settes fra js (animationDuration ut fra bredden), slik at den er den
+   samme uansett hvor mange rabatter som finnes.
+   ========================================================================== */
+.case-reel {
+  display: flex;
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+
+.case-reel.is-rolling { animation: case-reel-scroll linear infinite; }
+.case-reel.is-fast { animation-duration: var(--case-reel-fast, 3s) !important; }
+
+@keyframes case-reel-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-reel.is-rolling { animation: none; }
+}
+
+.case-reel-tile {
+  flex: none;
+  width: 112px;
+  height: 130px;
+  margin-right: 12px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.case-reel-thumb {
+  position: relative;
+  height: 78px;
+  background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.case-reel-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.case-reel-thumb span { font-family: ui-monospace, Menlo, monospace; font-size: 9px; color: var(--muted-3); }
+.case-reel-body { flex: 1; padding: 8px 9px; display: flex; flex-direction: column; gap: 2px; justify-content: center; }
+.case-reel-title { font-size: 13px; font-weight: 800; letter-spacing: -.02em; color: #fff; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.case-reel-brand { font-size: 10px; font-weight: 600; letter-spacing: .02em; color: var(--muted); }
+
+.case-reveal-link {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  margin-top: 2px; font-size: 12.5px; font-weight: 700; color: var(--accent);
+}
+.case-reveal-link:hover { color: var(--accent-light); }
+
+/* ---------- FAQ (bunnen av premier.html) ---------- */
+.faq-list { display: flex; flex-direction: column; gap: 10px; }
+
+.faq-item {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.faq-item[open] { border-color: var(--border-strong); }
+
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary:hover { color: var(--accent); }
+
+.faq-item summary::after {
+  content: "＋";
+  margin-left: auto;
+  flex: none;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--muted);
+  transition: transform .18s ease, color .18s ease;
+}
+
+.faq-item[open] summary::after { content: "－"; color: var(--accent); }
+
+.faq-answer {
+  margin: 0;
+  padding: 0 18px 18px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+/* ==========================================================================
+   Adminpanel – bildeslipp, kodelister, retention
+   ========================================================================== */
+.admin-dropzone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--border-strong);
+  background: var(--bg);
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.admin-dropzone:hover { border-color: rgba(46, 232, 127, .5); }
+.admin-dropzone.is-dragover { border-color: var(--accent); background: var(--accent-soft); }
+.admin-dropzone.is-busy { opacity: .6; cursor: default; }
+.admin-dropzone input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+
+.admin-dropzone-preview {
+  width: 46px; height: 46px; flex: none; border-radius: 9px; overflow: hidden;
+  background: #1b2434; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--muted-3);
+}
+
+.admin-dropzone-preview img { width: 100%; height: 100%; object-fit: cover; }
+.admin-dropzone-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.admin-dropzone-main { font-size: 12.5px; font-weight: 700; color: var(--text); letter-spacing: 0; }
+.admin-dropzone-sub { font-size: 11px; font-weight: 500; color: var(--muted-3); letter-spacing: 0; }
+.admin-dropzone-clear {
+  margin-left: auto; flex: none; border: none; background: transparent; cursor: pointer;
+  color: var(--muted-2); font-size: 15px; font-family: inherit; padding: 4px 6px; border-radius: 7px;
+}
+.admin-dropzone-clear:hover { color: #ff9385; background: rgba(245, 113, 92, .12); }
+
+.admin-pill-expired { padding: 2px 8px; border-radius: 99px; background: rgba(245, 113, 92, .16); color: #ff9385; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+
+.admin-code-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; padding: 4px 2px 2px 0; }
+.admin-code-row {
+  display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 9px;
+  background: var(--bg); border: 1px solid var(--border);
+}
+.admin-code-row.is-off { opacity: .55; }
+.admin-code-value { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; font-weight: 600; color: var(--text); letter-spacing: 0; }
+.admin-code-status { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--muted-2); letter-spacing: 0; }
+.admin-code-btn {
+  flex: none; border: 1px solid var(--border-strong); background: transparent; color: var(--muted);
+  font-family: inherit; font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 8px; cursor: pointer;
+}
+.admin-code-btn:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); }

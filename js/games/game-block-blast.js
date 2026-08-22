@@ -71,8 +71,38 @@
       boardEl = session.playArea.querySelector("[data-board-blast]");
       session.onRestart(() => initGame());
       attachControls();
-      initGame();
+      // Fortsett en påbegynt runde hvis den ligger lagret, ellers ny runde.
+      if (!resumeGame()) initGame();
     });
+
+    // Stillingen som lagres mellom økter: brettet, klossene i hånden og
+    // skåren. Alt er tall/strenger, så det kan lagres rett som JSON.
+    function saveGame() {
+      if (!session || over) return;
+      session.saveState({ grid, tray, score });
+    }
+
+    function resumeGame() {
+      const saved = session.savedState();
+      const validGrid = saved && Array.isArray(saved.grid) && saved.grid.length === SIZE
+        && saved.grid.every((row) => Array.isArray(row) && row.length === SIZE);
+      const validTray = saved && Array.isArray(saved.tray) && saved.tray.length
+        && saved.tray.every((p) => p && Array.isArray(p.cells) && p.cells.length && p.id && p.color);
+      if (!validGrid || !validTray) return false;
+
+      grid = saved.grid.map((row) => row.slice());
+      tray = saved.tray.map((p) => ({ id: p.id, color: p.color, cells: p.cells.map((cell) => cell.slice()) }));
+      score = Number(saved.score) || 0;
+      over = false;
+
+      // En lagret stilling der ingen klosser passer ville låst spilleren fast.
+      if (tray.every((p) => !anyFit(p))) return false;
+
+      session.setScore(Math.round(score));
+      session.hideOverlay();
+      render();
+      return true;
+    }
 
     function initGame() {
       grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
@@ -81,6 +111,7 @@
       over = false;
       session.setScore(0);
       session.hideOverlay();
+      session.clearState();
       render();
     }
 
@@ -162,9 +193,11 @@
           score += cleared * POINTS_PER_CLEARED_LINE * (cleared > 1 ? MULTI_CLEAR_BONUS : 1);
           session.setScore(Math.round(score));
           render();
+          saveGame();
           checkGameOver();
         }, 190);
       } else {
+        saveGame();
         checkGameOver();
       }
     }

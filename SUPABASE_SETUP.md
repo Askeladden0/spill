@@ -44,6 +44,33 @@ stegene for å koble et Supabase-prosjekt til nettsiden.
    etter "Glemt passord"-lenken (begge må stå i listen, f.eks.
    `https://dittdomene/index.html` og `https://dittdomene/tilbakestill-passord.html`).
 
+### 3b. Vis "Studilla" i Google-vinduet (ikke Supabase-adressen)
+
+Teksten brukeren ser når de trykker "Fortsett med Google" – «Logg på ...» og
+«Fortsett til ...» – kommer **ikke** fra koden i dette repoet, men fra to
+innstillinger hos Google og Supabase. Endres de ikke, viser Google
+Supabase-prosjektets adresse (`<prosjekt-ref>.supabase.co`) i stedet for
+Studilla. Slik retter du det:
+
+1. **Appnavnet**: Google Cloud Console → **APIs & Services → OAuth consent
+   screen → Branding**. Sett **App name** til `Studilla`, legg inn logo
+   (`assets/img/favicon.svg` eksportert som PNG, 120×120) og support-e-post,
+   og lagre. Dette styrer «Fortsett til Studilla».
+2. **Domenet**: teksten «Logg på <domene>» viser domenet til redirect-URI-en,
+   altså Supabase-domenet. For at det skal stå Studillas eget domene må
+   Supabase-prosjektet bruke et **Custom Auth Domain** (Supabase-dashbordet →
+   **Authentication → URL Configuration → Custom domains**, krever et betalt
+   plan). Sett f.eks. `auth.studilla.no`, og bytt deretter
+   redirect-URI-en i Google Cloud Console til
+   `https://auth.studilla.no/auth/v1/callback` og `SUPABASE_URL` i
+   [`js/supabase-config.js`](js/supabase-config.js) til `https://auth.studilla.no`.
+3. Google kan bruke noen minutter (i verste fall timer) på å oppdatere
+   samtykkeskjermen – tøm gjerne nettleserens innloggingsvindu og prøv på nytt
+   hvis det gamle navnet henger igjen.
+
+Punkt 1 alene fjerner Supabase-navnet fra «Fortsett til …»-linjen, som er den
+mest synlige. Punkt 2 trengs for å fjerne det helt.
+
 ## 4. Koble nettsiden til prosjektet
 
 Åpne [`js/supabase-config.js`](js/supabase-config.js) og bytt ut:

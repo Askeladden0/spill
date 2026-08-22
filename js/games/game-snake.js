@@ -22,6 +22,10 @@
     let timer = null;
     let session = null;
     let cellEls = null;
+    // Satt til true når en lagret runde er gjenopptatt: slangen står stille
+    // til spilleren gjør sitt første trekk, slik at man ikke krasjer med en
+    // gang siden åpnes igjen.
+    let waitingForResume = false;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -31,8 +35,42 @@
       `;
       session.onRestart(() => initGame());
       attachControls();
-      initGame();
+      // Fortsett en påbegynt runde hvis den ligger lagret, ellers ny runde.
+      if (!resumeGame()) initGame();
     });
+
+    function saveGame() {
+      if (!session || over) return;
+      session.saveState({ snake, direction, food, score });
+    }
+
+    function resumeGame() {
+      const saved = session.savedState();
+      const validSnake = saved && Array.isArray(saved.snake) && saved.snake.length
+        && saved.snake.every((seg) => seg && Number.isFinite(seg.r) && Number.isFinite(seg.c)
+          && seg.r >= 0 && seg.r < SIZE && seg.c >= 0 && seg.c < SIZE);
+      if (!validSnake) return false;
+
+      snake = saved.snake.map((seg) => ({ r: seg.r, c: seg.c }));
+      direction = OPPOSITE[saved.direction] ? saved.direction : "right";
+      nextDirection = direction;
+      score = Number(saved.score) || 0;
+      over = false;
+      food = saved.food && Number.isFinite(saved.food.r) && Number.isFinite(saved.food.c) ? saved.food : null;
+      if (!food) placeFood();
+
+      render();
+      session.setScore(score);
+      session.hideOverlay();
+
+      if (timer) clearInterval(timer);
+      timer = null;
+      waitingForResume = true;
+
+      const boardEl = session.playArea.querySelector("[data-board-snake]");
+      if (boardEl) boardEl.focus({ preventScroll: true });
+      return true;
+    }
 
     function initGame() {
       const mid = Math.floor(SIZE / 2);
@@ -49,6 +87,8 @@
       render();
       session.setScore(0);
       session.hideOverlay();
+      session.clearState();
+      waitingForResume = false;
 
       if (timer) clearInterval(timer);
       timer = setInterval(tick, TICK_MS);
@@ -101,6 +141,7 @@
       }
 
       render(ateAt);
+      saveGame();
     }
 
     function endGame() {
@@ -167,6 +208,12 @@
     function setDirection(dir) {
       if (!dir || !session || over) return;
       nextDirection = dir;
+      // Første trekk etter en gjenopptatt runde setter slangen i gang igjen.
+      if (waitingForResume) {
+        waitingForResume = false;
+        if (timer) clearInterval(timer);
+        timer = setInterval(tick, TICK_MS);
+      }
     }
 
     function attachControls() {

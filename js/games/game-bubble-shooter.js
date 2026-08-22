@@ -73,8 +73,42 @@
       ctx = canvas.getContext("2d");
       session.onRestart(() => initGame());
       attachControls();
-      initGame();
+      // Fortsett en påbegynt runde hvis den ligger lagret, ellers ny runde.
+      if (!resumeGame()) initGame();
     });
+
+    // Stillingen som lagres mellom økter: brettet og de to neste kulene.
+    // Kula som er i lufta lagres ikke – da ville et skudd kunne "fryses" og
+    // spilles av på nytt; spilleren fortsetter i stedet fra skuddet før.
+    function saveGame() {
+      if (!session || over) return;
+      session.saveState({ grid, score, current, next });
+    }
+
+    function resumeGame() {
+      const saved = session.savedState();
+      const validGrid = saved && Array.isArray(saved.grid) && saved.grid.length === TOTAL_ROWS
+        && saved.grid.every((row, r) => Array.isArray(row) && row.length === colsInRow(r));
+      if (!validGrid) return false;
+      if (saved.grid.every((row) => row.every((cell) => !cell))) return false;
+
+      grid = saved.grid.map((row) => row.slice());
+      score = Number(saved.score) || 0;
+      over = false;
+      moving = null;
+      effects = [];
+      aimAngle = 0;
+      current = PALETTE.includes(saved.current) ? saved.current : randomColor();
+      next = PALETTE.includes(saved.next) ? saved.next : randomColor();
+      session.setScore(score);
+      session.hideOverlay();
+      render();
+
+      if (rafId) cancelAnimationFrame(rafId);
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(loop);
+      return true;
+    }
 
     function initGame() {
       grid = Array.from({ length: TOTAL_ROWS }, (_, r) => Array(colsInRow(r)).fill(null));
@@ -92,6 +126,7 @@
       next = randomColor();
       session.setScore(0);
       session.hideOverlay();
+      session.clearState();
       render();
 
       if (rafId) cancelAnimationFrame(rafId);
@@ -173,6 +208,7 @@
 
       resolveMatches(r, c);
       checkGameEnd();
+      saveGame();
     }
 
     function resolveMatches(startR, startC) {

@@ -43,7 +43,11 @@
     claims: [],
     gameRecords: [],
     avatarOptions: { colors: [], icons: [] },
+    settings: { level_step: 1000 },
     gamesNeedMigration: false,
+    rewardsNeedMigration: false,
+    codesNeedMigration: false,
+    settingsNeedMigration: false,
 
     paletteOpen: false,
     paletteQuery: "",
@@ -61,17 +65,20 @@
     dragFromId: null,
     gameUploadBusy: new Set(),
 
-    // Nivåer
-    openLevels: new Set(),
-
     // Rabatter
     openCodeLists: new Set(),
+    openCodeTables: new Set(),
     rewardUploadBusy: new Set(),
+
+    // Nivåer
+    levelStepDraft: null,
+    levelCountDraft: null,
     adminPreview: { spinning: false, result: null, error: null },
 
     // Statistikk
     signupRange: "7d",
     playRange: "7d",
+    retentionRange: "30d",
   };
 
   const els = {};
@@ -92,13 +99,14 @@
   async function loadGames() {
     const full = await sb
       .from("games")
-      .select("id, name, genre, rating, points, time_estimate, description, thumbnail_url, icon_url, points_multiplier, is_daily_game, hidden, sort_order")
+      .select("id, name, genre, rating, points, time_estimate, description, thumbnail_url, icon_url, points_multiplier, is_daily_game, hidden, point_rate, sort_order")
       .order("sort_order", { ascending: true });
 
-    if (!full.error) return full.data || [];
+    if (!full.error) return (full.data || []).map((g) => ({ ...g, point_rate: g.point_rate == null ? 1 : Number(g.point_rate) }));
 
     // Fallback for prosjekter som ikke har kjørt migrasjonen med
-    // games.hidden ennå (se supabase/schema.sql, seksjon 16).
+    // games.hidden / games.point_rate ennå (se supabase/schema.sql,
+    // seksjon 16 og 35).
     state.gamesNeedMigration = true;
     const fallback = await sb
       .from("games")
@@ -108,46 +116,115 @@
       console.error("[Studilla admin] Klarte ikke hente spill:", fallback.error.message);
       return [];
     }
-    return (fallback.data || []).map((g) => ({ ...g, hidden: false }));
+    return (fallback.data || []).map((g) => ({ ...g, hidden: false, point_rate: 1 }));
+  }
+
+  async function loadRewards() {
+    const full = await sb
+      .from("rewards")
+      .select("id, brand, title, sub, rarity, image_url, active, code_type, general_code, expires_at, link_url, sort_order")
+      .order("sort_order", { ascending: true });
+    if (!full.error) return full.data || [];
+
+    // Fallback for prosjekter som ikke har kjørt migrasjonen med
+    // rewards.expires_at / rewards.link_url ennå (schema.sql, seksjon 33).
+    state.rewardsNeedMigration = true;
+    const fallback = await sb
+      .from("rewards")
+      .select("id, brand, title, sub, rarity, image_url, active, code_type, general_code, sort_order")
+      .order("sort_order", { ascending: true });
+    if (fallback.error) {
+      console.error("[Studilla admin] Klarte ikke hente rabatter:", fallback.error.message);
+      return [];
+    }
+    return (fallback.data || []).map((r) => ({ ...r, expires_at: null, link_url: null }));
+  }
+
+  async function loadRewardCodes() {
+    const full = await sb.from("reward_codes").select("id, reward_id, code, claimed_by, claimed_at, disabled");
+    if (!full.error) return full.data || [];
+
+    // Fallback for prosjekter uten reward_codes.disabled (schema.sql, 34).
+    state.codesNeedMigration = true;
+    const fallback = await sb.from("reward_codes").select("id, reward_id, code, claimed_by, claimed_at");
+    if (fallback.error) {
+      console.error("[Studilla admin] Klarte ikke hente kodelister:", fallback.error.message);
+      return [];
+    }
+    return (fallback.data || []).map((c) => ({ ...c, disabled: false }));
+  }
+
+  async function loadSettings() {
+    const { data, error } = await sb.from("app_settings").select("level_step").eq("id", 1).maybeSingle();
+    if (error || !data) {
+      // Fallback for prosjekter uten app_settings (schema.sql, seksjon 36).
+      state.settingsNeedMigration = true;
+      return { level_step: 1000 };
+    }
+    return { level_step: Number(data.level_step) || 1000 };
   }
 
   async function loadAll() {
-    const [profilesRes, levelsRes, rewardsRes, rarityRes, rewardCodesRes, claimsRes, recordsRes, avatarRes, games] = await Promise.all([
+    const [profilesRes, levelsRes, rewards, rarityRes, rewardCodes, claimsRes, recordsRes, avatarRes, games, settings] = await Promise.all([
       sb.from("profiles").select("id, username, xp, level, is_admin, created_at, avatar_icon, avatar_color").order("created_at", { ascending: false }),
       sb.from("levels").select("level_number, points_required").order("level_number", { ascending: true }),
-      sb.from("rewards").select("id, brand, title, sub, rarity, image_url, active, code_type, general_code, sort_order").order("sort_order", { ascending: true }),
+      loadRewards(),
       sb.from("rarity_weights").select("rarity, weight"),
-      sb.from("reward_codes").select("id, reward_id, code, claimed_by, claimed_at"),
+      loadRewardCodes(),
       sb.from("user_codes").select("user_id, reward_id, brand, title, code, created_at").order("created_at", { ascending: false }),
       sb.from("game_records").select("user_id, game_id, score, created_at"),
       sb.from("avatar_options").select("colors, icons").eq("id", 1).single(),
       loadGames(),
+      loadSettings(),
     ]);
 
     if (profilesRes.error) console.error("[Studilla admin] Klarte ikke hente brukere:", profilesRes.error.message);
     if (levelsRes.error) console.error("[Studilla admin] Klarte ikke hente nivåer:", levelsRes.error.message);
-    if (rewardsRes.error) console.error("[Studilla admin] Klarte ikke hente rabatter:", rewardsRes.error.message);
     if (rarityRes.error) console.error("[Studilla admin] Klarte ikke hente sjeldenhetsvekter:", rarityRes.error.message);
-    if (rewardCodesRes.error) console.error("[Studilla admin] Klarte ikke hente kodelister:", rewardCodesRes.error.message);
     if (claimsRes.error) console.error("[Studilla admin] Klarte ikke hente rabattlogg:", claimsRes.error.message);
     if (recordsRes.error) console.error("[Studilla admin] Klarte ikke hente spillrekorder:", recordsRes.error.message);
     if (avatarRes.error) console.error("[Studilla admin] Klarte ikke hente profilbilde-valg:", avatarRes.error.message);
 
     state.profiles = profilesRes.data || [];
     state.levels = levelsRes.data || [];
-    state.rewards = rewardsRes.data || [];
+    state.rewards = rewards;
     state.rarityWeights = rarityRes.data || [];
-    state.rewardCodes = rewardCodesRes.data || [];
+    state.rewardCodes = rewardCodes;
     state.claims = claimsRes.data || [];
     state.gameRecords = recordsRes.data || [];
     state.avatarOptions = avatarRes.data || { colors: [], icons: [] };
     state.games = games;
+    state.settings = settings;
+    state.levelStepDraft = null;
+    state.levelCountDraft = null;
   }
 
   function rewardCodeStats(rewardId) {
     const codes = state.rewardCodes.filter((c) => c.reward_id === rewardId);
-    const remaining = codes.filter((c) => !c.claimed_by).length;
-    return { total: codes.length, remaining };
+    // "Ledig" = verken hentet av en bruker eller deaktivert av admin – samme
+    // regel som open_level_case bruker når den deler ut en kode.
+    const remaining = codes.filter((c) => !c.claimed_by && !c.disabled).length;
+    const disabled = codes.filter((c) => c.disabled && !c.claimed_by).length;
+    return { total: codes.length, remaining, disabled };
+  }
+
+  // En rabatt med utløpsdato i fortiden regnes som deaktivert: den trekkes
+  // ikke i kasser (schema.sql, seksjon 38) og merkes "UTGÅTT" i listene her.
+  function isExpired(r) {
+    return !!r.expires_at && new Date(r.expires_at).getTime() <= Date.now();
+  }
+
+  function rewardIsLive(r) {
+    return !!r.active && !isExpired(r);
+  }
+
+  // <input type="date"> vil ha YYYY-MM-DD i lokal tid.
+  function dateInputValue(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
   function usernameFor(userId) {
@@ -180,7 +257,7 @@
   };
   const VIEW_HINTS = {
     spill: "Dra ⠿ for rekkefølge. Åpne et spill for navn, beskrivelse og bilder.",
-    nivaaer: "Poengkravet avgjør når nivået låses opp automatisk og gir en kasse på premiesiden.",
+    nivaaer: "Fyll inn hvor mye hvert nivå øker med – differansen er lik hele veien opp.",
     rabatter: "Hver rabatt har en sjeldenhetsgrad. Tweak sannsynligheten øverst, rediger rabattene under.",
     brukere: "Klikk en rad for detaljer. Endringer lagres med én gang.",
     avatar: "Farger og ikoner nye brukere tildeles tilfeldig ved registrering.",
@@ -215,7 +292,7 @@
     }));
     const levels = state.levels.map((lv) => ({
       label: `Nivå ${lv.level_number}`, kind: "NIVÅ", icon: "▸",
-      go: () => { state.openLevels.add(lv.level_number); goView("nivaaer"); },
+      go: () => goView("nivaaer"),
     }));
     const rewards = state.rewards.map((r) => ({
       label: `${r.brand} – ${r.title}`, kind: "RABATT", icon: "▸",
@@ -428,6 +505,102 @@
   // Statistikk
   // ---------------------------------------------------------------------
 
+  /**
+   * Retention per spill: hvor stor andel av spillerne som kom tilbake til
+   * spillet en annen dag enn den de spilte det første gang.
+   *
+   * Beregnes ut fra game_records i valgt periode:
+   *   spillere  = unike brukere med minst én runde i perioden
+   *   tilbake   = av disse, de som har runder på minst to ulike datoer
+   *   retention = tilbake / spillere
+   *
+   * Bare innloggede runder havner i game_records, så tallene gjelder
+   * registrerte brukere (gjestespill lagres kun lokalt i nettleseren).
+   */
+  const RETENTION_RANGES = { "7d": 7 * DAY_MS, "30d": 30 * DAY_MS, "90d": 90 * DAY_MS, alle: Infinity };
+
+  function buildRetention(range) {
+    const cutoff = RETENTION_RANGES[range] != null ? RETENTION_RANGES[range] : Infinity;
+    const now = Date.now();
+    const perGame = new Map(); // game_id -> Map(user_id -> Set(datoer))
+
+    state.gameRecords.forEach((r) => {
+      const t = new Date(r.created_at).getTime();
+      if (!Number.isFinite(t) || now - t > cutoff) return;
+      if (!perGame.has(r.game_id)) perGame.set(r.game_id, new Map());
+      const byUser = perGame.get(r.game_id);
+      if (!byUser.has(r.user_id)) byUser.set(r.user_id, { days: new Set(), rounds: 0 });
+      const entry = byUser.get(r.user_id);
+      entry.days.add(new Date(t).toDateString());
+      entry.rounds++;
+    });
+
+    return state.games.map((g) => {
+      const byUser = perGame.get(g.id) || new Map();
+      const players = byUser.size;
+      let returning = 0;
+      let rounds = 0;
+      byUser.forEach((entry) => {
+        if (entry.days.size > 1) returning++;
+        rounds += entry.rounds;
+      });
+      return {
+        id: g.id,
+        name: g.name,
+        players,
+        returning,
+        rounds,
+        pct: players ? Math.round((returning / players) * 1000) / 10 : 0,
+        perPlayer: players ? Math.round((rounds / players) * 10) / 10 : 0,
+      };
+    }).sort((a, b) => b.pct - a.pct || b.players - a.players);
+  }
+
+  function renderRetention() {
+    const rows = buildRetention(state.retentionRange);
+    const withPlayers = rows.filter((r) => r.players > 0);
+    const totalPlayers = withPlayers.reduce((a, r) => a + r.players, 0);
+    const totalReturning = withPlayers.reduce((a, r) => a + r.returning, 0);
+    const overall = totalPlayers ? Math.round((totalReturning / totalPlayers) * 1000) / 10 : 0;
+
+    const btns = ["7d", "30d", "90d", "alle"].map((id) => `
+      <button type="button" class="admin-range-btn${state.retentionRange === id ? " is-active" : ""}" data-retention-range="${id}">${id === "alle" ? "Hele tiden" : id === "7d" ? "7 dager" : id === "30d" ? "30 dager" : "90 dager"}</button>
+    `).join("");
+
+    return `
+      <div class="admin-card" style="overflow-x:auto">
+        <div class="admin-card-head">
+          <div>
+            <h2>Retention per triks</h2>
+            <span class="admin-card-sub">Andelen spillere som kom tilbake til triksen en annen dag. Teller kun innloggede runder.</span>
+          </div>
+          <span class="admin-card-spacer"></span>
+          <span class="admin-range-switch">${btns}</span>
+          <span class="admin-chart-stats">
+            <span class="admin-chart-stat">
+              <span class="admin-chart-stat-label">TOTALT</span>
+              <span class="admin-chart-stat-value is-accent">${overall} %</span>
+            </span>
+          </span>
+        </div>
+        <table class="records-table">
+          <thead><tr><th>Triks</th><th>Spillere</th><th>Kom tilbake</th><th>Retention</th><th>Runder per spiller</th></tr></thead>
+          <tbody>
+            ${withPlayers.length ? withPlayers.map((r) => `
+              <tr>
+                <td>${escapeHTML(r.name)}</td>
+                <td>${NOK(r.players)}</td>
+                <td>${NOK(r.returning)}</td>
+                <td><span style="color:${r.pct >= 40 ? "var(--accent)" : r.pct >= 20 ? "var(--text)" : "var(--muted)"};font-weight:700">${r.pct} %</span></td>
+                <td>${r.perPlayer.toLocaleString("no-NO")}</td>
+              </tr>
+            `).join("") : `<tr><td colspan="5">Ingen runder registrert i denne perioden.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
   function renderStatistikk() {
     const series = buildSignupSeries(state.signupRange);
     const avg = Math.round(series.reduce((a, s) => a + s.value, 0) / series.length);
@@ -515,6 +688,8 @@
             `).join("") : `<p class="admin-card-sub" style="margin:0">Ingen runder spilt i denne perioden.</p>`}
           </div>
         </div>
+
+        ${renderRetention()}
       </div>
     `;
   }
@@ -668,6 +843,13 @@
                 <input type="text" value="${escapeHTML(g.icon_url || "")}" placeholder="assets/img/icons/${g.id}.svg" data-game-field="icon_url" data-game-id="${g.id}">
                 ${uploadRowHTML(g, "icon_url")}
               </label>
+              <label class="admin-field">POENG PER SKÅR
+                <input type="number" min="0" step="0.1" value="${g.point_rate == null ? 1 : g.point_rate}" data-game-field="point_rate" data-game-id="${g.id}"${state.gamesNeedMigration ? " disabled" : ""}>
+                <span class="admin-dropzone-sub" style="padding-top:4px">1 = skåren gis 1:1. 2 = dobbelt så mange poeng, 0,5 = halvparten. Rekordene lagres alltid som den rå skåren.</span>
+              </label>
+              <label class="admin-field">POENGTEKST PÅ KORTET
+                <input type="text" value="${escapeHTML(g.points || "")}" placeholder="Din skår = dine poeng" data-game-field="points" data-game-id="${g.id}">
+              </label>
               <div class="admin-row-actions">
                 <button type="button" class="btn-start" style="width:auto;padding:10px 15px;opacity:${g.is_daily_game ? ".55" : "1"}" data-game-set-daily="${g.id}">${g.is_daily_game ? "★ Er dagens spill" : "Sett som dagens spill"}</button>
                 <button type="button" class="btn-danger" style="padding:10px 15px" data-game-delete="${g.id}">Slett spill</button>
@@ -698,70 +880,88 @@
   // Nivåer og premier
   // ---------------------------------------------------------------------
 
-  async function addLevel() {
-    const next = state.levels.reduce((max, l) => Math.max(max, l.level_number), 0) + 1;
-    const prevPoints = state.levels.reduce((max, l) => Math.max(max, l.points_required), 0);
-    const points = prevPoints + 1000;
-    const { data, error } = await sb.from("levels").insert({ level_number: next, points_required: points }).select().single();
-    if (error) return flash(Auth.friendlyAuthError(error));
-    state.levels.push(data);
-    state.openLevels.add(next);
-    goView("nivaaer");
-    flash(`Nivå ${next} lagt til`);
+  // Nivåstigen er lineær: nivå N krever (N - 1) * "poeng per nivå". Derfor
+  // fyller admin bare inn ett tall (differansen mellom to nivåer) og hvor
+  // mange nivåer stigen skal ha – resten regnes ut server-side av
+  // admin_set_level_config (schema.sql, seksjon 39).
+  function levelStep() {
+    return state.levelStepDraft != null ? state.levelStepDraft : (state.settings.level_step || 1000);
   }
 
-  async function saveLevel(lv, fields) {
-    const { error } = await sb.from("levels").update(fields).eq("level_number", lv.level_number);
-    if (error) { flash(Auth.friendlyAuthError(error)); return false; }
-    Object.assign(lv, fields);
-    return true;
+  function levelCount() {
+    return state.levelCountDraft != null ? state.levelCountDraft : state.levels.length;
   }
 
-  async function deleteLevel(lv) {
-    if (!window.confirm(`Slette nivå ${lv.level_number}? Dette kan ikke angres.`)) return;
-    const { error } = await sb.from("levels").delete().eq("level_number", lv.level_number);
+  async function saveLevelConfig(step, count) {
+    if (state.settingsNeedMigration) return flash("Kjør supabase/schema.sql på nytt for å ta i bruk «poeng per nivå».");
+    if (!Number.isFinite(step) || step <= 0) return flash("Poeng per nivå må være et tall større enn 0.");
+    if (!Number.isFinite(count) || count < 1 || count > 500) return flash("Antall nivåer må være mellom 1 og 500.");
+
+    const { error } = await sb.rpc("admin_set_level_config", { p_step: Math.round(step), p_count: Math.round(count) });
     if (error) return flash(Auth.friendlyAuthError(error));
-    state.levels = state.levels.filter((l) => l.level_number !== lv.level_number);
-    state.openLevels.delete(lv.level_number);
+
+    const { data } = await sb.from("levels").select("level_number, points_required").order("level_number", { ascending: true });
+    state.levels = data || [];
+    state.settings.level_step = Math.round(step);
+    state.levelStepDraft = null;
+    state.levelCountDraft = null;
     renderMain();
-    flash("Nivå slettet");
+    flash("Nivåstigen er lagret");
+  }
+
+  // "+ Nytt nivå" (hurtighandling/kommandopalett) legger nå ett nivå til på
+  // toppen av stigen, med samme differanse som resten.
+  async function addLevel() {
+    goView("nivaaer");
+    await saveLevelConfig(levelStep(), state.levels.length + 1);
   }
 
   function renderNivaaer() {
-    const rows = state.levels.map((lv) => {
-      const open = state.openLevels.has(lv.level_number);
-      return `
-        <div class="admin-row-card" data-level-card="${lv.level_number}">
-          <div class="admin-row-head" data-level-toggle="${lv.level_number}">
-            <span class="admin-level-badge">${lv.level_number}</span>
-            <span class="admin-row-titles">
-              <span class="admin-row-title">Nivå ${lv.level_number}</span>
-              <span class="admin-row-sub" style="font-family:inherit">${NOK(lv.points_required)} poeng kreves</span>
-            </span>
-            <span class="admin-row-side-label">Gir én kasse</span>
-            <span class="admin-chevron">${open ? "▲" : "▼"}</span>
-          </div>
-          ${open ? `
-            <div class="admin-level-detail">
-              <label class="admin-field" style="max-width:200px">POENG KREVD
-                <input type="number" min="0" value="${lv.points_required}" data-level-points="${lv.level_number}">
-              </label>
-              <p class="admin-card-sub" style="margin:0">Rabatten brukeren får ved å åpne kassen på dette nivået trekkes tilfeldig blant alle aktive rabatter – rediger dem under «Rabatter».</p>
-              <div style="display:flex;gap:10px">
-                <button type="button" class="btn-danger" style="padding:10px 15px" data-level-delete="${lv.level_number}">Slett nivå</button>
-              </div>
-            </div>
-          ` : ""}
+    const step = levelStep();
+    const count = levelCount();
+    const rows = state.levels.map((lv) => `
+      <div class="admin-row-card">
+        <div class="admin-row-head" style="cursor:default">
+          <span class="admin-level-badge">${lv.level_number}</span>
+          <span class="admin-row-titles">
+            <span class="admin-row-title">Nivå ${lv.level_number}</span>
+            <span class="admin-row-sub" style="font-family:inherit">${NOK(lv.points_required)} poeng kreves</span>
+          </span>
+          <span class="admin-row-side-label">Gir én kasse</span>
         </div>
-      `;
-    }).join("");
+      </div>
+    `).join("");
+
+    const migrationNote = state.settingsNeedMigration
+      ? `<p class="admin-card-sub" style="margin:0">⚠ Kjør <code>supabase/schema.sql</code> på nytt i Supabase for å ta i bruk «poeng per nivå».</p>`
+      : "";
 
     return `
       <div class="admin-section">
+        <div class="admin-card">
+          <div>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Poeng per nivå</h2>
+            <span class="admin-card-sub">Differansen er den samme fra nivå til nivå: nivå 1 krever 0 poeng, nivå 2 krever ett steg, nivå 3 to steg og så videre. Endrer du tallet, regnes hele stigen om.</span>
+          </div>
+          ${migrationNote}
+          <div class="admin-stat-grid" style="grid-template-columns:repeat(2,minmax(0,220px))">
+            <label class="admin-stat-box">POENG PER NIVÅ
+              <input type="number" min="1" step="1" value="${step}" data-level-step ${state.settingsNeedMigration ? "disabled" : ""}>
+            </label>
+            <label class="admin-stat-box">ANTALL NIVÅER
+              <input type="number" min="1" max="500" step="1" value="${count}" data-level-count ${state.settingsNeedMigration ? "disabled" : ""}>
+            </label>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px">
+            <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-save-levels ${state.settingsNeedMigration ? "disabled" : ""}>Lagre nivåstigen</button>
+            <span class="admin-card-sub">Toppnivået (nivå ${Math.max(1, Math.round(count))}) havner på ${NOK(Math.max(0, (Math.round(count) - 1) * Math.round(step)))} poeng.</span>
+          </div>
+        </div>
+
         <div class="admin-toolbar">
           <span class="admin-toolbar-count">${state.levels.length} nivåer</span>
           <span class="admin-card-spacer"></span>
-          <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-quick="new-level">+ Nytt nivå</button>
+          <span class="admin-toolbar-hint">Poengkravene regnes ut automatisk – rediger dem i boksen over</span>
         </div>
         <div class="admin-row-list">${rows || `<p class="admin-card-sub">Ingen nivåer ennå.</p>`}</div>
       </div>
@@ -796,12 +996,32 @@
     return true;
   }
 
+  // Bryteren viser om rabatten faktisk deles ut nå ("live"): en utgått rabatt
+  // står som av selv om active fortsatt er true. Skrur man den på igjen,
+  // fjernes derfor utløpsdatoen samtidig – ellers ville bryteren hoppet rett
+  // tilbake til "av".
   async function toggleRewardActive(r) {
-    return saveReward(r, { active: !r.active });
+    if (rewardIsLive(r)) return saveReward(r, { active: false });
+    const fields = { active: true };
+    if (isExpired(r) && !state.rewardsNeedMigration) fields.expires_at = null;
+    return saveReward(r, fields);
+  }
+
+  async function toggleRewardCode(codeId) {
+    if (state.codesNeedMigration) return flash("Kjør supabase/schema.sql på nytt for å låse opp «deaktiver kode».");
+    const c = state.rewardCodes.find((x) => x.id === codeId);
+    if (!c) return;
+    if (c.claimed_by) return flash("Koden er allerede hentet av en bruker.");
+    const next = !c.disabled;
+    const { error } = await sb.from("reward_codes").update({ disabled: next }).eq("id", codeId);
+    if (error) return flash(Auth.friendlyAuthError(error));
+    c.disabled = next;
+    renderMain();
+    flash(next ? "Koden er deaktivert" : "Koden er aktiv igjen");
   }
 
   async function deleteReward(r) {
-    if (!window.confirm(`Slette rabatten "${r.title}"? Dette sletter også eventuelle kodelister og fjerner den fra brukeres "Mine koder". Kan ikke angres.`)) return;
+    if (!window.confirm(`Slette rabatten "${r.title}"? Dette sletter også kodelisten som ikke er delt ut. Koder brukere allerede har hentet blir liggende i "Mine koder" hos dem. Kan ikke angres.`)) return;
     const { error } = await sb.from("rewards").delete().eq("id", r.id);
     if (error) return flash(Auth.friendlyAuthError(error));
     state.rewards = state.rewards.filter((x) => x.id !== r.id);
@@ -828,7 +1048,7 @@
     if (!codes.length) return flash("Ingen koder å laste ned ennå.");
     const rows = codes.map((c) => [
       c.code,
-      c.claimed_by ? "Brukt" : "Ledig",
+      c.claimed_by ? "Brukt" : c.disabled ? "Deaktivert" : "Ledig",
       c.claimed_by ? usernameFor(c.claimed_by) : "",
       c.claimed_at ? new Date(c.claimed_at).toLocaleString("no-NO") : "",
     ]);
@@ -838,14 +1058,41 @@
 
   function findReward(id) { return state.rewards.find((r) => r.id === id); }
 
+  // Bildefelt for en rabatt: en slippsone man enten kan dra et bilde rett
+  // inn i, eller klikke på for å velge fil på vanlig måte. Viser samtidig en
+  // miniatyr av bildet som er lagret nå.
   function rewardUploadRowHTML(r) {
     const busy = state.rewardUploadBusy.has(r.id);
     return `
-      <label class="admin-upload-btn${busy ? " is-busy" : ""}">
-        ${busy ? "Laster opp …" : "Last opp bilde"}
+      <label class="admin-dropzone${busy ? " is-busy" : ""}" data-reward-dropzone="${r.id}">
+        <span class="admin-dropzone-preview">${r.image_url ? `<img src="${escapeHTML(r.image_url)}" alt="">` : "🖼"}</span>
+        <span class="admin-dropzone-text">
+          <span class="admin-dropzone-main">${busy ? "Laster opp …" : r.image_url ? "Bytt bilde" : "Dra inn et bilde"}</span>
+          <span class="admin-dropzone-sub">Slipp et bilde her, eller klikk for å velge. PNG/JPG, maks 5 MB.</span>
+        </span>
+        ${r.image_url && !busy ? `<button type="button" class="admin-dropzone-clear" data-reward-image-clear="${r.id}" title="Fjern bildet" aria-label="Fjern bildet">×</button>` : ""}
         <input type="file" accept="image/png,image/jpeg" data-reward-upload="${r.id}" ${busy ? "disabled" : ""}>
       </label>
     `;
+  }
+
+  // Kodelisten for en 'list'-rabatt: hver kode kan deaktiveres (og aktiveres
+  // igjen) uten at den slettes eller at hele rabatten må skrus av.
+  function rewardCodeTableHTML(r) {
+    const codes = state.rewardCodes.filter((c) => c.reward_id === r.id);
+    if (!codes.length) return `<p class="admin-card-sub" style="margin:6px 0 0">Ingen koder lagt inn ennå.</p>`;
+    const rows = codes.map((c) => {
+      const claimed = !!c.claimed_by;
+      const status = claimed ? `Hentet av ${escapeHTML(usernameFor(c.claimed_by))}` : c.disabled ? "Deaktivert" : "Ledig";
+      return `
+        <div class="admin-code-row${c.disabled || claimed ? " is-off" : ""}">
+          <span class="admin-code-value">${escapeHTML(c.code)}</span>
+          <span class="admin-code-status">${status}</span>
+          ${claimed ? "" : `<button type="button" class="admin-code-btn" data-code-toggle="${c.id}">${c.disabled ? "Aktiver" : "Deaktiver"}</button>`}
+        </div>
+      `;
+    }).join("");
+    return `<div class="admin-code-list">${rows}</div>`;
   }
 
   async function uploadRewardImage(r, file) {
@@ -879,6 +1126,8 @@
     const isList = r.code_type === "list";
     const stats = isList ? rewardCodeStats(r.id) : null;
     const codesOpen = state.openCodeLists.has(r.id);
+    const expired = isExpired(r);
+    const live = rewardIsLive(r);
     return `
       <div class="admin-row-card" data-reward-id="${r.id}">
         <div class="admin-row-head" data-reward-toggle="${r.id}">
@@ -887,12 +1136,13 @@
             <span class="admin-row-title-line">
               <span class="admin-row-title">${escapeHTML(r.brand)} – ${escapeHTML(r.title)}</span>
               <span class="admin-pill-daily" style="background:rgba(157,107,245,.14);color:#9d6bf5">${RARITY_LABELS[r.rarity] || r.rarity}</span>
+              ${expired ? `<span class="admin-pill-expired">UTGÅTT</span>` : ""}
               ${!r.active ? `<span class="admin-pill-hidden">DEAKTIVERT</span>` : ""}
             </span>
-            <span class="admin-row-sub">${isList ? `${stats.remaining}/${stats.total} koder igjen` : `Én kode til alle: ${escapeHTML(r.general_code || "–")}`}</span>
+            <span class="admin-row-sub">${isList ? `${stats.remaining}/${stats.total} koder igjen${stats.disabled ? ` · ${stats.disabled} deaktivert` : ""}` : `Én kode til alle: ${escapeHTML(r.general_code || "–")}`}${r.expires_at ? ` · ${expired ? "utgikk" : "utgår"} ${formatDate(r.expires_at)}` : ""}</span>
           </span>
-          <span class="admin-row-side-label">${r.active ? "Aktiv" : "Inaktiv"}</span>
-          <button type="button" class="admin-switch${r.active ? " is-on" : ""}" data-reward-active-toggle="${r.id}" aria-label="Aktiver/deaktiver rabatt">
+          <span class="admin-row-side-label">${live ? "Aktiv" : expired ? "Utgått" : "Inaktiv"}</span>
+          <button type="button" class="admin-switch${live ? " is-on" : ""}" data-reward-active-toggle="${r.id}" aria-label="Aktiver/deaktiver rabatt">
             <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
           </button>
           <span class="admin-chevron">${codesOpen ? "▲" : "▼"}</span>
@@ -913,8 +1163,14 @@
                 ${RARITY_ORDER.map((k) => `<option value="${k}" ${r.rarity === k ? "selected" : ""}>${RARITY_LABELS[k]}</option>`).join("")}
               </select>
             </label>
-            <label class="admin-field">BILDE
+            <label class="admin-field is-wide">BILDE
               ${rewardUploadRowHTML(r)}
+            </label>
+            <label class="admin-field">LENKE TIL TILBUDET (VALGFRITT)
+              <input type="url" value="${escapeHTML(r.link_url || "")}" placeholder="https://partner.no/kampanje" data-reward-field="link_url"${state.rewardsNeedMigration ? " disabled" : ""}>
+            </label>
+            <label class="admin-field">UTLØPSDATO (VALGFRITT)
+              <input type="date" value="${dateInputValue(r.expires_at)}" data-reward-field="expires_at"${state.rewardsNeedMigration ? " disabled" : ""}>
             </label>
             <label class="admin-field">KODETYPE
               <select data-reward-field="code_type" title="Kodetype">
@@ -934,10 +1190,15 @@
                   <button type="button" class="btn-start" style="width:auto;padding:9px 14px" data-reward-codes-add="${r.id}">Legg til koder</button>
                   <button type="button" class="admin-btn-ghost" data-reward-codes-download="${r.id}">Last ned oversikt (CSV)</button>
                 </div>
-                <p class="admin-card-sub" style="margin:6px 0 0">${stats.remaining}/${stats.total} koder igjen. Går kodene tomme deaktiveres rabatten automatisk.</p>
+                <p class="admin-card-sub" style="margin:6px 0 0">${stats.remaining}/${stats.total} koder igjen${stats.disabled ? `, ${stats.disabled} deaktivert` : ""}. Går kodene tomme deaktiveres rabatten automatisk.</p>
+                <button type="button" class="admin-btn-text" style="align-self:flex-start;padding-left:0" data-reward-codes-list="${r.id}">${state.openCodeTables.has(r.id) ? "Skjul kodene ▲" : "Vis og deaktiver enkeltkoder ▼"}</button>
+                ${state.openCodeTables.has(r.id) ? rewardCodeTableHTML(r) : ""}
               </div>
             `}
-            <div style="display:flex;gap:10px;flex-basis:100%">
+            <div style="display:flex;gap:10px;flex-basis:100%;flex-wrap:wrap;align-items:center">
+              <button type="button" class="admin-btn-ghost" data-reward-deactivate="${r.id}">${live ? "Deaktiver rabatten" : "Aktiver rabatten"}</button>
+              ${expired ? `<button type="button" class="admin-btn-ghost" data-reward-clear-expiry="${r.id}">Fjern utløpsdatoen</button>` : ""}
+              <span class="admin-card-spacer"></span>
               <button type="button" class="btn-danger" style="padding:10px 15px" data-reward-remove="${r.id}">Slett rabatt</button>
             </div>
           </div>
@@ -1310,15 +1571,23 @@
       const isList = r.code_type === "list";
       const stats = isList ? rewardCodeStats(r.id) : null;
       const statusLabel = isList
-        ? `${stats.remaining}/${stats.total} ledig`
+        ? `${stats.remaining}/${stats.total} ledig${stats.disabled ? ` · ${stats.disabled} deaktivert` : ""}`
         : `Én kode til alle: ${escapeHTML(r.general_code || "–")}`;
+      const expired = isExpired(r);
+      const stateLabel = expired
+        ? '<span style="color:#ff9385">Utgått</span>'
+        : r.active ? "Aktiv" : '<span style="color:#ff9385">Deaktivert</span>';
       return `
         <tr>
           <td>${escapeHTML(r.brand)} – ${escapeHTML(r.title)}</td>
           <td>${RARITY_LABELS[r.rarity] || r.rarity}</td>
           <td>${statusLabel}</td>
-          <td>${r.active ? "Aktiv" : '<span style="color:#ff9385">Deaktivert</span>'}</td>
-          <td>${isList ? `<button type="button" class="admin-btn-ghost" data-reward-codes-download="${r.id}">Last ned CSV</button>` : ""}</td>
+          <td>${r.expires_at ? formatDate(r.expires_at) : "–"}</td>
+          <td>${stateLabel}</td>
+          <td>
+            <button type="button" class="admin-btn-ghost" data-reward-deactivate="${r.id}">${rewardIsLive(r) ? "Deaktiver" : "Aktiver"}</button>
+            ${isList ? `<button type="button" class="admin-btn-ghost" data-reward-codes-download="${r.id}">Last ned CSV</button>` : ""}
+          </td>
         </tr>
       `;
     }).join("");
@@ -1343,8 +1612,8 @@
           <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Rabatter</h2>
           <span class="admin-card-sub">Rediger rabattene under «Rabatter». Her ser du status og kan laste ned lister.</span>
           <table class="records-table">
-            <thead><tr><th>Rabatt</th><th>Sjeldenhet</th><th>Status</th><th>Aktiv</th><th></th></tr></thead>
-            <tbody>${rewardRows || `<tr><td colspan="5">Ingen rabatter ennå.</td></tr>`}</tbody>
+            <thead><tr><th>Rabatt</th><th>Sjeldenhet</th><th>Koder</th><th>Utløper</th><th>Status</th><th></th></tr></thead>
+            <tbody>${rewardRows || `<tr><td colspan="6">Ingen rabatter ennå.</td></tr>`}</tbody>
           </table>
         </div>
         <div class="admin-card" style="overflow-x:auto">
@@ -1371,10 +1640,12 @@
         isList ? "Kodeliste" : "Én kode til alle",
         isList ? stats.total : 1,
         isList ? stats.remaining : "–",
-        r.active ? "Aktiv" : "Deaktivert",
+        isExpired(r) ? "Utgått" : r.active ? "Aktiv" : "Deaktivert",
+        r.expires_at ? new Date(r.expires_at).toLocaleDateString("no-NO") : "",
+        r.link_url || "",
       ];
     });
-    downloadCSV("rabattkoder-oversikt.csv", ["Merke", "Tittel", "Sjeldenhet", "Type", "Totalt", "Ledige", "Status"], rows);
+    downloadCSV("rabattkoder-oversikt.csv", ["Merke", "Tittel", "Sjeldenhet", "Type", "Totalt", "Ledige", "Status", "Utløper", "Lenke"], rows);
   }
 
   // ---------------------------------------------------------------------
@@ -1395,6 +1666,11 @@
     };
     const fn = renderers[state.view] || renderOversikt;
     els.main.innerHTML = fn();
+    // Brukertabellen tegnes i sitt eget delelement, slik at søkefeltet over
+    // ikke mister fokus mens man skriver. Referansene må hentes på nytt hver
+    // gang <main> er skrevet om – uten dette ble brukersiden stående tom.
+    els.usersDynamic = els.main.querySelector("[data-users-dynamic]");
+    els.usersCount = els.main.querySelector("[data-users-count]");
     if (state.view === "brukere") renderUsersDynamic();
   }
 
@@ -1409,7 +1685,6 @@
   // ---------------------------------------------------------------------
 
   function findGame(id) { return state.games.find((g) => g.id === id); }
-  function findLevel(n) { return state.levels.find((l) => l.level_number === n); }
   function findUser(id) { return state.profiles.find((u) => u.id === id); }
 
   function onMainClick(e) {
@@ -1458,11 +1733,10 @@
     if (delGame) { const g = findGame(delGame.dataset.gameDelete); if (g) deleteGame(g); return; }
 
     // Nivåer
-    const lvToggle = t.closest("[data-level-toggle]");
-    if (lvToggle) {
-      const n = Number(lvToggle.dataset.levelToggle);
-      state.openLevels.has(n) ? state.openLevels.delete(n) : state.openLevels.add(n);
-      return renderMain();
+    if (t.closest("[data-save-levels]")) {
+      const stepEl = els.main.querySelector("[data-level-step]");
+      const countEl = els.main.querySelector("[data-level-count]");
+      return saveLevelConfig(Number(stepEl && stepEl.value), Number(countEl && countEl.value));
     }
     const rewardToggle = t.closest("[data-reward-toggle]");
     if (rewardToggle) {
@@ -1477,6 +1751,34 @@
       if (r) toggleRewardActive(r).then((ok) => { if (ok) { renderMain(); flash(r.active ? "Rabatt aktivert" : "Rabatt deaktivert"); } });
       return;
     }
+
+    const rewardDeactivate = t.closest("[data-reward-deactivate]");
+    if (rewardDeactivate) {
+      const r = findReward(Number(rewardDeactivate.dataset.rewardDeactivate));
+      if (r) toggleRewardActive(r).then((ok) => { if (ok) { renderMain(); flash(r.active ? "Rabatt aktivert" : "Rabatt deaktivert"); } });
+      return;
+    }
+    const clearExpiry = t.closest("[data-reward-clear-expiry]");
+    if (clearExpiry) {
+      const r = findReward(Number(clearExpiry.dataset.rewardClearExpiry));
+      if (r) saveReward(r, { expires_at: null }).then((ok) => { if (ok) { renderMain(); flash("Utløpsdatoen er fjernet"); } });
+      return;
+    }
+    const imageClear = t.closest("[data-reward-image-clear]");
+    if (imageClear) {
+      e.preventDefault(); // ligger inne i en <label>, som ellers åpner filvelgeren
+      const r = findReward(Number(imageClear.dataset.rewardImageClear));
+      if (r) saveReward(r, { image_url: null }).then((ok) => { if (ok) { renderMain(); flash("Bildet er fjernet"); } });
+      return;
+    }
+    const codesList = t.closest("[data-reward-codes-list]");
+    if (codesList) {
+      const id = Number(codesList.dataset.rewardCodesList);
+      state.openCodeTables.has(id) ? state.openCodeTables.delete(id) : state.openCodeTables.add(id);
+      return renderMain();
+    }
+    const codeToggle = t.closest("[data-code-toggle]");
+    if (codeToggle) return toggleRewardCode(Number(codeToggle.dataset.codeToggle));
 
     const removeReward = t.closest("[data-reward-remove]");
     if (removeReward) {
@@ -1497,8 +1799,6 @@
       if (r) downloadRewardCodes(r);
       return;
     }
-    const delLevel = t.closest("[data-level-delete]");
-    if (delLevel) { const lv = findLevel(Number(delLevel.dataset.levelDelete)); if (lv) deleteLevel(lv); return; }
 
     // Brukere
     const selectAll = t.closest("[data-select-all]");
@@ -1548,6 +1848,8 @@
     if (signupRange) { state.signupRange = signupRange.dataset.signupRange; return renderMain(); }
     const playRange = t.closest("[data-play-range]");
     if (playRange) { state.playRange = playRange.dataset.playRange; return renderMain(); }
+    const retentionRange = t.closest("[data-retention-range]");
+    if (retentionRange) { state.retentionRange = retentionRange.dataset.retentionRange; return renderMain(); }
 
     // Profilbilder
     const removeColor = t.closest("[data-remove-color]");
@@ -1612,17 +1914,16 @@
       let value = t.value.trim();
       if ((field === "thumbnail_url" || field === "icon_url") && value === "") value = null;
       if (field === "name" && value === "") { flash("Navn kan ikke være tomt."); renderMain(); return; }
+      if (field === "point_rate") {
+        const rate = Number(value.replace(",", "."));
+        if (!Number.isFinite(rate) || rate < 0) { flash("Poeng per skår må være et tall (0 eller mer)."); renderMain(); return; }
+        value = rate;
+      }
       if (g) saveGameField(g, field, value);
       return;
     }
-    const levelPoints = t.closest("[data-level-points]");
-    if (levelPoints) {
-      const lv = findLevel(Number(levelPoints.dataset.levelPoints));
-      const value = Number(t.value);
-      if (!lv || !Number.isFinite(value) || value < 0) return;
-      saveLevel(lv, { points_required: value }).then((ok) => { if (ok) { renderMain(); flash("Lagret!"); } });
-      return;
-    }
+    if (t.matches("[data-level-step]")) { state.levelStepDraft = Number(t.value); return; }
+    if (t.matches("[data-level-count]")) { state.levelCountDraft = Number(t.value); return; }
     const rewardField = t.closest("[data-reward-field]");
     if (rewardField) {
       const row = rewardField.closest("[data-reward-id]");
@@ -1631,7 +1932,20 @@
       const field = rewardField.dataset.rewardField;
       let value = t.value.trim();
       const fields = {};
-      if (field === "code_type") {
+      if (field === "expires_at") {
+        // <input type="date"> gir YYYY-MM-DD. Rabatten skal gjelde ut hele
+        // den dagen, så vi lagrer siste sekund av datoen i lokal tid.
+        if (!value) {
+          fields.expires_at = null;
+        } else {
+          const d = new Date(`${value}T23:59:59`);
+          if (Number.isNaN(d.getTime())) return flash("Ugyldig dato.");
+          fields.expires_at = d.toISOString();
+        }
+      } else if (field === "link_url") {
+        if (value && !/^https?:\/\//i.test(value)) return flash("Lenken må starte med http:// eller https://");
+        fields.link_url = value || null;
+      } else if (field === "code_type") {
         fields.code_type = value;
         if (value === "general" && !r.general_code) fields.general_code = "BYTT-MEG";
       } else if (field === "general_code") {
@@ -1668,10 +1982,35 @@
     e.dataTransfer.effectAllowed = "move";
   }
   function onMainDragOver(e) {
+    // Slippsonen for rabattbilder: markeres direkte på elementet (ikke via
+    // state + render), siden en rerendring midt i et dra-og-slipp bytter ut
+    // DOM-noden og avbryter selve slippet.
+    const zone = e.target.closest("[data-reward-dropzone]");
+    if (zone) {
+      if (zone.classList.contains("is-busy")) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+      zone.classList.add("is-dragover");
+      return;
+    }
     if (state.dragFromId == null) return;
     if (e.target.closest("[data-game-row]")) e.preventDefault();
   }
+  function onMainDragLeave(e) {
+    const zone = e.target.closest("[data-reward-dropzone]");
+    if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove("is-dragover");
+  }
   function onMainDrop(e) {
+    const zone = e.target.closest("[data-reward-dropzone]");
+    if (zone) {
+      e.preventDefault();
+      zone.classList.remove("is-dragover");
+      if (zone.classList.contains("is-busy")) return;
+      const r = findReward(Number(zone.dataset.rewardDropzone));
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (r && file) uploadRewardImage(r, file);
+      return;
+    }
     const row = e.target.closest("[data-game-row]");
     if (!row || state.dragFromId == null) return;
     e.preventDefault();
@@ -1717,6 +2056,7 @@
     els.main.addEventListener("submit", onMainSubmit);
     els.main.addEventListener("dragstart", onMainDragStart);
     els.main.addEventListener("dragover", onMainDragOver);
+    els.main.addEventListener("dragleave", onMainDragLeave);
     els.main.addEventListener("drop", onMainDrop);
     els.main.addEventListener("dragend", onMainDragEnd);
   }

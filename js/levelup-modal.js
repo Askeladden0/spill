@@ -141,7 +141,17 @@
   async function hasActiveRewards() {
     if (levelsCache != null) return levelsCache;
     if (!sb) return false;
-    const { count, error } = await sb.from("rewards").select("id", { count: "exact", head: true }).eq("active", true);
+    // Utgåtte rabatter (rewards.expires_at i fortiden) er deaktivert og skal
+    // ikke telle med. Databaser uten den kolonnen (schema.sql, seksjon 33)
+    // svarer med en feil, og teller da bare aktive som før.
+    const withExpiry = await sb
+      .from("rewards")
+      .select("id", { count: "exact", head: true })
+      .eq("active", true)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+    const { count, error } = withExpiry.error
+      ? await sb.from("rewards").select("id", { count: "exact", head: true }).eq("active", true)
+      : withExpiry;
     levelsCache = !error && count > 0;
     return levelsCache;
   }
