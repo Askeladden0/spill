@@ -777,7 +777,6 @@ alter table public.rewards add column if not exists image_url text;
 alter table public.rewards add column if not exists active boolean not null default true;
 
 alter table public.rewards drop constraint if exists rewards_level_number_fkey;
-alter table public.rewards alter column level_number drop not null;
 alter table public.rewards drop column if exists level_number;
 alter table public.rewards drop column if exists expires_at;
 
