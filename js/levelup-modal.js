@@ -1,5 +1,5 @@
 /**
- * Dilla – nivå opp-modal. Vises som en overlay med konfetti og en
+ * Studilla – nivå opp-modal. Vises som en overlay med konfetti og en
  * animert ring/stolpe når en spiller stiger et nivå (etter et fullført
  * spill via js/game-runtime.js). Bygget etter design­filen
  * "Nivaa opp.dc.html", men koblet til de samme profil-/nivådataene som
@@ -10,7 +10,7 @@
   "use strict";
 
   const sb = window.supabaseClient;
-  const Auth = window.DillaAuth;
+  const Auth = window.StudillaAuth;
   const CONFETTI_COLORS = ["#2ee87f", "#5cf5a0", "#5c8df5", "#f5c95c", "#f55c9b", "#a56cf5", "#ffffff"];
   const RING_CIRCUMFERENCE = 364.4;
 
@@ -231,5 +231,5 @@
     ];
   }
 
-  window.DillaLevelUp = { show, close };
+  window.StudillaLevelUp = { show, close };
 })();

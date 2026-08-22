@@ -1,5 +1,5 @@
 /**
- * Supabase-oppsett for Dilla.
+ * Supabase-oppsett for Studilla.
  *
  * Fyll inn dine egne verdier under (Supabase-dashbord → Project Settings → API).
  * Disse to verdiene er trygge å ha i klientkoden – det er den offentlige
@@ -17,7 +17,7 @@ if (
   window.SUPABASE_ANON_KEY.includes("YOUR-PUBLIC-ANON-KEY")
 ) {
   console.warn(
-    "[Dilla] Supabase er ikke konfigurert ennå – fyll inn SUPABASE_URL og SUPABASE_ANON_KEY i js/supabase-config.js (se SUPABASE_SETUP.md)."
+    "[Studilla] Supabase er ikke konfigurert ennå – fyll inn SUPABASE_URL og SUPABASE_ANON_KEY i js/supabase-config.js (se SUPABASE_SETUP.md)."
   );
 }
 

@@ -1,4 +1,4 @@
-# Supabase-oppsett for Dilla
+# Supabase-oppsett for Studilla
 
 Denne siden bruker [Supabase](https://supabase.com) for innlogging (e-post +
 Google), brukerprofiler, adminpanel og fremtidige spillrekorder. Følg disse

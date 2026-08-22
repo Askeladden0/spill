@@ -1,5 +1,5 @@
 /**
- * Dilla – delt autentiserings- og profil-logikk.
+ * Studilla – delt autentiserings- og profil-logikk.
  * Brukes av alle sider (via header/footer) og av login.html / profil.html / admin.html.
  * Krever js/supabase-config.js lastet først.
  */
@@ -14,7 +14,7 @@
   //   Passord: minst 8 tegn, minst én bokstav og ett tall
   const USERNAME_REGEX = /^[a-zA-Z0-9_]{5,20}$/;
   const PASSWORD_MIN_LENGTH = 8;
-  const GUEST_POINTS_KEY = "dilla_guest_points";
+  const GUEST_POINTS_KEY = "studilla_guest_points";
 
   // Poeng en utlogget besøkende har "tjent" (f.eks. ved å spinne hjulet uten
   // å være innlogget). Lagres lokalt i nettleseren og vises i headeren i
@@ -84,14 +84,14 @@
       .eq("id", session.user.id)
       .single();
     if (error) {
-      console.error("[Dilla] Klarte ikke hente profil:", error.message);
+      console.error("[Studilla] Klarte ikke hente profil:", error.message);
       return null;
     }
     return { ...data, email: session.user.email };
   }
 
   function avatarHTML(profile, size) {
-    return window.DillaAvatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, size);
+    return window.StudillaAvatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, size);
   }
 
   // Nivåene har ulikt poengkrav (se public.levels), ikke et fast antall
@@ -263,7 +263,7 @@
     window.location.href = "index.html";
   }
 
-  window.DillaAuth = {
+  window.StudillaAuth = {
     USERNAME_REGEX,
     PASSWORD_MIN_LENGTH,
     validateUsername,
