@@ -3,18 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Studilla · Dagens triks</title>
-<meta name="description" content="Fullfør dagens triks og tjen poeng du kan bytte inn i rabattkoder fra våre partnere.">
-<meta property="og:title" content="Studilla · Dagens triks">
-<meta property="og:description" content="Fullfør dagens triks og tjen poeng du kan bytte inn i rabattkoder fra våre partnere.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Studilla">
+<title>Studilla · Nytt passord</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body data-page="spill">
+<body data-page="login">
 <div class="page">
 
   <header class="site-header">
@@ -38,33 +34,31 @@
         </a>
       </nav>
     </div>
-
     <div class="header-right" data-auth-slot></div>
   </header>
 
   <main>
-    <section>
-      <a href="index.html#spill" class="back-link">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-        Tilbake til alle triks
-      </a>
-    </section>
+    <section style="display:flex;justify-content:center">
+      <div class="auth-card">
+        <h1 style="margin:0 0 4px;font-size:20px;font-weight:800;color:#fff">Velg nytt passord</h1>
 
-    <section>
-      <div class="player-stage" data-player-stage></div>
-    </section>
+        <p class="auth-error" data-auth-error hidden></p>
+        <p class="auth-success" data-auth-success hidden></p>
 
-    <section>
-      <div class="player-info-bar">
-        <div class="section-heading" style="margin:0">
-          <h1 data-player-title>Laster triks …</h1>
-        </div>
-        <div class="game-meta" style="gap:20px">
-          <span class="game-points" data-player-points></span>
-          <span class="game-time" data-player-time></span>
-        </div>
+        <p class="section-sub" data-waiting-note>Åpner lenken fra e-posten din …</p>
+
+        <form data-reset-form hidden>
+          <label class="auth-field">
+            <span>Nytt passord</span>
+            <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="Minst 8 tegn, med bokstav og tall">
+          </label>
+          <label class="auth-field">
+            <span>Gjenta passord</span>
+            <input type="password" name="password2" required minlength="8" autocomplete="new-password">
+          </label>
+          <button type="submit" class="btn-primary" style="width:100%">Lagre nytt passord</button>
+        </form>
       </div>
-      <p class="section-sub" data-player-description style="margin-top:14px;max-width:720px;line-height:1.6"></p>
     </section>
   </main>
 
@@ -86,42 +80,75 @@
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/games-data.js"></script>
-<script src="js/levelup-modal.js"></script>
-<script src="js/game-runtime.js"></script>
 <script>
 (function () {
   "use strict";
-  // Laster kun skriptet(ene) det aktuelle spillet trenger, i stedet for alle
-  // spillmoduler (+ fysikkmotoren Matter.js, som kun Fruktfusjon bruker) på
-  // hver eneste spillside. main.js venter på window.STUDILLA_GAME_SCRIPT_READY
-  // (hvis satt) før den ser etter window.STUDILLA_GAME_MODULES.
-  // Faller tilbake til det første spillet i fallback-listen (samme som
-  // main.js sin games[0]-fallback) hvis ?id= mangler i URL-en, slik at
-  // direkte lenker uten id fortsatt laster et spillskript.
-  const fallbackId = (window.STUDILLA_GAMES && window.STUDILLA_GAMES[0] && window.STUDILLA_GAMES[0].id) || "";
-  const id = new URLSearchParams(window.location.search).get("id") || fallbackId;
-  const safeId = /^[a-z0-9-]{1,40}$/.test(id) ? id : null;
-  const EXTRA_SCRIPTS_BY_ID = { fruktfusjon: ["js/vendor/matter.min.js"] };
-  const scripts = safeId ? (EXTRA_SCRIPTS_BY_ID[safeId] || []).concat([`js/games/game-${safeId}.js`]) : [];
+  const sb = window.supabaseClient;
+  const Auth = window.StudillaAuth;
 
-  function loadScript(src) {
-    return new Promise((resolve) => {
-      const el = document.createElement("script");
-      el.src = src;
-      el.onload = resolve;
-      // Feiler stille: main.js viser en enkel plassholder hvis modulen mangler.
-      el.onerror = resolve;
-      document.head.appendChild(el);
-    });
+  const waitingNote = document.querySelector("[data-waiting-note]");
+  const resetForm = document.querySelector("[data-reset-form]");
+  const errorEl = document.querySelector("[data-auth-error]");
+  const successEl = document.querySelector("[data-auth-success]");
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+    successEl.hidden = true;
   }
 
-  window.STUDILLA_GAME_SCRIPT_READY = scripts.reduce(
-    (chain, src) => chain.then(() => loadScript(src)),
-    Promise.resolve()
-  );
+  function showSuccess(msg) {
+    successEl.textContent = msg;
+    successEl.hidden = false;
+    errorEl.hidden = true;
+  }
+
+  function revealForm() {
+    waitingNote.hidden = true;
+    resetForm.hidden = false;
+  }
+
+  // Supabase-js gjenkjenner selv "recovery"-lenken i URL-en og oppretter en
+  // midlertidig sesjon, og fyrer PASSWORD_RECOVERY når den er klar. Sjekker
+  // også om det allerede finnes en sesjon ved lasting (i tilfelle eventen
+  // rakk å fyre før denne lytteren ble lagt til).
+  sb.auth.onAuthStateChange((event) => {
+    if (event === "PASSWORD_RECOVERY") revealForm();
+  });
+
+  (async function init() {
+    const session = await Auth.getSession();
+    if (session) revealForm();
+    else {
+      window.setTimeout(() => {
+        if (resetForm.hidden) {
+          waitingNote.textContent = "Fant ingen gyldig lenke. Be om en ny tilbakestillingslenke fra innloggingssiden.";
+        }
+      }, 3000);
+    }
+  })();
+
+  resetForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorEl.hidden = true;
+    successEl.hidden = true;
+
+    const form = new FormData(resetForm);
+    const password = form.get("password");
+    const password2 = form.get("password2");
+
+    const passwordError = Auth.validatePassword(password);
+    if (passwordError) return showError(passwordError);
+    if (password !== password2) return showError("Passordene er ikke like.");
+
+    const { error } = await sb.auth.updateUser({ password });
+    if (error) return showError(Auth.friendlyAuthError(error));
+
+    showSuccess("Passordet er oppdatert! Du blir sendt videre til forsiden …");
+    resetForm.hidden = true;
+    window.setTimeout(() => { window.location.href = "index.html"; }, 1800);
+  });
 })();
 </script>
-<script src="js/main.js"></script>
 </body>
 </html>

@@ -32,6 +32,54 @@
     return next;
   }
 
+  const GUEST_BEST_PREFIX = "studilla_guest_best_";
+
+  /**
+   * Overfører gjestepoeng (lykkehjul spunnet uinnlogget) og gjeste-rekorder
+   * (spill spilt uinnlogget, lagret av js/game-runtime.js) til kontoen når en
+   * bruker logger inn/registrerer seg, i stedet for at de bare forsvinner
+   * stille fra localStorage. Kjøres én gang per innlogging (se
+   * onAuthStateChange under) og rydder opp lagringsnøklene etterpå, slik at
+   * de aldri overføres på nytt.
+   */
+  async function migrateGuestDataToProfile(profile) {
+    if (!profile) return;
+
+    const bestEntries = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (!key || key.indexOf(GUEST_BEST_PREFIX) !== 0) continue;
+      const gameId = key.slice(GUEST_BEST_PREFIX.length);
+      const score = parseInt(window.localStorage.getItem(key), 10);
+      if (Number.isFinite(score) && score > 0) bestEntries.push({ key, gameId, score });
+    }
+    const guestPoints = getGuestPoints();
+
+    if (!guestPoints && !bestEntries.length) return;
+
+    if (bestEntries.length) {
+      const { error } = await sb
+        .from("game_records")
+        .insert(bestEntries.map((e) => ({ user_id: profile.id, game_id: e.gameId, score: e.score })));
+      if (error) {
+        console.error("[Studilla] Klarte ikke overføre gjesterekorder:", error.message);
+      } else {
+        bestEntries.forEach((e) => window.localStorage.removeItem(e.key));
+      }
+    }
+
+    if (guestPoints > 0) {
+      const { error } = await sb.rpc("add_points", { p_delta: guestPoints });
+      if (error) {
+        console.error("[Studilla] Klarte ikke overføre gjestepoeng:", error.message);
+      } else {
+        window.localStorage.removeItem(GUEST_POINTS_KEY);
+      }
+    }
+
+    await renderHeaderAuth();
+  }
+
   function validateUsername(username) {
     if (!username) return "Brukernavn er påkrevd.";
     if (!USERNAME_REGEX.test(username)) {
@@ -51,8 +99,11 @@
   }
 
   async function isUsernameTaken(username) {
+    // profiles_public (ikke profiles direkte): en anonym besøkende som
+    // registrerer seg må kunne sjekke ALLE brukernavn, men RLS på profiles
+    // gir nå kun tilgang til egen rad + admin (se supabase/schema.sql, seksjon 24).
     const { data, error } = await sb
-      .from("profiles")
+      .from("profiles_public")
       .select("id")
       .ilike("username", username)
       .maybeSingle();
@@ -177,6 +228,31 @@
   }
 
   /**
+   * Delt "fyll til 100% → nullstill uten transition → fyll til ny prosent"-
+   * sekvens, brukt av alle steder som animerer en nivåstolpe forbi 100% ved
+   * nivå opp (header-widgeten her, og game-over-kortet i js/game-runtime.js).
+   * Bruker et tidsavbrudd i stedet for å vente på "transitionend": stolpen
+   * kan allerede stå på 100% når nivået økte (f.eks. rett før terskelen), og
+   * da skjer det ingen visuell endring, så "transitionend" fyres aldri.
+   */
+  function animateLevelBarSequence(fillEl, opts) {
+    requestAnimationFrame(() => {
+      fillEl.style.width = "100%";
+    });
+    window.setTimeout(() => {
+      fillEl.style.transition = "none";
+      fillEl.style.width = "0%";
+      // eslint-disable-next-line no-unused-expressions
+      fillEl.offsetHeight;
+      fillEl.style.transition = "";
+      requestAnimationFrame(() => {
+        fillEl.style.width = `${opts.toPct}%`;
+        if (opts.onFinal) opts.onFinal();
+      });
+    }, opts.resetDelayMs);
+  }
+
+  /**
    * Animerer nivå-widgeten i toppmenyen fra forrige profiltilstand til den
    * nye, slik at spilleren ser nivåstolpen stige (og en egen "nivå opp"-puls
    * hvis nivået økte) i stedet for at tallene bare hopper til sluttverdien.
@@ -217,20 +293,7 @@
       return;
     }
 
-    requestAnimationFrame(() => {
-      fill.style.width = "100%";
-    });
-    // Bruker en tidsavbrudd i stedet for å vente på "transitionend": stolpen
-    // kan allerede stå på 100% når nivået økte (f.eks. rett før terskelen),
-    // og da skjer det ingen visuell endring, så "transitionend" fyres aldri.
-    window.setTimeout(() => {
-      fill.style.transition = "none";
-      fill.style.width = "0%";
-      // eslint-disable-next-line no-unused-expressions
-      fill.offsetHeight;
-      fill.style.transition = "";
-      requestAnimationFrame(applyFinal);
-    }, 950);
+    animateLevelBarSequence(fill, { toPct: to.pct, resetDelayMs: 950, onFinal: applyFinal });
   }
 
   async function renderFooterAdminLink() {
@@ -274,9 +337,11 @@
     getCurrentProfile,
     avatarHTML,
     xpProgress,
+    animateLevelBarSequence,
     loadLevels,
     getGuestPoints,
     addGuestPoints,
+    migrateGuestDataToProfile,
     renderHeaderAuth,
     animateHeaderLevelUp,
     renderFooterAdminLink,
@@ -290,8 +355,11 @@
     renderFooterAdminLink();
   });
 
-  sb.auth.onAuthStateChange(function () {
+  sb.auth.onAuthStateChange(function (event) {
     renderHeaderAuth();
     renderFooterAdminLink();
+    if (event === "SIGNED_IN") {
+      getCurrentProfile().then((profile) => migrateGuestDataToProfile(profile));
+    }
   });
 })();
