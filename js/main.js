@@ -10,15 +10,10 @@
 
   const games = window.STUDILLA_GAMES || [];
 
-  function starIcon() {
-    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8L5.7 21l1.7-7L2 9.2l7.1-.6z"></path></svg>';
-  }
-
   function gameCardHTML(g) {
     return `
       <article class="game-card">
         <a href="player.html?id=${encodeURIComponent(g.id)}" class="game-thumb" aria-label="Åpne ${g.name}">
-          <span class="game-rating">${starIcon()} ${g.rating}</span>
           ${g.thumbnail
             ? `<img class="game-thumb-img" src="${g.thumbnail}" alt="">`
             : `<span class="game-thumb-slot">[ spillbilde ]</span>`}
@@ -92,15 +87,11 @@
     document.title = `${game.name} · Studilla`;
 
     const titleEl = document.querySelector("[data-player-title]");
-    const genreEl = document.querySelector("[data-player-genre]");
-    const ratingEl = document.querySelector("[data-player-rating]");
     const pointsEl = document.querySelector("[data-player-points]");
     const timeEl = document.querySelector("[data-player-time]");
     const descEl = document.querySelector("[data-player-description]");
 
     if (titleEl) titleEl.textContent = game.name;
-    if (genreEl) genreEl.textContent = game.genre;
-    if (ratingEl) ratingEl.innerHTML = `${starIcon()} ${game.rating}`;
     if (pointsEl) pointsEl.textContent = game.points;
     if (timeEl) timeEl.textContent = game.time;
     if (descEl) descEl.textContent = game.description || "";
@@ -116,6 +107,7 @@
   document.addEventListener("DOMContentLoaded", async function () {
     initActiveNav();
     if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
+    if (window.STUDILLA_GAME_SCRIPT_READY) await window.STUDILLA_GAME_SCRIPT_READY;
     renderHero("[data-hero]");
     renderGameGrid("[data-game-grid]");
     initPlayerPage();

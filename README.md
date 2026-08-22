@@ -44,6 +44,12 @@ prosjekt, kjøre `supabase/schema.sql`, skru på Google-innlogging, koble
 Kort oppsummert:
 - **Registrering**: e-post/passord (brukernavn 5–20 tegn, passord min. 8 tegn
   med bokstav+tall) eller "Fortsett med Google". 2FA er ikke i bruk.
+- **Glemt passord**: "Glemt passord?" på `login.html` sender en tilbakestillingslenke
+  via Supabase til `tilbakestill-passord.html`, der brukeren velger nytt passord.
+- **Gjestepoeng overføres ved innlogging**: poeng og rekorder samlet uinnlogget
+  (lagret i `localStorage`) flyttes automatisk inn på kontoen første gang
+  brukeren logger inn/registrerer seg (se `Auth.migrateGuestDataToProfile` i
+  `js/auth.js`), i stedet for å bli liggende igjen i nettleseren.
 - **Automatisk avatar**: ny bruker får tilfeldig farge + ikon fra listen i
   `avatar_options`-tabellen (redigeres fra `admin.html`). Kan endres når som
   helst fra `profil.html`.

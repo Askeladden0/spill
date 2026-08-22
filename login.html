@@ -74,6 +74,17 @@
             <input type="password" name="password" required autocomplete="current-password">
           </label>
           <button type="submit" class="btn-primary" style="width:100%">Logg inn</button>
+          <button type="button" class="auth-fineprint" style="background:none;border:none;cursor:pointer;text-decoration:underline;padding:4px 0" data-forgot-toggle>Glemt passord?</button>
+        </form>
+
+        <form data-forgot-form hidden>
+          <p class="section-sub" style="margin:0 0 4px">Skriv inn e-posten din, så sender vi deg en lenke for å velge nytt passord.</p>
+          <label class="auth-field">
+            <span>E-post</span>
+            <input type="email" name="email" required autocomplete="email">
+          </label>
+          <button type="submit" class="btn-primary" style="width:100%">Send tilbakestillingslenke</button>
+          <button type="button" class="auth-fineprint" style="background:none;border:none;cursor:pointer;text-decoration:underline;padding:4px 0" data-forgot-cancel>Tilbake til innlogging</button>
         </form>
 
         <form data-register-form hidden>
@@ -127,6 +138,7 @@
   const tabs = document.querySelectorAll(".auth-tab");
   const loginForm = document.querySelector("[data-login-form]");
   const registerForm = document.querySelector("[data-register-form]");
+  const forgotForm = document.querySelector("[data-forgot-form]");
   const errorEl = document.querySelector("[data-auth-error]");
   const successEl = document.querySelector("[data-auth-success]");
   const googleBtn = document.querySelector("[data-google-btn]");
@@ -153,10 +165,41 @@
       tabs.forEach((t) => t.classList.remove("is-active"));
       tab.classList.add("is-active");
       clearMessages();
+      forgotForm.hidden = true;
       const isLogin = tab.dataset.tab === "login";
       loginForm.hidden = !isLogin;
       registerForm.hidden = isLogin;
     });
+  });
+
+  document.querySelector("[data-forgot-toggle]").addEventListener("click", () => {
+    clearMessages();
+    tabs.forEach((t) => t.classList.remove("is-active"));
+    loginForm.hidden = true;
+    registerForm.hidden = true;
+    forgotForm.hidden = false;
+  });
+
+  document.querySelector("[data-forgot-cancel]").addEventListener("click", () => {
+    clearMessages();
+    forgotForm.hidden = true;
+    tabs[0].classList.add("is-active");
+    loginForm.hidden = false;
+  });
+
+  forgotForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearMessages();
+    const form = new FormData(forgotForm);
+    const email = form.get("email").trim();
+    const redirectTo = window.location.origin + window.location.pathname.replace("login.html", "tilbakestill-passord.html");
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) {
+      showError(Auth.friendlyAuthError(error));
+      return;
+    }
+    showSuccess("Hvis kontoen finnes, har vi sendt en e-post med en lenke for å velge nytt passord.");
+    forgotForm.reset();
   });
 
   googleBtn.addEventListener("click", async () => {

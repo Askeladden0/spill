@@ -14,8 +14,6 @@
  *   id               - unik slug, brukes i URL: player.html?id=<id>, og som
  *                       filnavn for bilder: assets/img/games/<id>.svg / icons/<id>.svg
  *   name             - visningsnavn
- *   genre            - vises som badge på kortet
- *   rating           - tall som streng, f.eks. "4,7"
  *   points           - poeng-tekst, f.eks. "3 750 poeng"
  *   time             - omtrentlig spilletid, f.eks. "~25 min"
  *   thumbnail        - sti/URL til coverbilde (vises på hovedsiden og i "dagens spill")
@@ -29,8 +27,6 @@ window.STUDILLA_GAMES = [
   {
     id: "fruktfusjon",
     name: "Fruktfusjon",
-    genre: "Puslespill",
-    rating: "4,7",
     points: "Din skår = dine poeng",
     time: "~10 min",
     thumbnail: "assets/img/games/fruktfusjon.svg",
@@ -41,8 +37,6 @@ window.STUDILLA_GAMES = [
   {
     id: "2048",
     name: "2048",
-    genre: "Puslespill",
-    rating: "4,9",
     points: "Din skår = dine poeng",
     time: "~5 min",
     thumbnail: "assets/img/games/2048.svg",
@@ -53,8 +47,6 @@ window.STUDILLA_GAMES = [
   {
     id: "tetris",
     name: "Tetris",
-    genre: "Puslespill",
-    rating: "4,9",
     points: "Din skår = dine poeng",
     time: "~15 min",
     thumbnail: "assets/img/games/tetris.svg",
@@ -65,8 +57,6 @@ window.STUDILLA_GAMES = [
   {
     id: "block-blast",
     name: "Block Blast",
-    genre: "Puslespill",
-    rating: "4,8",
     points: "Din skår = dine poeng",
     time: "~10 min",
     thumbnail: "assets/img/games/block-blast.svg",
@@ -77,8 +67,6 @@ window.STUDILLA_GAMES = [
   {
     id: "snake",
     name: "Snake",
-    genre: "Arkade",
-    rating: "4,6",
     points: "Din skår = dine poeng",
     time: "~8 min",
     thumbnail: "assets/img/games/snake.svg",
@@ -89,8 +77,6 @@ window.STUDILLA_GAMES = [
   {
     id: "bubble-shooter",
     name: "Bubble Shooter",
-    genre: "Puslespill",
-    rating: "4,7",
     points: "Din skår = dine poeng",
     time: "~10 min",
     thumbnail: "assets/img/games/bubble-shooter.svg",
@@ -116,7 +102,7 @@ window.STUDILLA_GAMES_READY = (async function loadGames() {
   const result = await Promise.race([
     sb
       .from("games")
-      .select("id, name, genre, rating, points, time_estimate, description, thumbnail_url, icon_url, points_multiplier, is_daily_game")
+      .select("id, name, points, time_estimate, description, thumbnail_url, icon_url, points_multiplier, is_daily_game")
       .eq("hidden", false)
       .order("sort_order", { ascending: true }),
     timeout
@@ -136,8 +122,6 @@ window.STUDILLA_GAMES_READY = (async function loadGames() {
   const mapped = data.map((g) => ({
     id: g.id,
     name: g.name,
-    genre: g.genre,
-    rating: g.rating,
     points: g.points,
     time: g.time_estimate,
     thumbnail: g.thumbnail_url,

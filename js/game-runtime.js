@@ -232,20 +232,7 @@
         return;
       }
 
-      requestAnimationFrame(() => {
-        els.overlayLevelFill.style.width = "100%";
-      });
-      // Tidsavbrudd i stedet for "transitionend": stolpen kan allerede stå
-      // på 100% når nivået økte, og da skjer det ingen visuell endring, så
-      // "transitionend" fyres aldri.
-      window.setTimeout(() => {
-        els.overlayLevelFill.style.transition = "none";
-        els.overlayLevelFill.style.width = "0%";
-        // eslint-disable-next-line no-unused-expressions
-        els.overlayLevelFill.offsetHeight;
-        els.overlayLevelFill.style.transition = "";
-        requestAnimationFrame(applyFinal);
-      }, 1150);
+      Auth.animateLevelBarSequence(els.overlayLevelFill, { toPct: to.pct, resetDelayMs: 1150, onFinal: applyFinal });
     }
 
     return {

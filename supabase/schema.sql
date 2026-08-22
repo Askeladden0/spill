@@ -769,6 +769,44 @@ drop policy if exists "game_images_admin_delete" on storage.objects;
 create policy "game_images_admin_delete" on storage.objects
   for delete to authenticated using (bucket_id = 'game-images' and public.is_admin());
 
+-- ---------------------------------------------------------------------------
+-- 24. Innstramning: "profiles_select_all" ga tidligere ALLE (også anonyme
+--     besøkende) full lesetilgang til hele profiles-tabellen, inkludert
+--     is_admin – det lekker unødvendig hvem som er admin. Vanlige select mot
+--     profiles begrenses nå til egen rad (admin ser fortsatt alt, siden
+--     adminpanelet trenger det). En egen VIEW uten is_admin/username_is_default
+--     eksponerer fortsatt det rangering/søk/spillerprofiler trenger fra ALLE
+--     brukere (leaderboard-data.js, login.html sin brukernavn-sjekk).
+-- ---------------------------------------------------------------------------
+drop policy if exists "profiles_select_all" on public.profiles;
+drop policy if exists "profiles_select_own_or_admin" on public.profiles;
+create policy "profiles_select_own_or_admin" on public.profiles
+  for select using (auth.uid() = id or public.is_admin());
+
+create or replace view public.profiles_public as
+  select id, username, avatar_color, avatar_icon, level, xp, is_hidden, created_at
+    from public.profiles;
+
+grant select on public.profiles_public to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 25. Fyller hullene i nivåstigen (nivå 4–11 og 14 manglet poengkrav, slik at
+--     "Nivåstigen" på premier.html hoppet rett fra nivå 3 til 12). Ingen
+--     premier legges til her – admin fyller inn ekte partnerpremier for disse
+--     nivåene fra adminpanelet når de er klare.
+-- ---------------------------------------------------------------------------
+insert into public.levels (level_number, points_required) values
+  (4, 4000),
+  (5, 5500),
+  (6, 7000),
+  (7, 8000),
+  (8, 9000),
+  (9, 10000),
+  (10, 10800),
+  (11, 11400),
+  (14, 14500)
+on conflict (level_number) do nothing;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

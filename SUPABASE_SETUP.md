@@ -40,7 +40,9 @@ stegene for å koble et Supabase-prosjekt til nettsiden.
 4. Under **Authentication → URL Configuration**, legg til nettsidens URL(er)
    (f.eks. `http://localhost:8080` under utvikling, og produksjons-URL-en senere)
    i **Redirect URLs**, siden `login.html` ber Supabase sende brukeren til
-   `index.html` etter Google-innlogging.
+   `index.html` etter Google-innlogging, og til `tilbakestill-passord.html`
+   etter "Glemt passord"-lenken (begge må stå i listen, f.eks.
+   `https://dittdomene/index.html` og `https://dittdomene/tilbakestill-passord.html`).
 
 ## 4. Koble nettsiden til prosjektet
 

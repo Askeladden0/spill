@@ -14,8 +14,12 @@
   const games = window.STUDILLA_GAMES || [];
 
   async function loadProfiles() {
+    // Leser fra profiles_public (ikke profiles direkte): RLS begrenser nå
+    // rå-select på profiles til egen rad + admin, siden profiles.is_admin
+    // ikke skal være lesbart for alle. Viewet eksponerer fortsatt de samme
+    // offentlige feltene for ALLE brukere (se supabase/schema.sql, seksjon 24).
     const { data, error } = await sb
-      .from("profiles")
+      .from("profiles_public")
       .select("id, username, avatar_color, avatar_icon, level, xp, is_hidden");
     if (error) {
       console.error("[Studilla] Klarte ikke hente spillere:", error.message);
