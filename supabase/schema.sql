@@ -667,81 +667,13 @@ create policy "user_codes_select_admin" on public.user_codes
   for select using (public.is_admin());
 
 -- ---------------------------------------------------------------------------
--- 21. RPC: claim_reward – eneste måte en bruker kan hente ut en rabattkode
---     på. Kjøres server-side (SECURITY DEFINER) slik at:
---       - nivåkravet sjekkes mot profiles.level (kan ikke jukses fra klienten)
---       - en 'list'-premie tildeles atomisk via UPDATE ... FOR UPDATE SKIP
---         LOCKED, så to samtidige claims aldri kan få tildelt samme kode
---       - koden aldri sendes til klienten før den er skrevet til user_codes
---       - en bruker som claimer samme premie på nytt får tilbake koden sin
---         igjen (already_claimed = true) i stedet for en ny tildeling
---       - en tom kodeliste gir en tydelig feilmelding klienten kan vise,
---         ikke en krasj
+-- 21. RPC: claim_reward – den nivå-bundne forgjengeren til open_level_case
+--     (seksjon 30). Er permanent erstattet og droppes uansett i seksjon 29,
+--     så den opprettes ikke lenger her: funksjonskroppen refererte
+--     rewards.level_number/expires_at, som seksjon 26 fjerner – å re-opprette
+--     den ved en re-kjøring av dette skriptet mot en allerede migrert
+--     database feilet derfor med "column level_number does not exist".
 -- ---------------------------------------------------------------------------
-create or replace function public.claim_reward(p_reward_id bigint)
-returns table (brand text, title text, sub text, code text, already_claimed boolean)
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-declare
-  r public.rewards;
-  my_level int;
-  existing public.user_codes;
-  picked_code text;
-begin
-  if auth.uid() is null then
-    raise exception 'Du må være innlogget for å hente en rabattkode';
-  end if;
-
-  select * into r from public.rewards where id = p_reward_id;
-  if r is null then
-    raise exception 'Fant ikke premien';
-  end if;
-
-  if r.expires_at is not null and r.expires_at < now() then
-    raise exception 'Denne premien er utløpt';
-  end if;
-
-  select level into my_level from public.profiles where id = auth.uid();
-  if my_level is null or my_level < r.level_number then
-    raise exception 'Du har ikke låst opp denne premien ennå';
-  end if;
-
-  select * into existing from public.user_codes where user_id = auth.uid() and reward_id = p_reward_id;
-  if existing is not null then
-    return query select r.brand, r.title, r.sub, existing.code, true;
-    return;
-  end if;
-
-  if r.code_type = 'general' then
-    picked_code := r.general_code;
-  else
-    update public.reward_codes
-       set claimed_by = auth.uid(), claimed_at = now()
-     where id = (
-       select id from public.reward_codes
-        where reward_id = p_reward_id and claimed_by is null
-        order by id
-        limit 1
-        for update skip locked
-     )
-     returning code into picked_code;
-
-    if picked_code is null then
-      raise exception 'Ingen flere koder igjen for denne premien akkurat nå';
-    end if;
-  end if;
-
-  insert into public.user_codes (user_id, brand, title, code, reward_id)
-  values (auth.uid(), r.brand, r.title, picked_code, p_reward_id);
-
-  return query select r.brand, r.title, r.sub, picked_code, false;
-end;
-$$;
-
-revoke all on function public.claim_reward(bigint) from public;
-grant execute on function public.claim_reward(bigint) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 22. RPC: reward_codes_remaining – antall ledige koder igjen for en
