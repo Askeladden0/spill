@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;background:#0d1117;color:#e8edf5;font-family:'Poppins',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  *{box-sizing:border-box}
+  a{color:#2ee87f;text-decoration:none}
+  a:hover{color:#5cf5a0}
+  ::selection{background:#2ee87f;color:#0d1117}
+  @keyframes spinwheel{to{transform:rotate(360deg)}}
+  @keyframes revealPop{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.02)}100%{transform:scale(1);opacity:1}}
+  @keyframes caseFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#0d1117;color:#e8edf5;padding-bottom:80px;display:flex;flex-direction:column">
+
+  
+
+  
+
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ closeModal }}" style="position:absolute;inset:0;background:rgba(6,9,14,.82);backdrop-filter:blur(3px)"></div>
+      <div style="position:relative;z-index:1;width:100%;max-width:760px;background:linear-gradient(160deg,#18222f,#131a25);border:1px solid rgba(255,255,255,.09);border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,.5);overflow:hidden">
+        <button type="button" onClick="{{ closeModal }}" aria-label="Lukk" style="position:absolute;top:14px;right:14px;z-index:3;width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#96a3b8;font-family:inherit;font-size:16px;line-height:1;cursor:pointer" style-hover="color:#e8edf5;border-color:rgba(255,255,255,.2)">×</button>
+
+        <div style="padding:26px 28px 16px;display:flex;flex-direction:column;gap:14px;border-bottom:1px solid rgba(255,255,255,.06)">
+          <div style="display:flex;align-items:center;gap:14px;min-width:0;padding-right:36px">
+            <div style="width:44px;height:44px;flex:none;border-radius:12px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.35);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#2ee87f">{{ modalLevel }}</div>
+            <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+              <h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;color:#fff">{{ modalTitle }}</h2>
+              
+            </div>
+          </div>
+        </div>
+
+        <div style="position:relative;padding:26px 0;background:radial-gradient(120% 100% at 50% 0%,rgba(46,232,127,.07),transparent 70%)">
+          <div ref="{{ modalViewportRef }}" style="position:relative;overflow:hidden;height:214px">
+            <div ref="{{ modalStripRef }}" style="display:flex;gap:12px;padding:0 12px;height:100%;will-change:transform">
+              <sc-for list="{{ modalReel }}" as="it" hint-placeholder-count="14">
+                <article style="flex:none;width:132px;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:{{ it.tileBg }};border:1px solid {{ it.border }}">
+                  <div style="position:relative;height:96px;background:repeating-linear-gradient(135deg,#1b2434 0 12px,#202b3d 12px 24px);display:flex;align-items:center;justify-content:center">
+                    <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#6b7b93">[ logo ]</span>
+                  </div>
+                  <div style="flex:1;padding:12px 12px 10px;display:flex;flex-direction:column;gap:3px;justify-content:center">
+                    <span style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.15">{{ it.value }}</span>
+                    <span style="font-size:11px;font-weight:600;letter-spacing:.02em;color:#7c8aa0">{{ it.brand }}</span>
+                  </div>
+                </article>
+              </sc-for>
+            </div>
+            <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#141c28 0%,rgba(20,28,40,0) 12%,rgba(20,28,40,0) 88%,#141c28 100%)"></div>
+          </div>
+          <div style="position:absolute;top:20px;bottom:20px;left:50%;width:2px;transform:translateX(-1px);background:#2ee87f;box-shadow:0 0 18px rgba(46,232,127,.6);pointer-events:none"></div>
+          <svg width="16" height="12" viewBox="0 0 18 14" style="position:absolute;top:15px;left:50%;transform:translateX(-50%);pointer-events:none"><path d="M9 14 L0 0 L18 0 Z" fill="#2ee87f"></path></svg>
+          <svg width="16" height="12" viewBox="0 0 18 14" style="position:absolute;bottom:15px;left:50%;transform:translateX(-50%) rotate(180deg);pointer-events:none"><path d="M9 14 L0 0 L18 0 Z" fill="#2ee87f"></path></svg>
+        </div>
+
+        <div style="padding:0 28px 26px;display:flex;flex-direction:column;gap:16px">
+          <button type="button" onClick="{{ openModalCase }}" disabled="{{ modalOpenDisabled }}" style="width:100%;padding:16px 32px;border:none;border-radius:12px;background:{{ modalBtnBg }};color:{{ modalBtnFg }};font-family:inherit;font-size:16px;font-weight:800;letter-spacing:-.01em;cursor:{{ modalBtnCursor }}">{{ modalBtnLabel }}</button>
+
+          <sc-if value="{{ hasModalResult }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:16px;background:#0d1117;border:1px solid {{ modalResultBorder }};box-shadow:0 0 0 4px {{ modalResultGlow }};animation:revealPop .45s cubic-bezier(.2,1,.3,1) both">
+              <div style="width:86px;height:86px;flex:none;border-radius:12px;background:repeating-linear-gradient(135deg,#1b2434 0 12px,#202b3d 12px 24px);display:flex;align-items:center;justify-content:center">
+                <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#6b7b93">[ logo ]</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1">
+                <div style="display:flex;align-items:center;gap:7px">
+                  <span style="font-size:11px;font-weight:700;letter-spacing:.12em;color:{{ modalResultColor }}">{{ modalResultRarity }}</span>
+                  <button type="button" aria-label="Mer info om rabatten" style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;border:none;background:transparent;color:#7c8aa0;cursor:pointer" style-hover="color:#2ee87f">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </button>
+                </div>
+                <span style="font-size:26px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1.1">{{ modalResultValue }} hos {{ modalResultBrand }}</span>
+                <span style="font-size:12.5px;font-weight:500;color:#7c8aa0">{{ modalResultTerms }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch;flex:none">
+                <button type="button" style="padding:13px 20px;border-radius:11px;border:none;background:#2ee87f;color:#0d1117;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer" style-hover="background:#5cf5a0">Kopier koden</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <main style="max-width:1240px;margin:0 auto;padding:36px 32px 0;display:flex;flex-direction:column;gap:52px;width:100%;flex:1">
+
+    <section style="display:grid;grid-template-columns:1.55fr 1fr;gap:22px">
+      <div style="position:relative;overflow:hidden;border-radius:20px;border:1px solid rgba(46,232,127,.22);background:#131a25;padding:36px 40px;display:flex;align-items:center;gap:36px">
+        <div style="position:relative;width:132px;height:132px;flex:none;cursor:default">
+          <svg width="132" height="132" viewBox="0 0 132 132" style="transform:rotate(-90deg)">
+            <circle cx="66" cy="66" r="58" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="11"></circle>
+            <circle cx="66" cy="66" r="58" fill="none" stroke="#2ee87f" stroke-width="11" stroke-linecap="round" stroke-dasharray="364.4" stroke-dashoffset="131"></circle>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
+            <span style="font-size:34px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1">12</span>
+            <span style="font-size:10.5px;font-weight:700;letter-spacing:.12em;color:#7c8aa0">NIVÅ</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+          <h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-.025em;color:#fff">360 poeng til nivå 13 — og en ny kasse</h1>
+          <p style="margin:0;font-size:15px;line-height:1.6;color:#96a3b8;max-width:46ch;text-wrap:pretty">Fullfør triks for å samle poeng. Hvert nye nivå gir deg én kasse. Åpne den og du får én tilfeldig rabatt fra partnerne våre — den blir liggende på profilen din til du bruker den.</p>
+          <div style="display:flex;gap:26px;padding-top:2px">
+            <div style="display:flex;flex-direction:column">
+              
+              
+            </div>
+            <div style="display:flex;flex-direction:column">
+              
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-radius:20px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(160deg,#18222f,#131a25);padding:28px 30px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center">
+        <div style="position:relative;width:132px;height:140px;display:flex;align-items:flex-end;justify-content:center">
+          <div style="width:132px;height:132px;animation:spinwheel 12s linear infinite">{{ miniWheel }}</div>
+          <svg width="18" height="14" viewBox="0 0 18 14" style="position:absolute;top:0;left:50%;transform:translateX(-50%);filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));z-index:2">
+            <path d="M9 14 L0 0 L18 0 Z" fill="#2ee87f"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 style="margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em;color:#fff">Lykkehjulet</h2>
+          <p style="margin:0;font-size:13.5px;line-height:1.5;color:#96a3b8">Spinn hjulet daglig og vinn poeng</p>
+        </div>
+        <button type="button" style="width:100%;padding:16px 32px;border:none;border-radius:12px;background:#2ee87f;color:#0d1117;font-family:inherit;font-size:16px;font-weight:800;letter-spacing:-.01em;cursor:pointer" style-hover="background:#5cf5a0">Spinn hjulet</button>
+        
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:1fr 340px;gap:32px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:32px;min-width:0">
+
+        <div>
+          <div style="display:flex;align-items:baseline;gap:12px;justify-content:space-between;margin:0 0 18px">
+            <h2 style="margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff">Åpne kasse</h2>
+            
+          </div>
+
+          <div style="border-radius:20px;border:1px solid rgba(255,255,255,.09);background:linear-gradient(160deg,#18222f,#131a25);overflow:hidden">
+
+            <div style="padding:22px 24px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid rgba(255,255,255,.06)">
+              <div style="display:flex;align-items:center;gap:14px;min-width:0">
+                <div style="width:44px;height:44px;flex:none;border-radius:12px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.35);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#2ee87f">12</div>
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <h3 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#fff">Nivå 12-kassen</h3>
+                  <span style="font-size:12.5px;font-weight:500;color:#7c8aa0"></span>
+                </div>
+              </div>
+            </div>
+
+            <div style="position:relative;padding:26px 0;background:radial-gradient(120% 100% at 50% 0%,rgba(46,232,127,.07),transparent 70%)">
+              <div ref="{{ viewportRef }}" style="position:relative;overflow:hidden;height:214px">
+                <div ref="{{ stripRef }}" style="display:flex;gap:12px;padding:0 12px;height:100%;will-change:transform">
+                  <sc-for list="{{ reel }}" as="it" hint-placeholder-count="14">
+                    <article style="flex:none;width:132px;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:{{ it.tileBg }};border:1px solid {{ it.border }}">
+                      <div style="position:relative;height:96px;background:repeating-linear-gradient(135deg,#1b2434 0 12px,#202b3d 12px 24px);display:flex;align-items:center;justify-content:center">
+                        <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#6b7b93">[ logo ]</span>
+                      </div>
+                      <div style="flex:1;padding:12px 12px 10px;display:flex;flex-direction:column;gap:3px;justify-content:center">
+                        <span style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.15">{{ it.value }}</span>
+                        <span style="font-size:11px;font-weight:600;letter-spacing:.02em;color:#7c8aa0">{{ it.brand }}</span>
+                      </div>
+                        </article>
+                  </sc-for>
+                </div>
+                <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#141c28 0%,rgba(20,28,40,0) 12%,rgba(20,28,40,0) 88%,#141c28 100%)"></div>
+              </div>
+              <div style="position:absolute;top:20px;bottom:20px;left:50%;width:2px;transform:translateX(-1px);background:#2ee87f;box-shadow:0 0 18px rgba(46,232,127,.6);pointer-events:none"></div>
+              <svg width="16" height="12" viewBox="0 0 18 14" style="position:absolute;top:15px;left:50%;transform:translateX(-50%);pointer-events:none"><path d="M9 14 L0 0 L18 0 Z" fill="#2ee87f"></path></svg>
+              <svg width="16" height="12" viewBox="0 0 18 14" style="position:absolute;bottom:15px;left:50%;transform:translateX(-50%) rotate(180deg);pointer-events:none"><path d="M9 14 L0 0 L18 0 Z" fill="#2ee87f"></path></svg>
+            </div>
+
+            <div style="padding:0 24px 24px;display:flex;flex-direction:column;gap:16px">
+              <button type="button" onClick="{{ open }}" disabled="{{ openDisabled }}" style="width:100%;padding:16px 32px;border:none;border-radius:12px;background:{{ openBg }};color:{{ openFg }};font-family:inherit;font-size:16px;font-weight:800;letter-spacing:-.01em;cursor:{{ openCursor }}">{{ openLabel }}</button>
+
+              <sc-if value="{{ hasResult }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:16px;background:#0d1117;border:1px solid {{ resultBorder }};box-shadow:0 0 0 4px {{ resultGlow }};animation:revealPop .45s cubic-bezier(.2,1,.3,1) both">
+                  <div style="width:86px;height:86px;flex:none;border-radius:12px;background:repeating-linear-gradient(135deg,#1b2434 0 12px,#202b3d 12px 24px);display:flex;align-items:center;justify-content:center">
+                    <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#6b7b93">[ logo ]</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1">
+                    <div style="display:flex;align-items:center;gap:7px">
+                      <span style="font-size:11px;font-weight:700;letter-spacing:.12em;color:{{ resultColor }}">{{ resultRarity }}</span>
+                      <button type="button" aria-label="Mer info om rabatten" style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;border:none;background:transparent;color:#7c8aa0;cursor:pointer" style-hover="color:#2ee87f">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                      </button>
+                    </div>
+                    <span style="font-size:26px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1.1">{{ resultValue }} hos {{ resultBrand }}</span>
+                    <span style="font-size:12.5px;font-weight:500;color:#7c8aa0">{{ resultTerms }}</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch;flex:none">
+                    <button type="button" style="padding:13px 20px;border-radius:11px;border:none;background:#2ee87f;color:#0d1117;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer" style-hover="background:#5cf5a0">Kopier koden</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <sc-for list="{{ cases }}" as="c" hint-placeholder-count="3">
+              
+            </sc-for>
+          </div>
+          <sc-if value="{{ noCases }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;font-size:13px;font-weight:500;color:#7c8aa0">Ingen uåpnede kasser — nå nivå 13 for å få en ny.</p>
+          </sc-if>
+        </div>
+      </div>
+
+      <aside style="position:sticky;top:96px;display:flex;flex-direction:column;gap:22px">
+        <div style="border-radius:18px;border:1px solid rgba(255,255,255,.06);background:#131a25;overflow:hidden">
+          <div style="padding:18px 20px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(255,255,255,.06)">
+            <span style="width:8px;height:8px;border-radius:50%;background:#2ee87f;box-shadow:0 0 0 4px rgba(46,232,127,.16)"></span>
+            <h2 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff">Nettopp låst opp</h2>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ feed }}" as="f" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.06)">
+                <div style="width:34px;height:34px;flex:none;border-radius:10px;background:rgba(46,232,127,.12);color:#2ee87f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">{{ f.initials }}</div>
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
+                  <span style="font-size:13.5px;font-weight:600;color:#e8edf5">{{ f.text }}</span>
+                  <span style="font-size:11.5px;font-weight:500;color:#7c8aa0">{{ f.time }}</span>
+                </div>
+                
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        
+      </aside>
+    </section>
+  </main><footer style="max-width:1240px;margin:64px auto 0;padding:24px 32px 0;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.09);width:100%">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="width:24px;height:24px;border-radius:7px;background:#0d1117;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"></rect><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"></rect></svg></span>
+      <span style="font-size:13px;font-weight:500;color:#7c8aa0">© 2026 Studilla</span>
+    </div>
+    <nav style="display:flex;align-items:center;gap:28px">
+      <a href="#kontakt" style="font-size:13.5px;font-weight:600;color:#96a3b8" style-hover="color:#2ee87f">Kontakt</a>
+      <a href="#personvern" style="font-size:13.5px;font-weight:600;color:#96a3b8" style-hover="color:#2ee87f">Personvern</a>
+      <a href="#vilkar" style="font-size:13.5px;font-weight:600;color:#96a3b8" style-hover="color:#2ee87f">Vilkår</a>
+    </nav>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1400,&quot;height&quot;:1700}}">
+const RARITY = {
+  vanlig: { label: "VANLIG", color: "#7c8aa0", weight: 60 },
+  sjelden: { label: "SJELDEN", color: "#4b8ef0", weight: 25 },
+  episk: { label: "EPISK", color: "#9d6bf5", weight: 11 },
+  legendarisk: { label: "LEGENDARISK", color: "#f0b429", weight: 4 }
+};
+
+const POOL = [
+  { brand: "Narvesen", value: "20 kr av", rarity: "vanlig", terms: "Ved kjøp over 100 kr" },
+  { brand: "Cubus", value: "10 %", rarity: "vanlig", terms: "Nettbutikk og butikk" },
+  { brand: "Kaffebrenneriet", value: "15 kr av", rarity: "vanlig", terms: "Én kopp per dag" },
+  { brand: "Peppes", value: "10 %", rarity: "vanlig", terms: "Gjelder hele menyen" },
+  { brand: "Sushi & Wok", value: "25 kr av", rarity: "vanlig", terms: "Take away" },
+  { brand: "Peppes", value: "20 %", rarity: "sjelden", terms: "Gjelder hele menyen" },
+  { brand: "Sushi & Wok", value: "100 kr av", rarity: "sjelden", terms: "Ved kjøp over 400 kr" },
+  { brand: "Cubus", value: "25 %", rarity: "sjelden", terms: "Én ordre, hele utvalget" },
+  { brand: "Kicks", value: "30 %", rarity: "sjelden", terms: "Hudpleie, én ordre" },
+  { brand: "Nike", value: "25 %", rarity: "episk", terms: "Utvalgte modeller" },
+  { brand: "Elkjøp", value: "300 kr av", rarity: "episk", terms: "Gaming-tilbehør" },
+  { brand: "XXL", value: "20 %", rarity: "episk", terms: "Unntatt sykkel" },
+  { brand: "Steam", value: "500 kr av", rarity: "legendarisk", terms: "Gavekort, én gang" },
+  { brand: "Norwegian", value: "500 kr av", rarity: "legendarisk", terms: "Innenriks, hele året" }
+];
+
+const STEP = 144;
+const WIN_INDEX = 46;
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.viewportRef = React.createRef();
+    this.stripRef = React.createRef();
+    this.modalViewportRef = React.createRef();
+    this.modalStripRef = React.createRef();
+    this.state = {
+      reel: this.buildReel(this.pick()),
+      spinning: false,
+      result: null,
+      selected: 12,
+      opened: [],
+      modalCase: null,
+      modalReel: this.buildReel(this.pick()),
+      modalSpinning: false,
+      modalResult: null
+    };
+  }
+
+  pick() {
+    const total = POOL.reduce((s, i) => s + RARITY[i.rarity].weight / POOL.filter(p => p.rarity === i.rarity).length, 0);
+    let r = Math.random() * total;
+    for (const item of POOL) {
+      const w = RARITY[item.rarity].weight / POOL.filter(p => p.rarity === item.rarity).length;
+      r -= w;
+      if (r <= 0) return item;
+    }
+    return POOL[0];
+  }
+
+  tile(item) {
+    const rar = RARITY[item.rarity];
+    return {
+      brand: item.brand,
+      value: item.value,
+      color: rar.color,
+      border: item.rarity === "vanlig" ? "rgba(255,255,255,.07)" : rar.color + "55",
+      tileBg: item.rarity === "vanlig" ? "#131a25" : "linear-gradient(180deg," + rar.color + "1f,#131a25 62%)"
+    };
+  }
+
+  buildReel(winner) {
+    const items = [];
+    for (let i = 0; i < 56; i++) items.push(i === WIN_INDEX ? winner : this.pick());
+    this.winner = winner;
+    return items.map(i => this.tile(i));
+  }
+
+  spin(cfg) {
+    const winner = this.pick();
+    const strip = cfg.strip.current;
+    const vp = cfg.viewport.current;
+    if (!strip || !vp) return;
+
+    strip.style.transition = "none";
+    strip.style.transform = "translateX(0px)";
+    this.setState(cfg.start(this.buildReel(winner)), () => {
+      const jitter = (Math.random() - 0.5) * 90;
+      const target = -(WIN_INDEX * STEP + STEP / 2 - vp.clientWidth / 2) + jitter;
+      requestAnimationFrame(() => {
+        strip.style.transition = "transform 6.4s cubic-bezier(.07,.72,.06,1)";
+        strip.style.transform = "translateX(" + target + "px)";
+      });
+      window.setTimeout(() => this.setState(s => cfg.done(s, winner)), 6600);
+    });
+  }
+
+  open = () => {
+    if (this.state.spinning) return;
+    this.spin({
+      strip: this.stripRef,
+      viewport: this.viewportRef,
+      start: reel => ({ reel, spinning: true, result: null }),
+      done: (s, winner) => ({ spinning: false, result: winner, opened: s.opened.concat([s.selected]) })
+    });
+  };
+
+  openModalCase = () => {
+    if (this.state.modalSpinning) return;
+    this.spin({
+      strip: this.modalStripRef,
+      viewport: this.modalViewportRef,
+      start: modalReel => ({ modalReel, modalSpinning: true, modalResult: null }),
+      done: (s, winner) => ({
+        modalSpinning: false,
+        modalResult: winner,
+        opened: s.opened.indexOf(s.modalCase) === -1 ? s.opened.concat([s.modalCase]) : s.opened
+      })
+    });
+  };
+
+  openCaseModal(n) {
+    this.setState({ modalCase: n, modalResult: null, modalSpinning: false, modalReel: this.buildReel(this.pick()) });
+  }
+
+  closeModal = () => {
+    if (this.state.modalSpinning) return;
+    this.setState({ modalCase: null });
+  };
+
+  code(item) {
+    const base = item.brand.replace(/[^A-Za-zÆØÅæøå]/g, "").slice(0, 6).toUpperCase();
+    const num = item.value.replace(/[^0-9]/g, "") || "10";
+    return base + "-" + num + "-" + "8FQ2";
+  }
+
+  renderVals() {
+    const { spinning, result, selected, opened, reel, modalCase, modalReel, modalSpinning, modalResult } = this.state;
+    const rar = result ? RARITY[result.rarity] : null;
+    const mRar = modalResult ? RARITY[modalResult.rarity] : null;
+
+    const caseDefs = [
+      { n: 12, title: "Nivå 12-kassen" },
+      { n: 11, title: "Nivå 11-kassen" },
+      { n: 10, title: "Nivå 10-kassen" },
+      { n: 13, title: "Nivå 13-kassen", locked: true }
+    ];
+
+    const cases = caseDefs
+      .filter(c => !c.locked && opened.indexOf(c.n) === -1)
+      .map(c => ({ n: c.n, select: () => this.openCaseModal(c.n) }));
+
+    const unopened = caseDefs.filter(c => !c.locked && opened.indexOf(c.n) === -1).length;
+
+    return {
+      reel,
+      cases,
+      noCases: cases.length === 0,
+      viewportRef: this.viewportRef,
+      stripRef: this.stripRef,
+      miniWheel: this.wheel(132),
+      unopenedCount: unopened,
+      activeCaseLabel: unopened + " uåpnede kasser",
+      odds: Object.keys(RARITY).map(k => ({
+        label: RARITY[k].label,
+        pct: RARITY[k].weight + " %",
+        color: RARITY[k].color
+      })),
+      open: this.open,
+      openDisabled: spinning || !cases.some(c => c.n === selected),
+      openLabel: spinning ? "Åpner kassen …" : result ? "Åpne neste kasse" : "Åpne nivå " + selected + "-kassen",
+      openBg: spinning ? "#1b2434" : "#2ee87f",
+      openFg: spinning ? "#7c8aa0" : "#0d1117",
+      openCursor: spinning ? "wait" : "pointer",
+      hasResult: !!result,
+      resultValue: result ? result.value : "",
+      resultBrand: result ? result.brand : "",
+      resultTerms: result ? result.terms + " · lagret i «Mine koder»" : "",
+      resultRarity: rar ? rar.label + " RABATT" : "",
+      resultColor: rar ? rar.color : "#7c8aa0",
+      resultBorder: rar ? rar.color + "80" : "rgba(255,255,255,.09)",
+      resultGlow: rar ? rar.color + "1a" : "transparent",
+      resultCode: result ? this.code(result) : "",
+      modalOpen: modalCase !== null,
+      modalLevel: modalCase,
+      modalTitle: "Nivå " + modalCase + "-kassen",
+      modalReel,
+      modalViewportRef: this.modalViewportRef,
+      modalStripRef: this.modalStripRef,
+      openModalCase: this.openModalCase,
+      closeModal: this.closeModal,
+      modalOpenDisabled: modalSpinning || !!modalResult,
+      modalBtnLabel: modalSpinning ? "Åpner kassen …" : modalResult ? "Kassen er åpnet" : "Åpne nivå " + modalCase + "-kassen",
+      modalBtnBg: modalSpinning || modalResult ? "#1b2434" : "#2ee87f",
+      modalBtnFg: modalSpinning || modalResult ? "#7c8aa0" : "#0d1117",
+      modalBtnCursor: modalSpinning ? "wait" : modalResult ? "default" : "pointer",
+      hasModalResult: !!modalResult,
+      modalResultValue: modalResult ? modalResult.value : "",
+      modalResultBrand: modalResult ? modalResult.brand : "",
+      modalResultTerms: modalResult ? modalResult.terms + " · lagret i «Mine koder»" : "",
+      modalResultRarity: mRar ? mRar.label + " RABATT" : "",
+      modalResultColor: mRar ? mRar.color : "#7c8aa0",
+      modalResultBorder: mRar ? mRar.color + "80" : "rgba(255,255,255,.09)",
+      modalResultGlow: mRar ? mRar.color + "1a" : "transparent",
+      modalResultCode: modalResult ? this.code(modalResult) : "",
+      feed: [
+        { initials: "MJ", text: "Mari åpnet 25 % hos Nike", time: "2 min siden", color: "#9d6bf5" },
+        { initials: "SO", text: "Sondre åpnet 500 kr hos Steam", time: "6 min siden", color: "#f0b429" },
+        { initials: "AH", text: "Amina åpnet 20 kr hos Narvesen", time: "11 min siden", color: "#7c8aa0" },
+        { initials: "TK", text: "Trym åpnet 100 kr hos Sushi & Wok", time: "18 min siden", color: "#4b8ef0" },
+        { initials: "LB", text: "Lea åpnet 10 % hos Cubus", time: "24 min siden", color: "#7c8aa0" },
+        { initials: "EN", text: "Even åpnet 20 % hos XXL", time: "31 min siden", color: "#9d6bf5" }
+      ],
+      myCodes: [
+        { title: "25 % hos Nike", sub: "Episk · gyldig til 30. sep" },
+        { title: "100 kr av hos Sushi & Wok", sub: "Sjelden · gyldig til 12. sep" },
+        { title: "10 % hos Peppes", sub: "Vanlig · gyldig til 1. okt" }
+      ]
+    };
+  }
+
+  polar(cx, cy, r, a) {
+    const rad = ((a - 90) * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  wheel(size) {
+    const VALUES = [10, 750, 100, 500, 50, 1000, 250, 400];
+    const COLORS = ["#2ee87f", "#1b2434"];
+    const cx = size / 2, cy = size / 2, r = size / 2 - 4, n = VALUES.length, seg = 360 / n;
+    const paths = [];
+    for (let i = 0; i < n; i++) {
+      const p1 = this.polar(cx, cy, r, i * seg), p2 = this.polar(cx, cy, r, (i + 1) * seg);
+      paths.push(React.createElement("path", { key: i, d: `M${cx} ${cy} L${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A${r} ${r} 0 0 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z`, fill: COLORS[i % 2] }));
+    }
+    return React.createElement("svg", { width: size, height: size, viewBox: `0 0 ${size} ${size}` },
+      React.createElement("circle", { cx, cy, r: r + 2, fill: "#0d1117" }),
+      paths,
+      React.createElement("circle", { cx, cy, r: size * 0.11, fill: "#131a25", stroke: "rgba(46,232,127,.5)", strokeWidth: 3 })
+    );
+  }
+}
+</script>
+</body>
+</html>
