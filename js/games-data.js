@@ -1,13 +1,13 @@
 /**
- * Spilldatabase for Dilla.
+ * Spilldatabase for Studilla.
  *
- * window.DILLA_GAMES starter som en statisk fallback-liste (samme format
+ * window.STUDILLA_GAMES starter som en statisk fallback-liste (samme format
  * som før), men fylles umiddelbart om med ekte data fra Supabase-tabellen
  * `games` når den er tilgjengelig – arrayet muteres i stedet for å byttes ut,
  * slik at kode som har lagret en referanse til det (main.js, leaderboard-data.js
  * osv.) automatisk ser oppdaterte verdier.
  *
- * Vent på window.DILLA_GAMES_READY før du render noe som er avhengig av
+ * Vent på window.STUDILLA_GAMES_READY før du render noe som er avhengig av
  * spilldata, slik at siden ikke rekker å tegne fallback-dataene først.
  *
  * Felter per spill:
@@ -25,7 +25,7 @@
  *   pointsMultiplier - valgfri tekst for badge i heltefeltet, f.eks. "1,5X POENG"
  */
 
-window.DILLA_GAMES = [
+window.STUDILLA_GAMES = [
   {
     id: "fruktfusjon",
     name: "Fruktfusjon",
@@ -102,12 +102,12 @@ window.DILLA_GAMES = [
 
 /**
  * Henter spill fra Supabase-tabellen `games` og oppdaterer
- * window.DILLA_GAMES i place (samme array-referanse). Feiler stille og
+ * window.STUDILLA_GAMES i place (samme array-referanse). Feiler stille og
  * beholder fallback-listen over hvis Supabase ikke er tilgjengelig ennå.
  */
-window.DILLA_GAMES_READY = (async function loadGames() {
+window.STUDILLA_GAMES_READY = (async function loadGames() {
   const sb = window.supabaseClient;
-  if (!sb) return window.DILLA_GAMES;
+  if (!sb) return window.STUDILLA_GAMES;
 
   // Ikke la et treigt/utilgjengelig nettverk blokkere siden i det uendelige –
   // etter 5 sekunder gir vi opp og viser fallback-listen i stedet.
@@ -123,14 +123,14 @@ window.DILLA_GAMES_READY = (async function loadGames() {
   ]);
 
   if (result.timedOut) {
-    console.error("[Dilla] Tidsavbrudd ved henting av spill, bruker fallback-liste.");
-    return window.DILLA_GAMES;
+    console.error("[Studilla] Tidsavbrudd ved henting av spill, bruker fallback-liste.");
+    return window.STUDILLA_GAMES;
   }
 
   const { data, error } = result;
   if (error || !data || !data.length) {
-    if (error) console.error("[Dilla] Klarte ikke hente spill, bruker fallback-liste:", error.message);
-    return window.DILLA_GAMES;
+    if (error) console.error("[Studilla] Klarte ikke hente spill, bruker fallback-liste:", error.message);
+    return window.STUDILLA_GAMES;
   }
 
   const mapped = data.map((g) => ({
@@ -147,9 +147,9 @@ window.DILLA_GAMES_READY = (async function loadGames() {
     pointsMultiplier: g.points_multiplier || undefined
   }));
 
-  window.DILLA_GAMES.length = 0;
-  window.DILLA_GAMES.push(...mapped);
-  return window.DILLA_GAMES;
+  window.STUDILLA_GAMES.length = 0;
+  window.STUDILLA_GAMES.push(...mapped);
+  return window.STUDILLA_GAMES;
 })();
 
 /**

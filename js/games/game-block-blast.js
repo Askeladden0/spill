@@ -1,5 +1,5 @@
 /**
- * Dilla – Block Blast.
+ * Studilla – Block Blast.
  * Dra klosser fra brettet nederst og slipp dem på 8x8-rutenettet. Fyll en
  * hel rad eller kolonne for å sprenge den og få poeng. Spillet er over når
  * ingen av de tre klossene i "hånden" lenger passer noe sted på brettet.
@@ -61,7 +61,7 @@
     let cellSize = 0;
     let dragState = null;
 
-    window.DillaGameRuntime.mount(container, GAME_ID).then((s) => {
+    window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
         <p class="game-blast-hint">Dra en kloss fra hånden og slipp den på brettet. Fyll en hel rad eller kolonne for å sprenge den!</p>
@@ -343,6 +343,6 @@
     }
   }
 
-  window.DILLA_GAME_MODULES = window.DILLA_GAME_MODULES || {};
-  window.DILLA_GAME_MODULES[GAME_ID] = { start };
+  window.STUDILLA_GAME_MODULES = window.STUDILLA_GAME_MODULES || {};
+  window.STUDILLA_GAME_MODULES[GAME_ID] = { start };
 })();

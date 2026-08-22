@@ -1,5 +1,5 @@
 /**
- * Dilla – delt kjøretid for spill: poeng-HUD, rekordlagring og
+ * Studilla – delt kjøretid for spill: poeng-HUD, rekordlagring og
  * game-over-visning. Alle spill (2048 og senere spill) bygger sin egen
  * spilloverflate, men bruker denne til poeng/rekord slik at UIen og
  * lagringslogikken er lik på tvers av spill.
@@ -14,7 +14,7 @@
   "use strict";
 
   const sb = window.supabaseClient;
-  const Auth = window.DillaAuth;
+  const Auth = window.StudillaAuth;
 
   // Poengterskler som viser en kort "Block Blast"-aktig tekst midt i
   // spillflaten når spilleren når dem i én økt. Delt på tvers av alle spill
@@ -31,7 +31,7 @@
   ];
 
   function guestBestKey(gameId) {
-    return `dilla_guest_best_${gameId}`;
+    return `studilla_guest_best_${gameId}`;
   }
 
   function getGuestBest(gameId) {
@@ -69,7 +69,7 @@
         .from("game_records")
         .insert({ user_id: profile.id, game_id: gameId, score: rounded });
       if (insertError) {
-        console.error("[Dilla] Klarte ikke lagre rekord:", insertError.message);
+        console.error("[Studilla] Klarte ikke lagre rekord:", insertError.message);
       }
 
       // add_points returnerer den oppdaterte profilraden direkte, så vi
@@ -77,7 +77,7 @@
       // race/cache-problemer og vise gammel xp/nivå i UIen).
       const { data: updatedProfile, error: rpcError } = await sb.rpc("add_points", { p_delta: rounded });
       if (rpcError) {
-        console.error("[Dilla] Klarte ikke oppdatere xp/nivå:", rpcError.message);
+        console.error("[Studilla] Klarte ikke oppdatere xp/nivå:", rpcError.message);
       }
 
       const best = await loadBest(gameId, profile);
@@ -312,8 +312,8 @@
         animateOverlayLevel(prevProfile, newProfile);
         els.overlay.hidden = false;
 
-        if (leveledUp && window.DillaLevelUp) {
-          window.DillaLevelUp.show(prevProfile, newProfile);
+        if (leveledUp && window.StudillaLevelUp) {
+          window.StudillaLevelUp.show(prevProfile, newProfile);
         }
 
         return { isNewBest, best, leveledUp };
@@ -321,5 +321,5 @@
     };
   }
 
-  window.DillaGameRuntime = { mount };
+  window.StudillaGameRuntime = { mount };
 })();

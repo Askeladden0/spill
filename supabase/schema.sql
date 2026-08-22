@@ -1,5 +1,5 @@
 -- =============================================================================
--- Dilla – Supabase-skjema for innlogging, profiler, avatar-innstillinger
+-- Studilla – Supabase-skjema for innlogging, profiler, avatar-innstillinger
 -- og spillrekorder.
 --
 -- Kjør denne filen i Supabase-dashbordet under "SQL Editor" på et nytt/tomt
@@ -196,7 +196,7 @@ create trigger on_auth_user_created
 --    Trigger'en fyrer på ENHVER oppdatering av profiles, også den som
 --    public.add_points() gjør selv for å legge til poeng. Systemfunksjoner
 --    som skal få lov til å skrive level/xp setter derfor et transaksjons-
---    lokalt flagg ("dilla.trusted_profile_write" = 'on') rett før sin
+--    lokalt flagg ("studilla.trusted_profile_write" = 'on') rett før sin
 --    egen update; trigger'en slipper skrivingen gjennom når flagget er satt,
 --    i tillegg til når brukeren er admin. Flagget nullstilles automatisk når
 --    transaksjonen er ferdig (set_config-parameteret `is_local` = true).
@@ -209,7 +209,7 @@ set search_path = public, pg_temp
 as $$
 begin
   if not public.is_admin()
-     and coalesce(current_setting('dilla.trusted_profile_write', true), '') <> 'on' then
+     and coalesce(current_setting('studilla.trusted_profile_write', true), '') <> 'on' then
     new.is_admin := old.is_admin;
     new.level := old.level;
     new.xp := old.xp;
@@ -388,7 +388,7 @@ begin
     raise exception 'p_delta må være et positivt tall';
   end if;
 
-  perform set_config('dilla.trusted_profile_write', 'on', true);
+  perform set_config('studilla.trusted_profile_write', 'on', true);
   update public.profiles
      set xp = xp + p_delta
    where id = auth.uid()
@@ -403,7 +403,7 @@ begin
    where points_required <= updated.xp;
 
   if best_level is not null and best_level > updated.level then
-    perform set_config('dilla.trusted_profile_write', 'on', true);
+    perform set_config('studilla.trusted_profile_write', 'on', true);
     update public.profiles set level = best_level where id = auth.uid()
       returning * into updated;
   end if;

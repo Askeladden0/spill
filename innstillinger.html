@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dilla · Innstillinger</title>
-<meta name="description" content="Administrer kontoen og innstillingene dine hos Dilla.">
+<title>Studilla · Innstillinger</title>
+<meta name="description" content="Administrer kontoen og innstillingene dine hos Studilla.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,7 @@
     <div class="header-left">
       <a href="index.html" class="logo">
         <span class="logo-mark"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"/><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"/></svg></span>
-        <span class="logo-text">Di<span>ll</span>a</span>
+        <span class="logo-text">Studi<span>ll</span>a</span>
       </a>
       <nav class="main-nav">
         <a href="index.html#spill" class="nav-link" data-page="spill">
@@ -150,7 +150,7 @@
   <footer class="site-footer">
     <div class="footer-brand">
       <span class="footer-logo-mark"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"/><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"/></svg></span>
-      <span class="footer-copy">© 2026 Dilla</span>
+      <span class="footer-copy">© 2026 Studilla</span>
     </div>
     <nav class="footer-nav">
       <a href="#kontakt">Kontakt</a>
@@ -188,8 +188,8 @@
 (function () {
   "use strict";
   const sb = window.supabaseClient;
-  const Auth = window.DillaAuth;
-  const Avatars = window.DillaAvatars;
+  const Auth = window.StudillaAuth;
+  const Avatars = window.StudillaAvatars;
 
   let profile = null;
   let avatarOptions = { colors: [], icons: [] };
@@ -361,7 +361,7 @@
 
   // ---------- Init ----------
   (async function init() {
-    if (window.DILLA_GAMES_READY) await window.DILLA_GAMES_READY;
+    if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
     profile = await Auth.requireAuth();
     if (!profile) return;
     document.querySelector("[data-settings-main]").hidden = false;

@@ -1,5 +1,5 @@
 /**
- * Dilla – Fruktfusjon.
+ * Studilla – Fruktfusjon.
  * Klassisk "fruit merge"-spill: slipp frukt ned i krukken, og når to like
  * frukter treffer hverandre slås de sammen til neste frukt i kjeden. Krukken
  * ser ut som i andre fruktfusjon-spill (rund frukt, tegneserieaktig look) –
@@ -51,7 +51,7 @@
     let bodySeq = 1;
     let mergeEffects = [];
 
-    window.DillaGameRuntime.mount(container, GAME_ID).then((s) => {
+    window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
         <p class="fruit-merge-hint">Flytt musen (eller dra fingeren) for å sikte, og klikk/trykk for å slippe frukten. Like frukter som treffer hverandre blir til neste frukt!</p>
@@ -289,6 +289,6 @@
     }
   }
 
-  window.DILLA_GAME_MODULES = window.DILLA_GAME_MODULES || {};
-  window.DILLA_GAME_MODULES[GAME_ID] = { start };
+  window.STUDILLA_GAME_MODULES = window.STUDILLA_GAME_MODULES || {};
+  window.STUDILLA_GAME_MODULES[GAME_ID] = { start };
 })();
