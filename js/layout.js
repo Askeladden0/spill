@@ -42,7 +42,7 @@
       <span class="footer-copy">© 2026 Studilla</span>
     </div>
     <nav class="footer-nav">
-      <a href="#kontakt">Kontakt</a>
+      <a href="kontakt.html">Kontakt</a>
       <a href="#personvern">Personvern</a>
       <a href="vilkar.html">Vilkår</a>
       <a href="admin.html" data-admin-only style="display:none">Admin</a>
