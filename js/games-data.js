@@ -14,7 +14,6 @@
  *   id               - unik slug, brukes i URL: player.html?id=<id>, og som
  *                       filnavn for bilder: assets/img/games/<id>.svg / icons/<id>.svg
  *   name             - visningsnavn
- *   points           - poeng-tekst, f.eks. "3 750 poeng"
  *   time             - omtrentlig spilletid, f.eks. "~25 min"
  *   thumbnail        - sti/URL til coverbilde (vises på hovedsiden og i "dagens spill")
  *   icon             - sti/URL til ikon (vises til venstre for spillnavn i rangering/rekorder)
@@ -29,7 +28,6 @@ window.STUDILLA_GAMES = [
   {
     id: "fruktfusjon",
     name: "Fruktfusjon",
-    points: "Din skår = dine poeng",
     time: "~10 min",
     thumbnail: "assets/img/games/fruktfusjon.svg",
     icon: "assets/img/icons/fruktfusjon.svg",
@@ -39,7 +37,6 @@ window.STUDILLA_GAMES = [
   {
     id: "2048",
     name: "2048",
-    points: "Din skår = dine poeng",
     time: "~5 min",
     thumbnail: "assets/img/games/2048.svg",
     icon: "assets/img/icons/2048.svg",
@@ -49,7 +46,6 @@ window.STUDILLA_GAMES = [
   {
     id: "tetris",
     name: "Tetris",
-    points: "Din skår = dine poeng",
     time: "~15 min",
     thumbnail: "assets/img/games/tetris.svg",
     icon: "assets/img/icons/tetris.svg",
@@ -59,7 +55,6 @@ window.STUDILLA_GAMES = [
   {
     id: "block-blast",
     name: "Block Blast",
-    points: "Din skår = dine poeng",
     time: "~10 min",
     thumbnail: "assets/img/games/block-blast.svg",
     icon: "assets/img/icons/block-blast.svg",
@@ -69,7 +64,6 @@ window.STUDILLA_GAMES = [
   {
     id: "snake",
     name: "Snake",
-    points: "Din skår = dine poeng",
     time: "~8 min",
     thumbnail: "assets/img/games/snake.svg",
     icon: "assets/img/icons/snake.svg",
@@ -79,7 +73,6 @@ window.STUDILLA_GAMES = [
   {
     id: "bubble-shooter",
     name: "Bubble Shooter",
-    points: "Din skår = dine poeng",
     time: "~10 min",
     thumbnail: "assets/img/games/bubble-shooter.svg",
     icon: "assets/img/icons/bubble-shooter.svg",
@@ -93,9 +86,44 @@ window.STUDILLA_GAMES = [
  * window.STUDILLA_GAMES i place (samme array-referanse). Feiler stille og
  * beholder fallback-listen over hvis Supabase ikke er tilgjengelig ennå.
  */
+/**
+ * "Dagens triks" roterer automatisk: hvilket triks som er dagens regnes ut
+ * fra datoen, slik at det bytter seg selv ved midnatt uten at noen må inn i
+ * adminpanelet. Rekkefølgen på forsiden (sort_order) brukes som runde, så
+ * alle triks får tur etter tur.
+ *
+ * Admin kan skru rotasjonen av i adminpanelet
+ * (app_settings.daily_game_rotation); da blir triksen som er merket manuelt
+ * med is_daily_game stående til den byttes.
+ */
+window.STUDILLA_DAILY_ROTATION = true;
+
+// Døgnnummer i UTC – samme tall for alle besøkende hele døgnet, og +1 ved
+// midnatt.
+function studillaDayIndex(now) {
+  return Math.floor((now || Date.now()) / 86400000);
+}
+
+window.studillaApplyDailyRotation = function applyDailyRotation(games) {
+  if (!games || !games.length) return games;
+  if (!window.STUDILLA_DAILY_ROTATION) return games;
+  const index = studillaDayIndex() % games.length;
+  games.forEach((g, i) => { g.isDailyGame = i === index; });
+  return games;
+};
+
+/**
+ * Millisekunder til neste rotasjon (midnatt UTC). Brukes av nedtellingen på
+ * forsiden.
+ */
+window.studillaMsUntilNextDailyGame = function msUntilNextDailyGame() {
+  const now = Date.now();
+  return (studillaDayIndex(now) + 1) * 86400000 - now;
+};
+
 window.STUDILLA_GAMES_READY = (async function loadGames() {
   const sb = window.supabaseClient;
-  if (!sb) return window.STUDILLA_GAMES;
+  if (!sb) return window.studillaApplyDailyRotation(window.STUDILLA_GAMES);
 
   // Ikke la et treigt/utilgjengelig nettverk blokkere siden i det uendelige –
   // etter 5 sekunder gir vi opp og viser fallback-listen i stedet.
@@ -121,17 +149,29 @@ window.STUDILLA_GAMES_READY = (async function loadGames() {
       .order("sort_order", { ascending: true });
   }
 
-  const result = await Promise.race([fetchGames(), timeout]);
+  // Rotasjonen kan skrus av i adminpanelet. Feiler oppslaget (eller mangler
+  // kolonnen fordi migrasjonen ikke er kjørt), lar vi rotasjonen stå på.
+  async function fetchRotationSetting() {
+    const { data, error } = await sb.from("app_settings").select("daily_game_rotation").eq("id", 1).maybeSingle();
+    if (error || !data || data.daily_game_rotation == null) return true;
+    return !!data.daily_game_rotation;
+  }
+
+  const [result, rotation] = await Promise.all([
+    Promise.race([fetchGames(), timeout]),
+    Promise.race([fetchRotationSetting(), timeout.then(() => true)]),
+  ]);
+  window.STUDILLA_DAILY_ROTATION = rotation !== false;
 
   if (result.timedOut) {
     console.error("[Studilla] Tidsavbrudd ved henting av spill, bruker fallback-liste.");
-    return window.STUDILLA_GAMES;
+    return window.studillaApplyDailyRotation(window.STUDILLA_GAMES);
   }
 
   const { data, error } = result;
   if (error || !data || !data.length) {
     if (error) console.error("[Studilla] Klarte ikke hente spill, bruker fallback-liste:", error.message);
-    return window.STUDILLA_GAMES;
+    return window.studillaApplyDailyRotation(window.STUDILLA_GAMES);
   }
 
   const mapped = data.map((g) => ({
@@ -150,7 +190,7 @@ window.STUDILLA_GAMES_READY = (async function loadGames() {
 
   window.STUDILLA_GAMES.length = 0;
   window.STUDILLA_GAMES.push(...mapped);
-  return window.STUDILLA_GAMES;
+  return window.studillaApplyDailyRotation(window.STUDILLA_GAMES);
 })();
 
 /**

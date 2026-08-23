@@ -14,6 +14,17 @@
   //   Passord: minst 8 tegn, minst én bokstav og ett tall
   const USERNAME_REGEX = /^[a-zA-Z0-9_]{5,20}$/;
   const PASSWORD_MIN_LENGTH = 8;
+
+  // Studilla logges inn med brukernavn og passord – ikke e-post. Supabase Auth
+  // krever likevel en e-postadresse per konto, så vi lager en intern, fast
+  // adresse ut fra brukernavnet (den brukes aldri til å sende noe). Samme
+  // brukernavn gir alltid samme adresse, slik at innlogging fungerer på tvers
+  // av økter og enheter.
+  const INTERNAL_EMAIL_DOMAIN = "brukere.studilla.no";
+
+  function emailForUsername(username) {
+    return String(username || "").trim().toLowerCase() + "@" + INTERNAL_EMAIL_DOMAIN;
+  }
   const GUEST_POINTS_KEY = "studilla_guest_points";
 
   // Poeng en utlogget besøkende har "tjent" (f.eks. ved å spinne hjulet uten
@@ -114,10 +125,10 @@
   function friendlyAuthError(error) {
     if (!error) return "Noe gikk galt. Prøv igjen.";
     const msg = error.message || "";
-    if (msg.includes("Invalid login credentials")) return "Feil e-post eller passord.";
-    if (msg.includes("User already registered")) return "Det finnes allerede en bruker med denne e-posten.";
+    if (msg.includes("Invalid login credentials")) return "Feil brukernavn eller passord.";
+    if (msg.includes("User already registered")) return "Dette brukernavnet er allerede tatt.";
     if (msg.includes("Password should be")) return "Passordet oppfyller ikke kravene.";
-    if (msg.includes("Email not confirmed")) return "Du må bekrefte e-posten din før du kan logge inn.";
+    if (msg.includes("Email not confirmed")) return "Kontoen er ikke bekreftet ennå. Skru av e-postbekreftelse i Supabase (Authentication → Providers → Email).";
     return msg || "Noe gikk galt. Prøv igjen.";
   }
 
@@ -296,11 +307,14 @@
     animateLevelBarSequence(fill, { toPct: to.pct, resetDelayMs: 950, onFinal: applyFinal });
   }
 
+  // Admin-lenkene (toppmenyen og bunnmenyen) er skjult som standard og vises
+  // kun for innloggede administratorer.
   async function renderFooterAdminLink() {
-    const link = document.querySelector("[data-admin-only]");
-    if (!link) return;
+    const links = document.querySelectorAll("[data-admin-only]");
+    if (!links.length) return;
     const profile = await getCurrentProfile();
-    link.style.display = profile && profile.is_admin ? "" : "none";
+    const show = !!(profile && profile.is_admin);
+    links.forEach((link) => { link.style.display = show ? "" : "none"; });
   }
 
   async function requireAuth() {
@@ -331,6 +345,7 @@
     PASSWORD_MIN_LENGTH,
     validateUsername,
     validatePassword,
+    emailForUsername,
     isUsernameTaken,
     friendlyAuthError,
     getSession,

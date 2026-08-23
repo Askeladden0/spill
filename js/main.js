@@ -22,7 +22,6 @@
         </a>
         <div class="game-body">
           <div class="game-meta">
-            <span class="game-points">${g.points}</span>
             <span class="game-time">${g.time}</span>
           </div>
           <a href="player.html?id=${encodeURIComponent(g.id)}"><button class="btn-start" type="button">Start</button></a>
@@ -80,12 +79,10 @@
     document.title = `${game.name} · Studilla`;
 
     const titleEl = document.querySelector("[data-player-title]");
-    const pointsEl = document.querySelector("[data-player-points]");
     const timeEl = document.querySelector("[data-player-time]");
     const descEl = document.querySelector("[data-player-description]");
 
     if (titleEl) titleEl.textContent = game.name;
-    if (pointsEl) pointsEl.textContent = game.points;
     if (timeEl) timeEl.textContent = game.time;
     if (descEl) descEl.textContent = game.description || "";
 
@@ -97,12 +94,36 @@
     }
   }
 
+  /**
+   * Nedtelling til neste "dagens triks". Dagens triks roterer automatisk ved
+   * midnatt (se js/games-data.js), så teksten teller ned til det faktiske
+   * byttet i stedet for å stå på et fast tall.
+   */
+  function initDailyCountdown() {
+    const el = document.querySelector("[data-daily-countdown]");
+    if (!el || !window.studillaMsUntilNextDailyGame) return;
+
+    function tick() {
+      const ms = Math.max(0, window.studillaMsUntilNextDailyGame());
+      const total = Math.floor(ms / 1000);
+      const pad = (n) => String(n).padStart(2, "0");
+      el.textContent = `Byttes ut om ${pad(Math.floor(total / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
+      // Når tiden er ute: hent siden på nytt, slik at dagens triks byttes uten
+      // at brukeren må gjøre det selv.
+      if (ms <= 0) window.location.reload();
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  }
+
   document.addEventListener("DOMContentLoaded", async function () {
     // Aktivt menypunkt markeres av js/layout.js (kjører på alle sider).
     if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
     if (window.STUDILLA_GAME_SCRIPT_READY) await window.STUDILLA_GAME_SCRIPT_READY;
     renderHero("[data-hero]");
     renderGameGrid("[data-game-grid]");
+    initDailyCountdown();
     initPlayerPage();
   });
 })();

@@ -43,11 +43,13 @@
     claims: [],
     gameRecords: [],
     avatarOptions: { colors: [], icons: [] },
-    settings: { level_step: 1000 },
+    settings: { level_step: 1000, wheel_spins_per_day: 1, daily_game_rotation: true },
     gamesNeedMigration: false,
     rewardsNeedMigration: false,
     codesNeedMigration: false,
     settingsNeedMigration: false,
+    wheelNeedMigration: false,
+    wheelSpinsDraft: null,
 
     paletteOpen: false,
     paletteQuery: "",
@@ -155,13 +157,30 @@
   }
 
   async function loadSettings() {
-    const { data, error } = await sb.from("app_settings").select("level_step").eq("id", 1).maybeSingle();
-    if (error || !data) {
-      // Fallback for prosjekter uten app_settings (schema.sql, seksjon 36).
-      state.settingsNeedMigration = true;
-      return { level_step: 1000 };
+    const full = await sb
+      .from("app_settings")
+      .select("level_step, wheel_spins_per_day, daily_game_rotation")
+      .eq("id", 1)
+      .maybeSingle();
+
+    if (!full.error && full.data) {
+      return {
+        level_step: Number(full.data.level_step) || 1000,
+        wheel_spins_per_day: full.data.wheel_spins_per_day == null ? 1 : Number(full.data.wheel_spins_per_day),
+        daily_game_rotation: full.data.daily_game_rotation !== false,
+      };
     }
-    return { level_step: Number(data.level_step) || 1000 };
+
+    // Fallback for prosjekter uten lykkehjul-/rotasjonsinnstillingene
+    // (schema.sql, seksjon 41).
+    const basic = await sb.from("app_settings").select("level_step").eq("id", 1).maybeSingle();
+    state.wheelNeedMigration = true;
+    if (basic.error || !basic.data) {
+      // Fallback for prosjekter uten app_settings i det hele tatt (seksjon 36).
+      state.settingsNeedMigration = true;
+      return { level_step: 1000, wheel_spins_per_day: 1, daily_game_rotation: true };
+    }
+    return { level_step: Number(basic.data.level_step) || 1000, wheel_spins_per_day: 1, daily_game_rotation: true };
   }
 
   async function loadAll() {
@@ -197,6 +216,7 @@
     state.settings = settings;
     state.levelStepDraft = null;
     state.levelCountDraft = null;
+    state.wheelSpinsDraft = null;
   }
 
   function rewardCodeStats(rewardId) {
@@ -252,12 +272,13 @@
 
   const VIEW_TITLES = {
     oversikt: "Oversikt", statistikk: "Statistikk", spill: "Spill",
-    nivaaer: "Nivåer", rabatter: "Rabatter", brukere: "Brukere", avatar: "Profilbilder",
+    nivaaer: "Nivåer", lykkehjul: "Lykkehjul", rabatter: "Rabatter", brukere: "Brukere", avatar: "Profilbilder",
     koder: "Rabattkoder", drift: "Drift",
   };
   const VIEW_HINTS = {
     spill: "Dra ⠿ for rekkefølge. Åpne et spill for navn, beskrivelse og bilder.",
     nivaaer: "Fyll inn hvor mye hvert nivå øker med – differansen er lik hele veien opp.",
+    lykkehjul: "Bestem hvor mange ganger hver spiller kan spinne hjulet per døgn.",
     rabatter: "Hver rabatt har en sjeldenhetsgrad. Tweak sannsynligheten øverst, rediger rabattene under.",
     brukere: "Klikk en rad for detaljer. Endringer lagres med én gang.",
     avatar: "Farger og ikoner nye brukere tildeles tilfeldig ved registrering.",
@@ -801,22 +822,39 @@
     flash("Spill slettet");
   }
 
+  // Når automatisk rotasjon er på, regnes dagens triks ut fra datoen på
+  // nøyaktig samme måte som på forsiden (js/games-data.js): døgnnummer i UTC
+  // modulo antall synlige triks, i rekkefølgen de ligger på forsiden.
+  function rotatingDailyGameId() {
+    const visible = state.games.filter((g) => !g.hidden);
+    if (!visible.length) return null;
+    return visible[Math.floor(Date.now() / 86400000) % visible.length].id;
+  }
+
+  function isDailyToday(game) {
+    if (state.settings.daily_game_rotation === false) return !!game.is_daily_game;
+    return game.id === rotatingDailyGameId();
+  }
+
   function renderSpill() {
     const migrationNote = state.gamesNeedMigration
       ? `<p class="admin-card-sub" style="margin:0">⚠ Kjør <code>supabase/schema.sql</code> på nytt i Supabase for å ta i bruk "skjul spill".</p>`
       : "";
 
+    const rotationOn = state.settings.daily_game_rotation !== false;
+
     const rows = state.games.map((g, i) => {
       const open = state.openGames.has(g.id);
+      const daily = isDailyToday(g);
       return `
-        <div class="admin-row-card${g.is_daily_game ? " is-daily" : ""}${g.hidden ? " is-hidden" : ""}" data-game-row="${g.id}" draggable="true">
+        <div class="admin-row-card${daily ? " is-daily" : ""}${g.hidden ? " is-hidden" : ""}" data-game-row="${g.id}" draggable="true">
           <div class="admin-row-head" data-game-toggle="${g.id}">
             <span class="admin-drag-handle">⠿</span>
             <span class="admin-row-thumb">${g.thumbnail_url ? `<img src="${escapeHTML(g.thumbnail_url)}" alt="">` : ""}</span>
             <span class="admin-row-titles">
               <span class="admin-row-title-line">
                 <span class="admin-row-title">${escapeHTML(g.name)}</span>
-                ${g.is_daily_game ? `<span class="admin-pill-daily">★ DAGENS</span>` : ""}
+                ${daily ? `<span class="admin-pill-daily">★ DAGENS</span>` : ""}
                 ${g.hidden ? `<span class="admin-pill-hidden">SKJULT</span>` : ""}
               </span>
               <span class="admin-row-sub">${escapeHTML(g.id)}</span>
@@ -847,11 +885,8 @@
                 <input type="number" min="0" step="0.1" value="${g.point_rate == null ? 1 : g.point_rate}" data-game-field="point_rate" data-game-id="${g.id}"${state.gamesNeedMigration ? " disabled" : ""}>
                 <span class="admin-dropzone-sub" style="padding-top:4px">1 = skåren gis 1:1. 2 = dobbelt så mange poeng, 0,5 = halvparten. Rekordene lagres alltid som den rå skåren.</span>
               </label>
-              <label class="admin-field">POENGTEKST PÅ KORTET
-                <input type="text" value="${escapeHTML(g.points || "")}" placeholder="Din skår = dine poeng" data-game-field="points" data-game-id="${g.id}">
-              </label>
               <div class="admin-row-actions">
-                <button type="button" class="btn-start" style="width:auto;padding:10px 15px;opacity:${g.is_daily_game ? ".55" : "1"}" data-game-set-daily="${g.id}">${g.is_daily_game ? "★ Er dagens spill" : "Sett som dagens spill"}</button>
+                <button type="button" class="btn-start" style="width:auto;padding:10px 15px;opacity:${daily || rotationOn ? ".55" : "1"}" data-game-set-daily="${g.id}"${rotationOn ? " disabled title=\"Skru av automatisk rotasjon for å velge dagens triks selv\"" : ""}>${daily ? "★ Er dagens triks" : "Sett som dagens triks"}</button>
                 <button type="button" class="btn-danger" style="padding:10px 15px" data-game-delete="${g.id}">Slett spill</button>
               </div>
             </div>
@@ -860,8 +895,27 @@
       `;
     }).join("");
 
+    const rotation = state.settings.daily_game_rotation !== false;
+    const rotationCard = `
+      <div class="admin-card">
+        <div class="admin-row-head" style="cursor:default;padding:0">
+          <span class="admin-row-titles">
+            <span class="admin-row-title">Dagens triks roterer automatisk</span>
+            <span class="admin-row-sub" style="font-family:inherit">${rotation
+              ? "Et nytt triks blir dagens triks hver dag ved midnatt, i samme rekkefølge som listen under."
+              : "Rotasjonen er av: triksen du merker med «Sett som dagens triks» blir stående til du bytter den."}</span>
+          </span>
+          <span class="admin-row-side-label">${rotation ? "På" : "Av"}</span>
+          <button type="button" class="admin-switch${rotation ? " is-on" : ""}" data-rotation-toggle aria-label="Bytt automatisk rotasjon"${state.wheelNeedMigration || state.settingsNeedMigration ? " disabled" : ""}>
+            <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
+          </button>
+        </div>
+      </div>
+    `;
+
     return `
       <div class="admin-section">
+        ${rotationCard}
         <div class="admin-toolbar">
           <span class="admin-toolbar-count">${state.games.length} spill</span>
           <span class="admin-card-spacer"></span>
@@ -964,6 +1018,69 @@
           <span class="admin-toolbar-hint">Poengkravene regnes ut automatisk – rediger dem i boksen over</span>
         </div>
         <div class="admin-row-list">${rows || `<p class="admin-card-sub">Ingen nivåer ennå.</p>`}</div>
+      </div>
+    `;
+  }
+
+  // ---------------------------------------------------------------------
+  // Lykkehjul
+  // ---------------------------------------------------------------------
+
+  // Hvor mange spinn hver spiller får per døgn. 0 = ingen grense. Grensen
+  // håndheves server-side av RPC-ene wheel_spins_left/spin_wheel
+  // (schema.sql, seksjon 41–44), så tallet her er fasiten for hele siden.
+  function wheelSpinsPerDay() {
+    return state.wheelSpinsDraft != null ? state.wheelSpinsDraft : (state.settings.wheel_spins_per_day == null ? 1 : state.settings.wheel_spins_per_day);
+  }
+
+  async function saveSetting(fields, message) {
+    if (state.settingsNeedMigration || state.wheelNeedMigration) {
+      return flash("Kjør supabase/schema.sql på nytt i Supabase for å ta i bruk denne innstillingen.");
+    }
+    const { error } = await sb.from("app_settings").update({ ...fields, updated_at: new Date().toISOString() }).eq("id", 1);
+    if (error) return flash(Auth.friendlyAuthError(error));
+    Object.assign(state.settings, fields);
+    renderMain();
+    if (message) flash(message);
+  }
+
+  async function saveWheelSpins(value) {
+    if (!Number.isFinite(value) || value < 0 || value > 100) return flash("Antall spinn må være mellom 0 og 100.");
+    state.wheelSpinsDraft = null;
+    await saveSetting({ wheel_spins_per_day: Math.round(value) }, "Lykkehjulet er lagret");
+  }
+
+  function renderLykkehjul() {
+    const perDay = wheelSpinsPerDay();
+    const migrationNote = state.wheelNeedMigration || state.settingsNeedMigration
+      ? `<p class="admin-card-sub" style="margin:0">⚠ Kjør <code>supabase/schema.sql</code> på nytt i Supabase for å ta i bruk dagsgrensen på lykkehjulet.</p>`
+      : "";
+
+    return `
+      <div class="admin-section">
+        <div class="admin-card">
+          <div>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Spinn per dag</h2>
+            <span class="admin-card-sub">Hvor mange ganger hver spiller kan spinne lykkehjulet i løpet av ett døgn. Døgnet nullstilles ved midnatt (UTC). Sett tallet til 0 for å fjerne grensen helt.</span>
+          </div>
+          ${migrationNote}
+          <div class="admin-stat-grid" style="grid-template-columns:repeat(2,minmax(0,220px))">
+            <label class="admin-stat-box">SPINN PER DAG
+              <input type="number" min="0" max="100" step="1" value="${perDay}" data-wheel-spins ${state.wheelNeedMigration || state.settingsNeedMigration ? "disabled" : ""}>
+            </label>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px">
+            <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-save-wheel ${state.wheelNeedMigration || state.settingsNeedMigration ? "disabled" : ""}>Lagre</button>
+            <span class="admin-card-sub">${perDay === 0 ? "Ingen grense: spillerne kan spinne så mye de vil." : `Hver spiller kan spinne ${perDay} gang${perDay === 1 ? "" : "er"} per døgn.`}</span>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Slik virker hjulet</h2>
+            <span class="admin-card-sub">Hjulet gir mellom 10 og 1000 poeng per spinn, og poengene legges rett på spilleren. Utloggede besøkende kan også spinne, men poengene deres lagres bare i nettleseren til de logger inn.</span>
+          </div>
+        </div>
       </div>
     `;
   }
@@ -1658,6 +1775,7 @@
       statistikk: renderStatistikk,
       spill: renderSpill,
       nivaaer: renderNivaaer,
+      lykkehjul: renderLykkehjul,
       rabatter: renderRabatter,
       brukere: renderBrukere,
       avatar: renderAvatar,
@@ -1731,6 +1849,16 @@
     if (setDaily) return setDailyGame(setDaily.dataset.gameSetDaily);
     const delGame = t.closest("[data-game-delete]");
     if (delGame) { const g = findGame(delGame.dataset.gameDelete); if (g) deleteGame(g); return; }
+
+    // Lykkehjul
+    if (t.closest("[data-save-wheel]")) {
+      const input = els.main.querySelector("[data-wheel-spins]");
+      return saveWheelSpins(Number(input && input.value));
+    }
+    if (t.closest("[data-rotation-toggle]")) {
+      const next = state.settings.daily_game_rotation === false;
+      return saveSetting({ daily_game_rotation: next }, next ? "Dagens triks roterer nå automatisk" : "Automatisk rotasjon er skrudd av");
+    }
 
     // Nivåer
     if (t.closest("[data-save-levels]")) {
@@ -1922,6 +2050,7 @@
       if (g) saveGameField(g, field, value);
       return;
     }
+    if (t.matches("[data-wheel-spins]")) { state.wheelSpinsDraft = Number(t.value); return; }
     if (t.matches("[data-level-step]")) { state.levelStepDraft = Number(t.value); return; }
     if (t.matches("[data-level-count]")) { state.levelCountDraft = Number(t.value); return; }
     const rewardField = t.closest("[data-reward-field]");

@@ -29,6 +29,10 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
           Rangering
         </a>
+        <a href="admin.html" class="nav-link" data-page="admin" data-admin-only style="display:none">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-2.9 8.3-7 10-4.1-1.7-7-5.6-7-10V6l7-3z"></path><path d="M9.5 12.2l1.8 1.8 3.4-3.6"></path></svg>
+          Admin
+        </a>
       </nav>
     </div>
 
@@ -43,7 +47,7 @@
     </div>
     <nav class="footer-nav">
       <a href="kontakt.html">Kontakt</a>
-      <a href="#personvern">Personvern</a>
+      <a href="vilkar.html#personvern">Personvern</a>
       <a href="vilkar.html">Vilkår</a>
       <a href="admin.html" data-admin-only style="display:none">Admin</a>
     </nav>

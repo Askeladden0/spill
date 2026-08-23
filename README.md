@@ -12,7 +12,7 @@ spill/
 ├── rangering.html          Rangering-siden – delt layout, plassholderinnhold
 ├── player.html            Delt spillmal – viser ETT spill basert på ?id=<slug> i URL-en.
 │                          Det lages IKKE én fil per spill; alle spill går gjennom denne malen.
-├── login.html             Logg inn / registrer deg (e-post+passord eller Google)
+├── login.html             Logg inn / registrer deg (brukernavn + passord)
 ├── profil.html            Profilside – avatar, brukernavn, nivå, rekorder, slett konto
 ├── admin.html             Adminpanel – eget sidemeny-dashbord (se under), krever admin-status
 ├── assets/img/favicon.svg  Faviconet (Studilla-logoen), lenket inn fra alle sidene
@@ -40,14 +40,17 @@ spill/
 
 Innlogging kjøres via [Supabase](https://supabase.com) – se
 [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) for full oppsettsguide (opprette
-prosjekt, kjøre `supabase/schema.sql`, skru på Google-innlogging, koble
+prosjekt, kjøre `supabase/schema.sql`, skru av e-postbekreftelse, koble
 `js/supabase-config.js` til prosjektet, og gjøre deg selv til admin).
 
 Kort oppsummert:
-- **Registrering**: e-post/passord (brukernavn 5–20 tegn, passord min. 8 tegn
-  med bokstav+tall) eller "Fortsett med Google". 2FA er ikke i bruk.
-- **Glemt passord**: "Glemt passord?" på `login.html` sender en tilbakestillingslenke
-  via Supabase til `tilbakestill-passord.html`, der brukeren velger nytt passord.
+- **Registrering**: brukernavn + passord (brukernavn 5–20 tegn, passord min. 8
+  tegn med bokstav+tall). Verken e-post eller Google-innlogging er i bruk, og
+  2FA er ikke satt opp. Supabase krever en e-postadresse per konto, så
+  `js/auth.js` lager en intern adresse ut fra brukernavnet
+  (`brukernavn@brukere.studilla.no`) – den brukes aldri til å sende noe.
+- **Glemt passord**: siden vi ikke har e-postadresser, må en admin sette nytt
+  passord på brukeren fra Supabase-dashbordet (**Authentication → Users**).
 - **Gjestepoeng overføres ved innlogging**: poeng og rekorder samlet uinnlogget
   (lagret i `localStorage`) flyttes automatisk inn på kontoen første gang
   brukeren logger inn/registrerer seg (se `Auth.migrateGuestDataToProfile` i
@@ -55,14 +58,11 @@ Kort oppsummert:
 - **Automatisk avatar**: ny bruker får tilfeldig farge + ikon fra listen i
   `avatar_options`-tabellen (redigeres fra `admin.html`). Kan endres når som
   helst fra `profil.html`.
-- **Google-brukere** får et automatisk generert brukernavn ved første
-  innlogging (siden Google ikke lar oss spørre om det på forhånd), og blir
-  bedt om å velge sitt eget på profilsiden.
 - **Profilsiden** (`profil.html`) viser nivå/XP, lar deg redigere avatar og
   brukernavn, viser dine beste rekorder per spill (tom liste inntil spillene
   faktisk rapporterer poeng), og har en "Slett konto"-knapp som sletter
   brukeren permanent.
-- **Adminpanelet** (`admin.html`, lenket i bunnmenyen kun for admins) er et
+- **Adminpanelet** (`admin.html`, lenket i toppmenyen og bunnmenyen kun for admins) er et
   eget sidemeny-dashbord med seksjonene Oversikt, Statistikk, Spill, Nivåer og
   premier, Brukere og Profilbilder (samt "Rabattkoder"/"Drift" som tomme
   plassholdere for fremtidige seksjoner). Alt leser/skriver direkte mot de
@@ -84,6 +84,21 @@ Kort oppsummert:
   skåren, så bare xp/nivå skaleres.
 - **Statistikk** viser retention per triks: hvor stor andel av spillerne som
   kom tilbake til triksen en annen dag, med valgbar periode.
+- **Dagens triks roterer automatisk**: hvilket triks som er dagens regnes ut
+  fra datoen (døgnnummer i UTC modulo antall synlige triks, i rekkefølgen på
+  forsiden), så det bytter seg selv ved midnatt. Rotasjonen kan skrus av under
+  «Triks» i adminpanelet (`app_settings.daily_game_rotation`); da blir triksen
+  du merker manuelt stående.
+- **Lykkehjulet** har en egen seksjon i adminpanelet der du setter hvor mange
+  spinn hver spiller får per døgn (`app_settings.wheel_spins_per_day`,
+  0 = ingen grense). Grensen håndheves server-side av RPC-en `spin_wheel`, som
+  logger hvert spinn i `wheel_spins` – den kan altså ikke omgås fra
+  nettleseren. Utloggede gjester telles lokalt i `localStorage`.
+- **Kasser åpnes i en pop-up**: «Åpne kassen» på premier-siden åpner en modal
+  med kassebåndet og rabatten, i stedet for å skje inne i selve siden.
+- **Informasjonskapsler**: samtykkevarselet dukker først opp når en besøkende
+  går inn på et triks (`player.html`), og det ligger ingen flytende knapp igjen
+  i hjørnet etterpå – valget endres fra `innstillinger.html`.
 
 ## Hvordan legge til et nytt spill
 
@@ -93,13 +108,10 @@ Kort oppsummert:
 {
   id: "mitt-nye-spill",       // unik slug, brukes i URL-en player.html?id=mitt-nye-spill
   name: "Mitt Nye Spill",
-  genre: "Action",
-  rating: "4,5",
-  points: "1 000 poeng",
   time: "~15 min",
   thumbnail: null,             // sett til "assets/img/games/mitt-nye-spill.jpg" når bilde finnes
   description: "Kort beskrivelse av spillet.",
-  isDailyGame: false,          // sett til true for å vise det som "Dagens spill"
+  isDailyGame: false,          // styres normalt av den automatiske dagsrotasjonen
   pointsMultiplier: null,
   pointRate: 1                 // poeng per poeng skår (settes i adminpanelet)
 }
