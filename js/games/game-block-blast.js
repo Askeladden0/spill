@@ -45,6 +45,63 @@
     return COLORS[Math.floor(Math.random() * COLORS.length)];
   }
 
+  const COLOR_HEX = {
+    a: "#ff5c9d", b: "#ffb23f", c: "#4bf2c3", d: "#4d8cff", e: "#c76bff", f: "#ffe14d",
+  };
+
+  const COMBO_LABELS = ["", "", "⚡ DOBBEL! ⚡", "💥 TRIPPEL! 💥", "🔥 KVADRIPPEL! 🔥", "🌟 WOW! 🌟"];
+
+  // Ren visuell fest når to eller flere rader/kolonner sprenges samtidig –
+  // partikkelsprut + en kort komboetikett. Poenggivningen skjer uavhengig
+  // av dette i placePiece(), og påvirkes ikke av effekten.
+  function spawnBurst(cx, cy, count) {
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement("div");
+      el.className = "blast-particle";
+      const color = COLOR_HEX[COLORS[Math.floor(Math.random() * COLORS.length)]];
+      el.style.background = color;
+      el.style.boxShadow = `0 0 6px ${color}`;
+      el.style.left = `${cx}px`;
+      el.style.top = `${cy}px`;
+      document.body.appendChild(el);
+
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 60 + Math.random() * 90;
+      let x = cx;
+      let y = cy;
+      let vx = Math.cos(angle) * speed;
+      let vy = Math.sin(angle) * speed - 40;
+      let life = 1;
+
+      function step() {
+        x += vx * 0.016;
+        y += vy * 0.016;
+        vy += 180 * 0.016;
+        life -= 0.03;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.opacity = String(Math.max(0, life));
+        el.style.transform = `scale(${Math.max(0, life) * 1.3})`;
+        if (life > 0) requestAnimationFrame(step);
+        else el.remove();
+      }
+      requestAnimationFrame(step);
+    }
+  }
+
+  function showComboPopup(boardEl, cleared) {
+    const label = COMBO_LABELS[cleared] || `×${cleared} COMBO!`;
+    if (!label) return;
+    const rect = boardEl.getBoundingClientRect();
+    const el = document.createElement("div");
+    el.className = "blast-combo-popup";
+    el.textContent = label;
+    el.style.left = `${rect.left + rect.width / 2}px`;
+    el.style.top = `${rect.top + rect.height / 2}px`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+  }
+
   function shapeSize(cells) {
     const rows = Math.max(...cells.map((c) => c[0])) + 1;
     const cols = Math.max(...cells.map((c) => c[1])) + 1;
@@ -186,10 +243,14 @@
       render(justPlaced, fullRows, fullCols);
 
       if (fullRows.length || fullCols.length) {
+        const cleared = fullRows.length + fullCols.length;
+        const rect = boardEl.getBoundingClientRect();
+        spawnBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 10 + cleared * 6);
+        if (cleared >= 2) showComboPopup(boardEl, cleared);
+
         window.setTimeout(() => {
           for (const r of fullRows) grid[r].fill(null);
           for (const c of fullCols) for (let r = 0; r < SIZE; r++) grid[r][c] = null;
-          const cleared = fullRows.length + fullCols.length;
           score += cleared * POINTS_PER_CLEARED_LINE * (cleared > 1 ? MULTI_CLEAR_BONUS : 1);
           session.setScore(Math.round(score));
           render();

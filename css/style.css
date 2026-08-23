@@ -738,6 +738,15 @@ main {
 
 .fruit-merge-canvas { display: block; touch-action: none; cursor: pointer; }
 
+.fruit-merge-next-emoji { font-size: 20px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+
+.fruit-merge-particle {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 280;
+}
+
 /* ---------- Spill: 2048 ---------- */
 .game-2048-hint { margin: 0; font-size: 13px; color: var(--muted); text-align: center; max-width: 420px; }
 
@@ -752,10 +761,7 @@ main {
 }
 
 .board-2048 {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  gap: 12px;
+  position: relative;
   width: min(420px, 90vw);
   aspect-ratio: 1;
   padding: 12px;
@@ -768,9 +774,30 @@ main {
   touch-action: none;
 }
 
+/* Statisk 4x4-rutenett i bunnen (tomme celler) – tegnes én gang. */
+.board-2048-grid {
+  position: absolute;
+  inset: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* Brikkene ligger i et eget absolutt-posisjonert lag over rutenettet, slik
+   at hver brikke kan beholde sitt DOM-element og skli (top/left-transition)
+   fra forrige til neste rute i stedet for å hoppe rett dit, à la det
+   klassiske 2048-spillet. */
+.board-2048-tiles {
+  position: absolute;
+  inset: 12px;
+  pointer-events: none;
+}
+
 .cell-2048 { border-radius: 10px; background: rgba(255, 255, 255, .04); }
 
 .tile-2048 {
+  position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -778,23 +805,13 @@ main {
   font-size: clamp(16px, 5vw, 28px);
   color: var(--bg);
   background: var(--accent);
-  animation: tilePop .25s cubic-bezier(.34, 1.56, .64, 1);
-  transition: background-color .18s ease, box-shadow .18s ease, color .18s ease;
-  will-change: transform;
+  transition: top .12s cubic-bezier(.4, 0, .2, 1), left .12s cubic-bezier(.4, 0, .2, 1),
+    background-color .18s ease, box-shadow .18s ease, color .18s ease;
+  will-change: top, left, transform;
 }
 
-.tile-2048.is-merged { animation: tileMergePop .28s cubic-bezier(.34, 1.56, .64, 1); }
-
-@keyframes tilePop { from { transform: scale(.35); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-@keyframes tileMergePop {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.18); box-shadow: 0 0 18px rgba(255, 255, 255, .35); }
-  100% { transform: scale(1); }
-}
-
-/* Kun genuint nye/sammenslåtte brikker skal spille inn-animasjon – brettet
-   tegnes helt på nytt hver trekk, så hvis animasjonen lå på grunnklassen
-   ville ALLE brikker "poppet" på nytt ved hvert eneste trekk. */
+/* Kun genuint nye/sammenslåtte brikker skal spille inn-animasjon – ellers
+   ville alle brikker "poppet" på nytt ved hvert eneste trekk. */
 .tile-2048.is-new { animation: tilePop .18s cubic-bezier(.34, 1.56, .64, 1); }
 .tile-2048.is-merged { animation: tileMergePop .22s cubic-bezier(.34, 1.56, .64, 1); }
 
@@ -1065,6 +1082,36 @@ main {
   pointer-events: none;
   opacity: .92;
   filter: drop-shadow(0 8px 18px rgba(0,0,0,.4));
+}
+
+/* Kombo-tekst og partikkelsprut når to eller flere rader/kolonner sprenges
+   samtidig – rent visuelt jafs, poenggivningen ligger fortsatt i
+   js/games/game-block-blast.js. */
+.blast-combo-popup {
+  position: fixed;
+  font-weight: 900;
+  font-size: 26px;
+  color: #fff;
+  text-shadow: 0 0 14px var(--accent), 0 2px 4px rgba(0,0,0,.5);
+  pointer-events: none;
+  z-index: 300;
+  animation: blastComboRise .9s ease-out forwards;
+  white-space: nowrap;
+}
+
+@keyframes blastComboRise {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(.8); }
+  50% { opacity: 1; transform: translate(-50%, -28px) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -64px) scale(1.35); }
+}
+
+.blast-particle {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 280;
 }
 
 /* ---------- Spill: Bubble Shooter ---------- */

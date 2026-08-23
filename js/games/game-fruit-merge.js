@@ -12,16 +12,16 @@
   const GAME_ID = "fruktfusjon";
 
   const FRUITS = [
-    { name: "Kirsebær", radius: 16, color: "#e63950" },
-    { name: "Drue", radius: 22, color: "#7e57c2" },
-    { name: "Aprikos", radius: 29, color: "#ff9f43" },
-    { name: "Klementin", radius: 37, color: "#ff7f11" },
-    { name: "Eple", radius: 46, color: "#ff4d4d" },
-    { name: "Pære", radius: 55, color: "#c6e26b" },
-    { name: "Fersken", radius: 65, color: "#ffb0a3" },
-    { name: "Ananas", radius: 76, color: "#ffd93d" },
-    { name: "Melon", radius: 88, color: "#8bd45c" },
-    { name: "Vannmelon", radius: 102, color: "#2fae5e" },
+    { name: "Kirsebær", radius: 16, color: "#e63950", emoji: "🍒" },
+    { name: "Drue", radius: 22, color: "#7e57c2", emoji: "🍇" },
+    { name: "Aprikos", radius: 29, color: "#ff9f43", emoji: "🍑" },
+    { name: "Klementin", radius: 37, color: "#ff7f11", emoji: "🍊" },
+    { name: "Eple", radius: 46, color: "#ff4d4d", emoji: "🍎" },
+    { name: "Pære", radius: 55, color: "#c6e26b", emoji: "🍐" },
+    { name: "Fersken", radius: 65, color: "#ffb0a3", emoji: "🍑" },
+    { name: "Ananas", radius: 76, color: "#ffd93d", emoji: "🍍" },
+    { name: "Melon", radius: 88, color: "#8bd45c", emoji: "🍈" },
+    { name: "Vannmelon", radius: 102, color: "#2fae5e", emoji: "🍉" },
   ];
 
   const DROPPABLE_MAX_INDEX = 4; // Kun de 5 minste fruktene faller ned i starten.
@@ -50,6 +50,7 @@
     let dangerSince = null;
     let bodySeq = 1;
     let mergeEffects = [];
+    let particles = [];
     let autosaveTimer = null;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
@@ -135,6 +136,7 @@
       over = false;
       dangerSince = null;
       mergeEffects = [];
+      particles = [];
       nextFruitIndex = randomDropIndex();
       currentDropX = WIDTH / 2;
       canDrop = true;
@@ -218,6 +220,25 @@
       nextFruitIndex = randomDropIndex();
       updateNextLabel();
       saveGame();
+      spawnParticles(x, DROP_Y, spec.color, 6);
+    }
+
+    // Liten partikkelsprut brukt både ved slipp og fusjon – ren pynt, ingen
+    // poeng er knyttet til dette.
+    function spawnParticles(x, y, color, count) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1 + Math.random() * 3;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1.2,
+          life: 0.9,
+          decay: 0.03 + Math.random() * 0.04,
+          radius: 2 + Math.random() * 4,
+          color,
+        });
+      }
     }
 
     function handleCollisions(event) {
@@ -244,6 +265,7 @@
         score += (nextIndex + 1) * 4;
         session.setScore(score);
         mergeEffects.push({ x: midX, y: midY, color: FRUITS[nextIndex].color, start: performance.now() });
+        spawnParticles(midX, midY, FRUITS[nextIndex].color, 14);
       }
     }
 
@@ -271,9 +293,46 @@
       session.finish(score, { title: "Krukken rant over!" });
     }
 
+    // Tegner fruktens emoji oppå Matter sin egen sirkel-rendering, slik at
+    // fruktene ser ut som ekte frukt (à la andre fruit-merge-spill) i stedet
+    // for bare fargede sirkler.
+    function drawFruitEmoji(ctx) {
+      const bodies = Matter.Composite.allBodies(world).filter((b) => b.fruitIndex !== undefined);
+      for (const b of bodies) {
+        const spec = FRUITS[b.fruitIndex];
+        ctx.save();
+        ctx.translate(b.position.x, b.position.y);
+        ctx.rotate(b.angle);
+        ctx.font = `${spec.radius * 1.15}px "Segoe UI Emoji","Apple Color Emoji",sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(spec.emoji, 0, 1);
+        ctx.restore();
+      }
+    }
+
+    function drawParticles(ctx) {
+      for (const p of particles) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius * Math.max(0, p.life), 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.restore();
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.12;
+        p.life -= p.decay;
+      }
+      particles = particles.filter((p) => p.life > 0);
+    }
+
     function drawOverlay() {
       const ctx = render.context;
       ctx.save();
+      drawFruitEmoji(ctx);
+      drawParticles(ctx);
 
       const now = performance.now();
       const MERGE_EFFECT_MS = 380;
@@ -307,6 +366,10 @@
         ctx.beginPath();
         ctx.arc(x, DROP_Y, spec.radius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.font = `${spec.radius * 1.15}px "Segoe UI Emoji","Apple Color Emoji",sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(spec.emoji, x, DROP_Y + 1);
         ctx.globalAlpha = 1;
 
         ctx.strokeStyle = "rgba(0,0,0,0.2)";
@@ -324,7 +387,7 @@
       const el = session.playArea.querySelector("[data-fruit-next]");
       if (!el) return;
       const spec = FRUITS[nextFruitIndex];
-      el.textContent = spec.name;
+      el.innerHTML = `<span class="fruit-merge-next-emoji">${spec.emoji}</span> ${spec.name}`;
       el.style.color = spec.color;
     }
 
