@@ -1307,7 +1307,14 @@ update public.levels lv
 --     feilet da med "duplicate key value violates unique constraint
 --     user_codes_user_reward_idx" og hele kasseåpningen krasjet. Trekningen
 --     ekskluderer nå premier brukeren allerede har fått kode for.
+--
+--     drop function if exists trengs her selv om returtypen er uendret fra
+--     seksjon 38 – create or replace kan feile på "cannot change return
+--     type of existing function" for table-funksjoner uansett, avhengig av
+--     hva som faktisk ligger i databasen.
 -- ---------------------------------------------------------------------------
+drop function if exists public.open_level_case(int);
+
 create or replace function public.open_level_case(p_level_number int)
 returns table (brand text, title text, sub text, rarity text, image_url text, link_url text, code text, already_opened boolean)
 language plpgsql
