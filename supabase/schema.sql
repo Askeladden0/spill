@@ -904,7 +904,7 @@ begin
         limit 1
         for update skip locked
      )
-     returning code into picked_code;
+     returning reward_codes.code into picked_code;
 
     if picked_code is null then
       raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
@@ -995,7 +995,7 @@ begin
   if r.code_type = 'general' then
     peeked_code := r.general_code;
   else
-    select code into peeked_code
+    select reward_codes.code into peeked_code
       from public.reward_codes
      where reward_id = r.id and claimed_by is null
      order by random()
@@ -1161,7 +1161,7 @@ begin
         limit 1
         for update skip locked
      )
-     returning code into picked_code;
+     returning reward_codes.code into picked_code;
 
     if picked_code is null then
       raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
@@ -1219,7 +1219,7 @@ begin
   if r.code_type = 'general' then
     peeked_code := r.general_code;
   else
-    select code into peeked_code
+    select reward_codes.code into peeked_code
       from public.reward_codes
      where reward_id = r.id and claimed_by is null and not disabled
      order by random()
