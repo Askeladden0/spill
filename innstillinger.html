@@ -71,10 +71,10 @@
 
             <div class="settings-row">
               <div class="settings-row-label">
-                <span>E-post</span>
-                <span data-email-display>–</span>
+                <span>Innlogging</span>
+                <span data-login-display>Brukernavn og passord</span>
               </div>
-              <span class="badge-locked">KAN IKKE ENDRES</span>
+              <span class="badge-locked">UTEN E-POST</span>
             </div>
           </div>
 
@@ -92,6 +92,14 @@
               <button type="button" class="toggle-switch" data-toggle-hidden aria-label="Skjul meg fra rangeringen">
                 <span class="toggle-switch-knob"></span>
               </button>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Informasjonskapsler</span>
+                <span>Velg om vi kan bruke cookies til statistikk og markedsføring.</span>
+              </div>
+              <button type="button" class="btn-outline-sm" data-open-cookie-settings>Endre</button>
             </div>
 
             <div class="settings-row">
@@ -173,10 +181,19 @@
     document.querySelector("[data-figure-label]").textContent = Avatars.figureLabel(profile.avatar_icon);
     document.querySelector("[data-username-display]").textContent = profile.username;
     document.querySelector('[name="username"]').value = profile.username;
-    document.querySelector("[data-email-display]").textContent = `${profile.email} · innlogget med Google/e-post`;
+    document.querySelector("[data-login-display]").textContent = `${profile.username} · innlogget med brukernavn og passord`;
     document.querySelector("[data-public-profile-url]").textContent = `spillerprofil.html?u=${profile.username}`;
     const link = `spillerprofil.html?u=${encodeURIComponent(profile.username)}`;
     document.querySelector("[data-public-profile-link]").href = link;
+  }
+
+  // Cookie-banneret dukker kun opp av seg selv når man går inn på et triks
+  // (js/cookie-banner.js). Herfra kan valget endres når som helst.
+  const cookieBtn = document.querySelector("[data-open-cookie-settings]");
+  if (cookieBtn) {
+    cookieBtn.addEventListener("click", function () {
+      if (window.StudillaCookieBanner) window.StudillaCookieBanner.open("preferences");
+    });
   }
 
   function renderPrivacy() {

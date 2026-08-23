@@ -1,10 +1,11 @@
 /**
  * Studilla – cookie-banner (UI).
  *
- * Bygger på designet i Cookie-banner.dc.html. Viser samtykkevarselet
- * første gang en besøkende kommer til siden (ingen lagret cookie-valg),
- * og legger igjen en liten "Informasjonskapsler ↻"-knapp nederst til
- * venstre som lar brukeren åpne innstillingene igjen når som helst.
+ * Bygger på designet i Cookie-banner.dc.html. Varselet dukker først opp når
+ * en besøkende går inn på et triks (spillsiden) og ikke har tatt et valg
+ * ennå – ikke på hver eneste side. Etter at valget er tatt ligger det ingen
+ * flytende knapp igjen i hjørnet; innstillingene åpnes fra
+ * innstillinger.html eller via window.StudillaCookieBanner.open().
  * Selve lagringen/håndhevingen av valget skjer i js/consent.js.
  */
 (function () {
@@ -90,8 +91,7 @@
             '<button type="button" id="scb-save" style="flex:1;padding:13px;border:none;border-radius:10px;background:#2ee87f;color:#0d1117;font-size:13.5px;font-weight:800;letter-spacing:-.01em;cursor:pointer;">Lagre valg</button>' +
           '</div>' +
         '</div>' +
-      '</div>' +
-      '<button type="button" id="scb-reopen" aria-label="Informasjonskapsel-innstillinger" style="display:none;position:fixed;bottom:24px;left:24px;z-index:9990;padding:10px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:#131a25;color:#96a3b8;font-family:\'Poppins\',system-ui,sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35);">Informasjonskapsler ↻</button>';
+      '</div>';
     return root;
   }
 
@@ -102,7 +102,6 @@
     const overlay = root.querySelector("#scb-overlay");
     const initialView = root.querySelector("#scb-initial");
     const preferencesView = root.querySelector("#scb-preferences");
-    const reopenBtn = root.querySelector("#scb-reopen");
     const statsInput = root.querySelector("#scb-stats");
     const marketingInput = root.querySelector("#scb-marketing");
     const statsTrack = root.querySelector("#scb-stats-track");
@@ -131,13 +130,11 @@
     }
     function openBanner(view) {
       overlay.style.display = "flex";
-      reopenBtn.style.display = "none";
       if (view === "preferences") showPreferences();
       else showInitial();
     }
     function closeBanner() {
       overlay.style.display = "none";
-      reopenBtn.style.display = "block";
     }
 
     root.querySelector("#scb-customize").addEventListener("click", showPreferences);
@@ -156,14 +153,15 @@
     });
     statsInput.addEventListener("change", syncToggleUI);
     marketingInput.addEventListener("change", syncToggleUI);
-    reopenBtn.addEventListener("click", function () {
-      openBanner("preferences");
-    });
 
-    if (window.StudillaConsent.hasChoice()) {
-      closeBanner();
-    } else {
+    // Varselet vises kun på spillsiden (player.html), og bare til brukeren har
+    // tatt et valg. Andre sider laster fortsatt banneret, slik at det kan
+    // åpnes manuelt fra innstillingene.
+    const isGamePage = !!document.querySelector("[data-player-stage]");
+    if (isGamePage && !window.StudillaConsent.hasChoice()) {
       openBanner("initial");
+    } else {
+      closeBanner();
     }
 
     window.StudillaCookieBanner = { open: openBanner, close: closeBanner };

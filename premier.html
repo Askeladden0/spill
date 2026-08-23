@@ -63,10 +63,10 @@
         </div>
         <div>
           <h2 class="spin-card-title">Lykkehjulet</h2>
-          <p class="spin-card-sub">Spinn hjulet og vinn mellom 10 og 1000 poeng.</p>
+          <p class="spin-card-sub">Spinn hjulet én gang om dagen og vinn mellom 10 og 1000 poeng.</p>
         </div>
         <button class="btn-primary" type="button" style="width:100%" data-open-spin>Spinn hjulet</button>
-        <span class="spin-card-note">Ingen grense på antall spinn ennå</span>
+        <span class="spin-card-note">Ett spinn per dag</span>
       </div>
     </section>
 
@@ -84,29 +84,9 @@
               <span style="width:44px;height:44px;flex:none;border-radius:12px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.35);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--accent)" data-case-badge>–</span>
               <h3 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#fff" data-case-title>–</h3>
             </div>
-            <div style="position:relative;padding:26px 0;background:radial-gradient(120% 100% at 50% 0%,rgba(46,232,127,.07),transparent 70%);overflow:hidden">
-              <div style="position:relative;overflow:hidden;height:130px" data-case-reel-viewport>
-                <div class="case-reel" data-case-reel></div>
-              </div>
-              <div style="position:absolute;top:16px;bottom:16px;left:50%;width:2px;transform:translateX(-1px);background:var(--accent);box-shadow:0 0 18px rgba(46,232,127,.6);pointer-events:none"></div>
-            </div>
-            <div style="padding:0 24px 24px;display:flex;flex-direction:column;gap:16px">
-              <button type="button" class="btn-primary" style="width:100%" data-case-open>Åpne kassen</button>
-              <div data-case-reveal hidden style="display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:16px;background:var(--bg);border:1px solid var(--border-strong)">
-                <span style="width:70px;height:70px;flex:none;border-radius:12px;background:#1b2434;display:flex;align-items:center;justify-content:center;overflow:hidden" data-case-reveal-thumb></span>
-                <div style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1">
-                  <div style="display:flex;align-items:center;gap:7px">
-                    <span style="font-size:11px;font-weight:700;letter-spacing:.12em" data-case-reveal-rarity></span>
-                    <button type="button" aria-label="Mer info om rabatten" title="" style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;border:none;background:transparent;color:var(--muted);cursor:help" data-case-reveal-info>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                    </button>
-                  </div>
-                  <span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.1" data-case-reveal-value></span>
-                  <span style="font-size:12px;font-weight:500;color:var(--muted)" data-case-reveal-code></span>
-                  <a class="case-reveal-link" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Gå til tilbudet ↗</a>
-                </div>
-                <button type="button" class="btn-primary" style="padding:13px 18px;font-size:13.5px" data-case-reveal-copy>Kopier koden</button>
-              </div>
+            <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
+              <p class="section-sub" style="margin:0" data-case-panel-sub>Åpne kassen for å trekke en tilfeldig rabatt fra en av partnerne våre.</p>
+              <button type="button" class="btn-primary" style="width:100%" data-open-case>Åpne kassen</button>
             </div>
           </div>
           <p class="section-sub" data-case-empty>Ingen ledige kasser. Nå et nytt nivå for å få en kasse!</p>
@@ -139,7 +119,7 @@
       <div class="faq-list">
         <details class="faq-item">
           <summary>Hvordan tjener jeg poeng?</summary>
-          <p class="faq-answer">Du får poeng av å spille triksene våre – skåren din i et triks legges rett til poengsummen din. I tillegg kan du spinne lykkehjulet her på premiersiden og vinne mellom 10 og 1000 poeng. Poengene samler seg opp og løfter deg oppover nivåene.</p>
+          <p class="faq-answer">Du får poeng av å spille triksene våre – skåren din i et triks legges rett til poengsummen din. I tillegg kan du spinne lykkehjulet her på premiersiden én gang om dagen og vinne mellom 10 og 1000 poeng. Poengene samler seg opp og løfter deg oppover nivåene.</p>
         </details>
         <details class="faq-item">
           <summary>Hva er en kasse, og hvordan får jeg en?</summary>
@@ -170,6 +150,41 @@
   </main>
 
   <div id="site-footer"></div>
+</div>
+
+<!-- Kasse-modal: selve åpningen skjer i en pop-up, slik at båndet og rabatten
+     får full oppmerksomhet -->
+<div class="modal-overlay" data-case-modal hidden>
+  <div class="modal-backdrop" data-case-backdrop></div>
+  <div class="modal-card" style="max-width:520px;align-items:stretch;gap:20px">
+    <button type="button" class="modal-close" data-close-case aria-label="Lukk">×</button>
+    <h2 class="modal-title" style="text-align:center" data-case-modal-title>Åpne kassen</h2>
+
+    <div style="position:relative;padding:22px 0;border-radius:16px;background:radial-gradient(120% 100% at 50% 0%,rgba(46,232,127,.09),transparent 70%);border:1px solid var(--border);overflow:hidden">
+      <div style="position:relative;overflow:hidden;height:130px" data-case-reel-viewport>
+        <div class="case-reel" data-case-reel></div>
+      </div>
+      <div style="position:absolute;top:14px;bottom:14px;left:50%;width:2px;transform:translateX(-1px);background:var(--accent);box-shadow:0 0 18px rgba(46,232,127,.6);pointer-events:none"></div>
+    </div>
+
+    <button type="button" class="btn-primary" style="width:100%" data-case-open>Åpne kassen</button>
+
+    <div data-case-reveal hidden style="display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:16px;background:var(--bg);border:1px solid var(--border-strong)">
+      <span style="width:70px;height:70px;flex:none;border-radius:12px;background:#1b2434;display:flex;align-items:center;justify-content:center;overflow:hidden" data-case-reveal-thumb></span>
+      <div style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="font-size:11px;font-weight:700;letter-spacing:.12em" data-case-reveal-rarity></span>
+          <button type="button" aria-label="Mer info om rabatten" title="" style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;border:none;background:transparent;color:var(--muted);cursor:help" data-case-reveal-info>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          </button>
+        </div>
+        <span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.1" data-case-reveal-value></span>
+        <span style="font-size:12px;font-weight:500;color:var(--muted)" data-case-reveal-code></span>
+        <a class="case-reveal-link" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Gå til tilbudet ↗</a>
+      </div>
+      <button type="button" class="btn-primary" style="padding:13px 18px;font-size:13.5px" data-case-reveal-copy>Kopier koden</button>
+    </div>
+  </div>
 </div>
 
 <!-- Lykkehjul-modal -->
@@ -222,6 +237,9 @@
   let bigRotation = 0;
   let spinning = false;
   let caseOpening = false;
+  let caseModalOpen = false;
+  let spinsLeft = null; // null = ukjent/ikke lastet, -1 = ingen grense
+  let wheelSpinsPerDay = 1;
 
   function fmt(n) {
     return Math.round(n).toLocaleString("no-NO");
@@ -430,24 +448,41 @@
     panel.hidden = false;
     empty.style.display = "none";
 
+    const openBtn = document.querySelector("[data-case-open]");
+    const panelBtn = document.querySelector("[data-open-case]");
+    const panelSub = document.querySelector("[data-case-panel-sub]");
+
     if (selectedCaseLevel === null) {
       document.querySelector("[data-case-badge]").textContent = "–";
       document.querySelector("[data-case-title]").textContent = "Ingen ledige kasser";
-      const openBtn = document.querySelector("[data-case-open]");
-      openBtn.textContent = unlockedLevels().length === 0
+      const wait = unlockedLevels().length === 0
         ? "Nå nivå 1 for å få din første kasse"
         : "Nå et nytt nivå for å få en ny kasse";
+      panelBtn.textContent = wait;
+      panelBtn.disabled = true;
+      panelSub.textContent = "Du får én kasse for hvert nivå du når.";
+      openBtn.textContent = wait;
       openBtn.disabled = true;
-      document.querySelector("[data-case-reveal]").hidden = true;
-      startReelShuffle();
+      document.querySelector("[data-case-modal-title]").textContent = "Ingen ledige kasser";
     } else {
       document.querySelector("[data-case-badge]").textContent = selectedCaseLevel;
       document.querySelector("[data-case-title]").textContent = `Nivå ${selectedCaseLevel}-kassen`;
-      const openBtn = document.querySelector("[data-case-open]");
+      panelBtn.textContent = `Åpne nivå ${selectedCaseLevel}-kassen`;
+      panelBtn.disabled = caseOpening;
+      panelSub.textContent = "Åpne kassen for å trekke en tilfeldig rabatt fra en av partnerne våre.";
       openBtn.textContent = caseOpening ? "Åpner kassen …" : `Åpne nivå ${selectedCaseLevel}-kassen`;
       openBtn.disabled = caseOpening;
+      document.querySelector("[data-case-modal-title]").textContent = `Nivå ${selectedCaseLevel}-kassen`;
+    }
+
+    // Båndet og rabatten lever i pop-upen; bygg/rull det kun når den er åpen.
+    if (caseModalOpen) {
+      if (!caseOpening) {
+        document.querySelector("[data-case-reveal]").hidden = true;
+        startReelShuffle();
+      }
+    } else {
       document.querySelector("[data-case-reveal]").hidden = true;
-      if (!caseOpening) startReelShuffle();
     }
 
     const others = unopened.filter((n) => n !== selectedCaseLevel);
@@ -531,6 +566,31 @@
     setTimeout(() => { btn.textContent = original; }, 1500);
   }
 
+  // ---------- Kasse-pop-up ----------
+  function openCaseModal() {
+    if (selectedCaseLevel === null) return;
+    if (!profile) { window.location.href = "login.html"; return; }
+    caseModalOpen = true;
+    document.querySelector("[data-case-modal]").hidden = false;
+    document.querySelector("[data-case-reveal]").hidden = true;
+    startReelShuffle(true);
+    renderCasePanel();
+  }
+
+  function closeCaseModal() {
+    if (caseOpening) return; // ikke lukk midt i en åpning
+    caseModalOpen = false;
+    document.querySelector("[data-case-modal]").hidden = true;
+    renderCasePanel();
+  }
+
+  document.querySelector("[data-open-case]").addEventListener("click", openCaseModal);
+  document.querySelector("[data-close-case]").addEventListener("click", closeCaseModal);
+  document.querySelector("[data-case-backdrop]").addEventListener("click", closeCaseModal);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { closeCaseModal(); closeSpinModal(); }
+  });
+
   document.querySelector("[data-case-open]").addEventListener("click", openSelectedCase);
   document.querySelector("[data-case-grid]").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-case-pick]");
@@ -580,11 +640,90 @@
       .join("");
   }
 
+  // ---------- Lykkehjul: dagsgrense ----------
+  // Hvor mange spinn hver spiller får per døgn settes i adminpanelet
+  // (app_settings.wheel_spins_per_day, 0 = ingen grense). For innloggede
+  // brukere håndheves grensen server-side av RPC-ene wheel_spins_left/
+  // spin_wheel, slik at den ikke kan omgås fra nettleseren. Utloggede gjester
+  // teller lokalt – de kan uansett ikke lagre poeng permanent.
+  const GUEST_SPIN_KEY = "studilla_guest_wheel_spins";
+
+  function utcDayKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function msUntilReset() {
+    const now = Date.now();
+    return (Math.floor(now / 86400000) + 1) * 86400000 - now;
+  }
+
+  function guestSpinsUsedToday() {
+    try {
+      const raw = JSON.parse(window.localStorage.getItem(GUEST_SPIN_KEY) || "null");
+      return raw && raw.day === utcDayKey() ? Number(raw.count) || 0 : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function registerGuestSpin() {
+    try {
+      window.localStorage.setItem(GUEST_SPIN_KEY, JSON.stringify({ day: utcDayKey(), count: guestSpinsUsedToday() + 1 }));
+    } catch (e) {
+      /* localStorage utilgjengelig – grensen gjelder da kun denne sidevisningen */
+    }
+  }
+
+  async function refreshSpinsLeft() {
+    if (profile) {
+      const { data, error } = await sb.rpc("wheel_spins_left");
+      // Databaser som ikke har kjørt migrasjonen (schema.sql, seksjon 41–44)
+      // kjenner ikke RPC-en – da står hjulet fritt, som før.
+      spinsLeft = error ? -1 : Number(data);
+    } else {
+      spinsLeft = wheelSpinsPerDay === 0 ? -1 : Math.max(0, wheelSpinsPerDay - guestSpinsUsedToday());
+    }
+    renderSpinAvailability();
+    return spinsLeft;
+  }
+
+  function spinsLeftText() {
+    if (spinsLeft === -1 || spinsLeft === null) return "Ingen grense på antall spinn";
+    if (spinsLeft > 0) return `${spinsLeft} spinn igjen i dag`;
+    const total = Math.floor(msUntilReset() / 1000);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `Nytt spinn om ${pad(Math.floor(total / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
+  }
+
+  function renderSpinAvailability() {
+    const note = document.querySelector(".spin-card-note");
+    const openBtn = document.querySelector("[data-open-spin]");
+    const actionBtn = document.querySelector("[data-spin-action]");
+    const outOfSpins = spinsLeft === 0;
+
+    if (note) note.textContent = spinsLeftText();
+    if (openBtn) {
+      openBtn.disabled = outOfSpins;
+      openBtn.textContent = outOfSpins ? "Kom tilbake i morgen" : "Spinn hjulet";
+    }
+    if (actionBtn && !spinning) {
+      actionBtn.disabled = outOfSpins;
+      if (outOfSpins) actionBtn.textContent = "Kom tilbake i morgen";
+    }
+  }
+
+  // Teller ned mot midnatt (UTC) mens hjulet er brukt opp, slik at teksten
+  // ikke blir stående på et gammelt tall.
+  setInterval(() => { if (spinsLeft === 0) renderSpinAvailability(); }, 1000);
+
   // ---------- Lykkehjul-modal ----------
   function openSpinModal() {
+    if (spinsLeft === 0) return;
     document.querySelector("[data-spin-modal]").hidden = false;
     document.querySelector("[data-spin-result]").textContent = "";
-    document.querySelector("[data-spin-hint]").textContent = "Trykk på knappen for å spinne hjulet.";
+    document.querySelector("[data-spin-hint]").textContent = spinsLeft > 0
+      ? `Trykk på knappen for å spinne hjulet. Du har ${spinsLeft} spinn igjen i dag.`
+      : "Trykk på knappen for å spinne hjulet.";
     document.querySelector("[data-spin-action]").textContent = "Spinn!";
     document.querySelector("[data-spin-action]").disabled = false;
   }
@@ -618,8 +757,20 @@
 
     let newTotal;
     if (profile) {
-      const { data, error } = await sb.rpc("add_points", { p_delta: value });
-      if (!error && data) {
+      // spin_wheel logger spinnet og håndhever dagsgrensen server-side. Er
+      // ikke migrasjonen kjørt ennå, faller vi tilbake til add_points.
+      let { data, error } = await sb.rpc("spin_wheel", { p_delta: value });
+      if (error && /function|does not exist|schema cache/i.test(error.message || "")) {
+        ({ data, error } = await sb.rpc("add_points", { p_delta: value }));
+      }
+      if (error) {
+        document.querySelector("[data-spin-result]").textContent = "";
+        document.querySelector("[data-spin-hint]").textContent = error.message;
+        spinning = false;
+        await refreshSpinsLeft();
+        return;
+      }
+      if (data) {
         profile.xp = data.xp;
         profile.level = data.level;
         newTotal = data.xp;
@@ -627,17 +778,23 @@
         newTotal = currentPoints();
       }
     } else {
+      registerGuestSpin();
       newTotal = Auth.addGuestPoints(value);
     }
 
+    await refreshSpinsLeft();
+
     document.querySelector("[data-spin-result]").textContent = `Du vant ${fmt(value)} poeng!`;
-    document.querySelector("[data-spin-hint]").textContent = `Du har nå ${fmt(newTotal)} poeng totalt.`;
-    actionBtn.textContent = "Spinn igjen";
-    actionBtn.disabled = false;
+    document.querySelector("[data-spin-hint]").textContent = spinsLeft === 0
+      ? `Du har nå ${fmt(newTotal)} poeng totalt. Du kan spinne igjen i morgen.`
+      : `Du har nå ${fmt(newTotal)} poeng totalt.`;
+    actionBtn.textContent = spinsLeft === 0 ? "Kom tilbake i morgen" : "Spinn igjen";
+    actionBtn.disabled = spinsLeft === 0;
     spinning = false;
 
     renderLevelCard();
     renderCasePanel();
+    renderSpinAvailability();
     Auth.renderHeaderAuth();
   }
 
@@ -677,12 +834,16 @@
   }
 
   async function loadLevels() {
-    const [levelsRes, rewardsRes] = await Promise.all([
+    const [levelsRes, rewardsRes, settingsRes] = await Promise.all([
       sb.from("levels").select("level_number, points_required").order("level_number"),
       fetchRewards(),
+      sb.from("app_settings").select("wheel_spins_per_day").eq("id", 1).maybeSingle(),
     ]);
     if (!levelsRes.error && levelsRes.data) levels = levelsRes.data;
     if (!rewardsRes.error && rewardsRes.data) rewards = rewardsRes.data;
+    if (!settingsRes.error && settingsRes.data && settingsRes.data.wheel_spins_per_day != null) {
+      wheelSpinsPerDay = Number(settingsRes.data.wheel_spins_per_day);
+    }
   }
 
   async function loadOpenedCases() {
@@ -721,10 +882,11 @@
     renderFeed();
 
     await Promise.all([loadLevels(), loadOpenedCases()]);
+    await refreshSpinsLeft();
     renderLevelCard();
-    // force = true: nå kjenner vi de ekte rabattene, så båndet bygges på nytt
-    // med dem i tilfeldig rekkefølge.
-    startReelShuffle(true);
+    // Båndet bygges først når kasse-pop-upen åpnes (da med de ekte rabattene,
+    // i tilfeldig rekkefølge) – det er ingen grunn til å animere et bånd
+    // ingen ser.
     renderCasePanel();
   })();
 
@@ -732,6 +894,7 @@
     profile = await Auth.getCurrentProfile();
     selectedCaseLevel = null;
     await loadOpenedCases();
+    await refreshSpinsLeft();
     renderLevelCard();
     renderCasePanel();
   });

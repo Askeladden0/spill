@@ -22,7 +22,7 @@
   <main data-profile-main hidden>
     <section>
       <p class="auth-success" data-default-username-banner hidden>
-        Du logget inn med Google og fikk et automatisk generert brukernavn. Du kan endre det under «Innstillinger».
+        Du fikk et automatisk generert brukernavn. Du kan endre det under «Innstillinger».
       </p>
 
       <div class="profile-top-card">
@@ -271,6 +271,7 @@
         <span class="code-card-notch is-right"></span>
         <div class="code-card-head"><span class="code-card-brand">${c.brand.toUpperCase()}</span><span class="code-card-date">Hentet ${relTime(c.created_at)}</span></div>
         <span class="code-card-title">${c.title}</span>
+        ${c.link_url ? `<a class="case-reveal-link" href="${c.link_url}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
         <div class="code-card-foot">
           <span class="code-card-foot-label">${c.code}</span>
           <button type="button" class="btn-copy-code" data-copy-code="${c.code}">Kopier</button>
@@ -492,10 +493,33 @@
   document.querySelector("[data-avatar-modal-backdrop]").addEventListener("click", closeAvatarModal);
 
   // ---------- Init ----------
+  // Lenken til tilbudet ligger på rabatten (rewards.link_url) og settes i
+  // adminpanelet. Den hentes med koden slik at «Gå til tilbudet» kan vises på
+  // kortet. Databaser uten reward_id/link_url (eldre migrasjoner) svarer med
+  // en feil – da vises kortet uten lenke, som før.
+  async function fetchCodes() {
+    const withLink = await sb
+      .from("user_codes")
+      .select("brand, title, code, created_at, rewards(link_url)")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false });
+    if (!withLink.error) {
+      return {
+        data: (withLink.data || []).map((c) => ({ ...c, link_url: c.rewards ? c.rewards.link_url : null })),
+        error: null,
+      };
+    }
+    return sb
+      .from("user_codes")
+      .select("brand, title, code, created_at")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false });
+  }
+
   async function loadRecordsAndCodes() {
     const [recordsRes, codesRes, levelsRes, rewardsRes] = await Promise.all([
       sb.from("game_records").select("game_id, score, created_at").eq("user_id", profile.id).order("score", { ascending: false }),
-      sb.from("user_codes").select("brand, title, code, created_at").eq("user_id", profile.id).order("created_at", { ascending: false }),
+      fetchCodes(),
       sb.from("levels").select("level_number, points_required").order("points_required", { ascending: true }),
       sb.from("rewards").select("id, brand, title").eq("active", true),
     ]);

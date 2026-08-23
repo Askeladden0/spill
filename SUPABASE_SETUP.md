@@ -1,8 +1,8 @@
 # Supabase-oppsett for Studilla
 
-Denne siden bruker [Supabase](https://supabase.com) for innlogging (e-post +
-Google), brukerprofiler, adminpanel og fremtidige spillrekorder. Følg disse
-stegene for å koble et Supabase-prosjekt til nettsiden.
+Denne siden bruker [Supabase](https://supabase.com) for innlogging (brukernavn
++ passord), brukerprofiler, adminpanel og spillrekorder. Følg disse stegene for
+å koble et Supabase-prosjekt til nettsiden.
 
 ## 1. Opprett prosjekt
 
@@ -19,8 +19,12 @@ stegene for å koble et Supabase-prosjekt til nettsiden.
    - `game_records` – tabell klar for fremtidige spillpoeng
    - `levels` – nivåstigen på premier.html (poengkrav + premier/rabattkoder per nivå)
    - `user_codes` – rabattkodene en bruker har hentet ut ("Mine koder")
-   - `add_points`-funksjonen som lykkehjulet på premier.html bruker til å legge
-     poeng til innlogget bruker og oppdatere nivået automatisk
+   - `add_points`-funksjonen som spillene bruker til å legge poeng til innlogget
+     bruker og oppdatere nivået automatisk
+   - `wheel_spins` + `spin_wheel`/`wheel_spins_left` – lykkehjulet på
+     premier.html, med dagsgrensen admin setter i adminpanelet
+   - `app_settings.wheel_spins_per_day` (spinn per døgn) og
+     `app_settings.daily_game_rotation` (automatisk rotasjon av dagens triks)
    - Triggere som auto-oppretter en profil med tilfeldig avatar når noen registrerer seg
    - Row Level Security-regler som sikrer at brukere kun kan endre sin egen data,
      og at kun admins kan endre `avatar_options`, `levels`, eller andres `level`/`xp`/`is_admin`
@@ -29,47 +33,25 @@ stegene for å koble et Supabase-prosjekt til nettsiden.
    `on conflict do nothing` osv.) – kjør den gjerne igjen etter at nye tabeller
    som `levels`/`user_codes` er lagt til, selv om prosjektet allerede er satt opp.
 
-## 3. Skru på Google-innlogging
+## 3. Skru på innlogging med brukernavn
 
-1. I Supabase-dashbordet: **Authentication → Providers → Google**, skru den på.
-2. I [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
-   opprett en OAuth Client ID (type "Web application").
-   - **Authorized redirect URI**: bruk URL-en Supabase viser deg på Google-siden
-     (ser ut som `https://<ditt-prosjekt>.supabase.co/auth/v1/callback`).
-3. Lim inn Client ID og Client Secret fra Google inn i Supabase sitt Google-provider-skjema, lagre.
-4. Under **Authentication → URL Configuration**, legg til nettsidens URL(er)
-   (f.eks. `http://localhost:8080` under utvikling, og produksjons-URL-en senere)
-   i **Redirect URLs**, siden `login.html` ber Supabase sende brukeren til
-   `index.html` etter Google-innlogging, og til `tilbakestill-passord.html`
-   etter "Glemt passord"-lenken (begge må stå i listen, f.eks.
-   `https://dittdomene/index.html` og `https://dittdomene/tilbakestill-passord.html`).
+Studilla logger inn med **brukernavn og passord** – ingen e-post og ingen
+Google-innlogging. Supabase Auth krever teknisk sett en e-postadresse per
+konto, så `js/auth.js` lager en intern adresse ut fra brukernavnet
+(`brukernavn@brukere.studilla.no`). Adressen brukes aldri til å sende noe, og
+den vises ikke for brukeren.
 
-### 3b. Vis "Studilla" i Google-vinduet (ikke Supabase-adressen)
+Derfor **må e-postbekreftelse være av**, ellers vil Supabase forsøke å sende en
+bekreftelse til en adresse som ikke finnes, og kontoen blir aldri aktiv:
 
-Teksten brukeren ser når de trykker "Fortsett med Google" – «Logg på ...» og
-«Fortsett til ...» – kommer **ikke** fra koden i dette repoet, men fra to
-innstillinger hos Google og Supabase. Endres de ikke, viser Google
-Supabase-prosjektets adresse (`<prosjekt-ref>.supabase.co`) i stedet for
-Studilla. Slik retter du det:
+1. Supabase-dashbordet → **Authentication → Providers → Email**: la
+   «Email» stå på, men skru **av** «Confirm email».
+2. Samme sted: skru **av** eventuelle andre providere (Google osv.) – de brukes
+   ikke lenger av `login.html`.
 
-1. **Appnavnet**: Google Cloud Console → **APIs & Services → OAuth consent
-   screen → Branding**. Sett **App name** til `Studilla`, legg inn logo
-   (`assets/img/favicon.svg` eksportert som PNG, 120×120) og support-e-post,
-   og lagre. Dette styrer «Fortsett til Studilla».
-2. **Domenet**: teksten «Logg på <domene>» viser domenet til redirect-URI-en,
-   altså Supabase-domenet. For at det skal stå Studillas eget domene må
-   Supabase-prosjektet bruke et **Custom Auth Domain** (Supabase-dashbordet →
-   **Authentication → URL Configuration → Custom domains**, krever et betalt
-   plan). Sett f.eks. `auth.studilla.no`, og bytt deretter
-   redirect-URI-en i Google Cloud Console til
-   `https://auth.studilla.no/auth/v1/callback` og `SUPABASE_URL` i
-   [`js/supabase-config.js`](js/supabase-config.js) til `https://auth.studilla.no`.
-3. Google kan bruke noen minutter (i verste fall timer) på å oppdatere
-   samtykkeskjermen – tøm gjerne nettleserens innloggingsvindu og prøv på nytt
-   hvis det gamle navnet henger igjen.
-
-Punkt 1 alene fjerner Supabase-navnet fra «Fortsett til …»-linjen, som er den
-mest synlige. Punkt 2 trengs for å fjerne det helt.
+Fordi det ikke finnes noen e-postadresse, kan et glemt passord ikke
+tilbakestilles automatisk. Et passord byttes ved at en admin setter et nytt
+passord på brukeren i Supabase-dashbordet (**Authentication → Users**).
 
 ## 4. Koble nettsiden til prosjektet
 
@@ -87,16 +69,15 @@ av å holde nøkkelen hemmelig.
 
 ## 5. Registrer din første bruker og gjør deg selv til admin
 
-1. Åpne `login.html` på nettsiden og registrer en konto med e-post/passord (eller Google).
-2. Hvis "Confirm email" er skrudd på i Supabase (standard), bekreft e-posten via lenken du får tilsendt.
-3. I Supabase **SQL Editor**, kjør (bytt ut med ditt eget brukernavn):
+1. Åpne `login.html` på nettsiden og registrer en konto med brukernavn og passord.
+2. I Supabase **SQL Editor**, kjør (bytt ut med ditt eget brukernavn):
 
    ```sql
    update public.profiles set is_admin = true where lower(username) = lower('dittbrukernavn');
    ```
 
-4. Logg inn på nytt (eller last siden på nytt) – nå vises "Admin"-lenken nederst
-   på siden, og du får tilgang til `admin.html`.
+3. Logg inn på nytt (eller last siden på nytt) – nå vises "Admin"-lenken både i
+   toppmenyen og nederst på siden, og du får tilgang til `admin.html`.
 
 Etter dette kan du gjøre flere brukere til admin direkte fra adminpanelet –
 SQL-kommandoen trengs kun for den aller første.
@@ -118,14 +99,14 @@ bekrefte e-post først. Anbefales skrudd på igjen i produksjon.
 - `js/auth.js` er lastet på alle sider og fyller `[data-auth-slot]` i headeren
   med enten en "Logg inn"-knapp eller avatar + nivå, avhengig av om noen er
   innlogget.
-- `[data-admin-only]`-lenken i bunnmenyen vises kun for administratorer.
+- `[data-admin-only]`-lenkene (Admin i toppmenyen og i bunnmenyen) vises kun for
+  administratorer.
 - `profil.html` krever innlogging (redirigerer til `login.html` ellers).
 - `admin.html` krever innlogging og admin-status (redirigerer til `login.html`
   hvis ingen er innlogget, ellers til `index.html` hvis brukeren ikke er
   admin) – håndhevet av `Auth.requireAdmin()` i `js/admin.js`.
 - Passordregler: minst 8 tegn, med minst én bokstav og ett tall.
 - Brukernavnregler: 5–20 tegn, kun bokstaver/tall/understrek, unikt.
-- Google-innlogging kan ikke spørre om brukernavn før kontoen opprettes, så
-  disse brukerne får et automatisk generert brukernavn
-  (`username_is_default = true`) og blir oppfordret til å velge sitt eget på
-  profilsiden.
+- Brukere som (av en eller annen grunn) er opprettet uten brukernavn får et
+  automatisk generert et (`username_is_default = true`) og blir oppfordret til å
+  velge sitt eget på profilsiden.

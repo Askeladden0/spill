@@ -1405,6 +1405,113 @@ $$;
 revoke all on function public.open_level_case(int) from public;
 grant execute on function public.open_level_case(int) to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 41. app_settings: innstillinger for lykkehjulet og dagens triks.
+--     wheel_spins_per_day: hvor mange ganger hver spiller kan spinne
+--       lykkehjulet per døgn. 0 = ingen grense.
+--     daily_game_rotation: når den er på, roterer "dagens triks" automatisk
+--       til et nytt triks hvert døgn (rekkefølgen på forsiden brukes som
+--       runde). Skrus den av, blir triksadmin har merket med is_daily_game
+--       stående til det byttes manuelt.
+-- ---------------------------------------------------------------------------
+alter table public.app_settings add column if not exists wheel_spins_per_day int not null default 1
+  constraint app_settings_wheel_spins_nonneg check (wheel_spins_per_day >= 0);
+alter table public.app_settings add column if not exists daily_game_rotation boolean not null default true;
+
+-- ---------------------------------------------------------------------------
+-- 42. wheel_spins – én rad per spinn på lykkehjulet, med hvilken dato spinnet
+--     hørte til (UTC-dato). Brukes til å håndheve dagsgrensen server-side, så
+--     grensen ikke kan omgås ved å tømme localStorage.
+-- ---------------------------------------------------------------------------
+create table if not exists public.wheel_spins (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  spun_on date not null default (now() at time zone 'utc')::date,
+  points int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists wheel_spins_user_day_idx on public.wheel_spins (user_id, spun_on);
+
+alter table public.wheel_spins enable row level security;
+
+drop policy if exists "wheel_spins_select_own" on public.wheel_spins;
+create policy "wheel_spins_select_own" on public.wheel_spins
+  for select using (auth.uid() = user_id or public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 43. RPC: hvor mange spinn den innloggede brukeren har igjen i dag.
+--     -1 betyr "ingen grense" (wheel_spins_per_day = 0).
+-- ---------------------------------------------------------------------------
+create or replace function public.wheel_spins_left()
+returns int
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  per_day int;
+  used int;
+begin
+  select coalesce(wheel_spins_per_day, 1) into per_day from public.app_settings where id = 1;
+  if per_day is null then per_day := 1; end if;
+  if per_day = 0 then return -1; end if;
+
+  select count(*) into used
+    from public.wheel_spins
+   where user_id = auth.uid()
+     and spun_on = (now() at time zone 'utc')::date;
+
+  return greatest(0, per_day - used);
+end;
+$$;
+
+revoke all on function public.wheel_spins_left() from public;
+grant execute on function public.wheel_spins_left() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 44. RPC: spinn lykkehjulet. Sjekker dagsgrensen, logger spinnet og legger
+--     poengene til brukeren i én og samme transaksjon, slik at klienten ikke
+--     kan spinne flere ganger enn admin har åpnet for.
+-- ---------------------------------------------------------------------------
+create or replace function public.spin_wheel(p_delta int)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  per_day int;
+  used int;
+begin
+  if p_delta is null or p_delta <= 0 then
+    raise exception 'p_delta må være et positivt tall';
+  end if;
+
+  select coalesce(wheel_spins_per_day, 1) into per_day from public.app_settings where id = 1;
+  if per_day is null then per_day := 1; end if;
+
+  if per_day > 0 then
+    select count(*) into used
+      from public.wheel_spins
+     where user_id = auth.uid()
+       and spun_on = (now() at time zone 'utc')::date;
+
+    if used >= per_day then
+      raise exception 'Du har brukt opp spinnene dine for i dag. Kom tilbake i morgen!';
+    end if;
+  end if;
+
+  insert into public.wheel_spins (user_id, points) values (auth.uid(), p_delta);
+
+  return public.add_points(p_delta);
+end;
+$$;
+
+revoke all on function public.spin_wheel(int) from public;
+grant execute on function public.spin_wheel(int) to authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
