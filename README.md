@@ -150,6 +150,34 @@ Alle seks spillene støtter dette. I sanntidsspillene (Snake og Tetris) står
 brettet stille til spilleren gjør sitt første trekk, slik at man ikke taper
 med en gang siden lastes.
 
+## Cookies og samtykke (statistikk/markedsføring)
+
+Alle sider laster `js/consent.js` og `js/cookie-banner.js` (i den
+rekkefølgen) rett før `js/layout.js`/`js/vendor/supabase.js`:
+
+- **`js/consent.js`** setter opp Googles «Consent Mode v2»
+  (`gtag('consent', 'default', …)` med alt satt til `denied` inntil
+  brukeren har valgt) og eksponerer `window.StudillaConsent` med
+  `get()`, `hasChoice()` og `save({ stats, marketing })`. Når brukeren
+  godtar statistikk og/eller markedsføring, oppdaterer den samtykket
+  hos Google og laster `gtag.js` først da – ingenting lastes før
+  brukeren har sagt ja. Måler-ID-ene for Google Analytics
+  (`STUDILLA_GA_MEASUREMENT_ID`) og Google Ads
+  (`STUDILLA_GOOGLE_ADS_ID`) fylles inn øverst i filen når kontoene er
+  klare; til da lastes ingen Google-tagger, selv om brukeren godtar.
+  Valget lagres i `localStorage` under nøkkelen `studilla_cookie_consent`.
+- **`js/cookie-banner.js`** viser selve banneret (design fra
+  `Cookie-banner.dc.html`) første gang en besøkende kommer til siden:
+  «Godta alle» / «Tilpass» → egne brytere for Statistikk og
+  Markedsføring («Nødvendige» kan ikke skrus av. Etter et valg legges
+  det igjen en liten «Informasjonskapsler ↻»-knapp nederst til venstre
+  som når som helst åpner innstillingene på nytt.
+
+Egen statistikkinnsamling (f.eks. sidevisninger/bruk i Supabase, hvis
+det legges til senere) bør sjekke `StudillaConsent.get()?.stats` – eller
+lytte på `window.addEventListener('studilla:consent-changed', …)` – før
+noe sendes, av samme grunn som Google-taggene venter på samtykke.
+
 ## Spilladministrasjon
 
 Spillistene ligger i Supabase-tabellen `games` (se `supabase/schema.sql`) og
