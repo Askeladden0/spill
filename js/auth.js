@@ -9,6 +9,10 @@
 
   const sb = window.supabaseClient;
 
+  // Nivåsystemet er skrudd av for den live siden (se js/feature-flags.js):
+  // toppmeny-widgeten viser da bare avatar/brukernavn, uten nivåring/xp-bar.
+  const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
+
   // Passord- og brukernavnregler (velges her siden oppgaven ga fritt valg):
   //   Brukernavn: 5–20 tegn, kun bokstaver/tall/understrek, unikt (uavh. store/små bokstaver)
   //   Passord: minst 8 tegn, minst én bokstav og ett tall
@@ -191,6 +195,14 @@
   }
 
   function xpWidgetHTML(profile) {
+    if (!LEVELS_ENABLED) {
+      return `
+        <a href="profil.html" class="login-btn" style="padding:6px 14px 6px 6px" aria-label="Min profil">
+          ${avatarHTML(profile, 30)}
+          <span>${profile.username}</span>
+        </a>
+      `;
+    }
     const { pct, xp, threshold } = xpProgress(profile);
     return `
       <div class="xp-widget" data-xp-widget>
@@ -270,7 +282,7 @@
    */
   function animateHeaderLevelUp(prevProfile, newProfile) {
     const slot = document.querySelector("[data-auth-slot]");
-    if (!slot || !prevProfile || !newProfile) {
+    if (!LEVELS_ENABLED || !slot || !prevProfile || !newProfile) {
       renderHeaderWithProfile(newProfile);
       return;
     }

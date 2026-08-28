@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Studilla · Rangering</title>
-<meta name="description" content="Se hvem som topper poenglisten og har låst opp flest rabattkoder hos Studilla.">
+<meta name="description" content="Se hvem som topper poenglisten hos Studilla.">
 <meta property="og:title" content="Studilla · Rangering">
-<meta property="og:description" content="Se hvem som topper poenglisten og har låst opp flest rabattkoder hos Studilla.">
+<meta property="og:description" content="Se hvem som topper poenglisten hos Studilla.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Studilla">
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
@@ -45,9 +45,9 @@
         </div>
       </div>
 
-      <div class="leaderboard-panel">
+      <div class="leaderboard-panel" data-leaderboard-panel>
         <div class="leaderboard-head">
-          <span>PLASS</span><span>SPILLER</span><span>NIVÅ</span><span>KAMPER</span><span>POENG</span>
+          <span>PLASS</span><span>SPILLER</span><span data-levels-only>NIVÅ</span><span>KAMPER</span><span>POENG</span>
         </div>
         <div class="leaderboard-body" data-leaderboard-body>
           <div class="leaderboard-empty">Laster brukere …</div>
@@ -70,6 +70,7 @@
 
 <script src="js/consent.js"></script>
 <script src="js/cookie-banner.js"></script>
+<script src="js/feature-flags.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
@@ -84,6 +85,7 @@
   const Auth = window.StudillaAuth;
   const LB = window.StudillaLeaderboard;
   const games = LB.games;
+  const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
 
   const VISIBLE_ROWS = 20;
   const MEDAL_COLORS = ["#f5c451", "#c9d2de", "#d08a52"];
@@ -176,7 +178,7 @@
             ${Auth.avatarHTML(me, 34)}
             <div style="display:flex;flex-direction:column">
               <span class="rank-me-name">Deg — ${me.username}</span>
-              <span class="rank-me-scope">${scopeLabel(scope)} · Nivå ${me.level}</span>
+              <span class="rank-me-scope">${scopeLabel(scope)}${LEVELS_ENABLED ? ` · Nivå ${me.level}` : ""}</span>
             </div>
           </div>
           <div class="rank-me-stats">
@@ -249,7 +251,7 @@
             <span class="leaderboard-player-name">${p.username}</span>
             ${profile && p.id === profile.id ? '<span class="you-badge">DEG</span>' : ""}
           </span>
-          <span class="leaderboard-level">${p.level}</span>
+          ${LEVELS_ENABLED ? `<span class="leaderboard-level">${p.level}</span>` : ""}
           <span class="leaderboard-matches">${fmt(p.matches)}</span>
           <span class="leaderboard-score">${fmt(p.score)}</span>
         </a>
@@ -348,7 +350,7 @@
             <a class="rank-search-result" href="${playerLink(p)}">
               ${Auth.avatarHTML(p, 32)}
               <span class="rank-search-name">${p.username}</span>
-              <span class="rank-search-meta">Nivå ${p.level} · ${fmt(p.xp)} p</span>
+              <span class="rank-search-meta">${LEVELS_ENABLED ? `Nivå ${p.level} · ` : ""}${fmt(p.xp)} p</span>
             </a>
           `
           )
@@ -368,6 +370,9 @@
 
   // ---------- Init ----------
   async function init() {
+    if (!LEVELS_ENABLED) {
+      document.querySelector("[data-leaderboard-panel]").classList.add("levels-hidden");
+    }
     if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
     profile = await Auth.getCurrentProfile();
     const [loadedProfiles, records] = await Promise.all([LB.loadProfiles(), LB.loadRecords()]);
