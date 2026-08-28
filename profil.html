@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Studilla · Min profil</title>
-<meta name="description" content="Se din poengsum, nivå og opptjente rabattkoder på Studilla.">
+<meta name="description" content="Se din poengsum og dine rekorder på Studilla.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
 <link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
@@ -36,17 +36,17 @@
         <div class="profile-top-meta">
           <div class="profile-top-name-row">
             <h1 data-profile-username>–</h1>
-            <span class="level-pill" data-profile-level-pill>NIVÅ –</span>
+            <span class="level-pill" data-profile-level-pill data-levels-only>NIVÅ –</span>
           </div>
           <span class="section-sub" data-profile-email-line>–</span>
           <a href="#" class="section-sub" data-public-profile-link>Se din offentlige brukerprofil →</a>
         </div>
 
-        <div class="profile-stats-grid">
+        <div class="profile-stats-grid" data-profile-stats-grid>
           <div class="profile-stat"><span class="profile-stat-num is-accent" data-stat-points>–</span><span class="profile-stat-label">POENG TOTALT</span></div>
           <div class="profile-stat"><span class="profile-stat-num" data-stat-rank>–</span><span class="profile-stat-label">PLASSERING</span></div>
           <div class="profile-stat"><span class="profile-stat-num" data-stat-matches>–</span><span class="profile-stat-label">KAMPER</span></div>
-          <div class="profile-stat"><span class="profile-stat-num" data-stat-codes>–</span><span class="profile-stat-label">RABATTKODER</span></div>
+          <div class="profile-stat" data-levels-only><span class="profile-stat-num" data-stat-codes>–</span><span class="profile-stat-label">RABATTKODER</span></div>
         </div>
       </div>
     </section>
@@ -56,7 +56,7 @@
         <div class="profile-tabs" data-profile-tabs>
           <button type="button" class="profile-tab is-active" data-tab="oversikt">Oversikt</button>
           <button type="button" class="profile-tab" data-tab="rekorder">Mine rekorder</button>
-          <button type="button" class="profile-tab" data-tab="koder">Rabattkoder <span class="profile-tab-count" data-tab-codes-count></span></button>
+          <button type="button" class="profile-tab" data-tab="koder" data-levels-only>Rabattkoder <span class="profile-tab-count" data-tab-codes-count></span></button>
         </div>
         <a href="innstillinger.html" class="settings-link-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -67,20 +67,20 @@
       <div data-tab-panel="oversikt">
         <div class="overview-grid">
           <div class="overview-card">
-            <div class="overview-card-head"><h2 data-level-progress-title>Vei til neste nivå</h2><span class="section-sub" data-level-progress-sub></span></div>
-            <div style="display:flex;flex-direction:column;gap:9px">
+            <div class="overview-card-head" data-levels-only><h2 data-level-progress-title>Vei til neste nivå</h2><span class="section-sub" data-level-progress-sub></span></div>
+            <div style="display:flex;flex-direction:column;gap:9px" data-levels-only>
               <div class="level-progress-bar"><div class="level-progress-fill" data-level-progress-fill style="width:0%"></div></div>
               <div class="level-progress-labels"><span data-level-progress-fraction></span><span data-level-progress-reward></span></div>
             </div>
-            <div class="overview-divider"></div>
+            <div class="overview-divider" data-levels-only></div>
             <h2>Dine tre beste</h2>
             <div style="display:flex;flex-direction:column;gap:10px" data-top-records></div>
             <button type="button" class="btn-outline-sm" style="align-self:flex-start" data-goto-records>Se alle rekorder</button>
           </div>
           <div class="overview-card">
-            <div class="overview-card-head"><h2>Nyeste rabattkode</h2><span class="section-sub" data-more-codes-label></span></div>
-            <div data-latest-code-slot></div>
-            <div class="overview-divider"></div>
+            <div class="overview-card-head" data-levels-only><h2>Nyeste rabattkode</h2><span class="section-sub" data-more-codes-label></span></div>
+            <div data-latest-code-slot data-levels-only></div>
+            <div class="overview-divider" data-levels-only></div>
             <h2>Siste aktivitet</h2>
             <div style="display:flex;flex-direction:column;gap:12px" data-activity-list></div>
           </div>
@@ -95,7 +95,7 @@
         </div>
       </div>
 
-      <div data-tab-panel="koder" hidden>
+      <div data-tab-panel="koder" data-levels-only hidden>
         <div style="display:flex;flex-direction:column;gap:22px">
           <div class="codes-grid" data-codes-grid>
             <p class="section-sub">Laster rabattkoder …</p>
@@ -135,6 +135,7 @@
 
 <script src="js/consent.js"></script>
 <script src="js/cookie-banner.js"></script>
+<script src="js/feature-flags.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
@@ -150,6 +151,7 @@
   const Avatars = window.StudillaAvatars;
   const LB = window.StudillaLeaderboard;
   const games = window.STUDILLA_GAMES || [];
+  const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
 
   let profile = null;
   let avatarOptions = { colors: [], icons: [] };
@@ -300,7 +302,9 @@
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
       if (row) events.push({ text: `Ny rekord i ${gameName(gameId)} · ${fmt(score)}`, at: row.created_at, isNew: true });
     });
-    codes.forEach((c) => events.push({ text: `Hentet rabattkode hos ${c.brand}`, at: c.created_at, isNew: false }));
+    if (LEVELS_ENABLED) {
+      codes.forEach((c) => events.push({ text: `Hentet rabattkode hos ${c.brand}`, at: c.created_at, isNew: false }));
+    }
 
     events.sort((a, b) => new Date(b.at) - new Date(a.at));
     const el = document.querySelector("[data-activity-list]");
@@ -401,7 +405,14 @@
     });
   }
 
+  function applyFeatureVisibility() {
+    if (LEVELS_ENABLED) return;
+    document.querySelectorAll("[data-levels-only]").forEach((el) => { el.style.display = "none"; });
+    document.querySelector("[data-profile-stats-grid]").classList.add("is-3col");
+  }
+
   function renderAll() {
+    applyFeatureVisibility();
     renderProfileHeader();
     renderStats();
     renderLevelProgress();

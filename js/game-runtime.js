@@ -16,6 +16,10 @@
   const sb = window.supabaseClient;
   const Auth = window.StudillaAuth;
 
+  // Nivåsystemet er skrudd av for den live siden (se js/feature-flags.js):
+  // nivå-baren og "nivå opp"-teksten på game over-kortet skal da ikke vises.
+  const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
+
   // Poengterskler som viser en kort "Block Blast"-aktig tekst midt i
   // spillflaten når spilleren når dem i én økt. Delt på tvers av alle spill
   // (samme terskler for alle) fordi poenggivningen er balansert til å ligge
@@ -391,10 +395,14 @@
         els.overlayBest.textContent = isNewBest
           ? "Ny personlig rekord! 🎉"
           : `Rekord: ${best.toLocaleString("no-NO")} poeng.`;
-        animateOverlayLevel(prevProfile, newProfile);
+        if (LEVELS_ENABLED) {
+          animateOverlayLevel(prevProfile, newProfile);
+        } else {
+          els.overlayLevel.hidden = true;
+        }
         els.overlay.hidden = false;
 
-        if (leveledUp && window.StudillaLevelUp) {
+        if (LEVELS_ENABLED && leveledUp && window.StudillaLevelUp) {
           window.StudillaLevelUp.show(prevProfile, newProfile);
         }
 

@@ -11,6 +11,7 @@
 
   const sb = window.supabaseClient;
   const Auth = window.StudillaAuth;
+  const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
   const CONFETTI_COLORS = ["#2ee87f", "#5cf5a0", "#5c8df5", "#f5c95c", "#f55c9b", "#a56cf5", "#ffffff"];
   const RING_CIRCUMFERENCE = 364.4;
 
@@ -162,7 +163,7 @@
    * samme sekvens som design­filen (fyll → nullstill → fyll igjen).
    */
   async function show(prevProfile, newProfile) {
-    if (!prevProfile || !newProfile || newProfile.level <= prevProfile.level) return;
+    if (!LEVELS_ENABLED || !prevProfile || !newProfile || newProfile.level <= prevProfile.level) return;
     const e = ensureMounted();
     clearTimers();
     runId += 1;

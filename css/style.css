@@ -2184,6 +2184,12 @@ main {
 
 .leaderboard-empty { padding: 40px 24px; text-align: center; font-size: 14px; color: var(--muted-2); }
 
+.leaderboard-panel.levels-hidden .leaderboard-head,
+.leaderboard-panel.levels-hidden .leaderboard-row {
+  grid-template-columns: 64px 1fr 120px 120px;
+}
+.leaderboard-panel.levels-hidden [data-levels-only] { display: none; }
+
 .leaderboard-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; }
 
 .btn-outline {
@@ -2266,6 +2272,8 @@ main {
   .mygames-grid { grid-template-columns: repeat(2, 1fr); }
   .leaderboard-head, .leaderboard-row { grid-template-columns: 48px 1fr 90px 90px; }
   .leaderboard-head span:nth-child(4), .leaderboard-matches { display: none; }
+  .leaderboard-panel.levels-hidden .leaderboard-head,
+  .leaderboard-panel.levels-hidden .leaderboard-row { grid-template-columns: 48px 1fr 90px; }
 }
 
 /* ---------- Nivå opp-modal ---------- */
@@ -3038,6 +3046,8 @@ main {
   border-radius: 14px;
   overflow: hidden;
 }
+
+.profile-stats-grid.is-3col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 .profile-stat {
   display: flex;
