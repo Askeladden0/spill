@@ -1543,6 +1543,42 @@ drop policy if exists "guest_game_plays_select_admin" on public.guest_game_plays
 create policy "guest_game_plays_select_admin" on public.guest_game_plays
   for select using (public.is_admin());
 
+-- ---------------------------------------------------------------------------
+-- 46. site_visits – enkel, anonym besøksmåling for adminpanelets "aktive
+--     personer i dag" (Oversikt/Statistikk). Bygges av js/visit-tracking.js,
+--     som kjøres på alle sider (via layout) og registrerer maks én rad per
+--     dag per besøker – innlogget eller ikke – med en tilfeldig visitor-id
+--     lagret i nettleserens localStorage. Pinger kun når brukeren har gitt
+--     samtykke til statistikk-informasjonskapsler (se js/consent.js), så
+--     "aktive personer" er derfor et minstetall, ikke et eksakt tall.
+--
+--     Ingen kobling til e-post/IP lagres – kun en tilfeldig id, dato og
+--     (om innlogget) profil-id, slik at admin kan se om aktiviteten kommer
+--     fra registrerte brukere eller gjester.
+-- ---------------------------------------------------------------------------
+create table if not exists public.site_visits (
+  id bigint generated always as identity primary key,
+  visitor_id text not null,
+  user_id uuid references auth.users(id) on delete set null,
+  day date not null default (now() at time zone 'utc')::date,
+  created_at timestamptz not null default now(),
+  unique (visitor_id, day)
+);
+
+create index if not exists site_visits_day_idx on public.site_visits (day);
+
+alter table public.site_visits enable row level security;
+
+-- Alle (også utlogget) kan registrere at de var innom i dag. Kun admin kan
+-- lese dataene tilbake – det er kun adminpanelet som trenger dem.
+drop policy if exists "site_visits_insert_all" on public.site_visits;
+create policy "site_visits_insert_all" on public.site_visits
+  for insert with check (true);
+
+drop policy if exists "site_visits_select_admin" on public.site_visits;
+create policy "site_visits_select_admin" on public.site_visits
+  for select using (public.is_admin());
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
