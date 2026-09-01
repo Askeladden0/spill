@@ -1512,6 +1512,37 @@ $$;
 revoke all on function public.spin_wheel(int) from public;
 grant execute on function public.spin_wheel(int) to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 45. guest_game_plays – logger runder spilt av utloggede besøkende, slik at
+--     adminpanelets statistikk (spilte runder / poeng per spill) også dekker
+--     gjester, ikke bare innloggede brukere (game_records krever user_id og
+--     kan derfor aldri inneholde gjesterunder). Ingen personopplysninger
+--     lagres – kun hvilket spill og skåren, uten noen kobling til besøkeren –
+--     så tallene kan brukes til volum, men ikke til gjeste-retention.
+-- ---------------------------------------------------------------------------
+create table if not exists public.guest_game_plays (
+  id bigint generated always as identity primary key,
+  game_id text not null,
+  score numeric not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists guest_game_plays_game_idx on public.guest_game_plays (game_id);
+create index if not exists guest_game_plays_created_idx on public.guest_game_plays (created_at);
+
+alter table public.guest_game_plays enable row level security;
+
+-- Alle (også utlogget) kan legge inn en rad når de fullfører et spill uten å
+-- være innlogget. Kun admin kan lese dem tilbake – det er kun adminpanelets
+-- statistikk som trenger dem.
+drop policy if exists "guest_game_plays_insert_all" on public.guest_game_plays;
+create policy "guest_game_plays_insert_all" on public.guest_game_plays
+  for insert with check (true);
+
+drop policy if exists "guest_game_plays_select_admin" on public.guest_game_plays;
+create policy "guest_game_plays_select_admin" on public.guest_game_plays
+  for select using (public.is_admin());
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

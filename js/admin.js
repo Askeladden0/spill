@@ -42,6 +42,7 @@
     rewardCodes: [],
     claims: [],
     gameRecords: [],
+    guestGameRecords: [],
     avatarOptions: { colors: [], icons: [] },
     settings: { level_step: 1000, wheel_spins_per_day: 1, daily_game_rotation: true },
     gamesNeedMigration: false,
@@ -183,8 +184,19 @@
     return { level_step: Number(basic.data.level_step) || 1000, wheel_spins_per_day: 1, daily_game_rotation: true };
   }
 
+  async function loadGuestGameRecords() {
+    const { data, error } = await sb.from("guest_game_plays").select("game_id, score, created_at");
+    if (error) {
+      // Tabellen finnes ikke før supabase/schema.sql (seksjon 45) er kjørt på
+      // nytt – feiler stille og lar gjesterunder mangle i statistikken i
+      // stedet for å velte hele adminpanelet.
+      return [];
+    }
+    return data || [];
+  }
+
   async function loadAll() {
-    const [profilesRes, levelsRes, rewards, rarityRes, rewardCodes, claimsRes, recordsRes, avatarRes, games, settings] = await Promise.all([
+    const [profilesRes, levelsRes, rewards, rarityRes, rewardCodes, claimsRes, recordsRes, guestRecords, avatarRes, games, settings] = await Promise.all([
       sb.from("profiles").select("id, username, xp, level, is_admin, created_at, avatar_icon, avatar_color").order("created_at", { ascending: false }),
       sb.from("levels").select("level_number, points_required").order("level_number", { ascending: true }),
       loadRewards(),
@@ -192,6 +204,7 @@
       loadRewardCodes(),
       sb.from("user_codes").select("user_id, reward_id, brand, title, code, created_at").order("created_at", { ascending: false }),
       sb.from("game_records").select("user_id, game_id, score, created_at"),
+      loadGuestGameRecords(),
       sb.from("avatar_options").select("colors, icons").eq("id", 1).single(),
       loadGames(),
       loadSettings(),
@@ -211,6 +224,7 @@
     state.rewardCodes = rewardCodes;
     state.claims = claimsRes.data || [];
     state.gameRecords = recordsRes.data || [];
+    state.guestGameRecords = guestRecords;
     state.avatarOptions = avatarRes.data || { colors: [], icons: [] };
     state.games = games;
     state.settings = settings;
@@ -431,7 +445,7 @@
     const totalPoints = state.profiles.reduce((a, u) => a + (u.xp || 0), 0);
     const daily = state.games.find((g) => g.is_daily_game);
     const dailyPlaysDay = daily
-      ? state.gameRecords.filter((r) => r.game_id === daily.id && Date.now() - new Date(r.created_at).getTime() < DAY_MS).length
+      ? [...state.gameRecords, ...state.guestGameRecords].filter((r) => r.game_id === daily.id && Date.now() - new Date(r.created_at).getTime() < DAY_MS).length
       : 0;
     const newest = state.profiles.slice(0, 4);
 
@@ -535,8 +549,11 @@
    *   tilbake   = av disse, de som har runder på minst to ulike datoer
    *   retention = tilbake / spillere
    *
-   * Bare innloggede runder havner i game_records, så tallene gjelder
-   * registrerte brukere (gjestespill lagres kun lokalt i nettleseren).
+   * Bygges kun fra game_records (innloggede runder): gjesterunder logges nå
+   * også (guest_game_plays, se "Spilte runder per spill" og "Dagens spill"),
+   * men uten noen kobling til besøkeren kan man ikke se om samme gjest kom
+   * tilbake en annen dag – retention kan derfor bare måles for registrerte
+   * brukere.
    */
   const RETENTION_RANGES = { "7d": 7 * DAY_MS, "30d": 30 * DAY_MS, "90d": 90 * DAY_MS, alle: Infinity };
 
@@ -631,7 +648,11 @@
     const countAllByGame = new Map();
     const cutoff = { "24t": DAY_MS, "7d": 7 * DAY_MS, "30d": 30 * DAY_MS, "90d": 90 * DAY_MS }[state.playRange] || Infinity;
     const countRangeByGame = new Map();
-    state.gameRecords.forEach((r) => {
+    // Innloggede runder (game_records) og gjesterunder (guest_game_plays)
+    // slås sammen her: poeng/antall runder skal telle alle spillere, ikke
+    // bare de som er logget inn. Retention (under) er fortsatt kun basert på
+    // game_records, siden gjesterunder ikke kan kobles til samme besøker.
+    [...state.gameRecords, ...state.guestGameRecords].forEach((r) => {
       pointsByGame.set(r.game_id, (pointsByGame.get(r.game_id) || 0) + (Number(r.score) || 0));
       countAllByGame.set(r.game_id, (countAllByGame.get(r.game_id) || 0) + 1);
       if (Date.now() - new Date(r.created_at).getTime() <= cutoff) {
