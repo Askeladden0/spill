@@ -226,10 +226,11 @@
     if (!profile) {
       const guestPoints = getGuestPoints();
       slot.innerHTML = `
+        ${LEVELS_ENABLED ? `
         <div class="guest-points" data-guest-points-display>
           <span class="guest-points-num">${guestPoints.toLocaleString("no-NO")}</span>
           <span class="guest-points-label">POENG DU HADDE HATT</span>
-        </div>
+        </div>` : ""}
         <a href="login.html">
           <button class="login-btn" type="button">
             <span class="login-avatar">
