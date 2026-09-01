@@ -43,6 +43,7 @@
     claims: [],
     gameRecords: [],
     guestGameRecords: [],
+    siteVisits: [],
     avatarOptions: { colors: [], icons: [] },
     settings: { level_step: 1000, wheel_spins_per_day: 1, daily_game_rotation: true },
     gamesNeedMigration: false,
@@ -82,6 +83,7 @@
     signupRange: "7d",
     playRange: "7d",
     retentionRange: "30d",
+    activityRange: "7d",
   };
 
   const els = {};
@@ -195,8 +197,19 @@
     return data || [];
   }
 
+  async function loadSiteVisits() {
+    const { data, error } = await sb.from("site_visits").select("visitor_id, user_id, day");
+    if (error) {
+      // Tabellen finnes ikke før supabase/schema.sql (seksjon 46) er kjørt på
+      // nytt – feiler stille og lar aktivitetsgrafen vise 0 i stedet for å
+      // velte hele adminpanelet.
+      return [];
+    }
+    return data || [];
+  }
+
   async function loadAll() {
-    const [profilesRes, levelsRes, rewards, rarityRes, rewardCodes, claimsRes, recordsRes, guestRecords, avatarRes, games, settings] = await Promise.all([
+    const [profilesRes, levelsRes, rewards, rarityRes, rewardCodes, claimsRes, recordsRes, guestRecords, siteVisits, avatarRes, games, settings] = await Promise.all([
       sb.from("profiles").select("id, username, xp, level, is_admin, created_at, avatar_icon, avatar_color").order("created_at", { ascending: false }),
       sb.from("levels").select("level_number, points_required").order("level_number", { ascending: true }),
       loadRewards(),
@@ -205,6 +218,7 @@
       sb.from("user_codes").select("user_id, reward_id, brand, title, code, created_at").order("created_at", { ascending: false }),
       sb.from("game_records").select("user_id, game_id, score, created_at"),
       loadGuestGameRecords(),
+      loadSiteVisits(),
       sb.from("avatar_options").select("colors, icons").eq("id", 1).single(),
       loadGames(),
       loadSettings(),
@@ -225,6 +239,7 @@
     state.claims = claimsRes.data || [];
     state.gameRecords = recordsRes.data || [];
     state.guestGameRecords = guestRecords;
+    state.siteVisits = siteVisits;
     state.avatarOptions = avatarRes.data || { colors: [], icons: [] };
     state.games = games;
     state.settings = settings;
@@ -439,6 +454,83 @@
     `;
   }
 
+  /**
+   * Utviklingen i antall unike aktive personer (innloggede + gjester) per
+   * dag, bygget fra public.site_visits (js/visit-tracking.js). Samme
+   * bøtte-logikk som buildSignupSeries, men teller unike visitor_id-er i
+   * stedet for nye rader.
+   */
+  function buildActivitySeries(range) {
+    const spanDays = { "7d": 7, "30d": 30, "90d": 90 }[range] || 7;
+    const bucketDays = range === "90d" ? 7 : 1;
+    const bucketCount = Math.round(spanDays / bucketDays);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const buckets = [];
+    for (let i = bucketCount - 1; i >= 0; i--) {
+      const endExclusive = new Date(todayStart.getTime() - i * bucketDays * DAY_MS + DAY_MS);
+      const start = new Date(endExclusive.getTime() - bucketDays * DAY_MS);
+      buckets.push({ start, endExclusive, visitors: new Set() });
+    }
+    state.siteVisits.forEach((v) => {
+      const t = new Date(`${v.day}T00:00:00`).getTime();
+      if (!Number.isFinite(t)) return;
+      const b = buckets.find((b) => t >= b.start.getTime() && t < b.endExclusive.getTime());
+      if (b) b.visitors.add(v.visitor_id);
+    });
+
+    const weekdayShort = ["sø", "ma", "ti", "on", "to", "fr", "lø"];
+    return buckets.map((b, i) => {
+      const count = b.visitors.size;
+      const dateLabel = bucketDays === 1
+        ? (bucketCount <= 7 ? weekdayShort[b.start.getDay()] : String(b.start.getDate()).padStart(2, "0"))
+        : `${b.start.getDate()}.${b.start.getMonth() + 1}`;
+      const sparse = bucketCount > 14 && bucketDays === 1;
+      return {
+        value: count,
+        label: sparse && i % 5 !== 0 ? "" : dateLabel,
+        tip: bucketDays === 1
+          ? `${b.start.toLocaleDateString("no-NO")} – ${count} aktive`
+          : `${b.start.toLocaleDateString("no-NO")}–${new Date(b.endExclusive.getTime() - DAY_MS).toLocaleDateString("no-NO")} – ${count} aktive`,
+      };
+    });
+  }
+
+  function activeTodayCount() {
+    const day = buildActivitySeries("7d");
+    return day.length ? day[day.length - 1].value : 0;
+  }
+
+  function activityCardHTML(opts) {
+    opts = opts || {};
+    const series = buildActivitySeries(state.activityRange && opts.withRangeSwitch ? state.activityRange : "7d");
+    const today = activeTodayCount();
+    const rangeLabel = { "7d": "Siste 7 dager", "30d": "Siste 30 dager", "90d": "Siste 90 dager, samlet per uke" }[state.activityRange] || "Siste 7 dager";
+    const rangeSwitch = opts.withRangeSwitch
+      ? `<span class="admin-range-switch">${["7d", "30d", "90d"].map((id) => `<button type="button" class="admin-range-btn${state.activityRange === id ? " is-active" : ""}" data-activity-range="${id}">${id === "7d" ? "7 dager" : id === "30d" ? "30 dager" : "90 dager"}</button>`).join("")}</span>`
+      : "";
+    return `
+      <div class="admin-card">
+        <div class="admin-card-head">
+          <div>
+            <h2>Aktive personer${opts.withRangeSwitch && state.activityRange === "90d" ? " per uke" : ""}</h2>
+            <span class="admin-card-sub">${opts.withRangeSwitch ? rangeLabel : "Siste 7 dager"} – unike personer på siden, ikke bare registrerte brukere. Krever samtykke til statistikk-cookies.</span>
+          </div>
+          <span class="admin-card-spacer"></span>
+          ${rangeSwitch}
+          <span class="admin-chart-stats">
+            <span class="admin-chart-stat">
+              <span class="admin-chart-stat-label">I DAG</span>
+              <span class="admin-chart-stat-value is-accent">${NOK(today)}</span>
+            </span>
+          </span>
+        </div>
+        ${barsHTML(series, { highlightLast: true })}
+      </div>
+    `;
+  }
+
   function renderOversikt() {
     const series = buildSignupSeries("7d");
     const avg = Math.round(series.reduce((a, s) => a + s.value, 0) / series.length);
@@ -451,6 +543,8 @@
 
     return `
       <div class="admin-section">
+        ${activityCardHTML({ withRangeSwitch: false })}
+
         <div class="admin-card">
           <div class="admin-card-head">
             <div>
@@ -679,6 +773,8 @@
 
     return `
       <div class="admin-section">
+        ${activityCardHTML({ withRangeSwitch: true })}
+
         <div class="admin-card">
           <div class="admin-card-head">
             <div>
@@ -1999,6 +2095,8 @@
     if (playRange) { state.playRange = playRange.dataset.playRange; return renderMain(); }
     const retentionRange = t.closest("[data-retention-range]");
     if (retentionRange) { state.retentionRange = retentionRange.dataset.retentionRange; return renderMain(); }
+    const activityRange = t.closest("[data-activity-range]");
+    if (activityRange) { state.activityRange = activityRange.dataset.activityRange; return renderMain(); }
 
     // Profilbilder
     const removeColor = t.closest("[data-remove-color]");
