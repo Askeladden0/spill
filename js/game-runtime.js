@@ -219,9 +219,44 @@
    * "session"-objekt spillmodulen bruker til å tegne brettet sitt og
    * rapportere poeng.
    */
+  /**
+   * Skalerer game-shell ned (aldri opp) slik at hele spillet – HUD + brett –
+   * alltid får plass inni spillboksen, uansett hvor stort spillets eget
+   * brett er (hvert spill setter sin egen faste/vw-baserte størrelse på
+   * brettet sitt) og uansett hvor stor boksen er på skjermen. Siden
+   * spillsiden ikke kan scrolles (se css/style.css, is-player-view), måtte
+   * spillet ellers bli beskåret i stedet for tilpasset.
+   */
+  function watchShellFit(container, shellEl) {
+    function fit() {
+      shellEl.style.transform = "none";
+      const availW = container.clientWidth;
+      const availH = container.clientHeight;
+      const naturalW = shellEl.scrollWidth;
+      const naturalH = shellEl.scrollHeight;
+      if (!availW || !availH || !naturalW || !naturalH) return;
+      const scale = Math.min(1, availW / naturalW, availH / naturalH);
+      shellEl.style.transform = scale < 1 ? `scale(${scale})` : "none";
+    }
+
+    if (window.ResizeObserver) {
+      // Observerer selve skallet (ikke boksen): boksens størrelse endres
+      // ikke av oss, men skallets NATURLIGE (utransformerte) høyde endres når
+      // spillmodulen fyller spillflaten sin rett etter mount() – det er da vi
+      // først må regne ut skaleringen.
+      const ro = new ResizeObserver(fit);
+      ro.observe(shellEl);
+      window.addEventListener("resize", fit);
+    } else {
+      window.addEventListener("resize", fit);
+    }
+    requestAnimationFrame(fit);
+  }
+
   async function mount(container, gameId) {
     container.innerHTML = shellHTML();
     container.classList.add("player-stage-active");
+    watchShellFit(container, container.querySelector(".game-shell"));
 
     const els = {
       score: container.querySelector("[data-hud-score]"),
