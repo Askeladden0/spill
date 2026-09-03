@@ -48,7 +48,6 @@
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
-        <p class="game-tetris-hint">Piltaster/WASD for å flytte, opp/W for å rotere, mellomrom for hard drop. Sveip eller bruk knappene på mobil.</p>
         <div class="tetris-layout">
           <div class="board-tetris" data-board-tetris tabindex="0"></div>
           <div class="tetris-side">

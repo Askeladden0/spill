@@ -121,7 +121,6 @@
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
-        <p class="game-blast-hint">Dra en kloss fra hånden og slipp den på brettet. Fyll en hel rad eller kolonne for å sprenge den!</p>
         <div class="board-blast" data-board-blast></div>
         <div class="blast-tray" data-blast-tray></div>
       `;

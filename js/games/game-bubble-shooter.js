@@ -66,7 +66,6 @@
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
-        <p class="game-bubble-hint">Sikt med mus/finger og trykk/klikk for å skyte. Match tre eller flere kuler med samme farge!</p>
         <canvas class="board-bubble" data-board-bubble width="${WIDTH}" height="${HEIGHT}"></canvas>
       `;
       canvas = session.playArea.querySelector("[data-board-bubble]");
