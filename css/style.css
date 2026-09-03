@@ -618,12 +618,28 @@ html.is-player-view .page {
 html.is-player-view main {
   min-height: 0;
   overflow: hidden;
-  padding-bottom: 32px;
+  gap: 14px;
+  padding: 16px 20px 20px;
+  align-items: center;
+  justify-content: center;
 }
 
+html.is-player-view main section {
+  flex-shrink: 0;
+  width: 100%;
+}
+
+/* Boksen skal ikke fylle hele resten av flaten – litt mindre og midtstilt,
+   slik at "Nytt spill", poeng osv. (som ligger i HUDen inni boksen, se
+   game-runtime.js) havner nærmere selve spillet i stedet for å flyte i tomt
+   rom. */
 html.is-player-view .player-stage {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  width: 100%;
+  max-width: 760px;
+  max-height: min(74vh, 720px);
+  margin: 0 auto;
 }
 
 /* ---------- Spill: delt poeng-HUD (game-runtime.js) ---------- */
