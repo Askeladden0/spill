@@ -807,7 +807,6 @@ html.is-player-view .player-stage {
 }
 
 /* ---------- Spill: Fruktfusjon ---------- */
-.fruit-merge-hint { margin: 0; font-size: 13px; color: var(--muted); text-align: center; max-width: 420px; }
 
 .fruit-merge-stage { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 
@@ -837,7 +836,6 @@ html.is-player-view .player-stage {
 }
 
 /* ---------- Spill: 2048 ---------- */
-.game-2048-hint { margin: 0; font-size: 13px; color: var(--muted); text-align: center; max-width: 420px; }
 
 .game-2048-toast {
   padding: 10px 18px;
@@ -930,7 +928,6 @@ html.is-player-view .player-stage {
 }
 
 /* ---------- Spill: Snake ---------- */
-.game-snake-hint { margin: 0; font-size: 13px; color: var(--muted); text-align: center; max-width: 420px; }
 
 .board-snake {
   display: grid;
@@ -963,7 +960,6 @@ html.is-player-view .player-stage {
 }
 
 /* ---------- Spill: Tetris (lekent/fargerikt) ---------- */
-.game-tetris-hint { margin: 0; font-size: 13px; color: var(--muted); text-align: center; max-width: 460px; }
 
 .tetris-layout {
   display: flex;
@@ -1086,7 +1082,6 @@ html.is-player-view .player-stage {
 }
 
 /* ---------- Spill: Block Blast (lekent/fargerikt) ---------- */
-.game-blast-hint { margin: 0; font-size: 13px; color: var(--muted); text-align: center; max-width: 460px; }
 
 .board-blast {
   display: grid;
@@ -1204,7 +1199,6 @@ html.is-player-view .player-stage {
 }
 
 /* ---------- Spill: Bubble Shooter ---------- */
-.game-bubble-hint { margin: 0; font-size: 13px; color: var(--muted); text-align: center; max-width: 420px; }
 
 .board-bubble {
   display: block;
