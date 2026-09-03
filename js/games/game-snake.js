@@ -22,10 +22,10 @@
     let timer = null;
     let session = null;
     let cellEls = null;
-    // Satt til true når en lagret runde er gjenopptatt: slangen står stille
-    // til spilleren gjør sitt første trekk, slik at man ikke krasjer med en
-    // gang siden åpnes igjen.
-    let waitingForResume = false;
+    // Satt til true frem til spilleren trykker høyre-tast (eller sveiper
+    // høyre): slangen står stille helt til da, både ved ny runde og ved en
+    // gjenopptatt lagret runde, slik at man ikke krasjer med en gang.
+    let waitingToStart = false;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -64,7 +64,7 @@
 
       if (timer) clearInterval(timer);
       timer = null;
-      waitingForResume = true;
+      waitingToStart = true;
 
       const boardEl = session.playArea.querySelector("[data-board-snake]");
       if (boardEl) boardEl.focus({ preventScroll: true });
@@ -87,10 +87,10 @@
       session.setScore(0);
       session.hideOverlay();
       session.clearState();
-      waitingForResume = false;
+      waitingToStart = true;
 
       if (timer) clearInterval(timer);
-      timer = setInterval(tick, TICK_MS);
+      timer = null;
 
       const boardEl = session.playArea.querySelector("[data-board-snake]");
       if (boardEl) boardEl.focus({ preventScroll: true });
@@ -206,13 +206,16 @@
 
     function setDirection(dir) {
       if (!dir || !session || over) return;
-      nextDirection = dir;
-      // Første trekk etter en gjenopptatt runde setter slangen i gang igjen.
-      if (waitingForResume) {
-        waitingForResume = false;
+      // Slangen står stille til spilleren trykker/sveiper høyre – da starter
+      // runden. Andre taster/retninger ignoreres helt til det skjer.
+      if (waitingToStart) {
+        if (dir !== "right") return;
+        waitingToStart = false;
         if (timer) clearInterval(timer);
         timer = setInterval(tick, TICK_MS);
+        return;
       }
+      nextDirection = dir;
     }
 
     function attachControls() {
