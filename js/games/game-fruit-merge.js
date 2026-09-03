@@ -1,36 +1,51 @@
 /**
  * Studilla – Fruktfusjon.
- * Klassisk "fruit merge"-spill: slipp frukt ned i krukken, og når to like
- * frukter treffer hverandre slås de sammen til neste frukt i kjeden. Krukken
- * ser ut som i andre fruktfusjon-spill (rund frukt, tegneserieaktig look) –
- * det er kun poeng-HUDen rundt selve krukken som følger sidens stil, via den
- * delte spill-kjøretiden (js/game-runtime.js).
+ * Klassisk "fruit merge"-spill (à la Suika Game): slipp frukt ned i krukken,
+ * og når to like frukter treffer hverandre slås de sammen til neste frukt i
+ * kjeden. Spill-logikken (frukt-progresjon, poeng, fysikk-følelse og
+ * game over-regelen) er portert fra det åpne referanseprosjektet subak-game
+ * (github.com/takempf/subak-game, CC BY-NC 4.0). Grafikk og lyd er egne,
+ * enkle implementasjoner laget for denne siden – subak-game sine bilder og
+ * lydfiler er ikke NonCommercial-lisensiert for et poeng/premie-nettsted som
+ * dette, så de er ikke kopiert inn. Poeng-HUDen rundt selve krukken følger
+ * sidens stil via den delte spill-kjøretiden (js/game-runtime.js).
  */
 (function () {
   "use strict";
 
   const GAME_ID = "fruktfusjon";
 
+  // Frukt-progresjonen (11 frukter) og radius-forholdene er hentet direkte
+  // fra subak-game sine konstanter (GAME_WIDTH = 0.6, FRUIT_SIZES), skalert
+  // om til piksler for vår WIDTH. Fargene er omtrentlig samme fargetone som
+  // referansens CSS-variabler (--color-blueberry osv.).
   const FRUITS = [
-    { name: "Kirsebær", radius: 16, color: "#e63950", emoji: "🍒" },
-    { name: "Drue", radius: 22, color: "#7e57c2", emoji: "🍇" },
-    { name: "Aprikos", radius: 29, color: "#ff9f43", emoji: "🍑" },
-    { name: "Klementin", radius: 37, color: "#ff7f11", emoji: "🍊" },
-    { name: "Eple", radius: 46, color: "#ff4d4d", emoji: "🍎" },
-    { name: "Pære", radius: 55, color: "#c6e26b", emoji: "🍐" },
-    { name: "Fersken", radius: 65, color: "#ffb0a3", emoji: "🍑" },
-    { name: "Ananas", radius: 76, color: "#ffd93d", emoji: "🍍" },
-    { name: "Melon", radius: 88, color: "#8bd45c", emoji: "🍈" },
-    { name: "Vannmelon", radius: 102, color: "#2fae5e", emoji: "🍉" },
+    { name: "Blåbær", radius: 14, color: "#5265ff", emoji: "🫐", points: 2 },
+    { name: "Drue", radius: 18, color: "#7fb544", emoji: "🍇", points: 4 },
+    { name: "Sitron", radius: 23, color: "#ffb020", emoji: "🍋", points: 6 },
+    { name: "Appelsin", radius: 29, color: "#ff6a1f", emoji: "🍊", points: 8 },
+    { name: "Eple", radius: 38, color: "#d81e05", emoji: "🍎", points: 10 },
+    { name: "Drakefrukt", radius: 47, color: "#f22e6d", emoji: "🐉", points: 12 },
+    { name: "Pære", radius: 57, color: "#d6dd6b", emoji: "🍐", points: 14 },
+    { name: "Fersken", radius: 70, color: "#ff9c73", emoji: "🍑", points: 16 },
+    { name: "Ananas", radius: 79, color: "#ffc61a", emoji: "🍍", points: 18 },
+    { name: "Honningmelon", radius: 97, color: "#a4d654", emoji: "🍈", points: 20 },
+    { name: "Vannmelon", radius: 116, color: "#7cb518", emoji: "🍉", points: 22 },
   ];
 
+  const WATERMELON_MERGE_BONUS = 100;
   const DROPPABLE_MAX_INDEX = 4; // Kun de 5 minste fruktene faller ned i starten.
-  const WIDTH = 380;
-  const HEIGHT = 520;
-  const WALL_THICKNESS = 16;
-  const DROP_Y = 46;
-  const DANGER_Y = 96;
-  const DANGER_HOLD_MS = 1500;
+  // 2:3-forhold på spillflaten, som i referansen (0.6m x 0.9m).
+  const WIDTH = 400;
+  const HEIGHT = 600;
+  const WALL_THICKNESS = 20;
+  const DROP_Y = 50;
+  const DANGER_Y = 100; // Tilsvarer GAME_OVER_HEIGHT (høyde/6) i referansen.
+  const DANGER_HOLD_MS = 1000;
+  const MERGE_EFFECT_MS = 1000;
+  // Pitch stiger for hver mindre frukt, samme idé som DROP_PITCH_RATES i
+  // referansen (minste frukt = høyest tone).
+  const PITCH_RATES = [1.9, 1.7, 1.5, 1.34, 1.19, 1.06, 0.94, 0.84, 0.75, 0.67, 0.6];
 
   function start(container) {
     const Matter = window.Matter;
@@ -47,11 +62,12 @@
     let nextFruitIndex = randomDropIndex();
     let currentDropX = WIDTH / 2;
     let canDrop = true;
-    let dangerSince = null;
     let bodySeq = 1;
     let mergeEffects = [];
     let particles = [];
     let autosaveTimer = null;
+    let muted = readMuted();
+    let audioCtx = null;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -60,16 +76,97 @@
           <div class="fruit-merge-next">
             <span class="fruit-merge-next-label">Neste</span>
             <span class="fruit-merge-next-fruit" data-fruit-next></span>
+            <button type="button" class="fruit-merge-mute" data-fruit-mute aria-label="Skru av/på lyd"></button>
           </div>
           <div class="fruit-merge-canvas-wrap" data-fruit-canvas-wrap></div>
         </div>
       `;
       session.onRestart(() => initGame());
 
+      const muteBtn = session.playArea.querySelector("[data-fruit-mute]");
+      updateMuteButton(muteBtn);
+      muteBtn.addEventListener("click", () => {
+        muted = !muted;
+        writeMuted(muted);
+        updateMuteButton(muteBtn);
+      });
+
       // Fortsett en påbegynt runde hvis den ligger lagret, ellers ny runde.
       const saved = session.savedState();
       initGame(validSavedGame(saved) ? saved : null);
     });
+
+    function readMuted() {
+      try {
+        return window.localStorage.getItem("studilla_sound_muted") === "1";
+      } catch (e) {
+        return false;
+      }
+    }
+    function writeMuted(v) {
+      try {
+        window.localStorage.setItem("studilla_sound_muted", v ? "1" : "0");
+      } catch (e) {
+        // ignorer – lyd-preferansen er ikke kritisk.
+      }
+    }
+    function updateMuteButton(btn) {
+      if (!btn) return;
+      btn.textContent = muted ? "🔇" : "🔊";
+      btn.classList.toggle("is-muted", muted);
+    }
+
+    // Enkel, selvlaget lydmotor via Web Audio API (ingen eksterne lydfiler):
+    // et kort "pop" ved fusjon og et mykt "bump" ved kollisjon, med tonehøyde
+    // og volum styrt av hvilken frukt / hvor hardt det smeller – samme idé
+    // som AudioManager i referansen, bare syntetisert i stedet for avspilte
+    // wav-filer.
+    function ensureAudio() {
+      if (audioCtx || muted) return audioCtx;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        audioCtx = null;
+      }
+      return audioCtx;
+    }
+
+    function playPop(fruitIndex) {
+      if (muted) return;
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      const rate = PITCH_RATES[fruitIndex] || 1;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(520 * rate, now);
+      osc.frequency.exponentialRampToValueAtTime(720 * rate, now + 0.08);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.35, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    }
+
+    function playBump(volume, fruitIndex) {
+      if (muted) return;
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      const rate = PITCH_RATES[fruitIndex] || 1;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(140 * rate, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.02, volume * 0.25), now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.14);
+    }
 
     // Stillingen som lagres mellom økter: hver frukt i krukken med posisjon,
     // vinkel og fart, pluss skåren og hvilken frukt som er neste ut. Fysikken
@@ -115,9 +212,6 @@
       }
       updateNextLabel();
       session.setScore(score);
-      // Fruktene er nettopp lagt inn og kan ligge så vidt over faregrensen –
-      // gi dem hele DANGER_HOLD_MS på å falle på plass før den telles.
-      dangerSince = null;
     }
 
     function randomDropIndex() {
@@ -133,7 +227,6 @@
 
       score = 0;
       over = false;
-      dangerSince = null;
       mergeEffects = [];
       particles = [];
       nextFruitIndex = randomDropIndex();
@@ -142,7 +235,9 @@
 
       engine = Matter.Engine.create();
       world = engine.world;
-      world.gravity.y = 1.1;
+      // Justert for å gi samme "vekt"-følelse som Rapier-fysikken i
+      // referansen (lav tyngdekraft + litt luftmotstand på fruktene).
+      world.gravity.y = 1.15;
 
       const wrap = session.playArea.querySelector("[data-fruit-canvas-wrap]");
       wrap.innerHTML = "";
@@ -196,18 +291,21 @@
     function makeFruit(index, x, y) {
       const spec = FRUITS[index];
       const body = Matter.Bodies.circle(x, y, spec.radius, {
-        restitution: 0.15,
-        friction: 0.6,
-        frictionStatic: 0.6,
+        restitution: 0.25,
+        friction: 0.35,
+        frictionStatic: 0.4,
+        frictionAir: 0.012,
         render: { fillStyle: spec.color },
       });
       body.fruitIndex = index;
       body.fruitSeq = bodySeq++;
+      body.dangerSince = null;
       return body;
     }
 
     function dropFruit() {
       if (!canDrop || over) return;
+      ensureAudio();
       const spec = FRUITS[nextFruitIndex];
       const x = Math.max(spec.radius + WALL_THICKNESS / 2, Math.min(WIDTH - spec.radius - WALL_THICKNESS / 2, currentDropX));
       const body = makeFruit(nextFruitIndex, x, DROP_Y);
@@ -244,42 +342,80 @@
       const merged = new Set();
       for (const pair of event.pairs) {
         const { bodyA, bodyB } = pair;
+        if (bodyA.fruitIndex === undefined || bodyB.fruitIndex === undefined) {
+          // Slag mot veggen – et mykt dunk, samme idé som "bump"-lyden i
+          // referansen (volum styrt av hvor hardt det traff).
+          const fruitBody = bodyA.fruitIndex !== undefined ? bodyA : (bodyB.fruitIndex !== undefined ? bodyB : null);
+          if (fruitBody) {
+            const speed = Math.hypot(fruitBody.velocity.x, fruitBody.velocity.y);
+            if (speed > 1.5) playBump(Math.min(1, speed / 12), fruitBody.fruitIndex);
+          }
+          continue;
+        }
         if (merged.has(bodyA.id) || merged.has(bodyB.id)) continue;
-        if (bodyA.fruitIndex === undefined || bodyB.fruitIndex === undefined) continue;
-        if (bodyA.fruitIndex !== bodyB.fruitIndex) continue;
-        if (bodyA.fruitIndex >= FRUITS.length - 1) continue;
+        if (bodyA.fruitIndex !== bodyB.fruitIndex) {
+          const relSpeed = Math.hypot(bodyA.velocity.x - bodyB.velocity.x, bodyA.velocity.y - bodyB.velocity.y);
+          if (relSpeed > 1.5) {
+            const dominant = bodyA.fruitIndex >= bodyB.fruitIndex ? bodyA : bodyB;
+            playBump(Math.min(1, relSpeed / 12), dominant.fruitIndex);
+          }
+          continue;
+        }
 
         merged.add(bodyA.id);
         merged.add(bodyB.id);
 
-        const nextIndex = bodyA.fruitIndex + 1;
         const midX = (bodyA.position.x + bodyB.position.x) / 2;
         const midY = (bodyA.position.y + bodyB.position.y) / 2;
+        const isWatermelonMerge = bodyA.fruitIndex >= FRUITS.length - 1;
+        const nextIndex = bodyA.fruitIndex + 1;
 
         Matter.World.remove(world, bodyA);
         Matter.World.remove(world, bodyB);
-        const grown = makeFruit(nextIndex, midX, midY);
-        Matter.World.add(world, grown);
 
-        score += (nextIndex + 1) * 4;
+        let effectColor;
+        let effectRadius;
+        if (isWatermelonMerge) {
+          // To vannmeloner smelter sammen til en flat bonus – ingen frukt
+          // igjen, akkurat som i referansen.
+          effectColor = FRUITS[FRUITS.length - 1].color;
+          effectRadius = FRUITS[FRUITS.length - 1].radius;
+          score += WATERMELON_MERGE_BONUS;
+        } else {
+          const grown = makeFruit(nextIndex, midX, midY);
+          Matter.World.add(world, grown);
+          effectColor = FRUITS[nextIndex].color;
+          effectRadius = FRUITS[nextIndex].radius;
+          score += FRUITS[nextIndex].points;
+        }
+
         session.setScore(score);
-        mergeEffects.push({ x: midX, y: midY, color: FRUITS[nextIndex].color, start: performance.now() });
-        spawnParticles(midX, midY, FRUITS[nextIndex].color, 14);
+        mergeEffects.push({ x: midX, y: midY, color: effectColor, radius: effectRadius, start: performance.now() });
+        spawnParticles(midX, midY, effectColor, 14);
+        playPop(isWatermelonMerge ? FRUITS.length - 1 : nextIndex);
       }
     }
 
+    // Portert fra referansens Fruit.isOutOfBounds(): sjekker hver frukt for
+    // seg, uavhengig av fart – toppen av frukten må ligge over faregrensen i
+    // mer enn DANGER_HOLD_MS sammenhengende for at runden skal ende. Dette
+    // fanger opp en høy, stillestående haug uten å avslutte for tidlig når
+    // en frukt bare passerer linjen på vei ned.
     function checkDanger() {
       if (over) return;
       const bodies = Matter.Composite.allBodies(world).filter((b) => b.fruitIndex !== undefined);
-      const settled = bodies.some((b) => b.position.y - FRUITS[b.fruitIndex].radius < DANGER_Y && Math.abs(b.velocity.y) < 0.5);
-
-      if (settled) {
-        if (dangerSince === null) dangerSince = Date.now();
-        else if (Date.now() - dangerSince > DANGER_HOLD_MS) {
-          endGame();
+      const now = Date.now();
+      for (const b of bodies) {
+        const topY = b.position.y - FRUITS[b.fruitIndex].radius;
+        if (topY < DANGER_Y) {
+          if (b.dangerSince == null) b.dangerSince = now;
+          else if (now - b.dangerSince > DANGER_HOLD_MS) {
+            endGame();
+            return;
+          }
+        } else {
+          b.dangerSince = null;
         }
-      } else {
-        dangerSince = null;
       }
     }
 
@@ -293,8 +429,7 @@
     }
 
     // Tegner fruktens emoji oppå Matter sin egen sirkel-rendering, slik at
-    // fruktene ser ut som ekte frukt (à la andre fruit-merge-spill) i stedet
-    // for bare fargede sirkler.
+    // fruktene ser ut som ekte frukt i stedet for bare fargede sirkler.
     function drawFruitEmoji(ctx) {
       const bodies = Matter.Composite.allBodies(world).filter((b) => b.fruitIndex !== undefined);
       for (const b of bodies) {
@@ -307,6 +442,18 @@
         ctx.textBaseline = "middle";
         ctx.fillText(spec.emoji, 0, 1);
         ctx.restore();
+
+        // Fare-ring rundt en frukt som holder på å utløse game over –
+        // samme idé som den rosa ringen i referansen.
+        if (b.dangerSince != null) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(b.position.x, b.position.y, spec.radius + 6, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(230,57,80,0.75)";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.restore();
+        }
       }
     }
 
@@ -327,28 +474,38 @@
       particles = particles.filter((p) => p.life > 0);
     }
 
+    // Fusjonsringen bruker samme kvintiske ease-out-kurve som
+    // MergeEffectData/renderCanvas i referansen (t = 1 - (1-progress)^5),
+    // slik at ringen sprer seg raskt først og deretter roer seg av.
+    function drawMergeEffects(ctx) {
+      const now = performance.now();
+      mergeEffects = mergeEffects.filter((e) => now - e.start < MERGE_EFFECT_MS);
+      for (const e of mergeEffects) {
+        const progress = (now - e.start) / MERGE_EFFECT_MS;
+        const t = 1 - Math.pow(1 - progress, 5);
+        const radius = e.radius * (1 + t * 4);
+        const opacity = 1 - t;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = e.color;
+        ctx.globalAlpha = opacity * 0.6;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
     function drawOverlay() {
       const ctx = render.context;
       ctx.save();
       drawFruitEmoji(ctx);
       drawParticles(ctx);
-
-      const now = performance.now();
-      const MERGE_EFFECT_MS = 380;
-      mergeEffects = mergeEffects.filter((e) => now - e.start < MERGE_EFFECT_MS);
-      for (const e of mergeEffects) {
-        const t = (now - e.start) / MERGE_EFFECT_MS;
-        ctx.globalAlpha = 1 - t;
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, 10 + t * 46, 0, Math.PI * 2);
-        ctx.strokeStyle = e.color;
-        ctx.lineWidth = 4 * (1 - t) + 1;
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
+      drawMergeEffects(ctx);
 
       // Fareindikator: en stiplet linje som viser "over kanten"-grensen.
-      ctx.strokeStyle = dangerSince ? "rgba(230,57,80,0.55)" : "rgba(0,0,0,0.15)";
+      const anyDanger = Matter.Composite.allBodies(world).some((b) => b.dangerSince != null);
+      ctx.strokeStyle = anyDanger ? "rgba(230,57,80,0.55)" : "rgba(0,0,0,0.15)";
       ctx.setLineDash([6, 6]);
       ctx.lineWidth = 2;
       ctx.beginPath();
