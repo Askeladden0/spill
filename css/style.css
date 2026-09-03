@@ -896,20 +896,63 @@ html.is-player-view .player-stage {
   aspect-ratio: 1;
   padding: 10px;
   border-radius: 16px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
+  background-color: #7cbf47;
+  background-image:
+    linear-gradient(45deg, #74b640 25%, transparent 25%, transparent 75%, #74b640 75%, #74b640),
+    linear-gradient(45deg, #74b640 25%, #82c951 25%, #82c951 75%, #74b640 75%, #74b640);
+  background-position: 0 0, 11px 11px;
+  background-size: 22px 22px;
+  border: 3px solid #8b5a2b;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.08);
   outline: none;
   touch-action: none;
 }
 
 .cell-snake {
-  border-radius: 3px;
-  background: rgba(255, 255, 255, .04);
-  transition: background-color .12s ease, box-shadow .12s ease, border-radius .12s ease;
+  border-radius: 4px;
+  background: transparent;
+  transition: background-color .12s ease, box-shadow .12s ease, border-radius .12s ease, transform .12s ease;
 }
-.cell-snake.is-body { background: var(--accent); opacity: .8; }
-.cell-snake.is-head { background: var(--accent); box-shadow: 0 0 0 2px rgba(46,232,127,.5); }
-.cell-snake.is-food { background: #f55c9b; border-radius: 50%; box-shadow: 0 0 10px rgba(245,92,155,.55); }
+
+.cell-snake.is-body {
+  border-radius: 46%;
+  background: radial-gradient(circle at 35% 28%, #a8de79, #5a9a35 72%);
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.16), inset 0 2px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.2);
+}
+
+.cell-snake.is-head {
+  border-radius: 44%;
+  background:
+    radial-gradient(circle at 27% 35%, #fff 0 2%, transparent 3%),
+    radial-gradient(circle at 63% 35%, #fff 0 2%, transparent 3%),
+    radial-gradient(circle at 50% 60%, #b5573d 0 5%, transparent 6%),
+    radial-gradient(circle at 30% 39%, #2b2320 0 6%, transparent 7%),
+    radial-gradient(circle at 66% 39%, #2b2320 0 6%, transparent 7%),
+    radial-gradient(circle at 18% 55%, rgba(242,140,166,.6) 0 9%, transparent 10%),
+    radial-gradient(circle at 78% 55%, rgba(242,140,166,.6) 0 9%, transparent 10%),
+    radial-gradient(circle at 35% 30%, #a8de79, #5a9a35 72%);
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.16), inset 0 2px 0 rgba(255,255,255,.25), 0 0 0 2px rgba(46,232,127,.45), 0 1px 3px rgba(0,0,0,.25);
+}
+
+.cell-snake.is-food {
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255,255,255,.85) 0 8%, transparent 9%),
+    radial-gradient(circle at 35% 35%, #ff6b81, #d92e4e 75%);
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), 0 0 8px rgba(217,46,78,.45);
+  position: relative;
+}
+.cell-snake.is-food::before {
+  content: "";
+  position: absolute;
+  top: -22%;
+  left: 50%;
+  width: 16%;
+  height: 34%;
+  background: #6b8f3a;
+  border-radius: 60% 20% 60% 20%;
+  transform: translateX(-50%) rotate(-18deg);
+}
 
 .cell-snake.is-eating { animation: snakeEatPop .28s ease; }
 @keyframes snakeEatPop {
