@@ -290,7 +290,6 @@
       } else if (manual) {
         score += 1;
         session.setScore(score);
-        pulseBoard("is-impact-soft");
       }
     }
 
@@ -306,9 +305,9 @@
       session.setScore(score);
     }
 
-    // Kort visuell puls på selve brettet (grønt for mykt fall, rødt "BOOM"
-    // for hardt fall). Fjernes og legges på igjen for å tvinge omstart av
-    // CSS-animasjonen selv om samme klasse allerede er lagt til nylig.
+    // Kort visuell puls på selve brettet (rødt "BOOM" for hardt fall).
+    // Fjernes og legges på igjen for å tvinge omstart av CSS-animasjonen
+    // selv om samme klasse allerede er lagt til nylig.
     function pulseBoard(className) {
       const boardEl = session.playArea.querySelector("[data-board-tetris]");
       if (!boardEl) return;
