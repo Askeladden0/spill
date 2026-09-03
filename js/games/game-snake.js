@@ -30,7 +30,6 @@
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
-        <p class="game-snake-hint">Bruk piltastene/WASD (eller sveip på mobil) for å styre slangen. Spis prikkene og unngå veggen og deg selv!</p>
         <div class="board-snake" data-board-snake tabindex="0"></div>
       `;
       session.onRestart(() => initGame());
