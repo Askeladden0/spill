@@ -72,7 +72,6 @@
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
-        <p class="fruit-merge-hint">Flytt musen (eller dra fingeren) for å sikte, og klikk/trykk for å slippe frukten. Like frukter som treffer hverandre blir til neste frukt!</p>
         <div class="fruit-merge-stage">
           <div class="fruit-merge-next">
             <span class="fruit-merge-next-label">Neste</span>
