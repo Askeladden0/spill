@@ -48,6 +48,21 @@
   const skyImage = new Image();
   skyImage.src = ASSET_DIR + "bg-sky.svg";
 
+  // Lagrede spill fra før paletten ble byttet til bilde-assets kan ha
+  // hex-fargekoder liggende i brettet/current/next. Map dem til de nye
+  // fargenøklene, ellers vises de gamle kulene fortsatt med flat farge
+  // i stedet for de nye illustrerte assetsa.
+  const LEGACY_COLOR_MAP = {
+    "#f55c9b": "magenta",
+    "#3f8ff0": "blue",
+    "#2ee87f": "green",
+    "#f5c95c": "yellow",
+    "#a56cf5": "purple",
+  };
+  function migrateColor(color) {
+    return LEGACY_COLOR_MAP[color] || color;
+  }
+
   function colsInRow(r) {
     return r % 2 === 0 ? COLS : COLS - 1;
   }
@@ -113,14 +128,16 @@
       if (!validGrid) return false;
       if (saved.grid.every((row) => row.every((cell) => !cell))) return false;
 
-      grid = saved.grid.map((row) => row.slice());
+      grid = saved.grid.map((row) => row.map((cell) => (cell ? migrateColor(cell) : cell)));
       score = Number(saved.score) || 0;
       over = false;
       moving = null;
       effects = [];
       aimAngle = 0;
-      current = PALETTE.includes(saved.current) ? saved.current : randomColor();
-      next = PALETTE.includes(saved.next) ? saved.next : randomColor();
+      const savedCurrent = migrateColor(saved.current);
+      const savedNext = migrateColor(saved.next);
+      current = PALETTE.includes(savedCurrent) ? savedCurrent : randomColor();
+      next = PALETTE.includes(savedNext) ? savedNext : randomColor();
       session.setScore(score);
       session.hideOverlay();
       render();

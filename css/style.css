@@ -594,6 +594,13 @@ main {
 html.is-player-view,
 html.is-player-view body {
   height: 100%;
+  /* 100% (og 100vh) regnes fra den STØRSTE mulige mobilviewporten (som om
+     adressefeltet alltid var skjult). Er feltet synlig blir den reelle,
+     synlige høyden mindre enn det – og siden bunnmenyen er låst med
+     overflow: hidden ovenfor, blir bunnen av spillet da usynlig og
+     umulig å scrolle til. 100dvh følger i stedet den faktiske, synlige
+     høyden og overstyrer i nettlesere som støtter det. */
+  height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -628,6 +635,7 @@ html.is-player-view .player-stage {
   width: 100%;
   max-width: 760px;
   max-height: min(74vh, 720px);
+  max-height: min(74dvh, 720px);
   margin: 0 auto;
 }
 
