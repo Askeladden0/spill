@@ -37,7 +37,6 @@
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
-        <p class="game-2048-hint">Bruk piltastene (eller sveip på mobil) for å flytte brikkene. Like tall slås sammen!</p>
         <div class="board-2048" data-board-2048 tabindex="0">
           <div class="board-2048-grid" data-board-2048-grid></div>
           <div class="board-2048-tiles" data-board-2048-tiles></div>
