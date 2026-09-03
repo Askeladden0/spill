@@ -189,11 +189,6 @@
             <span class="game-hud-value is-accent" data-hud-best>–</span>
           </div>
           <div class="game-hud-right">
-            <span class="demo-tag">Demo</span>
-            <div class="game-demo-info">
-              <button type="button" class="demo-info-btn" data-demo-info-btn aria-label="Om demoen" aria-expanded="false">i</button>
-              <div class="demo-info-popover" data-demo-info-popover hidden>Siden nettsiden er ny er ikke alle spillene perfekte. Jeg jobber med å gjøre de bedre :)</div>
-            </div>
             <button type="button" class="btn-hud-restart" data-hud-restart>Nytt spill</button>
           </div>
         </div>
@@ -232,8 +227,6 @@
       score: container.querySelector("[data-hud-score]"),
       best: container.querySelector("[data-hud-best]"),
       restartBtn: container.querySelector("[data-hud-restart]"),
-      demoInfoBtn: container.querySelector("[data-demo-info-btn]"),
-      demoInfoPopover: container.querySelector("[data-demo-info-popover]"),
       playArea: container.querySelector("[data-game-play-area]"),
       milestone: container.querySelector("[data-game-milestone]"),
       overlay: container.querySelector("[data-game-over]"),
@@ -285,21 +278,6 @@
     }
     els.restartBtn.addEventListener("click", fireRestart);
     els.overlayRestart.addEventListener("click", fireRestart);
-
-    if (els.demoInfoBtn && els.demoInfoPopover) {
-      els.demoInfoBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const willShow = els.demoInfoPopover.hidden;
-        els.demoInfoPopover.hidden = !willShow;
-        els.demoInfoBtn.setAttribute("aria-expanded", String(willShow));
-      });
-      document.addEventListener("click", (e) => {
-        if (!els.demoInfoPopover.hidden && !e.target.closest(".game-demo-info")) {
-          els.demoInfoPopover.hidden = true;
-          els.demoInfoBtn.setAttribute("aria-expanded", "false");
-        }
-      });
-    }
 
     /**
      * Animerer nivå-stolpen på game-over-kortet fra forrige nivåprogresjon
