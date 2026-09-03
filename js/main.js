@@ -21,10 +21,6 @@
           <h3 class="game-title">${g.name}</h3>
         </a>
         <div class="game-body">
-          <div class="game-meta">
-            <span class="game-time">${g.time}</span>
-          </div>
-          <span class="demo-tag">Demo</span>
           <a href="player.html?id=${encodeURIComponent(g.id)}"><button class="btn-start" type="button">Start</button></a>
         </div>
       </article>
@@ -59,7 +55,6 @@
         <div class="hero-gradient"></div>
         <div class="hero-content">
           <h2>${daily.name}</h2>
-          <span class="demo-tag">Demo</span>
           <a href="player.html?id=${encodeURIComponent(daily.id)}">
             <button class="btn-primary" type="button">Spill nå</button>
           </a>

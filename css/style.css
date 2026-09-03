@@ -495,17 +495,6 @@ main {
   gap: 14px;
 }
 
-.game-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.game-points { color: var(--accent); }
-.game-time { color: var(--muted); }
-
 .btn-start {
   width: 100%;
   padding: 12px;
