@@ -626,8 +626,7 @@ html.is-player-view .player-stage {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
-  max-width: 760px;
-  max-height: min(74vh, 720px);
+  max-width: 1040px;
   margin: 0 auto;
 }
 
