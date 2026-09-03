@@ -2,8 +2,9 @@
  * Studilla – cookie-banner (UI).
  *
  * Bygger på designet i Cookie-banner.dc.html. Varselet dukker først opp når
- * en besøkende går inn på et triks (spillsiden) og ikke har tatt et valg
- * ennå – ikke på hver eneste side. Etter at valget er tatt ligger det ingen
+ * en besøkende kommer til hovedsiden eller går inn på et triks (spillsiden)
+ * og ikke har tatt et valg ennå – ikke på hver eneste side. Etter at valget
+ * er tatt ligger det ingen
  * flytende knapp igjen i hjørnet; innstillingene åpnes fra
  * innstillinger.html eller via window.StudillaCookieBanner.open().
  * Selve lagringen/håndhevingen av valget skjer i js/consent.js.
@@ -154,11 +155,12 @@
     statsInput.addEventListener("change", syncToggleUI);
     marketingInput.addEventListener("change", syncToggleUI);
 
-    // Varselet vises kun på spillsiden (player.html), og bare til brukeren har
-    // tatt et valg. Andre sider laster fortsatt banneret, slik at det kan
-    // åpnes manuelt fra innstillingene.
+    // Varselet vises på hovedsiden (index.html) og spillsiden (player.html),
+    // og bare til brukeren har tatt et valg. Andre sider laster fortsatt
+    // banneret, slik at det kan åpnes manuelt fra innstillingene.
     const isGamePage = !!document.querySelector("[data-player-stage]");
-    if (isGamePage && !window.StudillaConsent.hasChoice()) {
+    const isHomePage = document.body.getAttribute("data-page") === "spill";
+    if ((isGamePage || isHomePage) && !window.StudillaConsent.hasChoice()) {
       openBanner("initial");
     } else {
       closeBanner();
