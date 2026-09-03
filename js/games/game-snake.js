@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const SIZE = 16;
+  const SIZE = 10;
   const GAME_ID = "snake";
   const TICK_MS = 130;
 
