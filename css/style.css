@@ -599,6 +599,33 @@ main {
 
 .back-link:hover { color: var(--accent); }
 
+/* Spillsiden (player.html) skal ikke kunne scrolles opp/ned – hele siden
+   låses til viewporten, og bunnmenyen fjernes derfor fra markupet (se
+   player.html). */
+html.is-player-view,
+html.is-player-view body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html.is-player-view .page {
+  height: 100%;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+html.is-player-view main {
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 32px;
+}
+
+html.is-player-view .player-stage {
+  flex: 1;
+  min-height: 0;
+}
+
 /* ---------- Spill: delt poeng-HUD (game-runtime.js) ---------- */
 .player-stage-active { align-items: stretch !important; justify-content: stretch !important; padding: 0; }
 
