@@ -15,25 +15,25 @@
 
   const GAME_ID = "fruktfusjon";
 
-  // Frukt-progresjonen (11 frukter) og radius-forholdene er hentet direkte
-  // fra subak-game sine konstanter (GAME_WIDTH = 0.6, FRUIT_SIZES), skalert
-  // om til piksler for vår WIDTH. Fargene er omtrentlig samme fargetone som
-  // referansens CSS-variabler (--color-blueberry osv.).
+  // Frukt-progresjonen og radius-forholdene er hentet direkte fra
+  // subak-game sine konstanter (GAME_WIDTH = 0.6, FRUIT_SIZES), skalert om
+  // til piksler for vår WIDTH. Bildene er egne, enkle "kawaii"-illustrasjoner
+  // (assets/img/fruits/) i stedet for emoji, med hitboksen (radius) satt til
+  // synlig frukt-størrelse på bildet.
   const FRUITS = [
-    { name: "Blåbær", radius: 14, color: "#5265ff", emoji: "🫐", points: 2 },
-    { name: "Drue", radius: 18, color: "#7fb544", emoji: "🍇", points: 4 },
-    { name: "Sitron", radius: 23, color: "#ffb020", emoji: "🍋", points: 6 },
-    { name: "Appelsin", radius: 29, color: "#ff6a1f", emoji: "🍊", points: 8 },
-    { name: "Eple", radius: 38, color: "#d81e05", emoji: "🍎", points: 10 },
-    { name: "Drakefrukt", radius: 47, color: "#f22e6d", emoji: "🐉", points: 12 },
-    { name: "Pære", radius: 57, color: "#d6dd6b", emoji: "🍐", points: 14 },
-    { name: "Fersken", radius: 70, color: "#ff9c73", emoji: "🍑", points: 16 },
-    { name: "Ananas", radius: 79, color: "#ffc61a", emoji: "🍍", points: 18 },
-    { name: "Honningmelon", radius: 97, color: "#a4d654", emoji: "🍈", points: 20 },
-    { name: "Vannmelon", radius: 116, color: "#7cb518", emoji: "🍉", points: 22 },
+    { name: "Blåbær", radius: 14, color: "#4d5fd6", image: "assets/img/fruits/blabaer.svg", points: 2 },
+    { name: "Jordbær", radius: 19, color: "#e6392f", image: "assets/img/fruits/jordbaer.svg", points: 4 },
+    { name: "Plomme", radius: 25, color: "#8a4fc9", image: "assets/img/fruits/plomme.svg", points: 6 },
+    { name: "Appelsin", radius: 31, color: "#f7941d", image: "assets/img/fruits/appelsin.svg", points: 8 },
+    { name: "Eple", radius: 40, color: "#7cc24b", image: "assets/img/fruits/eple.svg", points: 10 },
+    { name: "Fersken", radius: 50, color: "#ffa06a", image: "assets/img/fruits/fersken.svg", points: 12 },
+    { name: "Ananas", radius: 62, color: "#ffc42e", image: "assets/img/fruits/ananas.svg", points: 14 },
+    { name: "Vannmelon", radius: 78, color: "#5fae3a", image: "assets/img/fruits/vannmelon.svg", points: 16 },
+    { name: "Melon", radius: 96, color: "#cfe08a", image: "assets/img/fruits/melon.svg", points: 18 },
+    { name: "Kokosnøtt", radius: 116, color: "#7a5230", image: "assets/img/fruits/kokosnott.svg", points: 20 },
   ];
 
-  const WATERMELON_MERGE_BONUS = 100;
+  const FINAL_MERGE_BONUS = 100;
   const DROPPABLE_MAX_INDEX = 4; // Kun de 5 minste fruktene faller ned i starten.
   // 2:3-forhold på spillflaten, som i referansen (0.6m x 0.9m).
   const WIDTH = 400;
@@ -45,7 +45,14 @@
   const MERGE_EFFECT_MS = 1000;
   // Pitch stiger for hver mindre frukt, samme idé som DROP_PITCH_RATES i
   // referansen (minste frukt = høyest tone).
-  const PITCH_RATES = [1.9, 1.7, 1.5, 1.34, 1.19, 1.06, 0.94, 0.84, 0.75, 0.67, 0.6];
+  const PITCH_RATES = [1.9, 1.6, 1.4, 1.24, 1.1, 0.97, 0.86, 0.76, 0.68, 0.6];
+
+  // Bildene lastes én gang og gjenbrukes for alle instanser av hver frukt.
+  const FRUIT_IMAGES = FRUITS.map((spec) => {
+    const img = new Image();
+    img.src = spec.image;
+    return img;
+  });
 
   function start(container) {
     const Matter = window.Matter;
@@ -367,7 +374,7 @@
 
         const midX = (bodyA.position.x + bodyB.position.x) / 2;
         const midY = (bodyA.position.y + bodyB.position.y) / 2;
-        const isWatermelonMerge = bodyA.fruitIndex >= FRUITS.length - 1;
+        const isFinalMerge = bodyA.fruitIndex >= FRUITS.length - 1;
         const nextIndex = bodyA.fruitIndex + 1;
 
         Matter.World.remove(world, bodyA);
@@ -375,12 +382,12 @@
 
         let effectColor;
         let effectRadius;
-        if (isWatermelonMerge) {
-          // To vannmeloner smelter sammen til en flat bonus – ingen frukt
+        if (isFinalMerge) {
+          // To kokosnøtter smelter sammen til en flat bonus – ingen frukt
           // igjen, akkurat som i referansen.
           effectColor = FRUITS[FRUITS.length - 1].color;
           effectRadius = FRUITS[FRUITS.length - 1].radius;
-          score += WATERMELON_MERGE_BONUS;
+          score += FINAL_MERGE_BONUS;
         } else {
           const grown = makeFruit(nextIndex, midX, midY);
           Matter.World.add(world, grown);
@@ -392,7 +399,7 @@
         session.setScore(score);
         mergeEffects.push({ x: midX, y: midY, color: effectColor, radius: effectRadius, start: performance.now() });
         spawnParticles(midX, midY, effectColor, 14);
-        playPop(isWatermelonMerge ? FRUITS.length - 1 : nextIndex);
+        playPop(isFinalMerge ? FRUITS.length - 1 : nextIndex);
       }
     }
 
@@ -428,19 +435,26 @@
       session.finish(score, { title: "Krukken rant over!" });
     }
 
-    // Tegner fruktens emoji oppå Matter sin egen sirkel-rendering, slik at
-    // fruktene ser ut som ekte frukt i stedet for bare fargede sirkler.
-    function drawFruitEmoji(ctx) {
+    // Tegner fruktbildet oppå Matter sin egen sirkel-rendering, slik at
+    // fruktene ser ut som de kawaii-illustrerte fruktene i stedet for bare
+    // fargede sirkler.
+    function drawFruitImages(ctx) {
       const bodies = Matter.Composite.allBodies(world).filter((b) => b.fruitIndex !== undefined);
       for (const b of bodies) {
         const spec = FRUITS[b.fruitIndex];
+        const img = FRUIT_IMAGES[b.fruitIndex];
         ctx.save();
         ctx.translate(b.position.x, b.position.y);
         ctx.rotate(b.angle);
-        ctx.font = `${spec.radius * 1.15}px "Segoe UI Emoji","Apple Color Emoji",sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(spec.emoji, 0, 1);
+        if (img.complete && img.naturalWidth > 0) {
+          const d = spec.radius * 2;
+          ctx.drawImage(img, -spec.radius, -spec.radius, d, d);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, spec.radius, 0, Math.PI * 2);
+          ctx.fillStyle = spec.color;
+          ctx.fill();
+        }
         ctx.restore();
 
         // Fare-ring rundt en frukt som holder på å utløse game over –
@@ -499,7 +513,7 @@
     function drawOverlay() {
       const ctx = render.context;
       ctx.save();
-      drawFruitEmoji(ctx);
+      drawFruitImages(ctx);
       drawParticles(ctx);
       drawMergeEffects(ctx);
 
@@ -516,16 +530,18 @@
 
       if (canDrop && !over) {
         const spec = FRUITS[nextFruitIndex];
+        const img = FRUIT_IMAGES[nextFruitIndex];
         const x = Math.max(spec.radius + WALL_THICKNESS / 2, Math.min(WIDTH - spec.radius - WALL_THICKNESS / 2, currentDropX));
         ctx.globalAlpha = 0.55;
-        ctx.fillStyle = spec.color;
-        ctx.beginPath();
-        ctx.arc(x, DROP_Y, spec.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.font = `${spec.radius * 1.15}px "Segoe UI Emoji","Apple Color Emoji",sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(spec.emoji, x, DROP_Y + 1);
+        if (img.complete && img.naturalWidth > 0) {
+          const d = spec.radius * 2;
+          ctx.drawImage(img, x - spec.radius, DROP_Y - spec.radius, d, d);
+        } else {
+          ctx.fillStyle = spec.color;
+          ctx.beginPath();
+          ctx.arc(x, DROP_Y, spec.radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
         ctx.globalAlpha = 1;
 
         ctx.strokeStyle = "rgba(0,0,0,0.2)";
@@ -543,7 +559,7 @@
       const el = session.playArea.querySelector("[data-fruit-next]");
       if (!el) return;
       const spec = FRUITS[nextFruitIndex];
-      el.innerHTML = `<span class="fruit-merge-next-emoji">${spec.emoji}</span> ${spec.name}`;
+      el.innerHTML = `<img class="fruit-merge-next-icon" src="${spec.image}" alt="" width="20" height="20"> ${spec.name}`;
       el.style.color = spec.color;
     }
 
