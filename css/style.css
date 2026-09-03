@@ -840,6 +840,20 @@ html.is-player-view .player-stage {
 
 .fruit-merge-next-emoji { font-size: 20px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
 
+.fruit-merge-mute {
+  margin-left: 4px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  opacity: .8;
+}
+.fruit-merge-mute:hover { opacity: 1; background: rgba(0,0,0,.05); }
+.fruit-merge-mute.is-muted { opacity: .45; }
+
 .fruit-merge-particle {
   position: fixed;
   border-radius: 50%;
