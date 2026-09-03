@@ -942,17 +942,35 @@ html.is-player-view .player-stage {
   transition: transform .1s ease;
 }
 
-.board-tetris.is-impact { animation: tetrisImpact .18s ease; }
-@keyframes tetrisImpact {
-  0% { transform: translateY(0); }
-  35% { transform: translateY(5px); }
-  100% { transform: translateY(0); }
+/* Hardt fall: kraftig rødlig "BOOM"-støt. Mykt fall (pil ned): grønt puff. */
+.board-tetris.is-impact-hard { animation: tetrisImpactHard .2s ease; }
+.board-tetris.is-impact-soft { animation: tetrisImpactSoft .16s ease; }
+@keyframes tetrisImpactHard {
+  0% { transform: translateY(0); box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 12px 32px rgba(0,0,0,.35); }
+  30% { transform: translateY(6px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 0 28px 6px rgba(255, 92, 63, .65), 0 12px 32px rgba(0,0,0,.35); }
+  100% { transform: translateY(0); box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 12px 32px rgba(0,0,0,.35); }
+}
+@keyframes tetrisImpactSoft {
+  0% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 12px 32px rgba(0,0,0,.35); }
+  40% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 0 18px 3px rgba(75, 242, 140, .5), 0 12px 32px rgba(0,0,0,.35); }
+  100% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 12px 32px rgba(0,0,0,.35); }
 }
 
-.cell-tetris { border-radius: 4px; background: rgba(255, 255, 255, .05); }
+.cell-tetris { border-radius: 5px; background: rgba(255, 255, 255, .05); }
 
+/* Blank, "beveled" kloss-look (lys glans øverst til venstre, mørk kant
+   nederst til høyre), i tråd med tetris-eiendelene (mino-referansebildet). */
 .cell-tetris.is-filled {
-  box-shadow: inset 0 -3px 0 rgba(0,0,0,.22), inset 0 3px 0 rgba(255,255,255,.35);
+  border: 1px solid rgba(255, 255, 255, .28);
+  box-shadow:
+    inset 2px 2px 3px rgba(255, 255, 255, .55),
+    inset -2px -3px 4px rgba(0, 0, 0, .32),
+    0 1px 2px rgba(0, 0, 0, .25);
+}
+
+/* Roterende brikke: kort glødende "swirl"-puls rundt hver rute. */
+.cell-tetris.is-filled.is-rotating {
+  animation: tetrisRotate .18s ease;
 }
 
 /* Kun blokkene som faktisk låses fast denne runden skal poppe inn – brettet
@@ -963,22 +981,36 @@ html.is-player-view .player-stage {
 
 .cell-tetris.is-filled.is-clearing { animation: tetrisLineClear .16s ease-out forwards; }
 
-.cell-tetris.is-ghost { background: rgba(255, 255, 255, .1); border: 1px dashed rgba(255,255,255,.25); border-radius: 4px; }
-
-@keyframes tetrisPop { from { transform: scale(.55); opacity: .4; } to { transform: scale(1); opacity: 1; } }
-@keyframes tetrisLineClear {
-  0% { filter: brightness(1); transform: scale(1); }
-  45% { filter: brightness(2.4); transform: scale(1.08); }
-  100% { filter: brightness(1.8); opacity: .3; transform: scale(.88); }
+.cell-tetris.is-ghost {
+  background: rgba(255, 255, 255, .1);
+  border: 1px dashed rgba(255, 255, 255, .25);
+  border-radius: 5px;
+  filter: saturate(.55) brightness(.85);
 }
 
-.cell-tetris.is-i { background: #37e6f2; }
-.cell-tetris.is-o { background: #ffd23f; }
-.cell-tetris.is-t { background: #c76bff; }
-.cell-tetris.is-s { background: #4bf28c; }
-.cell-tetris.is-z { background: #ff5c7a; }
-.cell-tetris.is-j { background: #4d8cff; }
-.cell-tetris.is-l { background: #ff9c3f; }
+@keyframes tetrisPop {
+  0% { transform: scale(.55); opacity: .4; box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+  55% { box-shadow: 0 0 14px 4px rgba(255,255,255,.55); }
+  100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+}
+@keyframes tetrisLineClear {
+  0% { filter: brightness(1) saturate(1); transform: scale(1); }
+  40% { filter: brightness(2.6) saturate(1.6); transform: scale(1.1) rotate(-4deg); box-shadow: 0 0 12px 3px rgba(255,255,255,.8); }
+  100% { filter: brightness(2) saturate(1.4); opacity: .25; transform: scale(.82) rotate(4deg); }
+}
+@keyframes tetrisRotate {
+  0% { transform: rotate(0deg) scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+  50% { transform: rotate(8deg) scale(1.07); box-shadow: 0 0 10px 2px rgba(255,255,255,.6); }
+  100% { transform: rotate(0deg) scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+}
+
+.cell-tetris.is-i { background: linear-gradient(150deg, #8ff5ff 0%, #37e6f2 45%, #1aa8c2 100%); }
+.cell-tetris.is-o { background: linear-gradient(150deg, #ffe58a 0%, #ffd23f 45%, #d9a318 100%); }
+.cell-tetris.is-t { background: linear-gradient(150deg, #e6b3ff 0%, #c76bff 45%, #9432d6 100%); }
+.cell-tetris.is-s { background: linear-gradient(150deg, #9dffc4 0%, #4bf28c 45%, #26b565 100%); }
+.cell-tetris.is-z { background: linear-gradient(150deg, #ffb0bf 0%, #ff5c7a 45%, #d92a4a 100%); }
+.cell-tetris.is-j { background: linear-gradient(150deg, #a8c6ff 0%, #4d8cff 45%, #2359cc 100%); }
+.cell-tetris.is-l { background: linear-gradient(150deg, #ffce9e 0%, #ff9c3f 45%, #d9700f 100%); }
 
 .cell-tetris.is-ghost.is-i { border-color: rgba(55, 230, 242, .55); }
 .cell-tetris.is-ghost.is-o { border-color: rgba(255, 210, 63, .55); }
@@ -1006,7 +1038,12 @@ html.is-player-view .player-stage {
   border: 1px solid rgba(255, 255, 255, .08);
 }
 
-.tetris-next-block { border-radius: 4px; background: currentColor; }
+.tetris-next-block {
+  border-radius: 5px;
+  background: currentColor;
+  border: 1px solid rgba(255, 255, 255, .28);
+  box-shadow: inset 2px 2px 3px rgba(255, 255, 255, .55), inset -2px -3px 4px rgba(0, 0, 0, .32);
+}
 .tetris-next.is-i { color: #37e6f2; }
 .tetris-next.is-o { color: #ffd23f; }
 .tetris-next.is-t { color: #c76bff; }
