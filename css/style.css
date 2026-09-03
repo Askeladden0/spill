@@ -890,46 +890,70 @@ html.is-player-view .player-stage {
   display: grid;
   grid-template-columns: repeat(var(--snake-size, 16), 1fr);
   grid-template-rows: repeat(var(--snake-size, 16), 1fr);
-  gap: 2px;
+  gap: 0;
   width: min(420px, 90vw);
   aspect-ratio: 1;
-  padding: 10px;
-  border-radius: 16px;
-  background-color: #7cbf47;
-  border: 3px solid #8b5a2b;
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,.08);
+  padding: 0;
+  border-radius: 8px;
+  background: #8ed65c;
+  border: 8px solid #4a8a2a;
   outline: none;
   touch-action: none;
+  overflow: hidden;
 }
 
 .cell-snake {
-  border-radius: 4px;
-  background: transparent;
-  transition: background-color .12s ease, box-shadow .12s ease, border-radius .12s ease, transform .12s ease;
+  background: #8ed65c;
+  transition: box-shadow .12s ease, transform .12s ease;
 }
+.cell-snake.is-tile-b { background: #74bb42; }
 
 .cell-snake.is-body {
-  border-radius: 46%;
-  background: radial-gradient(circle at 35% 28%, #a8de79, #5a9a35 72%);
-  box-shadow: inset 0 -3px 0 rgba(0,0,0,.16), inset 0 2px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.2);
+  background: linear-gradient(180deg, #6fa8f0 0%, #3f7bd6 55%, #2f5eae 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 rgba(0,0,0,.16);
 }
 
 .cell-snake.is-head {
-  border-radius: 44%;
+  background: linear-gradient(180deg, #6fa8f0 0%, #3f7bd6 55%, #2f5eae 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 rgba(0,0,0,.16), 0 1px 3px rgba(0,0,0,.25);
+  position: relative;
+}
+.cell-snake.is-head,
+.cell-snake.is-head[data-dir="right"] {
   background:
-    radial-gradient(circle at 27% 35%, #fff 0 2%, transparent 3%),
-    radial-gradient(circle at 63% 35%, #fff 0 2%, transparent 3%),
-    radial-gradient(circle at 50% 60%, #b5573d 0 5%, transparent 6%),
-    radial-gradient(circle at 30% 39%, #2b2320 0 6%, transparent 7%),
-    radial-gradient(circle at 66% 39%, #2b2320 0 6%, transparent 7%),
-    radial-gradient(circle at 18% 55%, rgba(242,140,166,.6) 0 9%, transparent 10%),
-    radial-gradient(circle at 78% 55%, rgba(242,140,166,.6) 0 9%, transparent 10%),
-    radial-gradient(circle at 35% 30%, #a8de79, #5a9a35 72%);
-  box-shadow: inset 0 -3px 0 rgba(0,0,0,.16), inset 0 2px 0 rgba(255,255,255,.25), 0 0 0 2px rgba(46,232,127,.45), 0 1px 3px rgba(0,0,0,.25);
+    radial-gradient(circle at 68% 32%, #22303f 0 5%, transparent 5.5%),
+    radial-gradient(circle at 68% 32%, #fff 0 9%, transparent 9.5%),
+    radial-gradient(circle at 68% 64%, #22303f 0 5%, transparent 5.5%),
+    radial-gradient(circle at 68% 64%, #fff 0 9%, transparent 9.5%),
+    linear-gradient(180deg, #6fa8f0 0%, #3f7bd6 55%, #2f5eae 100%);
+}
+.cell-snake.is-head[data-dir="left"] {
+  background:
+    radial-gradient(circle at 32% 32%, #22303f 0 5%, transparent 5.5%),
+    radial-gradient(circle at 32% 32%, #fff 0 9%, transparent 9.5%),
+    radial-gradient(circle at 32% 64%, #22303f 0 5%, transparent 5.5%),
+    radial-gradient(circle at 32% 64%, #fff 0 9%, transparent 9.5%),
+    linear-gradient(180deg, #6fa8f0 0%, #3f7bd6 55%, #2f5eae 100%);
+}
+.cell-snake.is-head[data-dir="up"] {
+  background:
+    radial-gradient(circle at 32% 32%, #22303f 0 5%, transparent 5.5%),
+    radial-gradient(circle at 32% 32%, #fff 0 9%, transparent 9.5%),
+    radial-gradient(circle at 64% 32%, #22303f 0 5%, transparent 5.5%),
+    radial-gradient(circle at 64% 32%, #fff 0 9%, transparent 9.5%),
+    linear-gradient(180deg, #6fa8f0 0%, #3f7bd6 55%, #2f5eae 100%);
+}
+.cell-snake.is-head[data-dir="down"] {
+  background:
+    radial-gradient(circle at 32% 68%, #22303f 0 5%, transparent 5.5%),
+    radial-gradient(circle at 32% 68%, #fff 0 9%, transparent 9.5%),
+    radial-gradient(circle at 64% 68%, #22303f 0 5%, transparent 5.5%),
+    radial-gradient(circle at 64% 68%, #fff 0 9%, transparent 9.5%),
+    linear-gradient(180deg, #6fa8f0 0%, #3f7bd6 55%, #2f5eae 100%);
 }
 
 .cell-snake.is-food {
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40% !important;
   background:
     radial-gradient(circle at 30% 22%, rgba(255,255,255,.85) 0 8%, transparent 9%),
     radial-gradient(circle at 35% 35%, #ff6b81, #d92e4e 75%);
@@ -950,7 +974,7 @@ html.is-player-view .player-stage {
 
 .cell-snake.is-eating { animation: snakeEatPop .28s ease; }
 @keyframes snakeEatPop {
-  0% { transform: scale(1.7); box-shadow: 0 0 18px rgba(46,232,127,.85); }
+  0% { transform: scale(1.7); box-shadow: 0 0 18px rgba(63,123,214,.85); }
   100% { transform: scale(1); }
 }
 

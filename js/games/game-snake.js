@@ -152,7 +152,9 @@
     // Rutene bygges kun én gang og gjenbrukes videre (i stedet for å bygges
     // helt på nytt hvert eneste tikk). Slik kan CSS-overganger og
     // pop-animasjonen på nytt hode faktisk spille av i stedet for å bli
-    // avbrutt av at elementene stadig erstattes med helt nye.
+    // avbrutt av at elementene stadig erstattes med helt nye. Sjakkmønster-
+    // klassen (is-tile-b) settes kun her, siden brettmønsteret aldri endrer
+    // seg – render() rører den ikke.
     function buildBoard() {
       const boardEl = session.playArea.querySelector("[data-board-snake]");
       if (!boardEl) return null;
@@ -163,7 +165,7 @@
         const rowEls = [];
         for (let c = 0; c < SIZE; c++) {
           const cell = document.createElement("div");
-          cell.className = "cell-snake";
+          cell.className = "cell-snake" + ((r + c) % 2 ? " is-tile-b" : "");
           boardEl.appendChild(cell);
           rowEls.push(cell);
         }
@@ -172,22 +174,65 @@
       return boardEl;
     }
 
+    const DIR_DELTA = {
+      up: { dr: -1, dc: 0 },
+      down: { dr: 1, dc: 0 },
+      left: { dr: 0, dc: -1 },
+      right: { dr: 0, dc: 1 },
+    };
+
+    // Finner hvilke retninger et slangesegment henger sammen med naboene
+    // sine i (mot hodet og/eller mot halen), slik at kroppen kan tegnes som
+    // ett sammenhengende rør i stedet for adskilte klosser.
+    function segmentConnections(i) {
+      const cur = snake[i];
+      const dirs = [];
+      const neighbors = [snake[i - 1], snake[i + 1]];
+      for (const n of neighbors) {
+        if (!n) continue;
+        const dr = n.r - cur.r;
+        const dc = n.c - cur.c;
+        for (const dir in DIR_DELTA) {
+          if (DIR_DELTA[dir].dr === dr && DIR_DELTA[dir].dc === dc) dirs.push(dir);
+        }
+      }
+      return dirs;
+    }
+
+    const ROUND = 46;
+    const FLAT = 0;
+
+    function applyTubeShape(cell, dirs) {
+      const has = (d) => dirs.includes(d);
+      const tl = has("up") || has("left") ? FLAT : ROUND;
+      const tr = has("up") || has("right") ? FLAT : ROUND;
+      const br = has("down") || has("right") ? FLAT : ROUND;
+      const bl = has("down") || has("left") ? FLAT : ROUND;
+      cell.style.borderRadius = `${tl}% ${tr}% ${br}% ${bl}%`;
+    }
+
     function render(ateAt) {
       if (!session.playArea.querySelector("[data-board-snake]")) return;
       if (!cellEls) buildBoard();
       for (let r = 0; r < SIZE; r++) {
         for (let c = 0; c < SIZE; c++) {
           const cell = cellEls[r][c];
-          cell.className = "cell-snake";
+          cell.classList.remove("is-food", "is-head", "is-body", "is-eating");
+          cell.style.borderRadius = "";
+          delete cell.dataset.dir;
+
           if (food && food.r === r && food.c === c) {
             cell.classList.add("is-food");
           }
           const segIndex = snake.findIndex((seg) => seg.r === r && seg.c === c);
           if (segIndex === 0) {
             cell.classList.add("is-head");
+            cell.dataset.dir = direction;
+            applyTubeShape(cell, segmentConnections(segIndex));
             if (ateAt && ateAt.r === r && ateAt.c === c) cell.classList.add("is-eating");
           } else if (segIndex > 0) {
             cell.classList.add("is-body");
+            applyTubeShape(cell, segmentConnections(segIndex));
           }
         }
       }
