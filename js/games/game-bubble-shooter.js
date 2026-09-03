@@ -24,7 +24,29 @@
   const SPEED = 620; // px/sek
   const MAX_AIM_DEG = 75;
 
-  const PALETTE = ["#f55c9b", "#3f8ff0", "#2ee87f", "#f5c95c", "#a56cf5"];
+  const ASSET_DIR = "assets/img/games/bubble-shooter/";
+  const BUBBLE_COLORS = {
+    red: "#e8384f",
+    orange: "#f2892a",
+    yellow: "#f0c419",
+    green: "#22b34f",
+    skyblue: "#29b6e8",
+    blue: "#3f66e0",
+    indigo: "#5c4de0",
+    purple: "#8b3fe8",
+    magenta: "#d63fc9",
+    pink: "#f28fce",
+  };
+  const PALETTE = Object.keys(BUBBLE_COLORS);
+
+  const bubbleImages = {};
+  for (const name of PALETTE) {
+    const img = new Image();
+    img.src = ASSET_DIR + name + ".svg";
+    bubbleImages[name] = img;
+  }
+  const skyImage = new Image();
+  skyImage.src = ASSET_DIR + "bg-sky.svg";
 
   function colsInRow(r) {
     return r % 2 === 0 ? COLS : COLS - 1;
@@ -361,9 +383,14 @@
     }
 
     function drawBubble(x, y, color) {
+      const img = bubbleImages[color];
+      if (img && img.complete && img.naturalWidth) {
+        ctx.drawImage(img, x - RADIUS, y - RADIUS, RADIUS * 2, RADIUS * 2);
+        return;
+      }
       ctx.beginPath();
       ctx.arc(x, y, RADIUS - 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = color;
+      ctx.fillStyle = BUBBLE_COLORS[color] || color;
       ctx.fill();
       ctx.beginPath();
       ctx.arc(x - RADIUS * 0.3, y - RADIUS * 0.35, RADIUS * 0.28, 0, Math.PI * 2);
@@ -374,6 +401,12 @@
     function render() {
       if (!ctx) return;
       ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      if (skyImage.complete && skyImage.naturalWidth) {
+        ctx.drawImage(skyImage, 0, 0, WIDTH, HEIGHT);
+      } else {
+        ctx.fillStyle = "#bfe4fb";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      }
 
       ctx.strokeStyle = "rgba(255,80,120,.35)";
       ctx.setLineDash([6, 6]);
