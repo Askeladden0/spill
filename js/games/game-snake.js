@@ -237,7 +237,8 @@
           '<span class="snake-eye snake-eye-l"><span class="snake-eye-ball"></span></span>' +
           '<span class="snake-eye snake-eye-r"><span class="snake-eye-ball"></span></span>' +
           '<span class="snake-mouth"></span>' +
-          '<span class="snake-tongue"></span>';
+          '<span class="snake-tongue"></span>' +
+          '<span class="snake-hit"></span>';
       }
       if (faceEl.parentNode !== cell) cell.appendChild(faceEl);
       return faceEl;
