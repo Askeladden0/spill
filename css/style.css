@@ -1137,6 +1137,11 @@ html.is-player-view .player-stage {
   background: linear-gradient(160deg, #1a2f3a, #10202a);
   border: 1px solid rgba(255, 255, 255, .08);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 12px 32px rgba(0,0,0,.35);
+  /* Uten denne mangler brettet (i motsetning til .board-2048) beskyttelse
+     mot nettleserens innebygde dobbelttrykk-for-å-zoome – hver gang
+     spilleren treffer selve brettet (ikke en kloss i hånden) i stedet for
+     å dra, zoomer siden seg gradvis inn utover i partiet. */
+  touch-action: none;
 }
 
 .cell-blast { border-radius: 7px; background: rgba(255, 255, 255, .05); transition: background .1s ease; }
