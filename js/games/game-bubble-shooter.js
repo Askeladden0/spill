@@ -11,7 +11,7 @@
   "use strict";
 
   const GAME_ID = "bubble-shooter";
-  const COLS = 9;
+  const COLS = 7;
   const RADIUS = 20;
   const COL_WIDTH = RADIUS * 2;
   const ROW_HEIGHT = RADIUS * Math.sqrt(3);
@@ -462,13 +462,36 @@
       if (!moving && !over) {
         const dx = Math.sin(aimAngle);
         const dy = -Math.cos(aimAngle);
-        ctx.strokeStyle = "rgba(255,255,255,.25)";
-        ctx.setLineDash([4, 8]);
+        const originX = WIDTH / 2;
+        const originY = SHOOTER_Y + RADIUS + 10;
+        const shaftStart = RADIUS + 8;
+        const shaftEnd = RADIUS + 34;
+        const baseX = originX + dx * shaftStart;
+        const baseY = originY + dy * shaftStart;
+        const tipX = originX + dx * shaftEnd;
+        const tipY = originY + dy * shaftEnd;
+
+        ctx.strokeStyle = "rgba(255,255,255,.85)";
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(WIDTH / 2, SHOOTER_Y);
-        ctx.lineTo(WIDTH / 2 + dx * 260, SHOOTER_Y + dy * 260);
+        ctx.moveTo(baseX, baseY);
+        ctx.lineTo(tipX, tipY);
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.lineWidth = 1;
+
+        const headLen = 12;
+        const angle = Math.atan2(dy, dx);
+        const leftX = tipX - headLen * Math.cos(angle - Math.PI / 6);
+        const leftY = tipY - headLen * Math.sin(angle - Math.PI / 6);
+        const rightX = tipX - headLen * Math.cos(angle + Math.PI / 6);
+        const rightY = tipY - headLen * Math.sin(angle + Math.PI / 6);
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.lineTo(leftX, leftY);
+        ctx.lineTo(rightX, rightY);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(255,255,255,.9)";
+        ctx.fill();
       }
 
       ctx.beginPath();
