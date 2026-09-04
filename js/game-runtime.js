@@ -217,23 +217,37 @@
    * rapportere poeng.
    */
   /**
-   * Skalerer game-shell ned (aldri opp) slik at hele spillet – HUD + brett –
-   * alltid får plass inni spillboksen, uansett hvor stort spillets eget
+   * Skalerer game-shell opp ELLER ned slik at hele spillet – HUD + brett –
+   * alltid fyller mest mulig av spillboksen (som nå dekker hele skjermen
+   * under toppmenyen, se css/style.css), uansett hvor stort spillets eget
    * brett er (hvert spill setter sin egen faste/vw-baserte størrelse på
    * brettet sitt) og uansett hvor stor boksen er på skjermen. Siden
    * spillsiden ikke kan scrolles (se css/style.css, is-player-view), måtte
-   * spillet ellers bli beskåret i stedet for tilpasset.
+   * spillet ellers enten bli beskåret (for stort) eller flyte i tomt rom
+   * (for lite) i stedet for å fylle boksen. Skaleringen oppover er begrenset
+   * (MAX_SCALE) så brett med canvas (Fruktfusjon, Bubble Shooter) ikke blir
+   * synlig pikselerte på store skjermer.
    */
+  const MAX_SCALE = 1.6;
+
   function watchShellFit(container, shellEl) {
     function fit() {
       shellEl.style.transform = "none";
-      const availW = container.clientWidth;
-      const availH = container.clientHeight;
+      // container (.player-stage-inner) har egen padding (bl.a. plass til
+      // "Tilbake til menyen" øverst til venstre, se css/style.css) – den skal
+      // trekkes fra clientWidth/Height, ellers regner vi med mer plass enn
+      // det faktisk er igjen til selve skallet, og brettet skalerer for lite
+      // ned og blir beskåret/overlapper lenken på trange skjermer (mobil).
+      const cs = window.getComputedStyle(container);
+      const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+      const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const availW = container.clientWidth - padX;
+      const availH = container.clientHeight - padY;
       const naturalW = shellEl.scrollWidth;
       const naturalH = shellEl.scrollHeight;
       if (!availW || !availH || !naturalW || !naturalH) return;
-      const scale = Math.min(1, availW / naturalW, availH / naturalH);
-      shellEl.style.transform = scale < 1 ? `scale(${scale})` : "none";
+      const scale = Math.min(MAX_SCALE, availW / naturalW, availH / naturalH);
+      shellEl.style.transform = scale !== 1 ? `scale(${scale})` : "none";
     }
 
     if (window.ResizeObserver) {
@@ -252,7 +266,6 @@
 
   async function mount(container, gameId) {
     container.innerHTML = shellHTML();
-    container.classList.add("player-stage-active");
     watchShellFit(container, container.querySelector(".game-shell"));
 
     const els = {

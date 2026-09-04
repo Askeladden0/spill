@@ -551,16 +551,14 @@ main {
 }
 
 /* ---------- Spillside (player.html) ---------- */
+/* html-elementet på player.html har alltid klassen is-player-view (satt
+   direkte i markup, se player.html), så det er egentlig alltid reglene
+   lenger ned (html.is-player-view .player-stage) som avgjør utseendet her.
+   Denne dekker kun opp overflow før JS-en rekker å style boksen. */
 .player-stage {
   position: relative;
-  border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  min-height: 520px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--bg);
 }
 
 .player-stage-slot {
@@ -588,6 +586,22 @@ main {
 
 .back-link:hover { color: var(--accent); }
 
+/* Ligger inni spillboksen (.player-stage) på spillsiden, øverst til venstre,
+   siden boksen nå dekker hele skjermen og ikke lenger har en egen seksjon
+   over seg til lenken. Egen liten "chip"-bakgrunn slik at den er lesbar
+   oppå spillbrettet, som kan ligge helt inntil kanten når boksen er
+   usynlig (se .player-stage under). */
+.player-back-link {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  z-index: 12;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 8px 16px 8px 14px;
+}
+
 /* Spillsiden (player.html) skal ikke kunne scrolles opp/ned – hele siden
    låses til viewporten, og bunnmenyen fjernes derfor fra markupet (se
    player.html). */
@@ -614,46 +628,83 @@ html.is-player-view .page {
 html.is-player-view main {
   min-height: 0;
   overflow: hidden;
-  gap: 14px;
-  padding: 16px 20px 20px;
-  align-items: center;
-  justify-content: center;
+  gap: 0;
+  padding: 0;
 }
 
 html.is-player-view main section {
-  flex-shrink: 0;
-  width: 100%;
-}
-
-/* Boksen skal ikke fylle hele resten av flaten – litt mindre og midtstilt,
-   slik at "Nytt spill", poeng osv. (som ligger i HUDen inni boksen, se
-   game-runtime.js) havner nærmere selve spillet i stedet for å flyte i tomt
-   rom. */
-html.is-player-view .player-stage {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
-  max-width: 1040px;
-  max-height: min(74vh, 720px);
-  max-height: min(74dvh, 720px);
-  margin: 0 auto;
+  display: flex;
+}
+
+/* Boksen skal være "usynlig" (samme farge som bakgrunnen, ingen ramme) og
+   dekke hele skjermen under toppmenyen, slik at selve spillet (brettet inni
+   game-shell, se game-runtime.js) får mest mulig plass å vokse i i stedet
+   for å være låst inne i en synlig, begrenset boks. Toppmenyen ligger i
+   normal flyt over denne seksjonen (ikke fixed), så den er alltid synlig og
+   uberørt uansett hvor høy den blir (den blir f.eks. høyere på mobil). */
+html.is-player-view .player-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: var(--bg);
 }
 
 /* ---------- Spill: delt poeng-HUD (game-runtime.js) ---------- */
-.player-stage-active { align-items: center !important; justify-content: center !important; padding: 0; }
+.player-stage-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  /* Litt luft øverst til venstre så "Tilbake til menyen" (.player-back-link,
+     absoluttposisjonert oppå denne boksen) aldri overlapper poeng/rekord-
+     boksen selv når spillet er skalert helt opp og fyller det meste av
+     flaten (se watchShellFit i game-runtime.js). */
+  padding: 56px 16px 16px;
+}
 
 .game-shell {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  width: 100%;
+  /* Krymper til innholdets egen bredde (brettet, som selv har en fast/
+     vw-basert maksbredde) i stedet for å strekke seg til hele den nå
+     skjermfyllende .player-stage-inner-boksen. Ellers ble game-shells
+     "naturlige" bredde alltid regnet som HELE boksens bredde (siden den
+     fylte den uansett), og game-runtime.js sin skalering (watchShellFit)
+     fikk da aldri noe å skalere OPP mot – spillet ble aldri større selv om
+     boksen ble det. */
+  width: fit-content;
+  max-width: 100%;
   padding: 28px;
   box-sizing: border-box;
   transform-origin: center center;
 }
 
-.game-hud { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; }
+/* Poeng og rekord i én felles boks (samme plassering/størrelse på tallene
+   som før) i stedet for å flyte løst oppå den nå usynlige spillboksen. */
+.game-hud {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 12px 24px;
+}
 .game-hud-stat { display: flex; flex-direction: column; gap: 2px; }
 .game-hud-label { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; color: var(--muted-2); text-transform: uppercase; }
 .game-hud-value { font-size: 24px; font-weight: 800; color: var(--text-strong); }
