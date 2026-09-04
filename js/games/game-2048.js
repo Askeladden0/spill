@@ -237,9 +237,16 @@
       return null;
     }
 
+    // Brikkenes top/left settes i det LOKALE (utransformerte) koordinat-
+    // systemet til brettet, siden hele spillskallet kan bli skalert ned med
+    // en CSS transform (js/game-runtime.js, watchShellFit) for å få plass i
+    // spillboksen. getBoundingClientRect() ville gitt skjermstørrelsen ETTER
+    // den skaleringen, som gjør brikkene feil store/plassert (de sklir
+    // utenfor rutene) så snart skallet skaleres ned. offsetWidth er
+    // upåvirket av forfedres transform og er derfor riktig her.
     function boardMetrics() {
-      const rect = boardGridEl.getBoundingClientRect();
-      const cellSize = (rect.width - (SIZE - 1) * GRID_GAP) / SIZE;
+      const width = boardGridEl.offsetWidth;
+      const cellSize = (width - (SIZE - 1) * GRID_GAP) / SIZE;
       return { cellSize };
     }
 
