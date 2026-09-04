@@ -11,13 +11,17 @@
   "use strict";
 
   const GAME_ID = "bubble-shooter";
-  const COLS = 7;
+  const COLS = 9;
   const RADIUS = 20;
   const COL_WIDTH = RADIUS * 2;
   const ROW_HEIGHT = RADIUS * Math.sqrt(3);
-  const FILLED_ROWS = 6;
-  const TOTAL_ROWS = 13;
   const WIDTH = COLS * COL_WIDTH;
+  // Brettet med boblene skal ha sideforholdet 7:6 (bredde:høyde), og det er
+  // akkurat dette området som er fylt med bobler ved spillstart.
+  const BOARD_RATIO_W = 7;
+  const BOARD_RATIO_H = 6;
+  const FILLED_ROWS = Math.round((WIDTH * (BOARD_RATIO_H / BOARD_RATIO_W)) / ROW_HEIGHT);
+  const TOTAL_ROWS = 13;
   const HEIGHT = Math.round(TOTAL_ROWS * ROW_HEIGHT + RADIUS * 2 + 90);
   const SHOOTER_Y = HEIGHT - 40;
   const DANGER_Y = SHOOTER_Y - RADIUS * 2.4;
