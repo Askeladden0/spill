@@ -188,9 +188,6 @@
             <span class="game-hud-label">Rekord</span>
             <span class="game-hud-value is-accent" data-hud-best>–</span>
           </div>
-          <div class="game-hud-right">
-            <button type="button" class="btn-hud-restart" data-hud-restart>Nytt spill</button>
-          </div>
         </div>
         <div class="game-play-area" data-game-play-area></div>
         <div class="game-milestone-toast" data-game-milestone></div>
@@ -261,7 +258,6 @@
     const els = {
       score: container.querySelector("[data-hud-score]"),
       best: container.querySelector("[data-hud-best]"),
-      restartBtn: container.querySelector("[data-hud-restart]"),
       playArea: container.querySelector("[data-game-play-area]"),
       milestone: container.querySelector("[data-game-milestone]"),
       overlay: container.querySelector("[data-game-over]"),
@@ -311,7 +307,6 @@
       }
       if (restartHandler) restartHandler();
     }
-    els.restartBtn.addEventListener("click", fireRestart);
     els.overlayRestart.addEventListener("click", fireRestart);
 
     /**
@@ -418,7 +413,7 @@
 
         // Ikke oppdater header-widgeten med sluttresultatet med en gang: den
         // holdes på forrige tilstand og animeres til den nye først når
-        // spilleren trykker "Spill igjen" / "Nytt spill". Faller tilbake til
+        // spilleren trykker "Spill igjen". Faller tilbake til
         // forrige profil (ingen synlig endring) hvis xp/nivå-oppdateringen
         // feilet, i stedet for å la resten av visningen krasje.
         const newProfile = prevProfile ? result.profile || prevProfile : null;
