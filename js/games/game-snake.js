@@ -22,6 +22,7 @@
     let timer = null;
     let session = null;
     let cellEls = null;
+    let headFaceCell = null;
     // Satt til true frem til spilleren trykker høyre-tast (eller sveiper
     // høyre): slangen står stille helt til da, både ved ny runde og ved en
     // gjenopptatt lagret runde, slik at man ikke krasjer med en gang.
@@ -146,6 +147,13 @@
     function endGame() {
       over = true;
       if (timer) clearInterval(timer);
+      const face = headFaceCell && headFaceCell.querySelector(".snake-face");
+      if (face) face.classList.add("is-dead");
+      const boardEl = session.playArea.querySelector("[data-board-snake]");
+      if (boardEl) {
+        boardEl.classList.add("is-shaking");
+        setTimeout(() => boardEl.classList.remove("is-shaking"), 400);
+      }
       session.finish(score);
     }
 
@@ -160,7 +168,10 @@
       if (!boardEl) return null;
       boardEl.innerHTML = "";
       boardEl.style.setProperty("--snake-size", SIZE);
+      boardEl.classList.remove("is-shaking");
       cellEls = [];
+      headFaceCell = null;
+      faceEl = null;
       for (let r = 0; r < SIZE; r++) {
         const rowEls = [];
         for (let c = 0; c < SIZE; c++) {
@@ -211,6 +222,27 @@
       cell.style.borderRadius = `${tl}% ${tr}% ${br}% ${bl}%`;
     }
 
+    // Ansiktet (øyne/munn/tunge) er ett og samme DOM-element som bare
+    // *flyttes* til den nye hode-cellen hvert tikk (appendChild flytter
+    // uten å ødelegge elementet). Blunk- og tunge-flikk-animasjonene er
+    // CSS-animasjoner på dette elementet – lages det på nytt hvert tikk
+    // (slangen flytter seg jo hvert tikk) starter animasjonen på 0 igjen
+    // hver gang, og rekker aldri frem til blunket/flikket.
+    let faceEl = null;
+    function ensureFace(cell) {
+      if (!faceEl) {
+        faceEl = document.createElement("div");
+        faceEl.className = "snake-face";
+        faceEl.innerHTML =
+          '<span class="snake-eye snake-eye-l"><span class="snake-eye-ball"></span></span>' +
+          '<span class="snake-eye snake-eye-r"><span class="snake-eye-ball"></span></span>' +
+          '<span class="snake-mouth"></span>' +
+          '<span class="snake-tongue"></span>';
+      }
+      if (faceEl.parentNode !== cell) cell.appendChild(faceEl);
+      return faceEl;
+    }
+
     function render(ateAt) {
       if (!session.playArea.querySelector("[data-board-snake]")) return;
       if (!cellEls) buildBoard();
@@ -236,6 +268,11 @@
           }
         }
       }
+
+      const headSeg = snake[0];
+      const headCell = cellEls[headSeg.r][headSeg.c];
+      ensureFace(headCell);
+      headFaceCell = headCell;
     }
 
     const KEY_DIRECTIONS = {
