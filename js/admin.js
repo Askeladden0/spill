@@ -51,6 +51,7 @@
     codesNeedMigration: false,
     settingsNeedMigration: false,
     wheelNeedMigration: false,
+    siteVisitsNeedMigration: false,
     wheelSpinsDraft: null,
 
     paletteOpen: false,
@@ -202,9 +203,12 @@
     if (error) {
       // Tabellen finnes ikke før supabase/schema.sql (seksjon 46) er kjørt på
       // nytt – feiler stille og lar aktivitetsgrafen vise 0 i stedet for å
-      // velte hele adminpanelet.
+      // velte hele adminpanelet, men varsler admin i stedet for å late som om
+      // det ikke er noen aktive personer.
+      state.siteVisitsNeedMigration = true;
       return [];
     }
+    state.siteVisitsNeedMigration = false;
     return data || [];
   }
 
@@ -510,6 +514,9 @@
     const rangeSwitch = opts.withRangeSwitch
       ? `<span class="admin-range-switch">${["7d", "30d", "90d"].map((id) => `<button type="button" class="admin-range-btn${state.activityRange === id ? " is-active" : ""}" data-activity-range="${id}">${id === "7d" ? "7 dager" : id === "30d" ? "30 dager" : "90 dager"}</button>`).join("")}</span>`
       : "";
+    const migrationNote = state.siteVisitsNeedMigration
+      ? `<p class="admin-card-sub" style="margin:0">⚠ Kjør <code>supabase/schema.sql</code> på nytt i Supabase (seksjon 46) for å ta i bruk "aktive personer".</p>`
+      : "";
     return `
       <div class="admin-card">
         <div class="admin-card-head">
@@ -526,6 +533,7 @@
             </span>
           </span>
         </div>
+        ${migrationNote}
         ${barsHTML(series, { highlightLast: true })}
       </div>
     `;
