@@ -12,6 +12,9 @@ spill/
 ├── rangering.html          Rangering-siden – delt layout, plassholderinnhold
 ├── player.html            Delt spillmal – viser ETT spill basert på ?id=<slug> i URL-en.
 │                          Det lages IKKE én fil per spill; alle spill går gjennom denne malen.
+├── guider.html            Guider og ressurser – oversikt over alle guider (se under)
+├── guide.html             Delt guide-mal – viser ÉN guide basert på ?id=<slug> i URL-en,
+│                          akkurat som player.html gjør for spill
 ├── login.html             Logg inn / registrer deg (brukernavn + passord)
 ├── profil.html            Profilside – avatar, brukernavn, nivå, rekorder, slett konto
 ├── admin.html             Adminpanel – eget sidemeny-dashbord (se under), krever admin-status
@@ -21,6 +24,8 @@ spill/
 │                          Brukes av alle sider – endringer her slår ut overalt.
 ├── js/
 │   ├── games-data.js      Midlertidig "database" med spillobjekter (se under)
+│   ├── guides-data.js     Samme mønster som games-data.js, men for guider/moduler (se under)
+│   ├── guides.js          Rendring + admin-redigering for guider.html/guide.html
 │   ├── layout.js          Delt topp-nav/bunnmeny + markering av aktivt menypunkt
 │   ├── main.js            Rendrer heltefelt, spillrutenett og spillside
 │   ├── admin.js           All logikk for adminpanelet (admin.html)
@@ -28,7 +33,7 @@ spill/
 │   └── auth.js            Delt innloggingslogikk: header-avatar, admin-lenke, tilgangssjekk
 ├── supabase/
 │   └── schema.sql          Databaseskjema: profiler, avatar-innstillinger, spillrekorder, nivåer,
-│                          rabattkoder, RLS
+│                          rabattkoder, guider/guide-moduler, RLS
 ├── SUPABASE_SETUP.md       Steg-for-steg-guide for å koble opp Supabase-prosjektet
 └── assets/
     └── img/
@@ -200,3 +205,40 @@ direkte via `player.html?id=...`), dra for å endre rekkefølgen, eller slett
 det helt. `js/games-data.js` henter denne tabellen ved sidelasting og fyller
 `window.STUDILLA_GAMES` i place; den statiske listen øverst i filen er kun en
 fallback hvis Supabase er utilgjengelig.
+
+## Guider og ressurser (`guider.html` / `guide.html`)
+
+Guidene ligger i Supabase-tabellene `guides` (ett kort per guide: overskrift,
+kategori, ingress, "mengde spart/tjent" og lesetid) og `guide_modules` (selve
+innholdet – én rad per modul, i rekkefølge). `js/guides-data.js` henter begge
+og fyller `window.STUDILLA_GUIDES`/`window.STUDILLA_GUIDE_MODULES` på samme
+måte som `js/games-data.js` gjør for spill, med en tilsvarende fallback-liste
+(eksempelguiden fra designet) hvis Supabase er utilgjengelig eller migrasjonen
+i `supabase/schema.sql` ikke er kjørt ennå.
+
+**Det finnes ingen egen adminpanel-seksjon for dette.** Er man innlogget som
+admin, dukker det i stedet opp rediger-/slette-knapper direkte på kortene på
+`guider.html` og inne i selve guiden på `guide.html` (`js/guides.js`) – helt
+uten at andre besøkende ser noe til dem. Derfra kan en admin:
+
+- Opprette, redigere (overskrift, kategori, ingress, mengde spart/tjent,
+  lesetid, toppbilde) og slette guider, samt velge hvilken guide som vises
+  fremhevet øverst på `guider.html`.
+- Bygge innholdet i en guide som en fritt sammensatt rekke moduler – legg til,
+  rediger, flytt opp/ned eller slett hver enkelt modul. Modultypene er:
+  - **Tekst** – overskrift (H2/H3), brødtekst, punktliste og en tips-boks.
+  - **Fil** – en nedlastbar fil (lastes opp til `guide-files`-bøtta i Storage).
+  - **Tabell** – egne kolonneoverskrifter og rader.
+  - **Gevinst** – en liste med poster (beskrivelse + beløp), summert automatisk
+    til "dette kan du tjene/spare" øverst i modulen og i sidefeltet.
+  - **Avstemning** – spørsmål + svaralternativer. Alle (også utlogget) kan
+    stemme; opptellingen skjer server-side i RPC-en `guide_vote_poll` slik at
+    den ikke kan forbikobles fra nettleseren, og nettleseren husker i
+    `localStorage` at man allerede har stemt.
+  - **Triks** – lenke til et eksisterende triks (hentet fra `games-data.js`,
+    med bilde/navn/beskrivelse) eller en egendefinert lenke.
+
+Innholdsfortegnelsen i sidefeltet på `guide.html` bygges automatisk ut fra
+modulene som har en tittel (tekst-overskrift, tabelltittel osv.), og
+"gevinstpotensial"-kortet i sidefeltet plukkes fra guidens gevinst-modul, hvis
+den har en.

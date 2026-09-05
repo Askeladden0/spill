@@ -32,6 +32,10 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
           Triks
         </a>${LEVELS_ENABLED ? PREMIER_NAV_LINK : ""}
+        <a href="guider.html" class="nav-link" data-page="guider">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5V5.5z"></path><path d="M8 7.5h7"></path><path d="M8 11h5"></path></svg>
+          Guider
+        </a>
         <a href="rangering.html" class="nav-link" data-page="rangering">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
           Rangering

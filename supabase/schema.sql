@@ -1593,6 +1593,215 @@ drop policy if exists "site_visits_select_admin" on public.site_visits;
 create policy "site_visits_select_admin" on public.site_visits
   for select using (public.is_admin());
 
+-- ---------------------------------------------------------------------------
+-- 47. guides / guide_modules – "Guider og ressurser" (guider.html + guide.html).
+--
+--     `guides` er ett kort per guide (tittel, kategori, ingress, "mengde
+--     spart/tjent" og lesetid). `guide_modules` er innholdet i guiden, som en
+--     rekke moduler i rekkefølge (sort_order) – hver modul har en `type`
+--     (tekst/fil/tabell/gevinst/poll/triks) og alle detaljene sine i `data`
+--     (jsonb), slik at nye felter kan legges til uten skjemaendring.
+--
+--     Det finnes ingen egen adminpanel-seksjon for dette – admin oppretter,
+--     redigerer og sletter guider og moduler direkte fra de offentlige sidene
+--     guider.html og guide.html (se js/guides.js), på samme måte som resten av
+--     siden bruker RLS (under) til å håndheve at kun admin kan skrive.
+--
+--     Modul-typer og felter i `data`:
+--       tekst   – { heading, headingLevel (2|3), body (avsnitt skilt med
+--                   tomlinje), bullets: string[], tip }
+--       fil     – { name, ext, meta, url } – url peker til `guide-files`-bøtta
+--       tabell  – { title, rows: [{a,b,c}], source }
+--       gevinst – { heading, note, gains: [{label, amountKr, displayText}] } –
+--                   summen regnes ut i js/guides.js fra amountKr-feltene
+--       poll    – { question, options: [{label, votes}] } – votes økes av
+--                   RPC-en guide_vote_poll under, ikke direkte av klienten
+--       triks   – { gameId, title, intro, href } – peker enten til et
+--                   eksisterende triks (gameId) eller en egen lenke (href)
+-- ---------------------------------------------------------------------------
+create table if not exists public.guides (
+  id text primary key,
+  title text not null default '',
+  category text not null default '',
+  excerpt text not null default '',
+  value_label text not null default '',
+  read_time text not null default '',
+  cover_url text,
+  is_featured boolean not null default false,
+  sort_order int not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+-- Kun én guide kan være fremhevet (toppkortet på guider.html) om gangen.
+create unique index if not exists guides_single_featured_idx
+  on public.guides (is_featured) where is_featured;
+
+alter table public.guides enable row level security;
+
+drop policy if exists "guides_select_all" on public.guides;
+create policy "guides_select_all" on public.guides
+  for select using (true);
+
+drop policy if exists "guides_admin_write" on public.guides;
+create policy "guides_admin_write" on public.guides
+  for all using (public.is_admin()) with check (public.is_admin());
+
+create table if not exists public.guide_modules (
+  id bigint generated always as identity primary key,
+  guide_id text not null references public.guides (id) on delete cascade,
+  type text not null check (type in ('tekst', 'fil', 'tabell', 'gevinst', 'poll', 'triks')),
+  sort_order int not null default 0,
+  data jsonb not null default '{}'::jsonb
+);
+
+create index if not exists guide_modules_guide_idx on public.guide_modules (guide_id, sort_order);
+
+alter table public.guide_modules enable row level security;
+
+drop policy if exists "guide_modules_select_all" on public.guide_modules;
+create policy "guide_modules_select_all" on public.guide_modules
+  for select using (true);
+
+drop policy if exists "guide_modules_admin_write" on public.guide_modules;
+create policy "guide_modules_admin_write" on public.guide_modules
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- Avstemningsmodulen kan besvares av alle, også utlogget besøkende. Selve
+-- opptellingen skjer i denne funksjonen (security definer) i stedet for at
+-- klienten skriver til `data` selv – ellers måtte alle kunnet skrive til
+-- guide_modules, og da kunne hvem som helst redigert resten av innholdet også.
+create or replace function public.guide_vote_poll(p_module_id bigint, p_option_index int)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_data jsonb;
+begin
+  update public.guide_modules
+     set data = jsonb_set(
+       data,
+       array['options', p_option_index::text, 'votes'],
+       to_jsonb(coalesce((data -> 'options' -> p_option_index ->> 'votes')::int, 0) + 1)
+     )
+   where id = p_module_id and type = 'poll'
+   returning data into v_data;
+
+  if v_data is null then
+    raise exception 'Fant ikke avstemningsmodulen';
+  end if;
+
+  return v_data;
+end;
+$$;
+
+grant execute on function public.guide_vote_poll(bigint, int) to anon, authenticated;
+
+-- Bilder til guide-kort/toppbilde og nedlastbare filer (fil-modulen) – samme
+-- mønster som game-images/reward-images: offentlig lesbar bøtte, kun admin
+-- kan laste opp/endre/slette.
+insert into storage.buckets (id, name, public)
+values ('guide-images', 'guide-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "guide_images_select_all" on storage.objects;
+create policy "guide_images_select_all" on storage.objects
+  for select using (bucket_id = 'guide-images');
+
+drop policy if exists "guide_images_admin_write" on storage.objects;
+create policy "guide_images_admin_write" on storage.objects
+  for insert to authenticated with check (bucket_id = 'guide-images' and public.is_admin());
+
+drop policy if exists "guide_images_admin_update" on storage.objects;
+create policy "guide_images_admin_update" on storage.objects
+  for update to authenticated using (bucket_id = 'guide-images' and public.is_admin())
+  with check (bucket_id = 'guide-images' and public.is_admin());
+
+drop policy if exists "guide_images_admin_delete" on storage.objects;
+create policy "guide_images_admin_delete" on storage.objects
+  for delete to authenticated using (bucket_id = 'guide-images' and public.is_admin());
+
+insert into storage.buckets (id, name, public)
+values ('guide-files', 'guide-files', true)
+on conflict (id) do nothing;
+
+drop policy if exists "guide_files_select_all" on storage.objects;
+create policy "guide_files_select_all" on storage.objects
+  for select using (bucket_id = 'guide-files');
+
+drop policy if exists "guide_files_admin_write" on storage.objects;
+create policy "guide_files_admin_write" on storage.objects
+  for insert to authenticated with check (bucket_id = 'guide-files' and public.is_admin());
+
+drop policy if exists "guide_files_admin_update" on storage.objects;
+create policy "guide_files_admin_update" on storage.objects
+  for update to authenticated using (bucket_id = 'guide-files' and public.is_admin())
+  with check (bucket_id = 'guide-files' and public.is_admin());
+
+drop policy if exists "guide_files_admin_delete" on storage.objects;
+create policy "guide_files_admin_delete" on storage.objects
+  for delete to authenticated using (bucket_id = 'guide-files' and public.is_admin());
+
+-- Eksempelguiden fra designet ("Hvordan tjene penger på å sitte i
+-- elevrådet") settes inn som utgangspunkt, med én modul av hver type – rediger
+-- eller slett den fritt fra guider.html/guide.html, den er ikke spesialbehandlet.
+insert into public.guides (id, title, category, excerpt, value_label, read_time, is_featured, sort_order) values
+  ('elevrad-penger', 'Hvordan tjene penger på å sitte i elevrådet', 'Elevrådet', 'Honorar, møtegodtgjørelse, reisedekning og fondene elevrådet kan søke på.', 'Opptil 12 000 kr', '8 min', true, 1)
+on conflict (id) do nothing;
+
+insert into public.guide_modules (guide_id, type, sort_order, data)
+select * from (values
+  ('elevrad-penger', 'tekst', 1, '{
+    "heading": "Slik kommer du i gang",
+    "headingLevel": 2,
+    "body": "De fleste elevråd har rett på mer penger enn de bruker. Pengene ligger tre steder: i skolens eget elevrådsbudsjett, i fylkets tilskuddsordninger, og i eksterne fond som deler ut midler til elevdemokrati. Start med å finne ut hvilket av de tre skolen din allerede bruker.
+
+Be rektor om budsjettlinja for elevrådet. Den skal finnes skriftlig, og du har rett til å se den. Er summen under 100 kroner per elev, ligger skolen lavt sammenlignet med snittet.",
+    "bullets": ["Spør etter budsjettlinja skriftlig, i god tid før neste møte.", "Sammenlign med naboskolene – tall gir tyngde i forhandlingen.", "Skriv et kort krav med sum, formål og frist."],
+    "tip": "Møtegodtgjørelse må vedtas før arbeidet er gjort. Ta det opp på det første møtet i skoleåret."
+  }'::jsonb),
+  ('elevrad-penger', 'fil', 2, '{"name": "Budsjettmal for elevrådet", "ext": "XLSX", "meta": "Regneark · 42 kB · ferdig utfylt eksempel inkludert", "url": null}'::jsonb),
+  ('elevrad-penger', 'tabell', 3, '{
+    "title": "Satser per verv, skoleåret 2026/27",
+    "columns": ["Verv", "Godtgjørelse", "Per år"],
+    "source": "Kilde: innsamlede satser fra 34 videregående skoler, august 2026.",
+    "rows": [
+      {"a": "Elevrådsleder", "b": "Honorar + møtegodtgjørelse", "c": "10 200 kr"},
+      {"a": "Nestleder", "b": "Halvt honorar + møtegodtgjørelse", "c": "7 200 kr"},
+      {"a": "Økonomiansvarlig", "b": "Møtegodtgjørelse", "c": "4 200 kr"},
+      {"a": "Klassetillitsvalgt", "b": "Ingen fast sats", "c": "0 kr"}
+    ]
+  }'::jsonb),
+  ('elevrad-penger', 'gevinst', 4, '{
+    "heading": "Dette kan du tjene",
+    "note": "per skoleår, som leder med full dekning",
+    "gains": [
+      {"label": "Møtegodtgjørelse, 14 møter", "amountKr": 4200},
+      {"label": "Honorar som elevrådsleder", "amountKr": 6000},
+      {"label": "Dekket reise til fylkessamlinger", "amountKr": 1800},
+      {"label": "Tilskudd fra elevdemokratifondet", "amountKr": 0, "displayText": "søkes særskilt"}
+    ]
+  }'::jsonb),
+  ('elevrad-penger', 'poll', 5, '{
+    "question": "Får elevrådet ditt honorar i dag?",
+    "options": [
+      {"label": "Ja, vedtatt honorar", "votes": 148},
+      {"label": "Bare dekning av reise", "votes": 96},
+      {"label": "Nei, ingenting", "votes": 312}
+    ]
+  }'::jsonb),
+  ('elevrad-penger', 'triks', 6, '{"gameId": null, "title": "Budsjett-byggeren", "intro": "Sett opp elevrådets årsbudsjett på tid og se hvor pengene forsvinner. Gir poeng til rangeringen.", "href": null}'::jsonb),
+  ('elevrad-penger', 'tekst', 7, '{
+    "heading": "Neste steg",
+    "headingLevel": 2,
+    "body": "Har du fått vedtaket i boks, er neste jobb å søke eksterne midler. Se etter flere guider om arrangementer og søknader i listen over alle guider.",
+    "bullets": [],
+    "tip": null
+  }'::jsonb)
+) as v(guide_id, type, sort_order, data)
+where not exists (select 1 from public.guide_modules where guide_id = 'elevrad-penger');
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

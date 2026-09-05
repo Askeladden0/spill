@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studilla · Guider og ressurser</title>
+<meta name="description" content="Steg-for-steg-guider for å tjene og spare mer penger som elev – med maler, tabeller og regnestykker du kan bruke rett fra møtet.">
+<meta property="og:title" content="Studilla · Guider og ressurser">
+<meta property="og:description" content="Steg-for-steg-guider for å tjene og spare mer penger som elev.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Studilla">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
+<meta name="theme-color" content="#0d1117">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script defer src="https://cloud.umami.is/script.js" data-website-id="d10b685b-d7f1-4d9c-ad3b-986b69caeb7f"></script>
+</head>
+<body data-page="guider">
+<div class="page">
+
+  <div id="site-header"></div>
+
+  <main>
+    <section>
+      <div class="section-heading" style="justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px">
+        <div>
+          <h1>Guider og ressurser</h1>
+          <span class="section-sub">Steg-for-steg til å tjene og spare mer</span>
+        </div>
+        <button type="button" class="btn-outline" data-guide-new hidden>+ Ny guide</button>
+      </div>
+
+      <div data-guide-feature></div>
+    </section>
+
+    <section>
+      <div class="section-heading spread">
+        <h2>Alle guider</h2>
+        <span class="section-sub" data-guide-count></span>
+      </div>
+
+      <div class="guide-filters" data-guide-filters></div>
+
+      <div class="guide-grid" data-guide-grid></div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+</div>
+
+<div class="admin-toast" data-toast hidden></div>
+
+<script src="js/consent.js"></script>
+<script src="js/cookie-banner.js"></script>
+<script src="js/feature-flags.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/avatar-figures.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/visit-tracking.js"></script>
+<script src="js/guides-data.js"></script>
+<script src="js/guides.js"></script>
+</body>
+</html>

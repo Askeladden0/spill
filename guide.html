@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-guide-doctitle>Studilla · Guide</title>
+<meta name="description" content="En steg-for-steg-guide fra Studilla." data-guide-meta-description>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
+<meta name="theme-color" content="#0d1117">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script defer src="https://cloud.umami.is/script.js" data-website-id="d10b685b-d7f1-4d9c-ad3b-986b69caeb7f"></script>
+</head>
+<body data-page="guider">
+<div class="page">
+
+  <div id="site-header"></div>
+
+  <main>
+    <a href="guider.html" class="guide-back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"></path></svg>
+      Alle guider
+    </a>
+
+    <div data-guide-notfound hidden class="admin-card" style="text-align:center;padding:60px 24px">
+      <h1 style="margin:0 0 8px;font-size:22px">Fant ikke guiden</h1>
+      <p class="section-sub" style="margin:0 0 18px">Den kan ha blitt slettet, eller lenken er feil.</p>
+      <a href="guider.html"><button type="button" class="btn-primary">Til alle guider</button></a>
+    </div>
+
+    <div class="guide-layout" data-guide-root hidden>
+      <article class="guide-article">
+        <header class="guide-header">
+          <div class="guide-admin-bar" data-guide-admin-bar hidden>
+            <button type="button" class="admin-btn-ghost" data-guide-edit>Rediger guide-info</button>
+            <button type="button" class="admin-btn-ghost is-danger" data-guide-delete>Slett guide</button>
+          </div>
+
+          <div class="guide-edit-panel" data-guide-edit-panel hidden></div>
+
+          <div class="guide-pills">
+            <span class="guide-category-pill" data-guide-category></span>
+          </div>
+          <h1 data-guide-title></h1>
+          <p class="guide-intro" data-guide-excerpt></p>
+          <div class="guide-meta-row">
+            <span class="guide-meta-item" data-guide-updated></span>
+            <span class="guide-meta-item" data-guide-time></span>
+            <span class="guide-meta-item">Av Studilla-redaksjonen</span>
+          </div>
+        </header>
+
+        <div class="guide-cover" data-guide-cover></div>
+
+        <div class="guide-modules" data-guide-modules></div>
+
+        <div class="guide-add-module" data-guide-add-module hidden></div>
+      </article>
+
+      <aside class="guide-aside">
+        <div class="side-card guide-toc-card" data-guide-toc-card hidden>
+          <div class="side-card-head"><span>I denne guiden</span></div>
+          <nav class="guide-toc" data-guide-toc></nav>
+        </div>
+
+        <div class="guide-gevinst-card" data-guide-gevinst-card hidden></div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+</div>
+
+<div class="admin-toast" data-toast hidden></div>
+
+<script src="js/consent.js"></script>
+<script src="js/cookie-banner.js"></script>
+<script src="js/feature-flags.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/avatar-figures.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/visit-tracking.js"></script>
+<script src="js/games-data.js"></script>
+<script src="js/guides-data.js"></script>
+<script src="js/guides.js"></script>
+</body>
+</html>
