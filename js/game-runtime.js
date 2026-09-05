@@ -176,108 +176,160 @@
     return { saved: true, best, profile: null };
   }
 
-  function shellHTML() {
+  function hudHTML() {
     return `
-      <div class="game-shell">
-        <div class="game-hud">
-          <div class="game-hud-stat">
-            <span class="game-hud-label">Poeng</span>
-            <span class="game-hud-value" data-hud-score>0</span>
-          </div>
-          <div class="game-hud-stat">
-            <span class="game-hud-label">Rekord</span>
-            <span class="game-hud-value is-accent" data-hud-best>–</span>
-          </div>
+      <div class="game-hud">
+        <div class="game-hud-stat">
+          <span class="game-hud-label">Poeng</span>
+          <span class="game-hud-value" data-hud-score>0</span>
         </div>
-        <div class="game-play-area" data-game-play-area></div>
-        <div class="game-milestone-toast" data-game-milestone></div>
-        <div class="game-over-overlay" data-game-over hidden>
-          <div class="game-over-card">
-            <h3 data-game-over-title>Spillet er over</h3>
-            <p class="game-over-score" data-game-over-score></p>
-            <p class="section-sub" data-game-over-best></p>
-            <div class="game-over-level" data-game-over-level hidden>
-              <div class="game-over-level-labels">
-                <span data-game-over-level-label>Nivå</span>
-                <span data-game-over-level-xp></span>
-              </div>
-              <div class="game-over-level-bar"><div class="game-over-level-fill" data-game-over-level-fill></div></div>
-              <p class="game-over-levelup" data-game-over-levelup>Nivå opp!</p>
-            </div>
-            <button type="button" class="btn-primary" data-game-over-restart>Spill igjen</button>
-          </div>
+        <div class="game-hud-stat">
+          <span class="game-hud-label">Rekord</span>
+          <span class="game-hud-value is-accent" data-hud-best>–</span>
         </div>
       </div>
     `;
   }
 
   /**
-   * Monterer poeng-HUD + game-over-overlay i en beholder, og returnerer et
-   * "session"-objekt spillmodulen bruker til å tegne brettet sitt og
-   * rapportere poeng.
+   * Innholdet i spillboksen. Merk hva som IKKE ligger inni .game-shell:
+   *
+   *  - Poeng/rekord-HUDen ligger i topplinjen over spillflaten (se
+   *    player.html og mount() under). .game-shell blir da bare selve brettet,
+   *    og skaleringen under kan derfor bruke HELE flaten til brettet i stedet
+   *    for å dele den med HUDen. HUDen slipper samtidig å bli blåst opp
+   *    sammen med brettet.
+   *  - Game over-kortet ligger som SØSKEN av .game-shell og dekker hele
+   *    flaten. Lå det inni skallet ville kortet blitt skalert sammen med
+   *    brettet, og teksten/knappen blitt absurd stor på store skjermer.
    */
-  /**
-   * Skalerer game-shell opp ELLER ned slik at hele spillet – HUD + brett –
-   * alltid fyller mest mulig av spillboksen (som nå dekker hele skjermen
-   * under toppmenyen, se css/style.css), uansett hvor stort spillets eget
-   * brett er (hvert spill setter sin egen faste/vw-baserte størrelse på
-   * brettet sitt) og uansett hvor stor boksen er på skjermen. Siden
-   * spillsiden ikke kan scrolles (se css/style.css, is-player-view), måtte
-   * spillet ellers enten bli beskåret (for stort) eller flyte i tomt rom
-   * (for lite) i stedet for å fylle boksen. Skaleringen oppover er begrenset
-   * (MAX_SCALE) så brett med canvas (Fruktfusjon, Bubble Shooter) ikke blir
-   * synlig pikselerte på store skjermer.
-   */
-  // Brettenes "naturlige" CSS-bredde (.board-2048, .board-snake, osv.) er nå
-  // med vilje faste pikselverdier, ikke vw-baserte (se css/style.css) –
-  // ellers matchet den naturlige bredden nesten alltid tilgjengelig bredde
-  // uansett skjerm, og denne funksjonen fant da nesten ingen ledig plass å
-  // skalere opp i (spillet forble lite på store skjermer, og etterlot mye
-  // ubrukt tomrom i høyden på høye/smale mobilskjermer). Med faste naturlige
-  // mål kan taket derfor settes en god del høyere enn før.
-  const MAX_SCALE = 2.6;
+  function stageHTML() {
+    return `
+      <div class="game-shell">
+        <div class="game-play-area" data-game-play-area></div>
+        <div class="game-milestone-toast" data-game-milestone></div>
+      </div>
+      <div class="game-over-overlay" data-game-over hidden>
+        <div class="game-over-card">
+          <h3 data-game-over-title>Spillet er over</h3>
+          <p class="game-over-score" data-game-over-score></p>
+          <p class="section-sub" data-game-over-best></p>
+          <div class="game-over-level" data-game-over-level hidden>
+            <div class="game-over-level-labels">
+              <span data-game-over-level-label>Nivå</span>
+              <span data-game-over-level-xp></span>
+            </div>
+            <div class="game-over-level-bar"><div class="game-over-level-fill" data-game-over-level-fill></div></div>
+            <p class="game-over-levelup" data-game-over-levelup>Nivå opp!</p>
+          </div>
+          <button type="button" class="btn-primary" data-game-over-restart>Spill igjen</button>
+        </div>
+      </div>
+    `;
+  }
 
-  function watchShellFit(container, shellEl) {
+  /**
+   * Skalerer game-shell opp ELLER ned slik at selve brettet alltid fyller
+   * mest mulig av spillflaten (.player-stage-inner, som dekker hele skjermen
+   * under toppmenyen og topplinjen – se css/style.css), uansett hvor stort
+   * spillets eget brett er og uansett hvor stor flaten er. Siden spillsiden
+   * ikke kan scrolles (se css/style.css, is-player-view), måtte spillet
+   * ellers enten bli beskåret (for stort) eller flyte i et hav av tomrom
+   * (for lite) i stedet for å fylle flaten.
+   *
+   * Skallet er absoluttposisjonert og sentrert i flaten (se .game-shell i
+   * css/style.css). Det er med vilje: da er skallets layout helt frikoblet
+   * fra flatens størrelse, og offsetWidth/offsetHeight gir alltid brettets
+   * EGEN, utransformerte størrelse. Da skallet lå i normal flyt med
+   * `max-width: 100%` ble det klemt sammen av flaten på smale skjermer,
+   * mens brettet inni beholdt sin faste bredde og hang utenfor på begge
+   * sider. Målingen under leste da en for liten "naturlig" bredde, regnet ut
+   * en for stor skala, og brettet ble beskåret i begge kanter på mobil.
+   */
+  // Et tak på oppskaleringen finnes fortsatt, men bare som en fornuftsgrense:
+  // brettene er rene DOM-elementer (skalerer knivskarpt), og de to
+  // canvas-baserte spillene tegner nå om i den faktiske skjermoppløsningen
+  // via session.onScale() i stedet for å bli strukket opp som et bilde.
+  const MAX_SCALE = 4;
+
+  function watchShellFit(container, shellEl, onScale) {
+    let lastScale = 0;
+
     function fit() {
-      shellEl.style.transform = "none";
-      // container (.player-stage-inner) har egen padding (bl.a. plass til
-      // "Tilbake til menyen" øverst til venstre, se css/style.css) – den skal
-      // trekkes fra clientWidth/Height, ellers regner vi med mer plass enn
-      // det faktisk er igjen til selve skallet, og brettet skalerer for lite
-      // ned og blir beskåret/overlapper lenken på trange skjermer (mobil).
+      // Flaten har litt luft rundt seg (padding) som brettet ikke skal legge
+      // seg oppå, så den trekkes fra den tilgjengelige plassen.
       const cs = window.getComputedStyle(container);
       const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
       const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
       const availW = container.clientWidth - padX;
       const availH = container.clientHeight - padY;
-      const naturalW = shellEl.scrollWidth;
-      const naturalH = shellEl.scrollHeight;
-      if (!availW || !availH || !naturalW || !naturalH) return;
+      // offsetWidth/offsetHeight er upåvirket av vår egen transform, så
+      // skallet trenger ikke nullstilles først (det ga en synlig blafring
+      // ved hver eneste resize).
+      const naturalW = shellEl.offsetWidth;
+      const naturalH = shellEl.offsetHeight;
+      if (availW <= 0 || availH <= 0 || !naturalW || !naturalH) return;
       const scale = Math.min(MAX_SCALE, availW / naturalW, availH / naturalH);
-      shellEl.style.transform = scale !== 1 ? `scale(${scale})` : "none";
+      if (!Number.isFinite(scale) || scale <= 0) return;
+      shellEl.style.transform = `translate(-50%, -50%) scale(${scale})`;
+      // Bare varsle ved reelle endringer: mottakeren (canvas-spillene) bygger
+      // om tegneflaten sin, som er for dyrt å gjøre på hver eneste måling.
+      if (Math.abs(scale - lastScale) > 0.01) {
+        lastScale = scale;
+        if (onScale) onScale(scale);
+      }
     }
 
     if (window.ResizeObserver) {
-      // Observerer selve skallet (ikke boksen): boksens størrelse endres
-      // ikke av oss, men skallets NATURLIGE (utransformerte) høyde endres når
-      // spillmodulen fyller spillflaten sin rett etter mount() – det er da vi
-      // først må regne ut skaleringen.
+      // Observerer BÅDE skallet og flaten. Skallets naturlige høyde endres
+      // når spillmodulen fyller spillflaten sin rett etter mount() – det er
+      // da vi først må regne ut skaleringen. Flatens høyde endres bl.a. når
+      // mobilnettleserens adressefelt glir inn/ut, noe som ikke gir noen
+      // window-resize i alle nettlesere. Skallet er absoluttposisjonert, så
+      // det kan ikke selv påvirke flatens størrelse – ingen løkke.
       const ro = new ResizeObserver(fit);
       ro.observe(shellEl);
-      window.addEventListener("resize", fit);
-    } else {
-      window.addEventListener("resize", fit);
+      ro.observe(container);
     }
+    window.addEventListener("resize", fit);
+    window.addEventListener("orientationchange", fit);
     requestAnimationFrame(fit);
   }
 
+  /**
+   * Monterer poeng-HUD + spillflate + game-over-kort, og returnerer et
+   * "session"-objekt spillmodulen bruker til å tegne brettet sitt og
+   * rapportere poeng.
+   */
   async function mount(container, gameId) {
-    container.innerHTML = shellHTML();
-    watchShellFit(container, container.querySelector(".game-shell"));
+    container.innerHTML = stageHTML();
+
+    // HUDen hører hjemme i topplinjen over spillflaten (se player.html).
+    // Finnes ikke den plassen (f.eks. hvis kjøretiden brukes fra en annen
+    // side), legges HUDen først i selve flaten i stedet, slik at poeng og
+    // rekord alltid vises et sted.
+    const hudSlot = document.querySelector("[data-player-hud]");
+    if (hudSlot) {
+      hudSlot.innerHTML = hudHTML();
+    } else {
+      container.insertAdjacentHTML("afterbegin", hudHTML());
+    }
+    const hudRoot = hudSlot || container;
+
+    // Spillmoduler som tegner på canvas melder seg på her for å bygge om
+    // tegneflaten sin i den faktiske skjermoppløsningen når skalaen endres.
+    // Uten det ville canvaset blitt strukket opp som et bilde og blitt
+    // synlig uskarpt så snart spillet fyller en stor skjerm.
+    let scaleHandler = null;
+    let currentScale = 1;
+    watchShellFit(container, container.querySelector(".game-shell"), (scale) => {
+      currentScale = scale;
+      if (scaleHandler) scaleHandler(scale);
+    });
 
     const els = {
-      score: container.querySelector("[data-hud-score]"),
-      best: container.querySelector("[data-hud-best]"),
+      score: hudRoot.querySelector("[data-hud-score]"),
+      best: hudRoot.querySelector("[data-hud-best]"),
       playArea: container.querySelector("[data-game-play-area]"),
       milestone: container.querySelector("[data-game-milestone]"),
       overlay: container.querySelector("[data-game-over]"),
@@ -376,6 +428,17 @@
 
     return {
       playArea: els.playArea,
+
+      /**
+       * Meld deg på endringer i hvor mye spillet skaleres opp/ned for å fylle
+       * skjermen (se watchShellFit). Kalles med én gang med skalaen som
+       * gjelder nå, og deretter hver gang den endrer seg. Brukes av de
+       * canvas-baserte spillene til å tegne i riktig oppløsning.
+       */
+      onScale(cb) {
+        scaleHandler = cb;
+        if (cb) cb(currentScale);
+      },
 
       /** Lagret stilling fra forrige økt, eller null. */
       savedState() {

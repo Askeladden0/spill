@@ -16,15 +16,23 @@
   const ROW_HEIGHT = RADIUS * Math.sqrt(3);
   const TOTAL_ROWS = 13;
   const FILLED_ROWS = 8;
-  const HEIGHT = Math.round(TOTAL_ROWS * ROW_HEIGHT + RADIUS * 2 + 90);
+  // Høyden på selve kulefeltet – alt over skytteren.
+  const FIELD_HEIGHT = Math.round(TOTAL_ROWS * ROW_HEIGHT + RADIUS * 2 + 90);
   // Selve spillbrettet (hele spilleflaten) skal ha sideforholdet 7:6
   // (bredde:høyde), så antall kolonner beregnes ut fra høyden i stedet for
   // å være et fast tall.
   const BOARD_RATIO_W = 7;
   const BOARD_RATIO_H = 6;
-  const COLS = Math.round((HEIGHT * (BOARD_RATIO_W / BOARD_RATIO_H)) / COL_WIDTH);
+  const COLS = Math.round((FIELD_HEIGHT * (BOARD_RATIO_W / BOARD_RATIO_H)) / COL_WIDTH);
   const WIDTH = COLS * COL_WIDTH;
-  const SHOOTER_Y = HEIGHT - 40;
+  const SHOOTER_Y = FIELD_HEIGHT - 40;
+  // Kanvaset må være litt høyere enn kulefeltet: skytteren TEGNES et stykke
+  // under SHOOTER_Y (se render()), og med høyden satt til kulefeltet alene
+  // ble den nederste delen av kula og holderen klippet bort av kanten.
+  // Det var lett å overse da brettet var lite, men er godt synlig nå som
+  // spillet fyller skjermen. Kolonnetallet regnes fortsatt ut fra
+  // kulefeltet, så brettet og fysikken er nøyaktig som før.
+  const HEIGHT = SHOOTER_Y + RADIUS * 2 + 18;
   const DANGER_Y = SHOOTER_Y - RADIUS * 2.4;
   const SPEED = 620; // px/sek
   const MAX_AIM_DEG = 75;
@@ -104,6 +112,9 @@
     let rafId = null;
     let lastTime = 0;
     let effects = [];
+    // Hvor mange ekte skjermpiksler det går på én av canvasets egne
+    // koordinatpiksler. Settes av session.onScale() under.
+    let renderScale = 1;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -112,6 +123,12 @@
       `;
       canvas = session.playArea.querySelector("[data-board-bubble]");
       ctx = canvas.getContext("2d");
+      // Spillflaten skalerer hele brettet opp for å fylle skjermen (se
+      // watchShellFit i js/game-runtime.js). Et canvas som bare strekkes opp
+      // blir uskarpt, så tegneflaten bygges i stedet om i den oppløsningen
+      // brettet faktisk vises i. CSS-størrelsen holdes fast på canvasets egne
+      // koordinater, slik at oppsettet rundt ikke endrer seg.
+      session.onScale(applyRenderScale);
       session.onRestart(() => initGame());
       attachControls();
       // Fortsett en påbegynt runde hvis den ligger lagret, ellers ny runde.
@@ -374,8 +391,11 @@
     function pointerPos(e) {
       const rect = canvas.getBoundingClientRect();
       const t = e.touches && e.touches[0] ? e.touches[0] : e;
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
+      // WIDTH/HEIGHT (koordinatsystemet), ikke canvas.width/height
+      // (tegneflaten): de to er ikke like når tegneflaten bygges opp i høyere
+      // oppløsning, og sikte-punktet ville da havnet langt utenfor brettet.
+      const scaleX = WIDTH / rect.width;
+      const scaleY = HEIGHT / rect.height;
       return { x: (t.clientX - rect.left) * scaleX, y: (t.clientY - rect.top) * scaleY };
     }
 
@@ -420,8 +440,32 @@
       ctx.fill();
     }
 
+    /**
+     * Bygger om tegneflaten slik at én koordinatpiksel tilsvarer én ekte
+     * skjermpiksel ved den skaleringen brettet vises i nå. Taket på 3 holder
+     * minnebruken nede på skjermer med høy pikseltetthet.
+     */
+    function applyRenderScale(scale) {
+      if (!canvas) return;
+      // Låses uansett: tegneflaten (width/height-attributtene) endrer også
+      // canvasets naturlige størrelse, så uten en eksplisitt CSS-størrelse
+      // ville brettet hoppet i størrelse når oppløsningen endres.
+      canvas.style.width = `${WIDTH}px`;
+      canvas.style.height = `${HEIGHT}px`;
+      const dpr = window.devicePixelRatio || 1;
+      const next = Math.min(3, Math.max(1, (scale || 1) * dpr));
+      if (Math.abs(next - renderScale) < 0.01 && canvas.width) return;
+      renderScale = next;
+      canvas.width = Math.round(WIDTH * renderScale);
+      canvas.height = Math.round(HEIGHT * renderScale);
+      render();
+    }
+
     function render() {
       if (!ctx) return;
+      // Alt tegnes i canvasets egne WIDTH/HEIGHT-koordinater; denne
+      // transformen oversetter dem til den faktiske tegneflaten.
+      ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
       ctx.clearRect(0, 0, WIDTH, HEIGHT);
       if (skyImage.complete && skyImage.naturalWidth) {
         ctx.drawImage(skyImage, 0, 0, WIDTH, HEIGHT);
