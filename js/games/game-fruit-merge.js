@@ -75,6 +75,9 @@
     let autosaveTimer = null;
     let muted = readMuted();
     let audioCtx = null;
+    // Hvor mange ekte skjermpiksler det går på én av canvasets egne
+    // koordinatpiksler. Settes av session.onScale() under.
+    let renderScale = 1;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -89,6 +92,12 @@
         </div>
       `;
       session.onRestart(() => initGame());
+      // Spillflaten skalerer hele brettet opp for å fylle skjermen (se
+      // watchShellFit i js/game-runtime.js). Et canvas som bare strekkes opp
+      // blir uskarpt, så Matter får beskjed om å tegne i den oppløsningen
+      // brettet faktisk vises i. Matter holder selv CSS-størrelsen fast på
+      // WIDTH/HEIGHT, så oppsettet rundt endrer seg ikke.
+      session.onScale(applyRenderScale);
 
       const muteBtn = session.playArea.querySelector("[data-fruit-mute]");
       updateMuteButton(muteBtn);
@@ -261,6 +270,9 @@
       });
       canvas = render.canvas;
       canvas.classList.add("fruit-merge-canvas");
+      // Ny render ved hver runde – den arver ikke oppløsningen fra den
+      // forrige, så den må settes på nytt her.
+      Matter.Render.setPixelRatio(render, renderScale);
 
       const wallOptions = { isStatic: true, render: { fillStyle: "#c98a4b" } };
       Matter.World.add(world, [
@@ -293,6 +305,19 @@
       // trekk slik de rutenettbaserte spillene gjør.
       if (autosaveTimer) clearInterval(autosaveTimer);
       autosaveTimer = setInterval(saveGame, 2000);
+    }
+
+    /**
+     * Ber Matter tegne i den oppløsningen brettet faktisk vises i.
+     * setPixelRatio setter tegneflaten til WIDTH/HEIGHT ganger forholdet, men
+     * beholder CSS-størrelsen, og Matter legger selv på transformen i hver
+     * frame – også for vår egen "afterRender"-tegning (drawOverlay). Taket på
+     * 3 holder minnebruken nede på skjermer med høy pikseltetthet.
+     */
+    function applyRenderScale(scale) {
+      const dpr = window.devicePixelRatio || 1;
+      renderScale = Math.min(3, Math.max(1, (scale || 1) * dpr));
+      if (render) Matter.Render.setPixelRatio(render, renderScale);
     }
 
     function makeFruit(index, x, y) {
