@@ -11,18 +11,19 @@
   "use strict";
 
   const GAME_ID = "bubble-shooter";
-  const COLS = 9;
   const RADIUS = 20;
   const COL_WIDTH = RADIUS * 2;
   const ROW_HEIGHT = RADIUS * Math.sqrt(3);
-  const WIDTH = COLS * COL_WIDTH;
-  // Brettet med boblene skal ha sideforholdet 7:6 (bredde:høyde), og det er
-  // akkurat dette området som er fylt med bobler ved spillstart.
+  const TOTAL_ROWS = 13;
+  const FILLED_ROWS = 8;
+  const HEIGHT = Math.round(TOTAL_ROWS * ROW_HEIGHT + RADIUS * 2 + 90);
+  // Selve spillbrettet (hele spilleflaten) skal ha sideforholdet 7:6
+  // (bredde:høyde), så antall kolonner beregnes ut fra høyden i stedet for
+  // å være et fast tall.
   const BOARD_RATIO_W = 7;
   const BOARD_RATIO_H = 6;
-  const FILLED_ROWS = Math.round((WIDTH * (BOARD_RATIO_H / BOARD_RATIO_W)) / ROW_HEIGHT);
-  const TOTAL_ROWS = 13;
-  const HEIGHT = Math.round(TOTAL_ROWS * ROW_HEIGHT + RADIUS * 2 + 90);
+  const COLS = Math.round((HEIGHT * (BOARD_RATIO_W / BOARD_RATIO_H)) / COL_WIDTH);
+  const WIDTH = COLS * COL_WIDTH;
   const SHOOTER_Y = HEIGHT - 40;
   const DANGER_Y = SHOOTER_Y - RADIUS * 2.4;
   const SPEED = 620; // px/sek
@@ -36,8 +37,7 @@
     green: "#22b34f",
     skyblue: "#29b6e8",
     blue: "#3f66e0",
-    indigo: "#5c4de0",
-    purple: "#8b3fe8",
+    purple: "#a83fe8",
     magenta: "#d63fc9",
     pink: "#f28fce",
   };
@@ -62,6 +62,7 @@
     "#2ee87f": "green",
     "#f5c95c": "yellow",
     "#a56cf5": "purple",
+    indigo: "blue",
   };
   function migrateColor(color) {
     return LEGACY_COLOR_MAP[color] || color;
