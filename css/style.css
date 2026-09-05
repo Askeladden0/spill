@@ -598,7 +598,16 @@ main {
   background: var(--bg);
 }
 
+/* Plassholderen js/main.js viser hvis spillmodulen ikke lastet. Sentreres
+   selv, siden spillflaten den ligger i (.player-stage-inner) ikke lenger er
+   en sentrerende flex-boks – der er det bare det skalerte spillskallet som
+   sentreres, og det med absolutt posisjon. */
 .player-stage-slot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: ui-monospace, Menlo, monospace;
   font-size: 12px;
   color: var(--muted-3);
@@ -623,21 +632,32 @@ main {
 
 .back-link:hover { color: var(--accent); }
 
-/* Ligger inni spillboksen (.player-stage) på spillsiden, øverst til venstre,
-   siden boksen nå dekker hele skjermen og ikke lenger har en egen seksjon
-   over seg til lenken. Egen liten "chip"-bakgrunn slik at den er lesbar
-   oppå spillbrettet, som kan ligge helt inntil kanten når boksen er
-   usynlig (se .player-stage under). */
+/* Ligger i topplinjen over spillflaten (.player-topbar i player.html), ikke
+   lenger absoluttposisjonert oppå selve brettet. Den tok da plass fra
+   brettet i form av ekstra luft på toppen av flaten, og lå likevel i veien
+   når brettet skalerte helt opp. Beholder "chip"-utseendet. */
 .player-back-link {
-  position: absolute;
-  top: 16px;
-  left: 20px;
-  z-index: 12;
+  flex: 0 0 auto;
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: 999px;
   padding: 8px 16px 8px 14px;
 }
+
+/* Topplinjen over spillflaten: tilbake-lenke til venstre, poeng/rekord til
+   høyre. Ligger i normal flyt og tar bare den høyden innholdet krever, slik
+   at alt som er igjen av skjermen tilhører spillbrettet. */
+.player-topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  min-height: 0;
+}
+
+.player-hud-slot { flex: 0 1 auto; min-width: 0; }
 
 /* Spillsiden (player.html) skal ikke kunne scrolles opp/ned – hele siden
    låses til viewporten, og bunnmenyen fjernes derfor fra markupet (se
@@ -692,59 +712,75 @@ html.is-player-view .player-stage {
   border: none;
   border-radius: 0;
   background: var(--bg);
-}
-
-/* ---------- Spill: delt poeng-HUD (game-runtime.js) ---------- */
-.player-stage-inner {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  box-sizing: border-box;
-  /* Litt luft øverst til venstre så "Tilbake til menyen" (.player-back-link,
-     absoluttposisjonert oppå denne boksen) aldri overlapper poeng/rekord-
-     boksen selv når spillet er skalert helt opp og fyller det meste av
-     flaten (se watchShellFit i game-runtime.js). */
-  padding: 56px 16px 16px;
-}
-
-.game-shell {
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  /* Krymper til innholdets egen bredde (brettet, som selv har en fast/
-     vw-basert maksbredde) i stedet for å strekke seg til hele den nå
-     skjermfyllende .player-stage-inner-boksen. Ellers ble game-shells
-     "naturlige" bredde alltid regnet som HELE boksens bredde (siden den
-     fylte den uansett), og game-runtime.js sin skalering (watchShellFit)
-     fikk da aldri noe å skalere OPP mot – spillet ble aldri større selv om
-     boksen ble det. */
-  width: fit-content;
-  max-width: 100%;
-  padding: 28px;
-  box-sizing: border-box;
-  transform-origin: center center;
 }
 
-/* Poeng og rekord i én felles boks (samme plassering/størrelse på tallene
-   som før) i stedet for å flyte løst oppå den nå usynlige spillboksen. */
+/* Spillsiden skal bruke HELE skjermbredden. main har ellers
+   max-width: 1240px (se "Main / layout" over), som på brede skjermer la en
+   usynlig vegg rundt spillflaten og hindret brettet i å vokse videre. */
+html.is-player-view main { max-width: none; }
+
+/* ---------- Spill: delt poeng-HUD (game-runtime.js) ---------- */
+/* Selve spillflaten: alt som er igjen av skjermen under toppmenyen og
+   topplinjen. Er kun et posisjoneringsanker for det skalerte spillskallet
+   (.game-shell under), som sentreres i den. Luften rundt holdes liten med
+   vilje – hver piksel her er en piksel brettet ikke får bruke. */
+.player-stage-inner {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 8px 8px 12px;
+}
+
+/* Skallet inneholder nå BARE selve brettet (HUDen ligger i topplinjen og
+   game over-kortet er et søsken av skallet), slik at hele spillflaten kan
+   brukes til å gjøre brettet størst mulig.
+
+   Absoluttposisjonert og sentrert med vilje: da bestemmes skallets
+   størrelse utelukkende av brettet inni det, aldri av flaten rundt.
+   Tidligere lå det i normal flyt med `max-width: 100%`, og da klemte
+   flaten skallet sammen på smale skjermer mens brettet inni beholdt sin
+   faste bredde og hang utenfor på begge sider – watchShellFit
+   (js/game-runtime.js) leste da en for liten "naturlig" bredde, regnet ut
+   for stor skala, og brettet ble beskåret i kantene på mobil.
+
+   transform settes av watchShellFit og inneholder translate(-50%, -50%)
+   i tillegg til skaleringen – ikke overstyr transform herfra. */
+.game-shell {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  max-width: none;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Poeng og rekord i én felles boks i topplinjen over spillflaten. Ligger
+   UTENFOR det skalerte spillskallet (se .game-shell), så tallene har sin
+   egen, lesbare størrelse i stedet for å blåses opp sammen med brettet –
+   og de stjeler ikke lenger høyde fra selve brettet. */
 .game-hud {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  flex-wrap: wrap;
+  gap: 20px;
   background: var(--surface);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  padding: 12px 24px;
+  border-radius: 999px;
+  padding: 6px 18px;
 }
-.game-hud-stat { display: flex; flex-direction: column; gap: 2px; }
-.game-hud-label { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; color: var(--muted-2); text-transform: uppercase; }
-.game-hud-value { font-size: 24px; font-weight: 800; color: var(--text-strong); }
+.game-hud-stat { display: flex; align-items: baseline; gap: 7px; }
+.game-hud-label { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; color: var(--muted-2); text-transform: uppercase; }
+.game-hud-value { font-size: 19px; font-weight: 800; color: var(--text-strong); }
 .game-hud-value.is-accent { color: var(--accent); }
 .game-hud-value.is-bump { animation: hudValueBump .32s cubic-bezier(.34, 1.56, .64, 1); }
 
@@ -759,7 +795,10 @@ html.is-player-view .player-stage {
   top: 42%;
   left: 50%;
   transform: translate(-50%, -50%) scale(.6);
-  font-size: clamp(22px, 5vw, 34px);
+  /* Fast px, ikke vw: teksten ligger inni det skalerte spillskallet (se
+     .game-shell) og følger derfor allerede brettets skalering. Et vw-basert
+     mål ville blitt skalert to ganger. */
+  font-size: 26px;
   font-weight: 900;
   letter-spacing: .01em;
   color: var(--text-strong);
@@ -784,6 +823,9 @@ html.is-player-view .player-stage {
 
 .game-play-area { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 
+/* Dekker hele spillflaten (.player-stage-inner), ikke bare skallet. Lå det
+   inni skallet ble kortet skalert sammen med brettet, og tekst og knapp ble
+   absurd store på store skjermer. */
 .game-over-overlay {
   position: absolute;
   inset: 0;
@@ -791,7 +833,6 @@ html.is-player-view .player-stage {
   backdrop-filter: blur(3px);
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-lg);
   z-index: 10;
 }
 
@@ -843,7 +884,10 @@ html.is-player-view .player-stage {
 
 .fruit-merge-next-label { text-transform: uppercase; letter-spacing: .04em; }
 
-.fruit-merge-next-fruit { font-weight: 700; }
+/* Egen flex-rad, ikke bare tekst: ikonet er et <img>, og den globale
+   `img { display: block }`-regelen dyttet ellers navnet ned på en egen linje
+   som la seg oppå ikonet. */
+.fruit-merge-next-fruit { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
 
 .fruit-merge-canvas-wrap { border-radius: 12px; overflow: hidden; touch-action: none; line-height: 0; }
 
@@ -1445,11 +1489,12 @@ html.is-player-view .player-stage {
 
 .board-bubble {
   display: block;
-  /* Fast bredde, ikke vw-basert – se forklaring i .board-2048 ovenfor.
-     Kanvasets EGNE pikselbredde (se WIDTH i js/games/game-bubble-shooter.js)
-     er allerede større enn dette (rundt 680px), så det er fortsatt rom for
-     skarp oppskalering før teksturene blir synlig pikselerte. */
-  width: 360px;
+  /* Bredden settes fra js/games/game-bubble-shooter.js (canvasets egne
+     WIDTH/HEIGHT), fordi selve tegneflaten (width/height-attributtene)
+     bygges om i skjermoppløsning når brettet skaleres opp – uten en fast
+     CSS-størrelse ville brettet da hoppet i størrelse hver gang. Verdiene
+     her gjelder bare det korte øyeblikket før skriptet har kjørt. */
+  width: 680px;
   height: auto;
   border-radius: 16px;
   background: var(--surface-2);
@@ -1459,8 +1504,22 @@ html.is-player-view .player-stage {
 }
 
 @media (max-width: 720px) {
-  .game-shell { padding: 20px; }
-  .game-hud { gap: 16px; }
+  .game-hud { gap: 12px; padding: 5px 14px; }
+  .game-hud-value { font-size: 17px; }
+  .player-topbar { padding: 8px 12px; }
+  .player-back-link { font-size: 13px; padding: 7px 13px 7px 11px; }
+}
+
+/* På smale telefoner får ikke både lenketeksten og poeng/rekord plass i
+   topplinjen ved siden av hverandre – da dyttes poeng/rekord ut av skjermen.
+   Lenken beholder pilen (og aria-label-en sin, se player.html) og blir bare
+   et ikon. */
+@media (max-width: 560px) {
+  .player-back-link { padding: 8px 10px; }
+  .player-back-link-text { display: none; }
+  .player-topbar { gap: 8px; }
+  .game-hud { gap: 10px; padding: 5px 12px; }
+  .game-hud-label { font-size: 10px; }
 }
 
 /* ---------- Footer ---------- */
