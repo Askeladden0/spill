@@ -886,7 +886,18 @@ html.is-player-view .player-stage {
 
 .board-2048 {
   position: relative;
-  width: min(420px, 90vw);
+  /* Fast bredde (IKKE koblet til vw) med vilje: watchShellFit i
+     game-runtime.js leser denne "naturlige" størrelsen og skalerer HELE
+     game-shell opp/ned til å fylle mest mulig av skjermen (se der for
+     hvorfor). Var denne koblet til vw (f.eks. min(420px, 90vw)) matchet
+     den naturlige bredden nesten alltid tilgjengelig bredde uansett
+     skjermstørrelse, og JS-en fant da nesten ingen ledig plass å skalere
+     opp i – spillet forble like lite på store skjermer OG etterlot massevis
+     av ubrukt høyde på høye/smale mobilskjermer (den faktiske buggen
+     brukeren meldte). Skalering NEDOVER på trange skjermer (skjermer
+     smalere enn 420px) skjer fortsatt automatisk via watchShellFit uten
+     behov for en vw-basert sikring her. */
+  width: 420px;
   aspect-ratio: 1;
   padding: 12px;
   border-radius: 16px;
@@ -926,7 +937,12 @@ html.is-player-view .player-stage {
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: clamp(16px, 5vw, 28px);
+  /* Fast px, ikke vw-basert klipp: brettet (.board-2048) har nå fast bredde
+     uansett skjerm (se forklaringen der) og skaleres i stedet opp/ned som
+     en helhet av watchShellFit i game-runtime.js. En vw-basert skriftstørrelse
+     her ville da IKKE fulgt med resten av brettet ved skalering – brikkene
+     ville blitt store men teksten i dem forbli liten på smale skjermer. */
+  font-size: 28px;
   color: var(--bg);
   background: var(--accent);
   transition: top .12s cubic-bezier(.4, 0, .2, 1), left .12s cubic-bezier(.4, 0, .2, 1),
@@ -952,12 +968,12 @@ html.is-player-view .player-stage {
 .tile-2048[data-value="16"] { background: #5cf5df; color: #0d1117; }
 .tile-2048[data-value="32"] { background: #8bf05c; color: #0d1117; }
 .tile-2048[data-value="64"] { background: #f5c95c; color: #131a25; }
-.tile-2048[data-value="128"] { background: #f5a15c; color: #131a25; font-size: clamp(14px, 4.4vw, 24px); }
-.tile-2048[data-value="256"] { background: #f55c9b; color: #fff; font-size: clamp(14px, 4.4vw, 24px); }
-.tile-2048[data-value="512"] { background: #a56cf5; color: #fff; font-size: clamp(14px, 4.4vw, 24px); }
-.tile-2048[data-value="1024"] { background: #5c8df5; color: #fff; font-size: clamp(12px, 3.8vw, 20px); }
-.tile-2048[data-value="2048"] { background: #2ee87f; color: #0d1117; font-size: clamp(12px, 3.8vw, 20px); box-shadow: 0 0 0 2px rgba(46,232,127,.55), 0 0 16px rgba(46,232,127,.4); animation: tilePop .25s cubic-bezier(.34, 1.56, .64, 1), tileGlow 1.6s ease-in-out infinite; }
-.tile-2048[data-value="2048plus"] { background: #0d1117; color: #2ee87f; border: 1px solid var(--accent); font-size: clamp(12px, 3.6vw, 18px); }
+.tile-2048[data-value="128"] { background: #f5a15c; color: #131a25; font-size: 24px; }
+.tile-2048[data-value="256"] { background: #f55c9b; color: #fff; font-size: 24px; }
+.tile-2048[data-value="512"] { background: #a56cf5; color: #fff; font-size: 24px; }
+.tile-2048[data-value="1024"] { background: #5c8df5; color: #fff; font-size: 20px; }
+.tile-2048[data-value="2048"] { background: #2ee87f; color: #0d1117; font-size: 20px; box-shadow: 0 0 0 2px rgba(46,232,127,.55), 0 0 16px rgba(46,232,127,.4); animation: tilePop .25s cubic-bezier(.34, 1.56, .64, 1), tileGlow 1.6s ease-in-out infinite; }
+.tile-2048[data-value="2048plus"] { background: #0d1117; color: #2ee87f; border: 1px solid var(--accent); font-size: 18px; }
 
 @keyframes tileGlow {
   0%, 100% { box-shadow: 0 0 0 2px rgba(46,232,127,.55), 0 0 10px rgba(46,232,127,.3); }
@@ -971,7 +987,8 @@ html.is-player-view .player-stage {
   grid-template-columns: repeat(var(--snake-size, 16), 1fr);
   grid-template-rows: repeat(var(--snake-size, 16), 1fr);
   gap: 0;
-  width: min(420px, 90vw);
+  /* Fast bredde, ikke vw-basert – se forklaring i .board-2048 ovenfor. */
+  width: 420px;
   aspect-ratio: 1;
   padding: 0;
   border-radius: 8px;
@@ -1161,7 +1178,8 @@ html.is-player-view .player-stage {
   grid-template-columns: repeat(var(--tetris-cols, 10), 1fr);
   grid-template-rows: repeat(var(--tetris-rows, 18), 1fr);
   gap: 2px;
-  width: min(300px, 62vw);
+  /* Fast bredde, ikke vw-basert – se forklaring i .board-2048 ovenfor. */
+  width: 300px;
   aspect-ratio: 10 / 18;
   padding: 10px;
   border-radius: 18px;
@@ -1297,7 +1315,6 @@ html.is-player-view .player-stage {
 
 @media (max-width: 720px) {
   .tetris-layout { flex-direction: column; align-items: center; }
-  .board-tetris { width: min(340px, 88vw); }
   .tetris-touch { display: flex; }
 }
 
@@ -1308,7 +1325,8 @@ html.is-player-view .player-stage {
   grid-template-columns: repeat(var(--blast-size, 8), 1fr);
   grid-template-rows: repeat(var(--blast-size, 8), 1fr);
   gap: 4px;
-  width: min(380px, 90vw);
+  /* Fast bredde, ikke vw-basert – se forklaring i .board-2048 ovenfor. */
+  width: 380px;
   aspect-ratio: 1;
   padding: 12px;
   border-radius: 20px;
@@ -1427,7 +1445,11 @@ html.is-player-view .player-stage {
 
 .board-bubble {
   display: block;
-  width: min(360px, 90vw);
+  /* Fast bredde, ikke vw-basert – se forklaring i .board-2048 ovenfor.
+     Kanvasets EGNE pikselbredde (se WIDTH i js/games/game-bubble-shooter.js)
+     er allerede større enn dette (rundt 680px), så det er fortsatt rom for
+     skarp oppskalering før teksturene blir synlig pikselerte. */
+  width: 360px;
   height: auto;
   border-radius: 16px;
   background: var(--surface-2);

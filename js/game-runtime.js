@@ -228,7 +228,14 @@
    * (MAX_SCALE) så brett med canvas (Fruktfusjon, Bubble Shooter) ikke blir
    * synlig pikselerte på store skjermer.
    */
-  const MAX_SCALE = 1.6;
+  // Brettenes "naturlige" CSS-bredde (.board-2048, .board-snake, osv.) er nå
+  // med vilje faste pikselverdier, ikke vw-baserte (se css/style.css) –
+  // ellers matchet den naturlige bredden nesten alltid tilgjengelig bredde
+  // uansett skjerm, og denne funksjonen fant da nesten ingen ledig plass å
+  // skalere opp i (spillet forble lite på store skjermer, og etterlot mye
+  // ubrukt tomrom i høyden på høye/smale mobilskjermer). Med faste naturlige
+  // mål kan taket derfor settes en god del høyere enn før.
+  const MAX_SCALE = 2.6;
 
   function watchShellFit(container, shellEl) {
     function fit() {
