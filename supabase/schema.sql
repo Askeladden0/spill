@@ -1755,9 +1755,7 @@ select * from (values
   ('elevrad-penger', 'tekst', 1, '{
     "heading": "Slik kommer du i gang",
     "headingLevel": 2,
-    "body": "De fleste elevråd har rett på mer penger enn de bruker. Pengene ligger tre steder: i skolens eget elevrådsbudsjett, i fylkets tilskuddsordninger, og i eksterne fond som deler ut midler til elevdemokrati. Start med å finne ut hvilket av de tre skolen din allerede bruker.
-
-Be rektor om budsjettlinja for elevrådet. Den skal finnes skriftlig, og du har rett til å se den. Er summen under 100 kroner per elev, ligger skolen lavt sammenlignet med snittet.",
+    "body": "De fleste elevråd har rett på mer penger enn de bruker. Pengene ligger tre steder: i skolens eget elevrådsbudsjett, i fylkets tilskuddsordninger, og i eksterne fond som deler ut midler til elevdemokrati. Start med å finne ut hvilket av de tre skolen din allerede bruker.\n\nBe rektor om budsjettlinja for elevrådet. Den skal finnes skriftlig, og du har rett til å se den. Er summen under 100 kroner per elev, ligger skolen lavt sammenlignet med snittet.",
     "bullets": ["Spør etter budsjettlinja skriftlig, i god tid før neste møte.", "Sammenlign med naboskolene – tall gir tyngde i forhandlingen.", "Skriv et kort krav med sum, formål og frist."],
     "tip": "Møtegodtgjørelse må vedtas før arbeidet er gjort. Ta det opp på det første møtet i skoleåret."
   }'::jsonb),
