@@ -845,7 +845,15 @@ drop function if exists public.claim_reward(bigint);
 --     som den gamle claim_reward); går kodene tomme etter tildelingen,
 --     deaktiveres rabatten automatisk (active = false) slik at den ikke kan
 --     trekkes igjen før admin legger til flere koder.
+--
+--     drop function if exists trengs her selv om dette er den første
+--     definisjonen i filen – re-kjøring av hele schema.sql mot en database
+--     som allerede har en eldre versjon av funksjonen (annen OUT-radtype)
+--     feiler ellers med 42P13 "cannot change return type of existing
+--     function", se seksjon 40 for samme fiks lenger ned.
 -- ---------------------------------------------------------------------------
+drop function if exists public.open_level_case(int);
+
 create or replace function public.open_level_case(p_level_number int)
 returns table (brand text, title text, sub text, rarity text, image_url text, code text, already_opened boolean)
 language plpgsql
@@ -966,7 +974,13 @@ create policy "reward_images_admin_delete" on storage.objects
 --     user_level_cases eller user_codes. Koden som vises er derfor fortsatt
 --     ledig for en ekte bruker etterpå, og admins egen ekte kasse (via
 --     open_level_case) påvirkes heller ikke.
+--
+--     drop function if exists trengs her av samme grunn som for
+--     open_level_case over – re-kjøring mot en database med en eldre
+--     versjon av funksjonen kan ellers feile med 42P13.
 -- ---------------------------------------------------------------------------
+drop function if exists public.admin_preview_case();
+
 create or replace function public.admin_preview_case()
 returns table (brand text, title text, sub text, rarity text, image_url text, code text)
 language plpgsql
