@@ -1800,6 +1800,64 @@ select * from (values
 ) as v(guide_id, type, sort_order, data)
 where not exists (select 1 from public.guide_modules where guide_id = 'elevrad-penger');
 
+-- ---------------------------------------------------------------------------
+-- 48. profiles.recovery_email – valgfri e-post en bruker selv kan legge inn
+--     for å kunne be om en "glemt passord"-lenke (se login.html og
+--     supabase/functions/request-password-reset). Innloggingen er fortsatt
+--     brukernavn + passord; denne e-posten brukes ALDRI som innloggings-
+--     e-post, kun som leveringsadresse for tilbakestillingslenken.
+--
+--     Kolonnen er trygg å legge til på et eksisterende profiles: policyen
+--     "profiles_select_own_or_admin" (seksjon 24) gjør at kun eieren selv
+--     (eller admin) kan lese sin egen rad direkte, og profiles_public
+--     eksponerer den ikke – så adressen er aldri synlig for andre besøkende.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists recovery_email text;
+
+alter table public.profiles drop constraint if exists profiles_recovery_email_format;
+alter table public.profiles add constraint profiles_recovery_email_format
+  check (recovery_email is null or recovery_email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+-- Oppdater handle_new_user (seksjon 6) slik at en e-post oppgitt ved
+-- registrering (options.data.recovery_email) lagres på profilen med det
+-- samme, i stedet for å kreve en egen oppdatering etter innlogging.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  meta_username text := new.raw_user_meta_data ->> 'username';
+  meta_recovery_email text := nullif(trim(new.raw_user_meta_data ->> 'recovery_email'), '');
+  final_username text;
+  is_default boolean := false;
+  picked_color text;
+  picked_icon text;
+begin
+  if meta_username is not null and meta_username ~ '^[a-zA-Z0-9_]{5,20}$'
+     and not exists (select 1 from public.profiles where lower(username) = lower(meta_username)) then
+    final_username := meta_username;
+  else
+    final_username := public.generate_unique_username(split_part(new.email, '@', 1));
+    is_default := true;
+  end if;
+
+  select colors[1 + floor(random() * array_length(colors, 1))::int],
+         icons[1 + floor(random() * array_length(icons, 1))::int]
+    into picked_color, picked_icon
+    from public.avatar_options where id = 1;
+
+  insert into public.profiles (id, username, username_is_default, avatar_color, avatar_icon, recovery_email)
+  values (
+    new.id, final_username, is_default, coalesce(picked_color, '#2ee87f'), coalesce(picked_icon, 'robot'),
+    case when meta_recovery_email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$' then meta_recovery_email else null end
+  );
+
+  return new;
+end;
+$$;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

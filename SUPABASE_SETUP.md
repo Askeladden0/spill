@@ -49,9 +49,10 @@ bekreftelse til en adresse som ikke finnes, og kontoen blir aldri aktiv:
 2. Samme sted: skru **av** eventuelle andre providere (Google osv.) – de brukes
    ikke lenger av `login.html`.
 
-Fordi det ikke finnes noen e-postadresse, kan et glemt passord ikke
-tilbakestilles automatisk. Et passord byttes ved at en admin setter et nytt
-passord på brukeren i Supabase-dashbordet (**Authentication → Users**).
+En bruker kan likevel be om å tilbakestille passordet sitt selv, hvis de har
+lagt inn en valgfri gjenopprettings-e-post ved registrering (se «Glemt
+passord?» i punkt 7 under). Uten en slik e-post byttes passordet fortsatt
+manuelt av en admin i Supabase-dashbordet (**Authentication → Users**).
 
 ## 4. Koble nettsiden til prosjektet
 
@@ -88,6 +89,43 @@ slette andre brukere fra "Brukere"-seksjonen i adminpanelet). Har du kjørt
 filen tidligere, kjør den bare på nytt – den er skrevet slik at det er trygt
 (se punktet under).
 
+## 6b. «Glemt passord?» – gjenopprettingsmail (valgfritt, men anbefalt)
+
+`login.html` har en «Glemt passord?»-lenke som lar en bruker be om en
+tilbakestillingslenke, HVIS de har lagt inn en gjenopprettings-e-post ved
+registrering (`profiles.recovery_email`). Selve utsendingen skjer i en
+Supabase Edge Function (`supabase/functions/request-password-reset`), fordi
+det å generere en gyldig tilbakestillingslenke krever service role-nøkkelen,
+som aldri skal ligge i nettsidens JavaScript.
+
+1. Installer [Supabase CLI](https://supabase.com/docs/guides/cli) hvis du
+   ikke har den, og logg inn: `supabase login`.
+2. Koble mappen til prosjektet ditt: `supabase link --project-ref DITT-PROSJEKT-REF`
+   (project ref finner du i URL-en til dashbordet, eller under
+   **Project Settings → General**).
+3. Opprett en gratis konto på [resend.com](https://resend.com), verifiser et
+   avsenderdomene der (kreves for å kunne sende til andre enn din egen
+   konto-e-post), og hent en API-nøkkel.
+4. Sett secrets for funksjonen:
+
+   ```
+   supabase secrets set RESEND_API_KEY=din_resend_nøkkel
+   supabase secrets set SITE_URL=https://studilla.no
+   ```
+
+   (`SUPABASE_URL` og `SUPABASE_SERVICE_ROLE_KEY` settes automatisk av
+   Supabase og trenger ikke legges inn manuelt.)
+5. Deploy funksjonen: `supabase functions deploy request-password-reset`
+
+Uten dette oppsettet vil «Glemt passord?» fortsatt vise en pen feilmelding i
+stedet for å krasje, men ingen e-post blir faktisk sendt – brukeren må da
+kontakte admin som i dag.
+
+Merk: gjenopprettings-e-posten er kun en leveringsadresse for
+tilbakestillingslenken. Den er ALDRI innloggings-e-posten til kontoen (den er
+og blir `brukernavn@brukere.studilla.no`, se punkt 3), så innlogging med
+brukernavn fungerer helt uendret.
+
 ## 6. Valgfritt: skru av e-postbekreftelse for testing
 
 Under **Authentication → Providers → Email**, kan du skru av "Confirm email"
@@ -97,8 +135,10 @@ bekrefte e-post først. Anbefales skrudd på igjen i produksjon.
 ## Hvordan innloggingen henger sammen med resten av siden
 
 - `js/auth.js` er lastet på alle sider og fyller `[data-auth-slot]` i headeren
-  med enten en "Logg inn"-knapp eller avatar + nivå, avhengig av om noen er
-  innlogget.
+  med enten en "Registrer deg"-knapp (lenker til `login.html?mode=register`,
+  som åpner registrerings-fanen direkte) eller avatar + nivå, avhengig av om
+  noen er innlogget. Innloggingsfanen er fortsatt standard når man kommer til
+  `login.html` uten `?mode=register` (f.eks. via `Auth.requireAuth()`-redirect).
 - `[data-admin-only]`-lenkene (Admin i toppmenyen og i bunnmenyen) vises kun for
   administratorer.
 - `profil.html` krever innlogging (redirigerer til `login.html` ellers).

@@ -43,11 +43,21 @@
             <span>Passord</span>
             <input type="password" name="password" required autocomplete="current-password">
           </label>
-          <label class="auth-terms">
-            <input type="checkbox" name="accept-terms" required>
-            <span>Jeg godtar <a href="vilkar.html" target="_blank" rel="noopener">vilkårene</a> for bruk av Studilla.</span>
-          </label>
+          <button type="button" class="auth-forgot-link" data-forgot-password-toggle>Glemt passord?</button>
           <button type="submit" class="btn-primary" style="width:100%">Logg inn</button>
+        </form>
+
+        <form data-forgot-password-form hidden>
+          <p class="section-sub" style="margin:0 0 14px">
+            Skriv inn brukernavnet ditt. Har du lagt inn en gjenopprettings-e-post,
+            sender vi deg en lenke for å velge nytt passord.
+          </p>
+          <label class="auth-field">
+            <span>Brukernavn</span>
+            <input type="text" name="username" required autocomplete="username">
+          </label>
+          <button type="submit" class="btn-primary" style="width:100%">Send tilbakestillingslenke</button>
+          <button type="button" class="auth-forgot-link" data-forgot-password-cancel style="text-align:center;margin-top:12px">Tilbake til innlogging</button>
         </form>
 
         <form data-register-form hidden>
@@ -59,6 +69,10 @@
             <span>Passord</span>
             <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="Minst 8 tegn, med bokstav og tall">
           </label>
+          <label class="auth-field">
+            <span>E-post (valgfritt)</span>
+            <input type="email" name="recovery-email" autocomplete="email" placeholder="Kun for å kunne tilbakestille passordet">
+          </label>
           <label class="auth-terms">
             <input type="checkbox" name="accept-terms" required>
             <span>Jeg godtar <a href="vilkar.html" target="_blank" rel="noopener">vilkårene</a> for bruk av Studilla.</span>
@@ -67,10 +81,11 @@
         </form>
 
         <p class="auth-fineprint">
-          Du logger inn med brukernavn og passord – vi ber aldri om e-postadressen din.
+          Du logger inn med brukernavn og passord – vi krever aldri e-postadressen din.
           Ved å fortsette godtar du at vi lagrer brukernavnet ditt, en tilfeldig
           tildelt profilfarge/ikon, samt nivå og spillrekorder knyttet til kontoen din.
-          Husk passordet godt: uten e-post kan det ikke tilbakestilles automatisk.
+          Legger du inn en e-post kan du bruke "Glemt passord?" for å tilbakestille det selv;
+          uten e-post må du kontakte admin for å få passordet nullstilt.
         </p>
       </div>
     </section>
@@ -97,6 +112,9 @@
   const tabs = document.querySelectorAll(".auth-tab");
   const loginForm = document.querySelector("[data-login-form]");
   const registerForm = document.querySelector("[data-register-form]");
+  const forgotForm = document.querySelector("[data-forgot-password-form]");
+  const forgotToggle = document.querySelector("[data-forgot-password-toggle]");
+  const forgotCancel = document.querySelector("[data-forgot-password-cancel]");
   const errorEl = document.querySelector("[data-auth-error]");
   const successEl = document.querySelector("[data-auth-success]");
 
@@ -117,15 +135,67 @@
     successEl.hidden = true;
   }
 
+  function showTab(tabName) {
+    tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.tab === tabName));
+    clearMessages();
+    const isLogin = tabName === "login";
+    loginForm.hidden = !isLogin;
+    registerForm.hidden = isLogin;
+    forgotForm.hidden = true;
+  }
+
   tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      tabs.forEach((t) => t.classList.remove("is-active"));
-      tab.classList.add("is-active");
-      clearMessages();
-      const isLogin = tab.dataset.tab === "login";
-      loginForm.hidden = !isLogin;
-      registerForm.hidden = isLogin;
-    });
+    tab.addEventListener("click", () => showTab(tab.dataset.tab));
+  });
+
+  // Toppmeny-knappen "Registrer deg" lenker hit med ?mode=register, slik at
+  // besøkende som klikker den havner rett i registrerings-fanen i stedet for
+  // innlogging (som fortsatt er standard når man kommer hit på andre måter,
+  // f.eks. redirect fra en side som krever innlogging).
+  const initialMode = new URLSearchParams(window.location.search).get("mode");
+  showTab(initialMode === "register" ? "register" : "login");
+
+  forgotToggle.addEventListener("click", () => {
+    clearMessages();
+    loginForm.hidden = true;
+    forgotForm.hidden = false;
+  });
+
+  forgotCancel.addEventListener("click", () => {
+    clearMessages();
+    forgotForm.hidden = true;
+    loginForm.hidden = false;
+    forgotForm.reset();
+  });
+
+  forgotForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearMessages();
+    const form = new FormData(forgotForm);
+    const username = String(form.get("username") || "").trim();
+    if (!username) return showError("Skriv inn brukernavnet ditt.");
+
+    const submitBtn = forgotForm.querySelector("button[type=submit]");
+    submitBtn.disabled = true;
+    try {
+      const { data, error } = await sb.functions.invoke("request-password-reset", {
+        body: { username },
+      });
+      if (error) throw error;
+
+      if (data && data.status === "sent") {
+        showSuccess(data.message);
+        forgotForm.reset();
+      } else if (data) {
+        showError(data.message || "Noe gikk galt. Prøv igjen.");
+      } else {
+        showError("Noe gikk galt. Prøv igjen.");
+      }
+    } catch (err) {
+      showError(Auth.friendlyAuthError(err));
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 
   // Innlogging skjer med brukernavn og passord. Supabase Auth krever teknisk
@@ -155,12 +225,16 @@
     const form = new FormData(registerForm);
     const username = form.get("username").trim();
     const password = form.get("password");
+    const recoveryEmail = String(form.get("recovery-email") || "").trim();
 
     const usernameError = Auth.validateUsername(username);
     if (usernameError) return showError(usernameError);
 
     const passwordError = Auth.validatePassword(password);
     if (passwordError) return showError(passwordError);
+
+    const recoveryEmailError = Auth.validateRecoveryEmail(recoveryEmail);
+    if (recoveryEmailError) return showError(recoveryEmailError);
 
     try {
       if (await Auth.isUsernameTaken(username)) {
@@ -173,7 +247,7 @@
     const { data, error } = await sb.auth.signUp({
       email: Auth.emailForUsername(username),
       password,
-      options: { data: { username } },
+      options: { data: { username, recovery_email: recoveryEmail || null } },
     });
 
     if (error) return showError(Auth.friendlyAuthError(error));

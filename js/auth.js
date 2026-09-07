@@ -113,6 +113,16 @@
     return null;
   }
 
+  const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+  // Gjenopprettings-e-posten er valgfri ved registrering, så tomt/utelatt
+  // er alltid gyldig – denne validerer kun formatet når noe er skrevet inn.
+  function validateRecoveryEmail(email) {
+    if (!email) return null;
+    if (!EMAIL_REGEX.test(email)) return "E-postadressen ser ikke gyldig ut.";
+    return null;
+  }
+
   async function isUsernameTaken(username) {
     // profiles_public (ikke profiles direkte): en anonym besøkende som
     // registrerer seg må kunne sjekke ALLE brukernavn, men RLS på profiles
@@ -231,12 +241,12 @@
           <span class="guest-points-num">${guestPoints.toLocaleString("no-NO")}</span>
           <span class="guest-points-label">POENG DU HADDE HATT</span>
         </div>` : ""}
-        <a href="login.html">
+        <a href="login.html?mode=register">
           <button class="login-btn" type="button">
             <span class="login-avatar">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#96a3b8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
             </span>
-            Logg inn
+            Registrer deg
           </button>
         </a>
       `;
@@ -358,6 +368,7 @@
     PASSWORD_MIN_LENGTH,
     validateUsername,
     validatePassword,
+    validateRecoveryEmail,
     emailForUsername,
     isUsernameTaken,
     friendlyAuthError,
