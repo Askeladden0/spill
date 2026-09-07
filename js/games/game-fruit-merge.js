@@ -35,8 +35,13 @@
 
   const FINAL_MERGE_BONUS = 100;
   const DROPPABLE_MAX_INDEX = 4; // Kun de 5 minste fruktene faller ned i starten.
-  // 2:3-forhold på spillflaten, som i referansen (0.6m x 0.9m).
-  const WIDTH = 400;
+  // Bredere enn referansens 2:3-forhold (0.6m x 0.9m) med vilje: krukken var
+  // smal nok til at watchShellFit (js/game-runtime.js) alltid ble
+  // høydebegrenset og lot mesteparten av bredden på skjermen stå ubrukt, slik
+  // at spillet så synlig mindre ut enn de andre (mer kvadratiske/brede)
+  // spillene selv om det fylte samme høyde. HEIGHT er uendret (samme
+  // fall-dybde og faretidspunkt), kun WIDTH er økt.
+  const WIDTH = 480;
   const HEIGHT = 600;
   const WALL_THICKNESS = 20;
   const DROP_Y = 50;
