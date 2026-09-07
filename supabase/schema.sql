@@ -1800,6 +1800,62 @@ select * from (values
 ) as v(guide_id, type, sort_order, data)
 where not exists (select 1 from public.guide_modules where guide_id = 'elevrad-penger');
 
+-- Tre ressursguider flyttet inn fra skolesaus.no (mal-siden, P-matte-siden og
+-- nynorsk-oversetteren) – samme redirect+popup-mønster som spillene bruker
+-- (js/new-site-welcome-modal.js), bare med "guiden" i teksten i stedet for
+-- "spillet". Filene modulene peker til ligger statisk i /documents/ i dette
+-- repoet; admin kan bytte dem ut når som helst fra "Rediger modul" på
+-- guide.html, som laster opp til guide-files-bøtta og overskriver url-en.
+insert into public.guides (id, title, category, excerpt, value_label, read_time, is_featured, sort_order) values
+  ('mal-norsk-nynorsk', 'Mal til norsk og nynorsk', 'Norsk', 'Ferdige maler til fagtekst, retorisk analyse, essay, leserinnlegg, sammenligning og novelle-/diktanalyse.', '', '2 min', false, 2),
+  ('p-matte-snarveier', 'Snarveier til P-matte', 'Matte', 'Snarveier til Del 2 av eksamen, tilpasset 1P, 1PY, 2P og 2PY.', '', '1 min', false, 3),
+  ('nynorsk-oversetter', 'Nynorsk-oversetter', 'Norsk', 'Din praktiske guide for bokmål → nynorsk-oversettelse, med oppsett for autokorrektur og full ordliste.', '', '5 min', false, 4)
+on conflict (id) do nothing;
+
+insert into public.guide_modules (guide_id, type, sort_order, data)
+select * from (values
+  ('mal-norsk-nynorsk', 'tekst', 1, '{
+    "heading": "Slik bruker du malene",
+    "headingLevel": 2,
+    "body": "Her finner du maler til fagtekst, retorisk analyse, essay, leserinnlegg, sammenligning og novelle- og diktanalyse – last ned den formen som passer i PDF eller DOCX.",
+    "bullets": [],
+    "tip": "Det kan hende du får opp en feilmelding når du prøver å laste ned DOCX-filen. Trykk bare \"Ja\" i dialogboksen, så åpnes filen som normalt."
+  }'::jsonb),
+  ('mal-norsk-nynorsk', 'fil', 2, '{"name": "Snorres hjelpehefte (PDF)", "ext": "PDF", "meta": "PDF · maler til fagtekst, retorisk analyse, essay, leserinnlegg, sammenligning og novelle-/diktanalyse", "url": "documents/Snorres_hjelpehefte.pdf"}'::jsonb),
+  ('mal-norsk-nynorsk', 'fil', 3, '{"name": "Snorres hjelpehefte (DOCX)", "ext": "DOCX", "meta": "Word-dokument · samme maler, redigerbar", "url": "documents/Snorres_hjelpehefte.docx"}'::jsonb),
+
+  ('p-matte-snarveier', 'tekst', 1, '{
+    "heading": "Slik bruker du snarveiene",
+    "headingLevel": 2,
+    "body": "Snarveiene under kan brukes på Del 2 av eksamen, og er tilpasset 1P, 1PY, 2P og 2PY. Last ned regnearket og ha det oppe ved siden av eksamenen.",
+    "bullets": [],
+    "tip": null
+  }'::jsonb),
+  ('p-matte-snarveier', 'fil', 2, '{"name": "Snorres Matteskjema", "ext": "XLSX", "meta": "Regneark · snarveier tilpasset 1P, 1PY, 2P og 2PY", "url": "documents/Snorres_Matteskjema.xlsx"}'::jsonb),
+
+  ('nynorsk-oversetter', 'tekst', 1, '{
+    "heading": "Hvordan bruker du denne?",
+    "headingLevel": 2,
+    "body": "Åpne et Word-dokument og bytt språket til nynorsk. Klikk deretter på Fil, velg Alternativer, og gå til Korrektur. Klikk på Alternativer for autokorrektur, og kopier inn ordene fra listene under ved å trykke på dem – legg dem inn i autokorrektur-listen.\n\nNoen ord som \"dere\", \"de\" eller \"noen\" er ikke med i listen, fordi de kan bli til ulike ord på nynorsk avhengig av sammenhengen.",
+    "bullets": [],
+    "tip": "Trykk Windows + Shift for å ha denne siden og Word oppe samtidig!"
+  }'::jsonb),
+  ('nynorsk-oversetter', 'tabell', 2, '{
+    "title": "De viktigste ordene",
+    "columns": ["Bokmål", "Nynorsk", ""],
+    "source": "",
+    "rows": [{"a": "jeg", "b": "eg", "c": ""}, {"a": "ikke", "b": "ikkje", "c": ""}, {"a": "en", "b": "ein", "c": ""}, {"a": "et", "b": "eit", "c": ""}, {"a": "ett", "b": "eitt", "c": ""}, {"a": "man", "b": "ein", "c": ""}, {"a": "bare", "b": "berre", "c": ""}, {"a": "eksempel", "b": "døme", "c": ""}, {"a": "for eksempel", "b": "til dømes", "c": ""}, {"a": "også", "b": "òg", "c": ""}, {"a": "disse", "b": "desse", "c": ""}, {"a": "vi", "b": "me", "c": ""}, {"a": "siden", "b": "sidan", "c": ""}, {"a": "gjøre", "b": "gjere", "c": ""}, {"a": "derfor", "b": "difor", "c": ""}, {"a": "fra", "b": "frå", "c": ""}, {"a": "hvorfor", "b": "kvifor", "c": ""}, {"a": "hvordan", "b": "korleis", "c": ""}, {"a": "hva", "b": "kva", "c": ""}, {"a": "hvilken", "b": "kva for ein", "c": ""}]
+  }'::jsonb),
+  ('nynorsk-oversetter', 'tabell', 3, '{
+    "title": "Andre ord",
+    "columns": ["Bokmål", "Nynorsk", ""],
+    "source": "",
+    "rows": [{"a": "annenhver", "b": "annankvar", "c": ""}, {"a": "annerledes", "b": "annleis", "c": ""}, {"a": "virkemiddel", "b": "verkemiddel", "c": ""}, {"a": "språklig", "b": "språkleg", "c": ""}, {"a": "enten", "b": "anten", "c": ""}, {"a": "hete", "b": "heite", "c": ""}, {"a": "igjen", "b": "att", "c": ""}, {"a": "velge", "b": "velje", "c": ""}, {"a": "være", "b": "vere", "c": ""}, {"a": "blir", "b": "vert", "c": ""}, {"a": "bli", "b": "verte", "c": ""}, {"a": "engang", "b": "eingong", "c": ""}, {"a": "ved siden av", "b": "attmed", "c": ""}, {"a": "drar", "b": "dreg", "c": ""}, {"a": "da", "b": "då", "c": ""}, {"a": "eget", "b": "eige", "c": ""}, {"a": "eie", "b": "eige", "c": ""}, {"a": "eneste", "b": "einaste", "c": ""}, {"a": "enkel", "b": "einskild", "c": ""}, {"a": "fremmed", "b": "framand", "c": ""}, {"a": "foran", "b": "framfor", "c": ""}, {"a": "fremdeles", "b": "framleis", "c": ""}, {"a": "først", "b": "fyrst", "c": ""}, {"a": "gi", "b": "gje", "c": ""}, {"a": "hjem", "b": "heim", "c": ""}, {"a": "hjemme", "b": "heime", "c": ""}, {"a": "hennes", "b": "hennar", "c": ""}, {"a": "hos", "b": "hjå", "c": ""}, {"a": "hun", "b": "ho", "c": ""}, {"a": "huske", "b": "hugse", "c": ""}, {"a": "høy", "b": "høg", "c": ""}, {"a": "høyre", "b": "høgre", "c": ""}, {"a": "kommer", "b": "kjem", "c": ""}, {"a": "kjærlighet", "b": "kjærleik", "c": ""}, {"a": "hvor", "b": "kor", "c": ""}, {"a": "verken", "b": "korkje", "c": ""}, {"a": "hvordan", "b": "korleis", "c": ""}, {"a": "hver", "b": "kvar", "c": ""}, {"a": "hverandre", "b": "kvarandre", "c": ""}, {"a": "hvem", "b": "kven", "c": ""}, {"a": "leste", "b": "las", "c": ""}, {"a": "lest", "b": "lese", "c": ""}, {"a": "leser", "b": "les", "c": ""}, {"a": "lav", "b": "låg", "c": ""}, {"a": "lå", "b": "låg", "c": ""}, {"a": "mye", "b": "mykje", "c": ""}, {"a": "mandag", "b": "måndag", "c": ""}, {"a": "nå", "b": "no", "c": ""}, {"a": "noe", "b": "noko", "c": ""}, {"a": "fornøyd", "b": "nøgd", "c": ""}, {"a": "også", "b": "òg", "c": ""}, {"a": "sammen", "b": "saman", "c": ""}, {"a": "si", "b": "seie", "c": ""}, {"a": "selger", "b": "sel", "c": ""}, {"a": "selv", "b": "sjølv", "c": ""}, {"a": "se", "b": "sjå", "c": ""}, {"a": "forskjell", "b": "skilnad", "c": ""}, {"a": "skyldes", "b": "skuldast", "c": ""}, {"a": "spille", "b": "spele", "c": ""}, {"a": "spørre", "b": "spørje", "c": ""}, {"a": "sted", "b": "stad", "c": ""}, {"a": "størrelse", "b": "storleik", "c": ""}, {"a": "søndag", "b": "sundag", "c": ""}, {"a": "veldig", "b": "særs", "c": ""}, {"a": "telle", "b": "telje", "c": ""}, {"a": "for eksempel", "b": "til dømes", "c": ""}, {"a": "til tross for", "b": "trass i", "c": ""}, {"a": "tirsdag", "b": "tysdag", "c": ""}, {"a": "voksen", "b": "vaksen", "c": ""}, {"a": "forsiktig", "b": "varsam", "c": ""}, {"a": "ble", "b": "vart", "c": ""}, {"a": "vann", "b": "vatn", "c": ""}, {"a": "vindu", "b": "vindauge", "c": ""}, {"a": "vært", "b": "vore", "c": ""}, {"a": "blitt", "b": "vorte", "c": ""}, {"a": "alene", "b": "åleine", "c": ""}, {"a": "følelser", "b": "kjensler", "c": ""}, {"a": "tenke", "b": "tenkje", "c": ""}, {"a": "barn", "b": "born", "c": ""}, {"a": "begynne", "b": "byrje", "c": ""}]
+  }'::jsonb),
+  ('nynorsk-oversetter', 'fil', 4, '{"name": "Nynorsk-ordliste (Excel)", "ext": "XLSX", "meta": "Regneark · alle ordene · kolonner for nynorsk og norsk", "url": "documents/Nynorskordliste.xlsx"}'::jsonb)
+) as v(guide_id, type, sort_order, data)
+where not exists (select 1 from public.guide_modules where guide_id in ('mal-norsk-nynorsk', 'p-matte-snarveier', 'nynorsk-oversetter'));
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
