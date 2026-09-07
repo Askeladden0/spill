@@ -99,7 +99,17 @@
   }
 
   function start(container) {
-    let grid = [];
+    // Fylles med bobler av initGame()/resumeGame() først etter mount().
+    // Startes likevel som et fullt, tomt rutenett (ikke []): session.onScale()
+    // kaller applyRenderScale() -> render() synkront med én gang den kobles
+    // til, FØR initGame() rekker å kjøre – og på skjermer med
+    // devicePixelRatio > 1 (så godt som alle mobiler og Retina-skjermer)
+    // trigges den første ombyggingen av tegneflaten alltid, uansett hvor lite
+    // brettet skaleres visuelt (se applyRenderScale). Var grid fortsatt []
+    // da, kastet render() en TypeError på grid[r][c], og siden det skjedde
+    // synkront inni .then()-kallbacken under, stoppet resten av den (inkl.
+    // initGame()) å kjøre i det hele tatt – brettet ble stående helt tomt.
+    let grid = Array.from({ length: TOTAL_ROWS }, (_, r) => Array(colsInRow(r)).fill(null));
     let score = 0;
     let over = false;
     let current = null;
