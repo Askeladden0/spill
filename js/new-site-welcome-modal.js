@@ -1,14 +1,18 @@
 /**
  * Studilla – velkomstpopup for besøkende som ble videresendt hit fra en av
- * de gamle spillsidene (skolesaus.no). Vises kun når URL-en har
- * ?ny-side=1 (satt av redirect-scriptet der), og fjernes fra URL-en igjen
- * så popup'en ikke dukker opp på nytt ved refresh.
+ * de gamle sidene på skolesaus.no. Vises kun når URL-en har ?ny-side=1
+ * (spill) eller ?ny-side=guide (guider/ressurser) – satt av
+ * redirect-scriptet der (public/shared/game-redirect-popup.js i
+ * skolesaus-repoet) – og fjernes fra URL-en igjen så popup'en ikke dukker
+ * opp på nytt ved refresh.
  */
 (function () {
   "use strict";
 
   const params = new URLSearchParams(window.location.search);
-  if (params.get("ny-side") !== "1") return;
+  const nySide = params.get("ny-side");
+  const isGuide = nySide === "guide";
+  if (nySide !== "1" && !isGuide) return;
 
   params.delete("ny-side");
   const cleanQuery = params.toString();
@@ -67,12 +71,19 @@
 
   const overlay = document.createElement("div");
   overlay.id = "ss-welcome-overlay";
+  const icon = isGuide ? "📄" : "🎮";
+  const title = isGuide ? "Denne guiden har flyttet!" : "Dette spillet har flyttet!";
+  const body = isGuide
+    ? "Dette er min nye side for guider og ressurser – med flere guider, filer og maler."
+    : "Dette er min nye spillnettside – med flere spill, poeng og rangeringer.";
+  const btnText = isGuide ? "Kult, la oss se!" : "Kult, la oss spille!";
+
   overlay.innerHTML = `
     <div id="ss-welcome-modal" role="dialog" aria-modal="true" aria-labelledby="ss-welcome-title">
-      <span class="ss-welcome-icon">🎮</span>
-      <h2 id="ss-welcome-title">Dette spillet har flyttet!</h2>
-      <p>Dette er min nye spillnettside – med flere spill, poeng og rangeringer.<br><span class="ss-welcome-sign">- Snorre Saus</span></p>
-      <button class="ss-welcome-btn" id="ss-welcome-close">Kult, la oss spille!</button>
+      <span class="ss-welcome-icon">${icon}</span>
+      <h2 id="ss-welcome-title">${title}</h2>
+      <p>${body}<br><span class="ss-welcome-sign">- Snorre Saus</span></p>
+      <button class="ss-welcome-btn" id="ss-welcome-close">${btnText}</button>
     </div>
   `;
 
