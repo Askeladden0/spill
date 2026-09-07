@@ -27,7 +27,7 @@
         <span class="logo-mark"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"/><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"/></svg></span>
         <span class="logo-text">Studi<span>ll</span>a</span>
       </a>
-      <nav class="main-nav">
+      <nav class="main-nav" id="main-nav">
         <a href="index.html#spill" class="nav-link" data-page="spill">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
           Triks
@@ -55,6 +55,11 @@
       </a>
 
       <div class="header-right" data-auth-slot></div>
+
+      <button type="button" class="mobile-menu-toggle" aria-label="Åpne meny" aria-expanded="false" aria-controls="main-nav">
+        <svg class="mobile-menu-icon-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
+        <svg class="mobile-menu-icon-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>
+      </button>
     </div>
   </header>`;
 
@@ -92,4 +97,45 @@
   document.querySelectorAll(".nav-link[data-page]").forEach((link) => {
     link.classList.toggle("is-active", link.getAttribute("data-page") === current);
   });
+
+  /**
+   * Mobil-meny: toppmenyen var tidligere en horisontalt scrollbar liste på
+   * mobil, som gjorde at «Rangering» ble skjult utenfor skjermen. Nå åpnes
+   * hele lenkelisten som et nedtrekkspanel under headeren via hamburger-
+   * knappen, slik at alle sidene er synlige med det samme.
+   */
+  const header = document.querySelector(".site-header");
+  const menuToggle = header && header.querySelector(".mobile-menu-toggle");
+  const mainNav = document.getElementById("main-nav");
+
+  function closeMobileMenu() {
+    if (!header) return;
+    header.classList.remove("is-menu-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+  }
+
+  if (header && menuToggle && mainNav) {
+    menuToggle.addEventListener("click", () => {
+      const isOpen = header.classList.toggle("is-menu-open");
+      menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+
+    mainNav.addEventListener("click", (event) => {
+      if (event.target.closest(".nav-link")) closeMobileMenu();
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!header.classList.contains("is-menu-open")) return;
+      if (header.contains(event.target)) return;
+      closeMobileMenu();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeMobileMenu();
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 720) closeMobileMenu();
+    });
+  }
 })();
