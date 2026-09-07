@@ -516,13 +516,17 @@
       </div>
     ` : "";
 
+    const moduleHead = state.isAdmin ? `
+      <div class="guide-module-head">
+        <span class="guide-module-eyebrow">Modul · ${escapeHTML(MODULE_LABELS[m.type] || m.type)}</span>
+        <div class="guide-module-divider"></div>
+        ${adminToolbar}
+      </div>
+    ` : "";
+
     return `
       <section class="guide-module" id="module-${idAttr}">
-        <div class="guide-module-head">
-          <span class="guide-module-eyebrow">Modul · ${escapeHTML(MODULE_LABELS[m.type] || m.type)}</span>
-          <div class="guide-module-divider"></div>
-          ${adminToolbar}
-        </div>
+        ${moduleHead}
         ${isEditing ? moduleEditorHTML(state.moduleDraft) : moduleBodyHTML(m)}
       </section>
     `;
