@@ -79,15 +79,17 @@
     toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
   }
 
-  const MODULE_LABELS = { tekst: "Tekst", fil: "Nedlasting", tabell: "Tabell", gevinst: "Gevinst", poll: "Avstemning", triks: "Triks" };
-  const MODULE_ICONS = { tekst: "text", fil: "file", tabell: "table", gevinst: "coins", poll: "poll", triks: "game" };
+  const MODULE_LABELS = { tekst: "Tekst", fil: "Nedlasting", tabell: "Tabell", gevinst: "Gevinst", poll: "Avstemning", triks: "Triks", bilde: "Bilde" };
+  const MODULE_ICONS = { tekst: "text", fil: "file", tabell: "table", gevinst: "coins", poll: "poll", triks: "game", bilde: "image" };
   // Rekkefølgen her styrer rekkefølgen i "legg til modul"-velgeren.
   const MODULE_TYPES = [
     ["tekst", "Tekst", "Overskrift, avsnitt, punktliste og en tips-boks."],
+    ["bilde", "Bilde", "Et bilde eller skjermbilde, med valgfri bildetekst."],
     ["fil", "Nedlasting", "Last opp en mal eller et dokument leseren kan laste ned."],
     ["tabell", "Tabell", "Tre kolonner med tall eller fakta."],
     ["gevinst", "Gevinst", "Regnestykke som summerer hva leseren kan tjene."],
-    ["poll", "Avstemning", "Spørsmål med svaralternativer leserne kan stemme på."]
+    ["poll", "Avstemning", "Spørsmål med svaralternativer leserne kan stemme på."],
+    ["triks", "Triks", "Kort som lenker til et triks på siden, eller en egen lenke."]
   ];
 
   function defaultModuleData(type) {
@@ -98,6 +100,7 @@
       case "gevinst": return { heading: "Dette kan du tjene", note: "", gains: [] };
       case "poll": return { question: "", options: [{ label: "", votes: 0 }, { label: "", votes: 0 }] };
       case "triks": return { gameId: null, title: "", intro: "", href: null };
+      case "bilde": return { url: null, alt: "", caption: "", size: "full" };
       default: return {};
     }
   }
@@ -111,6 +114,7 @@
       case "poll": return data.question && (data.options || []).filter((o) => o.label).length >= 2
         ? null : "Skriv et spørsmål og minst to svaralternativer.";
       case "triks": return (data.gameId || data.title) ? null : "Velg et triks, eller gi lenken en tittel.";
+      case "bilde": return data.url ? null : "Last opp et bilde først.";
       default: return null;
     }
   }
@@ -149,6 +153,11 @@
       d.title = (d.title || "").trim();
       d.intro = (d.intro || "").trim();
       d.href = (d.href || "").trim() || null;
+    } else if (type === "bilde") {
+      d.url = d.url || null;
+      d.alt = (d.alt || "").trim();
+      d.caption = (d.caption || "").trim();
+      d.size = d.size === "medium" ? "medium" : "full";
     }
     return d;
   }
@@ -218,9 +227,67 @@
   // =====================================================================
   // Guide-info-skjema (delt mellom "+ Ny guide" og "Rediger guide-info")
   // =====================================================================
+  // Felles bilde-opplaster: stort felt der bildet selv er kontrollen, i stedet
+  // for en tekstknapp ved siden av en liten miniatyr. Støtter både klikk og
+  // dra-og-slipp (se "drop"-lytteren nederst i fila).
+  function dropzoneHTML(o) {
+    const has = !!o.url;
+    return `
+      <div class="guide-dropzone${has ? " has-image" : ""}${o.busy ? " is-busy" : ""}" style="--dz-ratio:${o.ratio || "16 / 9"}">
+        <label class="guide-dropzone-target">
+          ${has ? `<img src="${escapeHTML(o.url)}" alt="">` : `
+            <span class="guide-dropzone-empty">
+              ${icon("image", 26)}
+              <strong>Slipp et bilde her, eller klikk for å velge</strong>
+              <small>${escapeHTML(o.hint || "")}</small>
+            </span>`}
+          ${o.busy ? `<span class="guide-dropzone-busy">Laster opp …</span>` : ""}
+          <input type="file" accept="image/png,image/jpeg,image/webp" ${o.uploadAttr} ${o.busy ? "disabled" : ""}>
+        </label>
+        ${has ? `
+          <div class="guide-dropzone-actions">
+            <label class="guide-action-btn">
+              ${icon("image", 15)}<span>Bytt bilde</span>
+              <input type="file" accept="image/png,image/jpeg,image/webp" ${o.uploadAttr} ${o.busy ? "disabled" : ""} hidden>
+            </label>
+            ${o.removeAttr ? `<button type="button" class="guide-action-btn is-danger" ${o.removeAttr}>${icon("trash", 15)}<span>Fjern</span></button>` : ""}
+          </div>` : ""}
+      </div>
+    `;
+  }
+
+  // Live-forhåndsvisning av kortet slik det vil se ut på guider.html. Gjør at
+  // man ser konsekvensen av tittel, ingress, bilde og "mengde spart" med én
+  // gang, i stedet for å måtte lagre og gå tilbake til oversikten.
+  function guideCardPreviewHTML(draft) {
+    return `
+      <div class="guide-preview-pane">
+        <span class="guide-form-legend">Slik ser kortet ut</span>
+        <div class="guide-card guide-card-preview${draft.hidden ? " is-hidden-guide" : ""}">
+          <span class="guide-card-thumb">
+            ${draft.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(draft.coverUrl)}" alt="">` : `<span class="guide-card-thumb-slot">${icon("image", 20)}</span>`}
+            <span class="guide-card-gradient"></span>
+            <h3 class="guide-card-title">${escapeHTML(draft.title) || '<span class="is-placeholder">Overskriften din havner her</span>'}</h3>
+          </span>
+          ${draft.hidden ? `<span class="guide-status-badge is-hidden">${icon("eyeOff", 13)}Skjult</span>` : ""}
+          ${draft.featured ? `<span class="guide-status-badge is-featured">Fremhevet</span>` : ""}
+          <div class="guide-card-body">
+            <p class="guide-card-excerpt">${escapeHTML(draft.excerpt) || '<span class="is-placeholder">Ingressen vises her.</span>'}</p>
+            <div class="guide-card-foot">
+              <span class="guide-card-value">${escapeHTML(draft.valueLabel) || '<span class="is-placeholder">Mengde spart/tjent</span>'}</span>
+            </div>
+          </div>
+        </div>
+        <span class="guide-field-hint">${draft.category
+          ? `Ligger under filteret <strong>${escapeHTML(draft.category)}</strong>.`
+          : "Uten kategori vises guiden bare under «Alle»."}</span>
+      </div>
+    `;
+  }
+
   function guideFormHTML(draft, opts) {
     opts = opts || {};
-    const hasCover = !!draft.coverUrl;
+    const cats = Array.from(new Set(Guides.list().map((g) => g.category).filter(Boolean)));
     return `
       <div class="admin-card guide-form">
         <div class="guide-form-head">
@@ -228,72 +295,82 @@
           <button type="button" class="guide-form-close" data-gf-cancel aria-label="Lukk skjemaet">${icon("x", 16)}</button>
         </div>
 
-        <div class="guide-form-body">
-          <section class="guide-form-section">
-            <span class="guide-form-legend">Innhold</span>
-            <div class="guide-form-grid">
+        <div class="guide-form-layout">
+          <div class="guide-form-body">
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Overskrift og ingress</span>
               <label class="admin-field is-wide">Overskrift
-                <input type="text" data-gf="title" value="${escapeHTML(draft.title)}" placeholder="F.eks. Hvordan tjene penger på å sitte i elevrådet">
-                <span class="guide-field-hint">Vises på kortet, øverst i guiden og i fanetittelen.</span>
+                <input type="text" class="is-title-input" data-gf="title" value="${escapeHTML(draft.title)}" placeholder="Hvordan tjene penger på å sitte i elevrådet">
               </label>
-              <label class="admin-field">Kategori
-                <input type="text" data-gf="category" value="${escapeHTML(draft.category)}" placeholder="F.eks. Elevrådet" list="guide-category-suggestions">
-                <span class="guide-field-hint">Styrer filterknappene på oversikten.</span>
+              <label class="admin-field is-wide">Ingress
+                <textarea data-gf="excerpt" rows="3" maxlength="300" placeholder="Kort beskrivelse av hva leseren sitter igjen med">${escapeHTML(draft.excerpt)}</textarea>
+                <span class="guide-field-hint"><span data-gf-count="excerpt">${(draft.excerpt || "").length}</span>/300 tegn · brukes også i Google-treffet.</span>
               </label>
-              <label class="admin-field">Mengde spart/tjent
+            </section>
+
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Toppbilde</span>
+              ${dropzoneHTML({
+                url: draft.coverUrl, busy: draft.uploadBusy, uploadAttr: "data-gf-upload",
+                removeAttr: draft.coverUrl ? "data-gf-remove-cover" : null, ratio: "16 / 9",
+                hint: "PNG, JPG eller WEBP · maks 5 MB · best i 16:9",
+              })}
+            </section>
+
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Kategori</span>
+              ${cats.length ? `<div class="guide-choice-row">
+                ${cats.map((c) => `<button type="button" class="guide-choice${draft.category === c ? " is-active" : ""}" data-gf-choice="category" data-value="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join("")}
+                ${draft.category ? `<button type="button" class="guide-choice is-clear" data-gf-choice="category" data-value="">${icon("x", 13)}Ingen</button>` : ""}
+              </div>` : ""}
+              <label class="admin-field is-wide">${cats.length ? "… eller skriv en ny" : "Kategori"}
+                <input type="text" data-gf="category" value="${escapeHTML(draft.category)}" placeholder="F.eks. Elevrådet">
+                <span class="guide-field-hint">Kategorien blir en filterknapp på oversikten.</span>
+              </label>
+            </section>
+
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Mengde spart eller tjent</span>
+              <div class="guide-choice-row">
+                ${["Opptil 5 000 kr", "Opptil 12 000 kr", "Spar timer i uka"].map((v) => `
+                  <button type="button" class="guide-choice${draft.valueLabel === v ? " is-active" : ""}" data-gf-choice="valueLabel" data-value="${escapeHTML(v)}">${escapeHTML(v)}</button>
+                `).join("")}
+              </div>
+              <label class="admin-field is-wide">Egen tekst
                 <input type="text" data-gf="valueLabel" value="${escapeHTML(draft.valueLabel)}" placeholder="F.eks. Opptil 12 000 kr">
                 <span class="guide-field-hint">Den grønne teksten nederst på kortet.</span>
               </label>
-              <label class="admin-field is-wide">Ingress
-                <textarea data-gf="excerpt" rows="3" maxlength="300" placeholder="Kort beskrivelse av guiden">${escapeHTML(draft.excerpt)}</textarea>
-                <span class="guide-field-hint"><span data-gf-count="excerpt">${(draft.excerpt || "").length}</span>/300 tegn · vises på kortet, øverst i guiden og i Google-treffet.</span>
-              </label>
-            </div>
-          </section>
+            </section>
 
-          <section class="guide-form-section">
-            <span class="guide-form-legend">Toppbilde</span>
-            <div class="guide-cover-editor">
-              <div class="guide-cover-preview${hasCover ? "" : " is-empty"}">
-                ${hasCover ? `<img src="${escapeHTML(draft.coverUrl)}" alt="">` : icon("image", 22)}
+            ${opts.isNew ? "" : `
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Synlighet</span>
+              <div class="guide-toggle-list">
+                <div class="guide-toggle-row${draft.featured ? " is-on" : ""}">
+                  <button type="button" class="admin-switch${draft.featured ? " is-on" : ""}" data-gf-toggle="featured" role="switch" aria-checked="${draft.featured ? "true" : "false"}" aria-label="Vis som fremhevet guide">
+                    <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
+                  </button>
+                  <span class="guide-toggle-text">
+                    <strong>Fremhev øverst på oversikten</strong>
+                    <small>Kun én guide kan være fremhevet om gangen.</small>
+                  </span>
+                </div>
+                <div class="guide-toggle-row is-warn${draft.hidden ? " is-on" : ""}">
+                  <button type="button" class="admin-switch is-warn${draft.hidden ? " is-on" : ""}" data-gf-toggle="hidden" role="switch" aria-checked="${draft.hidden ? "true" : "false"}" aria-label="Skjul guiden for besøkende">
+                    <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
+                  </button>
+                  <span class="guide-toggle-text">
+                    <strong>Skjul guiden</strong>
+                    <small>${draft.hidden ? "Guiden er usynlig for besøkende – kun admin ser den." : "Guiden er publisert og synlig for alle."}</small>
+                  </span>
+                </div>
               </div>
-              <div class="guide-cover-actions">
-                <span class="admin-upload-row">
-                  <label class="admin-upload-btn${draft.uploadBusy ? " is-busy" : ""}">
-                    ${draft.uploadBusy ? "Laster opp …" : (hasCover ? "Bytt bilde" : "Last opp bilde")}
-                    <input type="file" accept="image/png,image/jpeg,image/webp" data-gf-upload ${draft.uploadBusy ? "disabled" : ""}>
-                  </label>
-                </span>
-                ${hasCover ? `<button type="button" class="admin-btn-text is-danger" data-gf-remove-cover>Fjern bilde</button>` : ""}
-                <span class="guide-field-hint">PNG, JPG eller WEBP · maks 5 MB · best i 16:9.</span>
-              </div>
-            </div>
-          </section>
+            </section>`}
+          </div>
 
-          ${opts.isNew ? "" : `
-          <section class="guide-form-section">
-            <span class="guide-form-legend">Synlighet</span>
-            <div class="guide-toggle-list">
-              <div class="guide-toggle-row${draft.featured ? " is-on" : ""}">
-                <button type="button" class="admin-switch${draft.featured ? " is-on" : ""}" data-gf-toggle="featured" role="switch" aria-checked="${draft.featured ? "true" : "false"}" aria-label="Vis som fremhevet guide">
-                  <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
-                </button>
-                <span class="guide-toggle-text">
-                  <strong>Fremhev øverst på oversikten</strong>
-                  <small>Kun én guide kan være fremhevet om gangen.</small>
-                </span>
-              </div>
-              <div class="guide-toggle-row is-warn${draft.hidden ? " is-on" : ""}">
-                <button type="button" class="admin-switch is-warn${draft.hidden ? " is-on" : ""}" data-gf-toggle="hidden" role="switch" aria-checked="${draft.hidden ? "true" : "false"}" aria-label="Skjul guiden for besøkende">
-                  <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
-                </button>
-                <span class="guide-toggle-text">
-                  <strong>Skjul guiden</strong>
-                  <small>${draft.hidden ? "Guiden er usynlig for besøkende – kun admin ser den." : "Guiden er publisert og synlig for alle."}</small>
-                </span>
-              </div>
-            </div>
-          </section>`}
+          <aside class="guide-form-side">
+            ${guideCardPreviewHTML(draft)}
+          </aside>
         </div>
 
         <div class="guide-form-foot">
@@ -306,10 +383,6 @@
           </div>
         </div>
       </div>
-      <datalist id="guide-category-suggestions">
-        ${Array.from(new Set(Guides.list().map((g) => g.category).filter(Boolean)))
-          .map((c) => `<option value="${escapeHTML(c)}"></option>`).join("")}
-      </datalist>
     `;
   }
 
@@ -377,6 +450,29 @@
     flash("Guide slettet");
     if (isGuidePage && currentGuideId === id) { window.location.href = "guider.html"; return; }
     renderAll();
+  }
+
+  // Forhåndsvisningen av kortet oppdateres direkte i DOM mens man skriver.
+  // Et fullt re-render ville flyttet markøren til slutten av tekstfeltet.
+  function updateGuidePreview() {
+    const d = state.guideDraft;
+    const pane = document.querySelector(".guide-preview-pane");
+    if (!d || !pane) return;
+    const set = (sel, value, placeholder) => {
+      const el = pane.querySelector(sel);
+      if (!el) return;
+      if (value) el.textContent = value;
+      else el.innerHTML = `<span class="is-placeholder">${escapeHTML(placeholder)}</span>`;
+    };
+    set(".guide-card-title", d.title, "Overskriften din havner her");
+    set(".guide-card-excerpt", d.excerpt, "Ingressen vises her.");
+    set(".guide-card-value", d.valueLabel, "Mengde spart/tjent");
+    const hint = pane.querySelector(".guide-field-hint");
+    if (hint) {
+      hint.innerHTML = d.category
+        ? `Ligger under filteret <strong>${escapeHTML(d.category)}</strong>.`
+        : "Uten kategori vises guiden bare under «Alle».";
+    }
   }
 
   // Etter et re-render er DOM-noden byttet ut, så fokus må settes på nytt.
@@ -566,6 +662,9 @@
         const game = m.data.gameId ? (window.STUDILLA_GAMES || []).find((x) => x.id === m.data.gameId) : null;
         return (game && game.name) || m.data.title || "Triks";
       }
+      // Bilder får ingen oppføring i innholdsfortegnelsen – de hører til
+      // avsnittet over, og ville bare fylt lista med "Bilde"-lenker.
+      case "bilde": return null;
       default: return null;
     }
   }
@@ -689,8 +788,21 @@
       : `<div class="guide-trick-card is-static">${inner}</div>`;
   }
 
+  function bildeBodyHTML(d) {
+    if (!d.url) {
+      return `<div class="guide-image-block is-empty">${icon("image", 22)}<span>${state.isAdmin ? "Ingen fil lastet opp ennå" : ""}</span></div>`;
+    }
+    return `
+      <figure class="guide-image-block${d.size === "medium" ? " is-medium" : ""}">
+        <img src="${escapeHTML(d.url)}" alt="${escapeHTML(d.alt || "")}" loading="lazy">
+        ${d.caption ? `<figcaption>${escapeHTML(d.caption)}</figcaption>` : ""}
+      </figure>
+    `;
+  }
+
   function moduleBodyHTML(m) {
     switch (m.type) {
+      case "bilde": return bildeBodyHTML(m.data);
       case "tekst": return tekstBodyHTML(m.data);
       case "fil": return filBodyHTML(m.data);
       case "tabell": return tabellBodyHTML(m.data);
@@ -877,30 +989,85 @@
   function triksEditorHTML(d) {
     const games = window.STUDILLA_GAMES || [];
     const usingGame = !!d.gameId;
+    const game = usingGame ? games.find((g) => g.id === d.gameId) : null;
     return `
-      <div class="admin-row-detail" style="padding:0;border:none">
-        <label class="admin-field is-wide">Triks
-          <select data-mf="gameId" data-mod-game-select>
-            <option value="" ${!usingGame ? "selected" : ""}>— Egendefinert lenke —</option>
-            ${games.map((g) => `<option value="${escapeHTML(g.id)}" ${d.gameId === g.id ? "selected" : ""}>${escapeHTML(g.name)}</option>`).join("")}
-          </select>
-        </label>
-        ${!usingGame ? `
-        <label class="admin-field is-wide">Tittel
-          <input type="text" data-mf="title" value="${escapeHTML(d.title || "")}">
-        </label>
-        <label class="admin-field is-wide">Lenke (URL)
-          <input type="text" data-mf="href" value="${escapeHTML(d.href || "")}" placeholder="https://…">
-        </label>` : ""}
-        <label class="admin-field is-wide">Tekst (valgfri – overstyrer beskrivelsen)
-          <input type="text" data-mf="intro" value="${escapeHTML(d.intro || "")}">
-        </label>
+      <div class="guide-form-section">
+        <span class="guide-form-legend">Hva skal kortet lenke til?</span>
+        <div class="guide-form-grid">
+          <label class="admin-field is-wide">Triks på Studilla
+            <select data-mf="gameId" data-mod-game-select>
+              <option value="" ${!usingGame ? "selected" : ""}>— Egendefinert lenke —</option>
+              ${games.map((g) => `<option value="${escapeHTML(g.id)}" ${d.gameId === g.id ? "selected" : ""}>${escapeHTML(g.name)}</option>`).join("")}
+            </select>
+            <span class="guide-field-hint">${games.length
+              ? "Velger du et triks henter kortet navn, bilde og beskrivelse automatisk."
+              : "Fant ingen triks å velge mellom – bruk en egendefinert lenke."}</span>
+          </label>
+          ${usingGame ? `
+          <div class="admin-field is-wide">Valgt triks
+            <div class="guide-picked-game">
+              ${game && game.thumbnail ? `<img src="${escapeHTML(game.thumbnail)}" alt="">` : `<span class="guide-picked-game-slot">${icon("game", 18)}</span>`}
+              <span class="guide-picked-game-name">${escapeHTML((game && game.name) || d.gameId)}</span>
+            </div>
+          </div>` : `
+          <label class="admin-field is-wide">Tittel
+            <input type="text" data-mf="title" value="${escapeHTML(d.title || "")}" placeholder="F.eks. Budsjett-byggeren">
+          </label>
+          <label class="admin-field is-wide">Lenke (URL)
+            <input type="text" data-mf="href" value="${escapeHTML(d.href || "")}" placeholder="https://…">
+          </label>`}
+        </div>
+      </div>
+      <div class="guide-form-section">
+        <span class="guide-form-legend">Tekst på kortet</span>
+        <div class="guide-form-grid">
+          <label class="admin-field is-wide">Beskrivelse (valgfri)
+            <input type="text" data-mf="intro" value="${escapeHTML(d.intro || "")}" placeholder="La stå tom for å bruke trikset sin egen beskrivelse">
+            <span class="guide-field-hint">Overstyrer beskrivelsen som følger med trikset.</span>
+          </label>
+        </div>
+      </div>
+    `;
+  }
+
+  function bildeEditorHTML(draft) {
+    const d = draft.data;
+    return `
+      <div class="guide-form-section">
+        <span class="guide-form-legend">Bilde</span>
+        ${dropzoneHTML({
+          url: d.url, busy: draft.uploadBusy, uploadAttr: "data-mod-image-upload",
+          removeAttr: d.url ? "data-mod-image-remove" : null, ratio: "16 / 9",
+          hint: "PNG, JPG eller WEBP · maks 5 MB",
+        })}
+      </div>
+      <div class="guide-form-section">
+        <span class="guide-form-legend">Tekst</span>
+        <div class="guide-form-grid">
+          <label class="admin-field is-wide">Alt-tekst
+            <input type="text" data-mf="alt" value="${escapeHTML(d.alt || "")}" placeholder="Beskriv hva bildet viser">
+            <span class="guide-field-hint">Leses opp for blinde og vises hvis bildet ikke laster. La stå tom hvis bildet bare er pynt.</span>
+          </label>
+          <label class="admin-field is-wide">Bildetekst (valgfri)
+            <input type="text" data-mf="caption" value="${escapeHTML(d.caption || "")}" placeholder="F.eks. Slik ser budsjettlinja ut i praksis">
+            <span class="guide-field-hint">Vises i grått under bildet.</span>
+          </label>
+        </div>
+      </div>
+      <div class="guide-form-section">
+        <span class="guide-form-legend">Bredde</span>
+        <div class="guide-choice-row">
+          ${[["full", "Full bredde"], ["medium", "Halv bredde"]].map(([v, label]) => `
+            <button type="button" class="guide-choice${(d.size === "medium" ? "medium" : "full") === v ? " is-active" : ""}" data-mf-choice="size" data-value="${v}">${label}</button>
+          `).join("")}
+        </div>
       </div>
     `;
   }
 
   function moduleEditorHTML(draft) {
-    const body = draft.type === "tekst" ? tekstEditorHTML(draft.data)
+    const body = draft.type === "bilde" ? bildeEditorHTML(draft)
+      : draft.type === "tekst" ? tekstEditorHTML(draft.data)
       : draft.type === "fil" ? filEditorHTML(draft)
       : draft.type === "tabell" ? tabellEditorHTML(draft.data)
       : draft.type === "gevinst" ? gevinstEditorHTML(draft.data)
@@ -1230,6 +1397,19 @@
     renderAll();
   }
 
+  async function onModImageUpload(input) {
+    const file = input.files[0];
+    const draft = state.moduleDraft;
+    if (!file || !draft) return;
+    draft.uploadBusy = true;
+    renderAll();
+    const { data, error } = await Guides.uploadImage(currentGuideId, file);
+    draft.uploadBusy = false;
+    if (error) { flash(friendlyError(error)); renderAll(); return; }
+    draft.data.url = data;
+    renderAll();
+  }
+
   function onModGameSelect(el) {
     if (!state.moduleDraft) return;
     state.moduleDraft.data.gameId = el.value || null;
@@ -1328,6 +1508,22 @@
 
     if (e.target.closest("[data-gf-cancel]")) { state.guideDraft = null; renderAll(); return; }
     if (e.target.closest("[data-gf-remove-cover]")) { removeGuideCover(); return; }
+    const gfChoice = e.target.closest("[data-gf-choice]");
+    if (gfChoice && state.guideDraft) {
+      state.guideDraft[gfChoice.dataset.gfChoice] = gfChoice.dataset.value;
+      renderAll();
+      return;
+    }
+    const mfChoice = e.target.closest("[data-mf-choice]");
+    if (mfChoice && state.moduleDraft) {
+      state.moduleDraft.data[mfChoice.dataset.mfChoice] = mfChoice.dataset.value;
+      renderAll();
+      return;
+    }
+    if (e.target.closest("[data-mod-image-remove]")) {
+      if (state.moduleDraft) { state.moduleDraft.data.url = null; renderAll(); }
+      return;
+    }
     if (e.target.closest("[data-gf-save]")) { saveGuideDraft(); return; }
     const gfToggle = e.target.closest("[data-gf-toggle]");
     if (gfToggle && state.guideDraft) {
@@ -1379,6 +1575,9 @@
     const modFile = e.target.closest("[data-mod-file-upload]");
     if (modFile) { onModFileUpload(modFile); return; }
 
+    const modImage = e.target.closest("[data-mod-image-upload]");
+    if (modImage) { onModImageUpload(modImage); return; }
+
     const gameSelect = e.target.closest("[data-mod-game-select]");
     if (gameSelect) { onModGameSelect(gameSelect); return; }
 
@@ -1388,7 +1587,7 @@
 
   document.addEventListener("input", (e) => {
     const gf = e.target.closest("[data-gf]");
-    if (gf && state.guideDraft) { state.guideDraft[gf.dataset.gf] = gf.value; return; }
+    if (gf && state.guideDraft) { state.guideDraft[gf.dataset.gf] = gf.value; updateGuidePreview(); return; }
 
     const mf = e.target.closest("[data-mf]");
     if (mf && state.moduleDraft && mf.tagName !== "SELECT") {
@@ -1416,6 +1615,33 @@
     if (!gf) return;
     const counter = document.querySelector('[data-gf-count="excerpt"]');
     if (counter) counter.textContent = String(gf.value.length);
+  });
+
+  // Dra-og-slipp rett på bildefeltet. Filen sendes gjennom samme
+  // opplastingsfunksjon som filvelgeren, via en midlertidig DataTransfer.
+  ["dragenter", "dragover"].forEach((evt) => document.addEventListener(evt, (e) => {
+    const dz = e.target.closest && e.target.closest(".guide-dropzone");
+    if (!dz) return;
+    e.preventDefault();
+    dz.classList.add("is-dragover");
+  }));
+  document.addEventListener("dragleave", (e) => {
+    const dz = e.target.closest && e.target.closest(".guide-dropzone");
+    if (dz && !dz.contains(e.relatedTarget)) dz.classList.remove("is-dragover");
+  });
+  document.addEventListener("drop", (e) => {
+    const dz = e.target.closest && e.target.closest(".guide-dropzone");
+    if (!dz) return;
+    e.preventDefault();
+    dz.classList.remove("is-dragover");
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    const input = dz.querySelector('input[type="file"]');
+    if (!file || !input) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    if (input.hasAttribute("data-gf-upload")) onGuideCoverUpload(input);
+    else if (input.hasAttribute("data-mod-image-upload")) onModImageUpload(input);
   });
 
   // Esc lukker skjemaet, Cmd/Ctrl+S lagrer det som står åpent.

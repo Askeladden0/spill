@@ -322,13 +322,23 @@ window.StudillaGuides = {
   },
 
   async uploadCover(guideId, file) {
+    return this.uploadImage(guideId, file, "cover");
+  },
+
+  /**
+   * Laster opp et bilde til `guide-images`-bøtta og gir tilbake den offentlige
+   * URL-en. Brukes både til toppbildet (prefix "cover") og til bilde-modulene
+   * inne i guiden (prefix "bilde"), som har helt like krav til format og
+   * størrelse.
+   */
+  async uploadImage(guideId, file, prefix) {
     const sb = window.supabaseClient;
     const allowed = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
     const ext = allowed[file.type];
     if (!ext) return { error: { message: "Kun PNG, JPG og WEBP er støttet." } };
     if (file.size > 5 * 1024 * 1024) return { error: { message: "Bildet er for stort (maks 5 MB)." } };
 
-    const path = `${guideId}/cover-${Date.now()}.${ext}`;
+    const path = `${guideId}/${prefix || "bilde"}-${Date.now()}.${ext}`;
     const { error } = await sb.storage.from(GUIDE_IMAGE_BUCKET).upload(path, file, { contentType: file.type, upsert: true });
     if (error) return { error };
     const { data: pub } = sb.storage.from(GUIDE_IMAGE_BUCKET).getPublicUrl(path);

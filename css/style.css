@@ -4153,7 +4153,58 @@ html.is-player-view main { max-width: none; }
 }
 .guide-form-close:hover { border-color: var(--border-strong); color: var(--text); }
 
-.guide-form-body { padding: 4px 20px 18px; display: flex; flex-direction: column; }
+/* To kolonner: felter til venstre, levende forhåndsvisning av kortet til
+   høyre, så man ser hva man lager mens man skriver. */
+.guide-form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 0; }
+@media (max-width: 860px) { .guide-form-layout { grid-template-columns: 1fr; } }
+.guide-form-body { padding: 4px 20px 18px; display: flex; flex-direction: column; min-width: 0; }
+.guide-form-side { padding: 20px; border-left: 1px solid var(--border); background: var(--bg); }
+@media (max-width: 860px) { .guide-form-side { border-left: none; border-top: 1px solid var(--border); } }
+.guide-preview-pane { display: flex; flex-direction: column; gap: 12px; }
+.guide-card-preview { pointer-events: none; }
+.guide-card-preview .guide-card-thumb { display: block; }
+.is-placeholder { color: var(--muted-3); font-weight: 500; font-style: italic; }
+
+/* Store, klikk- og slippbare bildefelt. */
+.guide-dropzone { position: relative; margin-top: 12px; display: flex; flex-direction: column; gap: 10px; max-width: 520px; }
+.guide-dropzone-target {
+  position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  aspect-ratio: var(--dz-ratio, 16 / 9); border-radius: 13px; cursor: pointer;
+  border: 1px dashed var(--border-strong); background: var(--bg);
+  transition: border-color .15s ease, background .15s ease;
+}
+.guide-dropzone-target:hover { border-color: rgba(46, 232, 127, .55); background: var(--accent-soft); }
+.guide-dropzone.has-image .guide-dropzone-target { border-style: solid; border-color: var(--border-strong); background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px); }
+.guide-dropzone.is-dragover .guide-dropzone-target { border-color: var(--accent); background: var(--accent-soft); }
+.guide-dropzone-target img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.guide-dropzone-target input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.guide-dropzone-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 20px; color: var(--muted-3); }
+.guide-dropzone-empty strong { font-size: 13.5px; font-weight: 700; color: var(--muted); }
+.guide-dropzone-empty small { font-size: 11.5px; font-weight: 500; color: var(--muted-3); }
+.guide-dropzone-busy {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(13, 17, 23, .72); color: var(--accent); font-size: 13px; font-weight: 800;
+}
+.guide-dropzone.is-busy .guide-dropzone-target { cursor: default; }
+.guide-dropzone-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.guide-dropzone-actions label.guide-action-btn { cursor: pointer; }
+
+/* Rader med forhåndsvalg (kategori, beløp, bildebredde) i stedet for at alt
+   må skrives inn i en tom tekstboks. */
+.guide-choice-row { display: flex; gap: 7px; flex-wrap: wrap; padding-top: 12px; }
+.guide-choice {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 99px;
+  border: 1px solid var(--border-strong); background: var(--bg); color: var(--muted);
+  font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+}
+.guide-choice:hover { border-color: rgba(46, 232, 127, .5); color: var(--text); }
+.guide-choice.is-active { background: var(--accent-soft); border-color: rgba(46, 232, 127, .5); color: var(--accent); }
+.guide-choice.is-clear { color: var(--muted-3); }
+.admin-field .is-title-input { font-size: 16px; font-weight: 700; padding: 12px 14px; }
+.guide-picked-game { display: flex; align-items: center; gap: 11px; margin-top: 6px; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(46, 232, 127, .3); background: var(--accent-soft); }
+.guide-picked-game img { width: 44px; height: 30px; object-fit: cover; border-radius: 6px; flex: none; }
+.guide-picked-game-slot { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 30px; border-radius: 6px; background: rgba(13, 17, 23, .5); color: var(--accent); flex: none; }
+.guide-picked-game-name { font-size: 13.5px; font-weight: 700; color: var(--text-strong); letter-spacing: 0; text-transform: none; }
 .guide-form-section { padding: 16px 0; border-bottom: 1px solid var(--border); }
 .guide-form-section:last-child { border-bottom: none; padding-bottom: 4px; }
 .guide-form-legend { display: block; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-3); }
@@ -4167,17 +4218,6 @@ html.is-player-view main { max-width: none; }
 }
 .guide-form-hint { font-size: 11.5px; font-weight: 600; color: var(--muted-3); }
 
-/* Toppbilde med miniatyr, så man ser hva som faktisk er lastet opp. */
-.guide-cover-editor { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 12px; }
-.guide-cover-preview {
-  position: relative; width: 132px; aspect-ratio: 16 / 9; flex: none; border-radius: 10px; overflow: hidden;
-  border: 1px solid var(--border-strong); background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px);
-  display: flex; align-items: center; justify-content: center; color: var(--muted-3);
-}
-.guide-cover-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.guide-cover-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.guide-cover-actions .admin-upload-row { margin-top: 0; }
-.guide-cover-actions .guide-field-hint { flex-basis: 100%; }
 .admin-btn-text.is-danger { color: #ff9385; }
 
 /* Synlighetsbrytere som egne rader med forklaring. */
@@ -4378,6 +4418,17 @@ html.is-player-view main { max-width: none; }
 .guide-gevinst-side-label { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); }
 .guide-gevinst-side-amount { font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: var(--accent); line-height: 1.1; }
 .guide-gevinst-side-note { font-size: 13px; font-weight: 500; color: var(--muted); line-height: 1.5; }
+
+/* ---------- Modul: bilde ---------- */
+.guide-image-block { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.guide-image-block img { display: block; width: 100%; height: auto; border-radius: var(--radius-lg); border: 1px solid var(--border-strong); }
+.guide-image-block.is-medium { max-width: 420px; }
+.guide-image-block figcaption { font-size: 13px; font-weight: 500; color: var(--muted-2); line-height: 1.5; }
+.guide-image-block.is-empty {
+  align-items: center; justify-content: center; aspect-ratio: 16 / 9; max-width: 420px;
+  border-radius: var(--radius-lg); border: 1px dashed var(--border-strong); color: var(--muted-3);
+  font-size: 12.5px; font-weight: 600;
+}
 
 /* ---------- Modul: avstemning ---------- */
 .guide-poll { padding: 26px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: 18px; }
