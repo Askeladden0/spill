@@ -25,7 +25,6 @@ window.STUDILLA_GUIDES = [
     category: "Elevrådet",
     excerpt: "Honorar, møtegodtgjørelse, reisedekning og fondene elevrådet kan søke på.",
     valueLabel: "Opptil 12 000 kr",
-    readTime: "8 min",
     coverUrl: null,
     featured: true,
     updatedAt: null
