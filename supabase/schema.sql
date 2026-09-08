@@ -1633,6 +1633,8 @@ create table if not exists public.guides (
   updated_at timestamptz not null default now()
 );
 
+alter table public.guides add column if not exists is_hidden boolean not null default false;
+
 -- Kun én guide kan være fremhevet (toppkortet på guider.html) om gangen.
 create unique index if not exists guides_single_featured_idx
   on public.guides (is_featured) where is_featured;
