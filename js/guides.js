@@ -135,9 +135,12 @@
     return { id: null, tempId: "new-" + Date.now(), title: "", category: "", excerpt: "", valueLabel: "", readTime: "", coverUrl: null, featured: false, uploadBusy: false };
   }
   function guideDraftFrom(g) {
-    return { id: g.id, tempId: g.id, title: g.title, category: g.category, excerpt: g.excerpt, valueLabel: g.valueLabel, readTime: g.readTime, coverUrl: g.coverUrl, featured: g.featured, uploadBusy: false };
+    return { id: g.id, tempId: g.id, title: g.title, category: g.category, excerpt: g.excerpt, valueLabel: g.valueLabel, readTime: g.readTime, coverUrl: g.coverUrl, featured: g.featured, hidden: g.hidden, uploadBusy: false };
   }
   function getCurrentGuide() { return Guides.list().find((g) => g.id === currentGuideId) || null; }
+  // Skjulte guider (g.hidden) er bare synlige for admin – brukes på guider.html
+  // (oversikten) og for å blokkere direkte lenker på guide.html.
+  function visibleGuides() { return state.isAdmin ? Guides.list() : Guides.list().filter((g) => !g.hidden); }
 
   // =====================================================================
   // Guide-info-skjema (delt mellom "+ Ny guide" og "Rediger guide-info")
@@ -176,6 +179,12 @@
               <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
             </button>
             <span style="font-size:12.5px;font-weight:600;color:var(--muted)">Vis som fremhevet guide øverst</span>
+          </label>
+          <label class="admin-field" style="flex-direction:row;align-items:center;gap:10px;padding-top:26px">
+            <button type="button" class="admin-switch${draft.hidden ? " is-on" : ""}" data-gf-toggle="hidden" aria-label="Skjul guiden for besøkende">
+              <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
+            </button>
+            <span style="font-size:12.5px;font-weight:600;color:var(--muted)">Skjul guiden (kun synlig for admin)</span>
           </label>`}
         </div>
         <div class="admin-row-actions">
@@ -196,7 +205,7 @@
       title, category: d.category.trim(), excerpt: d.excerpt.trim(),
       valueLabel: d.valueLabel.trim(), readTime: d.readTime.trim(), coverUrl: d.coverUrl,
     };
-    if (d.id !== null) fields.featured = !!d.featured;
+    if (d.id !== null) { fields.featured = !!d.featured; fields.hidden = !!d.hidden; }
 
     if (d.id === null) {
       const { data, error } = await Guides.createGuide(fields);
@@ -247,7 +256,7 @@
     renderFilters();
     renderGrid();
     const countEl = document.querySelector("[data-guide-count]");
-    const list = Guides.list();
+    const list = visibleGuides();
     if (countEl) countEl.textContent = `${list.length} guide${list.length === 1 ? "" : "r"}`;
     const newBtn = document.querySelector("[data-guide-new]");
     if (newBtn) newBtn.hidden = !state.isAdmin;
@@ -256,7 +265,7 @@
   function renderFeature() {
     const el = document.querySelector("[data-guide-feature]");
     if (!el) return;
-    const list = Guides.list();
+    const list = visibleGuides();
     const featured = list.find((g) => g.featured) || list[0];
 
     if (!featured) {
@@ -292,7 +301,7 @@
   function renderFilters() {
     const el = document.querySelector("[data-guide-filters]");
     if (!el) return;
-    const cats = ["Alle", ...Array.from(new Set(Guides.list().map((g) => g.category).filter(Boolean)))];
+    const cats = ["Alle", ...Array.from(new Set(visibleGuides().map((g) => g.category).filter(Boolean)))];
     if (!cats.includes(state.filter)) state.filter = "Alle";
     el.innerHTML = cats.map((c) => `<button type="button" class="guide-filter-pill${c === state.filter ? " is-active" : ""}" data-guide-filter="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join("");
   }
@@ -302,12 +311,13 @@
       return `<div class="guide-card is-editing">${guideFormHTML(state.guideDraft, { isNew: false })}</div>`;
     }
     return `
-      <div class="guide-card">
+      <div class="guide-card${g.hidden ? " is-hidden-guide" : ""}">
         <a href="guide.html?id=${encodeURIComponent(g.id)}" class="guide-card-thumb">
           ${g.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(g.coverUrl)}" alt="">` : `<span class="guide-card-thumb-slot">[ guide-bilde ]</span>`}
           <div class="guide-card-gradient"></div>
           <h3 class="guide-card-title">${escapeHTML(g.title)}</h3>
         </a>
+        ${state.isAdmin && g.hidden ? `<span class="guide-card-hidden-badge">Skjult</span>` : ""}
         ${state.isAdmin ? `
           <div class="guide-card-admin-actions">
             <button type="button" class="guide-icon-btn" data-guide-card-edit="${escapeHTML(g.id)}" title="Rediger">✎</button>
@@ -328,7 +338,7 @@
   function renderGrid() {
     const el = document.querySelector("[data-guide-grid]");
     if (!el) return;
-    const list = Guides.list().filter((g) => state.filter === "Alle" || g.category === state.filter);
+    const list = visibleGuides().filter((g) => state.filter === "Alle" || g.category === state.filter);
     const newCardHTML = (state.guideDraft && state.guideDraft.id === null)
       ? `<div class="guide-card is-editing">${guideFormHTML(state.guideDraft, { isNew: true })}</div>`
       : "";
@@ -748,7 +758,7 @@
 
     const root = document.querySelector("[data-guide-root]");
     const notfound = document.querySelector("[data-guide-notfound]");
-    if (!g) {
+    if (!g || (g.hidden && !state.isAdmin)) {
       if (root) root.hidden = true;
       if (notfound) notfound.hidden = false;
       return;

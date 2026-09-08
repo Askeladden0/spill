@@ -135,6 +135,7 @@ function mapGuideRow(g) {
     readTime: g.read_time || "",
     coverUrl: g.cover_url || null,
     featured: !!g.is_featured,
+    hidden: !!g.is_hidden,
     sortOrder: g.sort_order || 0,
     updatedAt: g.updated_at || null
   };
@@ -269,6 +270,7 @@ window.StudillaGuides = {
       read_time: fields.readTime || "",
       cover_url: fields.coverUrl || null,
       is_featured: false,
+      is_hidden: false,
       sort_order: nextSortOrder()
     };
     const { data, error } = await sb.from("guides").insert(row).select().single();
@@ -297,6 +299,7 @@ window.StudillaGuides = {
     if (fields.readTime !== undefined) patch.read_time = fields.readTime;
     if (fields.coverUrl !== undefined) patch.cover_url = fields.coverUrl;
     if (fields.featured !== undefined) patch.is_featured = fields.featured;
+    if (fields.hidden !== undefined) patch.is_hidden = fields.hidden;
 
     const { error } = await sb.from("guides").update(patch).eq("id", id);
     if (error) return { error };
