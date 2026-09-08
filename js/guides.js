@@ -51,7 +51,7 @@
 
   const MODULE_LABELS = { tekst: "Tekst", fil: "Nedlasting", tabell: "Tabell", gevinst: "Gevinst", poll: "Avstemning", triks: "Triks" };
   const MODULE_TYPES = [
-    ["tekst", "Tekst"], ["fil", "Fil"], ["tabell", "Tabell"], ["gevinst", "Gevinst"], ["poll", "Avstemning"], ["triks", "Triks-lenke"]
+    ["tekst", "Tekst"], ["fil", "Fil"], ["tabell", "Tabell"], ["gevinst", "Gevinst"], ["poll", "Avstemning"]
   ];
 
   function defaultModuleData(type) {
@@ -132,10 +132,10 @@
   let currentGuideId = null;
 
   function emptyGuideDraft() {
-    return { id: null, tempId: "new-" + Date.now(), title: "", category: "", excerpt: "", valueLabel: "", readTime: "", coverUrl: null, featured: false, uploadBusy: false };
+    return { id: null, tempId: "new-" + Date.now(), title: "", category: "", excerpt: "", valueLabel: "", coverUrl: null, featured: false, uploadBusy: false };
   }
   function guideDraftFrom(g) {
-    return { id: g.id, tempId: g.id, title: g.title, category: g.category, excerpt: g.excerpt, valueLabel: g.valueLabel, readTime: g.readTime, coverUrl: g.coverUrl, featured: g.featured, hidden: g.hidden, uploadBusy: false };
+    return { id: g.id, tempId: g.id, title: g.title, category: g.category, excerpt: g.excerpt, valueLabel: g.valueLabel, coverUrl: g.coverUrl, featured: g.featured, hidden: g.hidden, uploadBusy: false };
   }
   function getCurrentGuide() { return Guides.list().find((g) => g.id === currentGuideId) || null; }
   // Skjulte guider (g.hidden) er bare synlige for admin – brukes på guider.html
@@ -155,9 +155,6 @@
           </label>
           <label class="admin-field">Kategori
             <input type="text" data-gf="category" value="${escapeHTML(draft.category)}" placeholder="F.eks. Elevrådet">
-          </label>
-          <label class="admin-field">Lesetid
-            <input type="text" data-gf="readTime" value="${escapeHTML(draft.readTime)}" placeholder="F.eks. 8 min">
           </label>
           <label class="admin-field is-wide">Ingress (vises på kortet og øverst i guiden)
             <textarea data-gf="excerpt" rows="2" placeholder="Kort beskrivelse av guiden">${escapeHTML(draft.excerpt)}</textarea>
@@ -203,7 +200,7 @@
 
     const fields = {
       title, category: d.category.trim(), excerpt: d.excerpt.trim(),
-      valueLabel: d.valueLabel.trim(), readTime: d.readTime.trim(), coverUrl: d.coverUrl,
+      valueLabel: d.valueLabel.trim(), coverUrl: d.coverUrl,
     };
     if (d.id !== null) { fields.featured = !!d.featured; fields.hidden = !!d.hidden; }
 
@@ -279,7 +276,7 @@
       return;
     }
 
-    const metaBits = [featured.readTime, featured.updatedAt ? `Oppdatert ${formatDate(featured.updatedAt)}` : ""].filter(Boolean).join(" · ");
+    const metaBits = [featured.updatedAt ? `Oppdatert ${formatDate(featured.updatedAt)}` : ""].filter(Boolean).join(" · ");
     el.innerHTML = `
       <div class="guide-feature">
         <div class="guide-feature-text">
@@ -328,7 +325,6 @@
           <p class="guide-card-excerpt">${escapeHTML(g.excerpt)}</p>
           <div class="guide-card-foot">
             <span class="guide-card-value">${escapeHTML(g.valueLabel)}</span>
-            ${g.readTime ? `<span class="guide-card-time">${escapeHTML(g.readTime)}</span>` : ""}
           </div>
         </div>
       </div>
@@ -491,7 +487,6 @@
     const inner = `
       <div class="guide-trick-thumb">${thumb ? `<img src="${escapeHTML(thumb)}" alt="">` : `<span class="hero-placeholder-label">[ triks-bilde ]</span>`}</div>
       <div class="guide-trick-body">
-        <span class="guide-trick-eyebrow">Øv på dette i et triks</span>
         <span class="guide-trick-title">${escapeHTML(title)}</span>
         ${intro ? `<span class="guide-trick-intro">${escapeHTML(intro)}</span>` : ""}
         <span class="guide-trick-cta">Spill trikset →</span>
@@ -774,7 +769,6 @@
     document.querySelector("[data-guide-title]").textContent = g.title;
     document.querySelector("[data-guide-excerpt]").textContent = g.excerpt;
     document.querySelector("[data-guide-updated]").textContent = g.updatedAt ? `Oppdatert ${formatDate(g.updatedAt)}` : "";
-    document.querySelector("[data-guide-time]").textContent = g.readTime ? `${g.readTime} lesing` : "";
 
     const cover = document.querySelector("[data-guide-cover]");
     cover.innerHTML = g.coverUrl ? `<img src="${escapeHTML(g.coverUrl)}" alt="">` : `<span class="hero-placeholder-label">[ toppbilde 16:7 ]</span>`;

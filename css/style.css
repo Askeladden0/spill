@@ -4099,7 +4099,6 @@ html.is-player-view main { max-width: none; }
 .guide-card-excerpt { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--muted); flex: 1; }
 .guide-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .guide-card-value { font-size: 13px; font-weight: 800; color: var(--accent); }
-.guide-card-time { font-size: 12px; font-weight: 600; color: var(--muted-2); }
 
 /* ---------- Guide-info-skjema (nytt / rediger) ---------- */
 .guide-form { padding: 20px; }
