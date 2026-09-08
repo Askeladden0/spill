@@ -4077,23 +4077,60 @@ html.is-player-view main { max-width: none; }
 .guide-card-gradient { position: absolute; left: 0; right: 0; bottom: 0; height: 70%; background: linear-gradient(180deg, rgba(13, 17, 23, 0) 0%, rgba(13, 17, 23, .7) 55%, rgba(13, 17, 23, .96) 100%); }
 .guide-card-title { position: absolute; left: 16px; right: 16px; bottom: 12px; z-index: 2; margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--text-strong); }
 
-.guide-card.is-hidden-guide { opacity: .6; }
-.guide-card-hidden-badge {
-  position: absolute; top: 10px; left: 10px; z-index: 3; padding: 4px 9px; border-radius: 7px;
-  background: rgba(13, 17, 23, .82); border: 1px solid var(--border-strong); color: var(--muted);
-  font-size: 11px; font-weight: 700; letter-spacing: .02em;
-}
+/* ---------- Skjult guide: tydelig markert for admin ---------- */
+/* Varselfargen brukes gjennomgående for "skjult/upublisert" – både på kortet,
+   i banneret på guide.html og på synlighetsbryteren i skjemaet. */
+:root { --guide-warn: #ffb347; --guide-warn-soft: rgba(255, 179, 71, .13); --guide-warn-line: rgba(255, 179, 71, .42); }
 
-.guide-card-admin-actions { position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; gap: 6px; }
+.guide-card.is-hidden-guide { border-color: var(--guide-warn-line); background: linear-gradient(180deg, var(--guide-warn-soft) 0%, transparent 90px), var(--surface); }
+.guide-card.is-hidden-guide:hover { border-color: var(--guide-warn); }
+/* Skravert overlegg på bildet gjør at skjulte kort skiller seg ut selv når man
+   bare skummer over rutenettet. */
+.guide-card.is-hidden-guide .guide-card-thumb::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(135deg, rgba(255, 179, 71, .13) 0 10px, transparent 10px 22px);
+}
+.guide-card.is-hidden-guide .guide-card-thumb-img { opacity: .5; }
+
+.guide-status-badge {
+  position: absolute; top: 10px; left: 10px; z-index: 4; display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; letter-spacing: .03em;
+  text-transform: uppercase; backdrop-filter: blur(6px);
+}
+.guide-status-badge.is-hidden { background: rgba(35, 24, 8, .9); border: 1px solid var(--guide-warn-line); color: var(--guide-warn); }
+.guide-status-badge.is-featured { background: rgba(13, 17, 23, .86); border: 1px solid rgba(46, 232, 127, .38); color: var(--accent); }
+.guide-card.is-hidden-guide .guide-status-badge.is-featured { left: auto; right: 10px; }
+
+/* ---------- Admin-knapper (ikon + tekst) ---------- */
+.guide-ico { flex: none; }
+.guide-action-btn {
+  display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 9px;
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
+  font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; line-height: 1;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+.guide-action-btn:hover { border-color: rgba(46, 232, 127, .55); background: var(--accent-soft); color: var(--accent); }
+.guide-action-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.guide-action-btn.is-active { border-color: rgba(46, 232, 127, .55); background: var(--accent-soft); color: var(--accent); }
+.guide-action-btn.is-warn { border-color: var(--guide-warn-line); color: var(--guide-warn); background: var(--guide-warn-soft); }
+.guide-action-btn.is-warn:hover { border-color: var(--guide-warn); background: rgba(255, 179, 71, .2); color: var(--guide-warn); }
+.guide-action-btn.is-danger { border-color: rgba(245, 113, 92, .34); color: #ff9385; }
+.guide-action-btn.is-danger:hover { border-color: rgba(245, 113, 92, .7); background: rgba(245, 113, 92, .16); color: #ff9385; }
+.guide-action-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.guide-card-admin-bar { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px dashed var(--border-strong); }
+.guide-card-admin-bar .guide-action-btn { flex: 1 1 auto; justify-content: center; padding: 8px 10px; }
+
 .guide-icon-btn {
-  width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--border-strong);
-  background: rgba(13, 17, 23, .82); color: var(--text); font-size: 13px; cursor: pointer;
+  width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text); cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center; padding: 0; line-height: 1;
 }
-.guide-icon-btn:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); }
-.guide-icon-btn.is-danger:hover { border-color: rgba(245, 113, 92, .5); color: #ff9385; }
-.guide-icon-btn:disabled { opacity: .35; cursor: not-allowed; }
-.guide-icon-btn:disabled:hover { border-color: var(--border-strong); color: var(--text); }
+.guide-icon-btn:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); background: var(--accent-soft); }
+.guide-icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.guide-icon-btn.is-danger:hover { border-color: rgba(245, 113, 92, .5); color: #ff9385; background: rgba(245, 113, 92, .14); }
+.guide-icon-btn:disabled { opacity: .3; cursor: not-allowed; }
+.guide-icon-btn:disabled:hover { border-color: var(--border-strong); color: var(--text); background: var(--surface); }
 
 .guide-card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
 .guide-card-excerpt { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--muted); flex: 1; }
@@ -4101,7 +4138,61 @@ html.is-player-view main { max-width: none; }
 .guide-card-value { font-size: 13px; font-weight: 800; color: var(--accent); }
 
 /* ---------- Guide-info-skjema (nytt / rediger) ---------- */
-.guide-form { padding: 20px; }
+/* Skjemaene er delt i tydelige seksjoner med egen topplinje og bunnlinje, i
+   stedet for ett flatt rutenett med felter uten gruppering. */
+.guide-form, .guide-module-editor { padding: 0; overflow: hidden; }
+
+.guide-form-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 15px 20px; border-bottom: 1px solid var(--border); background: var(--bg);
+}
+.guide-form-title { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 800; letter-spacing: -.01em; color: var(--text-strong); }
+.guide-form-close {
+  width: 30px; height: 30px; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--muted-2); cursor: pointer; padding: 0;
+}
+.guide-form-close:hover { border-color: var(--border-strong); color: var(--text); }
+
+.guide-form-body { padding: 4px 20px 18px; display: flex; flex-direction: column; }
+.guide-form-section { padding: 16px 0; border-bottom: 1px solid var(--border); }
+.guide-form-section:last-child { border-bottom: none; padding-bottom: 4px; }
+.guide-form-legend { display: block; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-3); }
+.guide-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; }
+@media (max-width: 720px) { .guide-form-grid { grid-template-columns: 1fr; } }
+.guide-field-hint { font-size: 11.5px; font-weight: 500; letter-spacing: 0; color: var(--muted-3); line-height: 1.45; text-transform: none; }
+
+.guide-form-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  padding: 14px 20px; border-top: 1px solid var(--border); background: var(--bg);
+}
+.guide-form-hint { font-size: 11.5px; font-weight: 600; color: var(--muted-3); }
+
+/* Toppbilde med miniatyr, så man ser hva som faktisk er lastet opp. */
+.guide-cover-editor { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 12px; }
+.guide-cover-preview {
+  position: relative; width: 132px; aspect-ratio: 16 / 9; flex: none; border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--border-strong); background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px);
+  display: flex; align-items: center; justify-content: center; color: var(--muted-3);
+}
+.guide-cover-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.guide-cover-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.guide-cover-actions .admin-upload-row { margin-top: 0; }
+.guide-cover-actions .guide-field-hint { flex-basis: 100%; }
+.admin-btn-text.is-danger { color: #ff9385; }
+
+/* Synlighetsbrytere som egne rader med forklaring. */
+.guide-toggle-list { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; }
+.guide-toggle-row {
+  display: flex; align-items: flex-start; gap: 12px; padding: 13px 15px; border-radius: 11px;
+  border: 1px solid var(--border); background: var(--bg); transition: border-color .15s ease, background .15s ease;
+}
+.guide-toggle-row.is-on { border-color: rgba(46, 232, 127, .35); background: var(--accent-soft); }
+.guide-toggle-row.is-warn.is-on { border-color: var(--guide-warn-line); background: var(--guide-warn-soft); }
+.guide-toggle-row .admin-switch { margin-top: 1px; }
+.admin-switch.is-warn.is-on .admin-switch-track { background: var(--guide-warn); }
+.guide-toggle-text { display: flex; flex-direction: column; gap: 3px; }
+.guide-toggle-text strong { font-size: 13.5px; font-weight: 700; color: var(--text-strong); }
+.guide-toggle-text small { font-size: 12px; font-weight: 500; color: var(--muted-2); line-height: 1.45; }
 .admin-btn-ghost.is-accent { background: var(--accent-soft); color: var(--accent); border-color: rgba(46, 232, 127, .4); }
 .admin-btn-ghost.is-accent:hover { background: var(--accent-soft-strong); }
 
@@ -4117,7 +4208,26 @@ html.is-player-view main { max-width: none; }
 
 .guide-article { display: flex; flex-direction: column; gap: 34px; min-width: 0; }
 .guide-header { display: flex; flex-direction: column; gap: 16px; }
-.guide-admin-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+/* ---------- Adminverktøy på guide.html ---------- */
+.guide-admin-bar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 10px 12px 10px 15px; border-radius: 12px;
+  border: 1px dashed var(--border-strong); background: var(--surface);
+}
+.guide-admin-bar-label { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-3); }
+.guide-admin-bar-label.is-preview { color: var(--accent); letter-spacing: .04em; text-transform: none; font-size: 12.5px; }
+.guide-admin-bar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+
+.guide-hidden-banner {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 15px 18px; border-radius: 12px;
+  border: 1px solid var(--guide-warn-line); background: var(--guide-warn-soft);
+}
+.guide-banner-icon { display: inline-flex; color: var(--guide-warn); }
+.guide-banner-text { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 200px; }
+.guide-banner-text strong { font-size: 14px; font-weight: 800; color: var(--guide-warn); }
+.guide-banner-text small { font-size: 12.5px; font-weight: 500; color: var(--muted); line-height: 1.45; }
+
 .guide-edit-panel:not([hidden]) { margin: 4px 0; }
 .guide-pills { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .guide-category-pill { padding: 6px 13px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
@@ -4139,18 +4249,77 @@ html.is-player-view main { max-width: none; }
 
 .guide-modules { display: flex; flex-direction: column; gap: 34px; }
 .guide-module { display: flex; flex-direction: column; gap: 14px; }
-.guide-module-head { display: flex; align-items: center; gap: 10px; }
-.guide-module-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-3); white-space: nowrap; }
-.guide-module-divider { height: 1px; flex: 1; background: var(--border); }
-.guide-module-toolbar { display: flex; gap: 6px; flex-shrink: 0; }
-.guide-module-editor { padding: 20px; }
+/* I redigeringsmodus får hver modul en tydelig ramme, slik at det er lett å se
+   hvor én modul slutter og den neste begynner når man flytter dem rundt. */
+.guide-module.is-editable { padding: 6px 16px 18px; margin: 0 -16px; border-radius: 14px; border: 1px solid transparent; transition: border-color .15s ease, background .15s ease; }
+.guide-module.is-editable:hover { border-color: var(--border); background: rgba(255, 255, 255, .012); }
+.guide-module.is-editing { border-color: rgba(46, 232, 127, .35); background: rgba(46, 232, 127, .04); }
 
-.guide-add-module { margin-top: 6px; }
-.guide-add-picker { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); }
-.guide-add-picker-label { font-size: 12.5px; font-weight: 700; color: var(--muted); }
-.guide-add-picker-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.guide-module-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.guide-module-eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); white-space: nowrap; }
+.guide-module-num {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px;
+  border-radius: 6px; background: var(--border); color: var(--text); font-size: 11px; font-weight: 800; letter-spacing: 0;
+}
+.guide-module.is-editing .guide-module-num { background: var(--accent-soft); color: var(--accent); }
+.guide-module-divider { height: 1px; flex: 1; min-width: 12px; background: var(--border); }
+.guide-module-toolbar { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+.guide-move-group { display: inline-flex; gap: 4px; }
 
-.guide-row-editor { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+/* ---------- Legg til / sett inn modul ---------- */
+.guide-add-module { margin-top: 10px; }
+.guide-add-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px; width: 100%;
+  padding: 15px 18px; border-radius: 13px; border: 1px dashed var(--border-strong); background: transparent;
+  color: var(--muted); font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.guide-add-btn:hover { border-color: rgba(46, 232, 127, .55); color: var(--accent); background: var(--accent-soft); }
+
+/* Innsettingspunkt mellom to moduler: nesten usynlig til man peker på det. */
+.guide-insert-slot { margin: -8px 0; }
+.guide-insert-slot.is-open { margin: 10px 0; }
+.guide-insert-btn {
+  display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%;
+  padding: 5px; border: none; background: none; border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 11.5px; font-weight: 700; color: var(--muted-3);
+  opacity: 0; transition: opacity .15s ease, color .15s ease;
+}
+.guide-insert-slot:hover .guide-insert-btn, .guide-insert-btn:focus-visible { opacity: 1; color: var(--accent); }
+.guide-insert-btn::before, .guide-insert-btn::after { content: ""; height: 1px; flex: 1; background: rgba(46, 232, 127, .3); }
+
+.guide-add-picker { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border-strong); }
+.guide-add-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.guide-add-picker-label { font-size: 13px; font-weight: 800; color: var(--text-strong); }
+.guide-add-picker-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+.guide-type-card {
+  display: flex; align-items: flex-start; gap: 11px; text-align: left; padding: 13px 14px; border-radius: 11px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.guide-type-card:hover { border-color: rgba(46, 232, 127, .5); background: var(--accent-soft); }
+.guide-type-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.guide-type-icon {
+  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex: none;
+  border-radius: 9px; background: var(--accent-soft); color: var(--accent);
+}
+.guide-type-icon.is-sm { width: 26px; height: 26px; border-radius: 8px; }
+.guide-type-text { display: flex; flex-direction: column; gap: 3px; }
+.guide-type-text strong { font-size: 13.5px; font-weight: 700; color: var(--text-strong); }
+.guide-type-text small { font-size: 11.5px; font-weight: 500; color: var(--muted-2); line-height: 1.4; }
+
+.guide-modules-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  padding: 44px 24px; border-radius: 14px; border: 1px dashed var(--border-strong); color: var(--muted-3);
+}
+.guide-modules-empty strong { font-size: 15px; font-weight: 800; color: var(--text-strong); }
+.guide-modules-empty span { font-size: 13px; font-weight: 500; color: var(--muted-2); max-width: 380px; line-height: 1.5; }
+
+.guide-row-editor { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.guide-row-editor .admin-btn-text { align-self: flex-start; padding-left: 0; }
+.guide-row-editor-legend { display: flex; gap: 8px; padding: 2px 0 0; }
+.guide-row-editor-legend span { flex: 1; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--muted-3); }
+.guide-row-editor-legend span.is-spacer { flex: none; width: 32px; }
 .guide-row-editor-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .guide-row-editor-row input {
   flex: 1; min-width: 110px; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--border-strong);
