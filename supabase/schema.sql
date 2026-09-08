@@ -1599,7 +1599,7 @@ create policy "site_visits_select_admin" on public.site_visits
 --     `guides` er ett kort per guide (tittel, kategori, ingress, "mengde
 --     spart/tjent" og lesetid). `guide_modules` er innholdet i guiden, som en
 --     rekke moduler i rekkefølge (sort_order) – hver modul har en `type`
---     (tekst/fil/tabell/gevinst/poll/triks) og alle detaljene sine i `data`
+--     (tekst/fil/tabell/gevinst/poll/triks/bilde) og alle detaljene sine i `data`
 --     (jsonb), slik at nye felter kan legges til uten skjemaendring.
 --
 --     Det finnes ingen egen adminpanel-seksjon for dette – admin oppretter,
@@ -1618,6 +1618,8 @@ create policy "site_visits_select_admin" on public.site_visits
 --                   RPC-en guide_vote_poll under, ikke direkte av klienten
 --       triks   – { gameId, title, intro, href } – peker enten til et
 --                   eksisterende triks (gameId) eller en egen lenke (href)
+--       bilde   – { url, alt, caption, size ('full'|'medium') } – url peker til
+--                   `guide-images`-bøtta, alt er alt-teksten for skjermlesere
 -- ---------------------------------------------------------------------------
 create table if not exists public.guides (
   id text primary key,
@@ -1652,10 +1654,18 @@ create policy "guides_admin_write" on public.guides
 create table if not exists public.guide_modules (
   id bigint generated always as identity primary key,
   guide_id text not null references public.guides (id) on delete cascade,
-  type text not null check (type in ('tekst', 'fil', 'tabell', 'gevinst', 'poll', 'triks')),
+  type text not null check (type in ('tekst', 'fil', 'tabell', 'gevinst', 'poll', 'triks', 'bilde')),
   sort_order int not null default 0,
   data jsonb not null default '{}'::jsonb
 );
+
+-- Modul-typene utvides over tid. `create table if not exists` over rører ikke
+-- en tabell som allerede finnes, så check-en settes eksplisitt på nytt her –
+-- ellers ville nye typer (bilde) blitt avvist i eksisterende prosjekter.
+alter table public.guide_modules drop constraint if exists guide_modules_type_check;
+alter table public.guide_modules
+  add constraint guide_modules_type_check
+  check (type in ('tekst', 'fil', 'tabell', 'gevinst', 'poll', 'triks', 'bilde'));
 
 create index if not exists guide_modules_guide_idx on public.guide_modules (guide_id, sort_order);
 
