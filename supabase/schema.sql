@@ -1628,6 +1628,7 @@ create table if not exists public.guides (
   read_time text not null default '',
   cover_url text,
   is_featured boolean not null default false,
+  is_hidden boolean not null default false,
   sort_order int not null default 0,
   updated_at timestamptz not null default now()
 );

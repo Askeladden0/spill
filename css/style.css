@@ -4077,6 +4077,13 @@ html.is-player-view main { max-width: none; }
 .guide-card-gradient { position: absolute; left: 0; right: 0; bottom: 0; height: 70%; background: linear-gradient(180deg, rgba(13, 17, 23, 0) 0%, rgba(13, 17, 23, .7) 55%, rgba(13, 17, 23, .96) 100%); }
 .guide-card-title { position: absolute; left: 16px; right: 16px; bottom: 12px; z-index: 2; margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--text-strong); }
 
+.guide-card.is-hidden-guide { opacity: .6; }
+.guide-card-hidden-badge {
+  position: absolute; top: 10px; left: 10px; z-index: 3; padding: 4px 9px; border-radius: 7px;
+  background: rgba(13, 17, 23, .82); border: 1px solid var(--border-strong); color: var(--muted);
+  font-size: 11px; font-weight: 700; letter-spacing: .02em;
+}
+
 .guide-card-admin-actions { position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; gap: 6px; }
 .guide-icon-btn {
   width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--border-strong);
