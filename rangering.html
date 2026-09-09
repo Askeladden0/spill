@@ -484,6 +484,12 @@
     profiles = loadedProfiles;
     friendIds = following;
     boards = LB.buildBoards(profiles, records);
+
+    // ?spill=<id> åpner rangeringen for ett triks direkte. Brukes blant annet
+    // av rekord-vedleggene i meldinger («Rekord i 2048 → se rangeringen»).
+    const wanted = new URLSearchParams(window.location.search).get("spill");
+    if (wanted && boards.perGame[wanted]) scope = wanted;
+
     renderAll();
   }
 

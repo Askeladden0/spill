@@ -184,6 +184,40 @@
     return (data || []).reverse();
   }
 
+
+  /* ---------------------------------------------------------------- *
+   * Vedlegg i meldinger
+   * ---------------------------------------------------------------- *
+   *
+   * En melding kan ha ett vedlegg: et triks å spille, en guide å lese
+   * eller en rekord å slå. Vedlegget ligger som et lite merke helt først
+   * i meldingsteksten («[[v:spill|2048]] slå denne da»), slik at det
+   * fungerer med den samme send_direct_message-RPC-en og den samme
+   * kolonnen som vanlige meldinger – ingen ny migrasjon trengs. Klienten
+   * plukker merket av igjen og tegner det som et kort over teksten.
+   */
+
+  const ATTACH_RE = /^\[\[v:(spill|guide|rekord)\|([^|\]]{1,120})(?:\|([^|\]]{0,32}))?\]\]\s*/;
+
+  /** Deler en lagret meldingstekst i { attachment, text }. */
+  function parseBody(body) {
+    const raw = String(body == null ? "" : body);
+    const m = ATTACH_RE.exec(raw);
+    if (!m) return { attachment: null, text: raw };
+    return {
+      attachment: { kind: m[1], ref: m[2], value: m[3] || "" },
+      text: raw.slice(m[0].length),
+    };
+  }
+
+  /** Setter sammen vedlegg + fritekst til den teksten som lagres. */
+  function buildBody(attachment, text) {
+    const t = String(text == null ? "" : text).trim();
+    if (!attachment) return t;
+    const value = attachment.value ? `|${attachment.value}` : "";
+    return `[[v:${attachment.kind}|${attachment.ref}${value}]]${t ? " " + t : ""}`;
+  }
+
   /* ---------------------------------------------------------------- *
    * Aktivitet og søk
    * ---------------------------------------------------------------- */
@@ -263,6 +297,7 @@
     followStats, follow, unfollow, followingIds,
     block, unblock, isBlocked,
     threads, unreadCount, markRead, send, conversation,
+    parseBody, buildBody,
     feed, findPlayers, profileByUsername,
     refreshUnreadBadge, timeAgo, escapeHTML,
     isAvailable: () => available !== false,
