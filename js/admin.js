@@ -75,6 +75,9 @@
     openCodeTables: new Set(),
     rewardUploadBusy: new Set(),
 
+    // Profilbilder
+    avatarUploadBusy: false,
+
     // Nivåer
     levelStepDraft: null,
     levelCountDraft: null,
@@ -1748,6 +1751,8 @@
   // Profilbilder
   // ---------------------------------------------------------------------
 
+  const AVATAR_IMAGE_BUCKET = "avatar-images";
+
   async function saveAvatarOptions() {
     const { error } = await sb
       .from("avatar_options")
@@ -1757,9 +1762,49 @@
     return true;
   }
 
+  async function uploadAvatarImage(file) {
+    if (!file) return;
+    const allowed = { "image/png": "png", "image/jpeg": "jpg" };
+    const ext = allowed[file.type];
+    if (!ext) return flash("Kun PNG og JPG er støttet.");
+    if (file.size > 5 * 1024 * 1024) return flash("Bildet er for stort (maks 5 MB).");
+
+    state.avatarUploadBusy = true;
+    renderMain();
+
+    const path = `custom/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error: uploadError } = await sb.storage
+      .from(AVATAR_IMAGE_BUCKET)
+      .upload(path, file, { contentType: file.type, upsert: true });
+
+    if (uploadError) {
+      state.avatarUploadBusy = false;
+      renderMain();
+      return flash(Auth.friendlyAuthError(uploadError));
+    }
+
+    const { data: pub } = sb.storage.from(AVATAR_IMAGE_BUCKET).getPublicUrl(path);
+    state.avatarOptions.icons.push(pub.publicUrl);
+    state.avatarUploadBusy = false;
+    const ok = await saveAvatarOptions();
+    renderMain();
+    if (ok) flash("Profilbilde lagt til");
+  }
+
+  function removeAvatarImage(url) {
+    const icons = state.avatarOptions.icons;
+    if (icons.length <= 1) return flash("Du må ha minst ett profilbilde/én figur.");
+    const idx = icons.indexOf(url);
+    if (idx === -1) return;
+    icons.splice(idx, 1);
+    saveAvatarOptions().then((ok) => { if (ok) { renderMain(); flash("Profilbilde fjernet"); } });
+  }
+
   function renderAvatar() {
     const colors = state.avatarOptions.colors || [];
     const icons = state.avatarOptions.icons || [];
+    const customImages = icons.filter((key) => window.StudillaAvatars.isImageIcon(key));
+    const busy = state.avatarUploadBusy;
     return `
       <div class="admin-avatar-grid">
         <div class="admin-card">
@@ -1789,6 +1834,30 @@
               <button type="button" class="figure-swatch ${icons.includes(key) ? "is-selected" : ""}" data-toggle-icon="${key}" title="${window.StudillaAvatars.figureLabel(key)}">${window.StudillaAvatars.figureSVG(key)}</button>
             `).join("")}
           </div>
+        </div>
+        <div class="admin-card admin-avatar-custom">
+          <div>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Egne profilbilder</h2>
+            <span class="admin-card-sub">Last opp bilder brukerne kan velge som profilbilde, i tillegg til figurene.</span>
+          </div>
+          <label class="admin-dropzone${busy ? " is-busy" : ""}" data-avatar-dropzone>
+            <span class="admin-dropzone-preview">🖼</span>
+            <span class="admin-dropzone-text">
+              <span class="admin-dropzone-main">${busy ? "Laster opp …" : "Dra inn et bilde"}</span>
+              <span class="admin-dropzone-sub">Slipp et bilde her, eller klikk for å velge. PNG/JPG, maks 5 MB.</span>
+            </span>
+            <input type="file" accept="image/png,image/jpeg" data-avatar-upload ${busy ? "disabled" : ""}>
+          </label>
+          ${customImages.length ? `
+            <div class="figure-grid" style="max-width:420px">
+              ${customImages.map((url) => `
+                <span class="figure-swatch avatar-image-swatch" style="padding:0">
+                  ${window.StudillaAvatars.figureSVG(url)}
+                  <button type="button" class="admin-dropzone-clear avatar-image-remove" data-remove-avatar-image="${escapeHTML(url)}" title="Fjern bildet" aria-label="Fjern bildet">×</button>
+                </span>
+              `).join("")}
+            </div>
+          ` : ""}
         </div>
       </div>
     `;
@@ -2136,10 +2205,20 @@
       saveAvatarOptions().then((ok) => { if (ok) { renderMain(); flash("Farge lagt til"); } });
       return;
     }
+    const removeAvatarImg = t.closest("[data-remove-avatar-image]");
+    if (removeAvatarImg) {
+      removeAvatarImage(removeAvatarImg.dataset.removeAvatarImage);
+      return;
+    }
   }
 
   function onMainChange(e) {
     const t = e.target;
+    if (t.matches("[data-avatar-upload]")) {
+      const file = t.files && t.files[0];
+      if (file) uploadAvatarImage(file);
+      return;
+    }
     const rewardUpload = t.closest("[data-reward-upload]");
     if (rewardUpload) {
       const r = findReward(Number(rewardUpload.dataset.rewardUpload));
@@ -2238,10 +2317,10 @@
     e.dataTransfer.effectAllowed = "move";
   }
   function onMainDragOver(e) {
-    // Slippsonen for rabattbilder: markeres direkte på elementet (ikke via
-    // state + render), siden en rerendring midt i et dra-og-slipp bytter ut
-    // DOM-noden og avbryter selve slippet.
-    const zone = e.target.closest("[data-reward-dropzone]");
+    // Slippsonene for rabatt-/profilbilder: markeres direkte på elementet
+    // (ikke via state + render), siden en rerendring midt i et dra-og-slipp
+    // bytter ut DOM-noden og avbryter selve slippet.
+    const zone = e.target.closest("[data-reward-dropzone], [data-avatar-dropzone]");
     if (zone) {
       if (zone.classList.contains("is-busy")) return;
       e.preventDefault();
@@ -2253,18 +2332,27 @@
     if (e.target.closest("[data-game-row]")) e.preventDefault();
   }
   function onMainDragLeave(e) {
-    const zone = e.target.closest("[data-reward-dropzone]");
+    const zone = e.target.closest("[data-reward-dropzone], [data-avatar-dropzone]");
     if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove("is-dragover");
   }
   function onMainDrop(e) {
-    const zone = e.target.closest("[data-reward-dropzone]");
-    if (zone) {
+    const rewardZone = e.target.closest("[data-reward-dropzone]");
+    if (rewardZone) {
       e.preventDefault();
-      zone.classList.remove("is-dragover");
-      if (zone.classList.contains("is-busy")) return;
-      const r = findReward(Number(zone.dataset.rewardDropzone));
+      rewardZone.classList.remove("is-dragover");
+      if (rewardZone.classList.contains("is-busy")) return;
+      const r = findReward(Number(rewardZone.dataset.rewardDropzone));
       const file = e.dataTransfer.files && e.dataTransfer.files[0];
       if (r && file) uploadRewardImage(r, file);
+      return;
+    }
+    const avatarZone = e.target.closest("[data-avatar-dropzone]");
+    if (avatarZone) {
+      e.preventDefault();
+      avatarZone.classList.remove("is-dragover");
+      if (avatarZone.classList.contains("is-busy")) return;
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) uploadAvatarImage(file);
       return;
     }
     const row = e.target.closest("[data-game-row]");

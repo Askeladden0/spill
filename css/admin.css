@@ -429,6 +429,13 @@
   background: var(--bg); color: var(--text); font-family: inherit; font-size: 13.5px;
 }
 .admin-avatar-add input:focus { outline: none; border-color: var(--accent); }
+.admin-avatar-custom { grid-column: 1 / -1; }
+.admin-avatar-custom .admin-dropzone { margin-bottom: 12px; }
+.avatar-image-swatch { position: relative; }
+.avatar-image-swatch .avatar-image-remove {
+  position: absolute; top: 4px; right: 4px; background: rgba(13, 17, 23, .72);
+  color: #fff; border-radius: 7px; padding: 2px 6px; font-size: 13px;
+}
 
 /* ---------- Tomme seksjoner ("Senere") ---------- */
 .admin-empty-view {
