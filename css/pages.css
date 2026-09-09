@@ -1,0 +1,573 @@
+/* ==========================================================================
+   Studilla – enkeltsider
+   Kassebåndet på premier.html, guider og ressurser.
+
+   Delt ut fra den tidligere ene css/style.css på 4 400+ linjer. Rekkefølgen
+   filene lastes i (se build/partials/head.html) er den samme som seksjonene
+   hadde i den gamle filen, slik at kaskaden er uendret.
+   ========================================================================== */
+
+/* ==========================================================================
+   Kassebåndet på premier.html
+   Båndet ruller kontinuerlig med én CSS-animasjon i stedet for en ny
+   transition annethvert sekund (som ga hakking hver gang den startet på
+   nytt). Tegningen er duplisert to ganger, og animasjonen flytter båndet
+   nøyaktig -50 % – altså ett helt sett – slik at overgangen er usynlig og
+   løkken sømløs. Avstanden mellom kortene ligger på margin-right (ikke gap),
+   ellers blir ikke halve bredden nøyaktig ett sett.
+   Farten settes fra js (animationDuration ut fra bredden), slik at den er den
+   samme uansett hvor mange rabatter som finnes.
+   ========================================================================== */
+.case-reel {
+  display: flex;
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+
+.case-reel.is-rolling { animation: case-reel-scroll linear infinite; }
+.case-reel.is-fast { animation-duration: var(--case-reel-fast, 3s) !important; }
+
+@keyframes case-reel-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-reel.is-rolling { animation: none; }
+}
+
+.case-reel-tile {
+  flex: none;
+  width: 112px;
+  height: 130px;
+  margin-right: 12px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.case-reel-thumb {
+  position: relative;
+  height: 78px;
+  background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.case-reel-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.case-reel-thumb span { font-family: ui-monospace, Menlo, monospace; font-size: 9px; color: var(--muted-3); }
+.case-reel-body { flex: 1; padding: 8px 9px; display: flex; flex-direction: column; gap: 2px; justify-content: center; }
+.case-reel-title { font-size: 13px; font-weight: 800; letter-spacing: -.02em; color: #fff; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.case-reel-brand { font-size: 10px; font-weight: 600; letter-spacing: .02em; color: var(--muted); }
+
+.case-reveal-link {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  margin-top: 2px; font-size: 12.5px; font-weight: 700; color: var(--accent);
+}
+.case-reveal-link:hover { color: var(--accent-light); }
+
+/* ---------- FAQ (bunnen av premier.html) ---------- */
+.faq-list { display: flex; flex-direction: column; gap: 10px; }
+
+.faq-item {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.faq-item[open] { border-color: var(--border-strong); }
+
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary:hover { color: var(--accent); }
+
+.faq-item summary::after {
+  content: "＋";
+  margin-left: auto;
+  flex: none;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--muted);
+  transition: transform .18s ease, color .18s ease;
+}
+
+.faq-item[open] summary::after { content: "－"; color: var(--accent); }
+
+.faq-answer {
+  margin: 0;
+  padding: 0 18px 18px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+/* ==========================================================================
+   Guider og ressurser (guider.html + guide.html)
+   ========================================================================== */
+
+.guide-filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 22px; }
+.guide-filter-pill {
+  padding: 9px 16px; border-radius: 99px; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--muted); font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.guide-filter-pill.is-active { background: var(--accent-soft); color: var(--accent); border-color: rgba(46, 232, 127, .35); }
+.guide-filter-pill:hover { border-color: rgba(46, 232, 127, .5); }
+
+/* ---------- Fremhevet guide ---------- */
+.guide-feature {
+  position: relative; border-radius: var(--radius-lg); overflow: hidden;
+  border: 1px solid rgba(46, 232, 127, .28); background: var(--surface);
+  box-shadow: 0 0 0 4px rgba(46, 232, 127, .06);
+  display: grid; grid-template-columns: 1.15fr .85fr; min-height: 300px;
+}
+@media (max-width: 860px) { .guide-feature { grid-template-columns: 1fr; } }
+.guide-feature-text { padding: 44px; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; justify-content: center; }
+.guide-feature-badge {
+  padding: 6px 13px; border-radius: 99px; background: var(--accent-soft); color: var(--accent);
+  font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+}
+.guide-feature-text h2 { margin: 0; font-size: 38px; line-height: 1.06; font-weight: 800; letter-spacing: -.03em; color: var(--text-strong); text-wrap: balance; }
+.guide-feature-text p { margin: 0; max-width: 460px; font-size: 15px; line-height: 1.6; color: var(--muted); }
+.guide-feature-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.guide-feature-media {
+  position: relative; background: repeating-linear-gradient(135deg, #1b2434 0 14px, #202b3d 14px 28px);
+  display: flex; align-items: center; justify-content: center; min-height: 220px;
+}
+.guide-feature-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- Guide-rutenett / kort ---------- */
+.guide-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+@media (max-width: 980px) { .guide-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .guide-grid { grid-template-columns: 1fr; } }
+.guide-empty { padding: 32px 0; }
+
+.guide-card {
+  position: relative; display: flex; flex-direction: column; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; transition: border-color .15s ease;
+}
+.guide-card:hover { border-color: rgba(46, 232, 127, .35); }
+.guide-card.is-editing { grid-column: 1 / -1; }
+.guide-card.is-editing .guide-form { border: none; }
+
+.guide-card-thumb {
+  position: relative; aspect-ratio: 16 / 10; display: block; color: inherit;
+  background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px);
+}
+.guide-card-thumb-slot { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--muted-3); }
+.guide-card-thumb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.guide-card-gradient { position: absolute; left: 0; right: 0; bottom: 0; height: 70%; background: linear-gradient(180deg, rgba(13, 17, 23, 0) 0%, rgba(13, 17, 23, .7) 55%, rgba(13, 17, 23, .96) 100%); }
+.guide-card-title { position: absolute; left: 16px; right: 16px; bottom: 12px; z-index: 2; margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--text-strong); }
+
+/* ---------- Skjult guide: tydelig markert for admin ---------- */
+/* Varselfargen brukes gjennomgående for "skjult/upublisert" – både på kortet,
+   i banneret på guide.html og på synlighetsbryteren i skjemaet. */
+:root { --guide-warn: #ffb347; --guide-warn-soft: rgba(255, 179, 71, .13); --guide-warn-line: rgba(255, 179, 71, .42); }
+
+.guide-card.is-hidden-guide { border-color: var(--guide-warn-line); background: linear-gradient(180deg, var(--guide-warn-soft) 0%, transparent 90px), var(--surface); }
+.guide-card.is-hidden-guide:hover { border-color: var(--guide-warn); }
+/* Skravert overlegg på bildet gjør at skjulte kort skiller seg ut selv når man
+   bare skummer over rutenettet. */
+.guide-card.is-hidden-guide .guide-card-thumb::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(135deg, rgba(255, 179, 71, .13) 0 10px, transparent 10px 22px);
+}
+.guide-card.is-hidden-guide .guide-card-thumb-img { opacity: .5; }
+
+.guide-status-badge {
+  position: absolute; top: 10px; left: 10px; z-index: 4; display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; letter-spacing: .03em;
+  text-transform: uppercase; backdrop-filter: blur(6px);
+}
+.guide-status-badge.is-hidden { background: rgba(35, 24, 8, .9); border: 1px solid var(--guide-warn-line); color: var(--guide-warn); }
+.guide-status-badge.is-featured { background: rgba(13, 17, 23, .86); border: 1px solid rgba(46, 232, 127, .38); color: var(--accent); }
+.guide-card.is-hidden-guide .guide-status-badge.is-featured { left: auto; right: 10px; }
+
+/* ---------- Admin-knapper (ikon + tekst) ---------- */
+.guide-ico { flex: none; }
+.guide-action-btn {
+  display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 9px;
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
+  font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; line-height: 1;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+.guide-action-btn:hover { border-color: rgba(46, 232, 127, .55); background: var(--accent-soft); color: var(--accent); }
+.guide-action-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.guide-action-btn.is-active { border-color: rgba(46, 232, 127, .55); background: var(--accent-soft); color: var(--accent); }
+.guide-action-btn.is-warn { border-color: var(--guide-warn-line); color: var(--guide-warn); background: var(--guide-warn-soft); }
+.guide-action-btn.is-warn:hover { border-color: var(--guide-warn); background: rgba(255, 179, 71, .2); color: var(--guide-warn); }
+.guide-action-btn.is-danger { border-color: rgba(245, 113, 92, .34); color: #ff9385; }
+.guide-action-btn.is-danger:hover { border-color: rgba(245, 113, 92, .7); background: rgba(245, 113, 92, .16); color: #ff9385; }
+.guide-action-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.guide-card-admin-bar { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px dashed var(--border-strong); }
+.guide-card-admin-bar .guide-action-btn { flex: 1 1 auto; justify-content: center; padding: 8px 10px; }
+
+.guide-icon-btn {
+  width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; padding: 0; line-height: 1;
+}
+.guide-icon-btn:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); background: var(--accent-soft); }
+.guide-icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.guide-icon-btn.is-danger:hover { border-color: rgba(245, 113, 92, .5); color: #ff9385; background: rgba(245, 113, 92, .14); }
+.guide-icon-btn:disabled { opacity: .3; cursor: not-allowed; }
+.guide-icon-btn:disabled:hover { border-color: var(--border-strong); color: var(--text); background: var(--surface); }
+
+.guide-card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.guide-card-excerpt { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--muted); flex: 1; }
+.guide-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.guide-card-value { font-size: 13px; font-weight: 800; color: var(--accent); }
+
+/* ---------- Guide-info-skjema (nytt / rediger) ---------- */
+/* Skjemaene er delt i tydelige seksjoner med egen topplinje og bunnlinje, i
+   stedet for ett flatt rutenett med felter uten gruppering. */
+.guide-form, .guide-module-editor { padding: 0; overflow: hidden; }
+
+.guide-form-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 15px 20px; border-bottom: 1px solid var(--border); background: var(--bg);
+}
+.guide-form-title { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 800; letter-spacing: -.01em; color: var(--text-strong); }
+.guide-form-close {
+  width: 30px; height: 30px; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--muted-2); cursor: pointer; padding: 0;
+}
+.guide-form-close:hover { border-color: var(--border-strong); color: var(--text); }
+
+/* To kolonner: felter til venstre, levende forhåndsvisning av kortet til
+   høyre, så man ser hva man lager mens man skriver. */
+.guide-form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 0; }
+@media (max-width: 860px) { .guide-form-layout { grid-template-columns: 1fr; } }
+.guide-form-body { padding: 4px 20px 18px; display: flex; flex-direction: column; min-width: 0; }
+.guide-form-side { padding: 20px; border-left: 1px solid var(--border); background: var(--bg); }
+@media (max-width: 860px) { .guide-form-side { border-left: none; border-top: 1px solid var(--border); } }
+.guide-preview-pane { display: flex; flex-direction: column; gap: 12px; }
+.guide-card-preview { pointer-events: none; }
+.guide-card-preview .guide-card-thumb { display: block; }
+.is-placeholder { color: var(--muted-3); font-weight: 500; font-style: italic; }
+
+/* Store, klikk- og slippbare bildefelt. */
+.guide-dropzone { position: relative; margin-top: 12px; display: flex; flex-direction: column; gap: 10px; max-width: 520px; }
+.guide-dropzone-target {
+  position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  aspect-ratio: var(--dz-ratio, 16 / 9); border-radius: 13px; cursor: pointer;
+  border: 1px dashed var(--border-strong); background: var(--bg);
+  transition: border-color .15s ease, background .15s ease;
+}
+.guide-dropzone-target:hover { border-color: rgba(46, 232, 127, .55); background: var(--accent-soft); }
+.guide-dropzone.has-image .guide-dropzone-target { border-style: solid; border-color: var(--border-strong); background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px); }
+.guide-dropzone.is-dragover .guide-dropzone-target { border-color: var(--accent); background: var(--accent-soft); }
+.guide-dropzone-target img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.guide-dropzone-target input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.guide-dropzone-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 20px; color: var(--muted-3); }
+.guide-dropzone-empty strong { font-size: 13.5px; font-weight: 700; color: var(--muted); }
+.guide-dropzone-empty small { font-size: 11.5px; font-weight: 500; color: var(--muted-3); }
+.guide-dropzone-busy {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(13, 17, 23, .72); color: var(--accent); font-size: 13px; font-weight: 800;
+}
+.guide-dropzone.is-busy .guide-dropzone-target { cursor: default; }
+.guide-dropzone-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.guide-dropzone-actions label.guide-action-btn { cursor: pointer; }
+
+/* Rader med forhåndsvalg (kategori, beløp, bildebredde) i stedet for at alt
+   må skrives inn i en tom tekstboks. */
+.guide-choice-row { display: flex; gap: 7px; flex-wrap: wrap; padding-top: 12px; }
+.guide-choice {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 99px;
+  border: 1px solid var(--border-strong); background: var(--bg); color: var(--muted);
+  font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+}
+.guide-choice:hover { border-color: rgba(46, 232, 127, .5); color: var(--text); }
+.guide-choice.is-active { background: var(--accent-soft); border-color: rgba(46, 232, 127, .5); color: var(--accent); }
+.guide-choice.is-clear { color: var(--muted-3); }
+.admin-field .is-title-input { font-size: 16px; font-weight: 700; padding: 12px 14px; }
+.guide-picked-game { display: flex; align-items: center; gap: 11px; margin-top: 6px; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(46, 232, 127, .3); background: var(--accent-soft); }
+.guide-picked-game img { width: 44px; height: 30px; object-fit: cover; border-radius: 6px; flex: none; }
+.guide-picked-game-slot { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 30px; border-radius: 6px; background: rgba(13, 17, 23, .5); color: var(--accent); flex: none; }
+.guide-picked-game-name { font-size: 13.5px; font-weight: 700; color: var(--text-strong); letter-spacing: 0; text-transform: none; }
+.guide-form-section { padding: 16px 0; border-bottom: 1px solid var(--border); }
+.guide-form-section:last-child { border-bottom: none; padding-bottom: 4px; }
+.guide-form-legend { display: block; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-3); }
+.guide-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; }
+@media (max-width: 720px) { .guide-form-grid { grid-template-columns: 1fr; } }
+.guide-field-hint { font-size: 11.5px; font-weight: 500; letter-spacing: 0; color: var(--muted-3); line-height: 1.45; text-transform: none; }
+
+.guide-form-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  padding: 14px 20px; border-top: 1px solid var(--border); background: var(--bg);
+}
+.guide-form-hint { font-size: 11.5px; font-weight: 600; color: var(--muted-3); }
+
+.admin-btn-text.is-danger { color: #ff9385; }
+
+/* Synlighetsbrytere som egne rader med forklaring. */
+.guide-toggle-list { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; }
+.guide-toggle-row {
+  display: flex; align-items: flex-start; gap: 12px; padding: 13px 15px; border-radius: 11px;
+  border: 1px solid var(--border); background: var(--bg); transition: border-color .15s ease, background .15s ease;
+}
+.guide-toggle-row.is-on { border-color: rgba(46, 232, 127, .35); background: var(--accent-soft); }
+.guide-toggle-row.is-warn.is-on { border-color: var(--guide-warn-line); background: var(--guide-warn-soft); }
+.guide-toggle-row .admin-switch { margin-top: 1px; }
+.admin-switch.is-warn.is-on .admin-switch-track { background: var(--guide-warn); }
+.guide-toggle-text { display: flex; flex-direction: column; gap: 3px; }
+.guide-toggle-text strong { font-size: 13.5px; font-weight: 700; color: var(--text-strong); }
+.guide-toggle-text small { font-size: 12px; font-weight: 500; color: var(--muted-2); line-height: 1.45; }
+.admin-btn-ghost.is-accent { background: var(--accent-soft); color: var(--accent); border-color: rgba(46, 232, 127, .4); }
+.admin-btn-ghost.is-accent:hover { background: var(--accent-soft-strong); }
+
+/* ---------- guide.html ---------- */
+.guide-back-link {
+  display: inline-flex; align-items: center; gap: 8px; margin: 28px 0 20px;
+  font-size: 14px; font-weight: 600; color: var(--muted);
+}
+.guide-back-link:hover { color: var(--accent); }
+
+.guide-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; align-items: start; padding-bottom: 60px; }
+@media (max-width: 900px) { .guide-layout { grid-template-columns: 1fr; } }
+
+.guide-article { display: flex; flex-direction: column; gap: 34px; min-width: 0; }
+.guide-header { display: flex; flex-direction: column; gap: 16px; }
+/* ---------- Adminverktøy på guide.html ---------- */
+.guide-admin-bar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 10px 12px 10px 15px; border-radius: 12px;
+  border: 1px dashed var(--border-strong); background: var(--surface);
+}
+.guide-admin-bar-label { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-3); }
+.guide-admin-bar-label.is-preview { color: var(--accent); letter-spacing: .04em; text-transform: none; font-size: 12.5px; }
+.guide-admin-bar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+
+.guide-hidden-banner {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 15px 18px; border-radius: 12px;
+  border: 1px solid var(--guide-warn-line); background: var(--guide-warn-soft);
+}
+.guide-banner-icon { display: inline-flex; color: var(--guide-warn); }
+.guide-banner-text { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 200px; }
+.guide-banner-text strong { font-size: 14px; font-weight: 800; color: var(--guide-warn); }
+.guide-banner-text small { font-size: 12.5px; font-weight: 500; color: var(--muted); line-height: 1.45; }
+
+.guide-edit-panel:not([hidden]) { margin: 4px 0; }
+.guide-pills { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.guide-category-pill { padding: 6px 13px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.guide-header h1 { margin: 0; font-size: 38px; line-height: 1.08; font-weight: 800; letter-spacing: -.03em; color: var(--text-strong); text-wrap: balance; }
+.guide-intro { margin: 0; font-size: 16.5px; line-height: 1.6; color: var(--muted); max-width: 660px; }
+.guide-meta-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.guide-meta-item { font-size: 13px; font-weight: 600; color: var(--muted-2); }
+.guide-meta-item:empty { display: none; }
+.guide-meta-credit { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--muted-2); transition: color .15s ease; }
+.guide-meta-credit:hover { color: var(--text); }
+.guide-meta-credit .header-credit-avatar { width: 20px; height: 20px; }
+
+.guide-cover {
+  position: relative; aspect-ratio: 16 / 7; border-radius: var(--radius-lg); overflow: hidden;
+  border: 1px solid var(--border-strong); background: repeating-linear-gradient(135deg, #1b2434 0 14px, #202b3d 14px 28px);
+  display: flex; align-items: center; justify-content: center;
+}
+.guide-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+.guide-modules { display: flex; flex-direction: column; gap: 34px; }
+.guide-module { display: flex; flex-direction: column; gap: 14px; }
+/* I redigeringsmodus får hver modul en tydelig ramme, slik at det er lett å se
+   hvor én modul slutter og den neste begynner når man flytter dem rundt. */
+.guide-module.is-editable { padding: 6px 16px 18px; margin: 0 -16px; border-radius: 14px; border: 1px solid transparent; transition: border-color .15s ease, background .15s ease; }
+.guide-module.is-editable:hover { border-color: var(--border); background: rgba(255, 255, 255, .012); }
+.guide-module.is-editing { border-color: rgba(46, 232, 127, .35); background: rgba(46, 232, 127, .04); }
+
+.guide-module-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.guide-module-eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); white-space: nowrap; }
+.guide-module-num {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px;
+  border-radius: 6px; background: var(--border); color: var(--text); font-size: 11px; font-weight: 800; letter-spacing: 0;
+}
+.guide-module.is-editing .guide-module-num { background: var(--accent-soft); color: var(--accent); }
+.guide-module-divider { height: 1px; flex: 1; min-width: 12px; background: var(--border); }
+.guide-module-toolbar { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+.guide-move-group { display: inline-flex; gap: 4px; }
+
+/* ---------- Legg til / sett inn modul ---------- */
+.guide-add-module { margin-top: 10px; }
+.guide-add-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px; width: 100%;
+  padding: 15px 18px; border-radius: 13px; border: 1px dashed var(--border-strong); background: transparent;
+  color: var(--muted); font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.guide-add-btn:hover { border-color: rgba(46, 232, 127, .55); color: var(--accent); background: var(--accent-soft); }
+
+/* Innsettingspunkt mellom to moduler: nesten usynlig til man peker på det. */
+.guide-insert-slot { margin: -8px 0; }
+.guide-insert-slot.is-open { margin: 10px 0; }
+.guide-insert-btn {
+  display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%;
+  padding: 5px; border: none; background: none; border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 11.5px; font-weight: 700; color: var(--muted-3);
+  opacity: 0; transition: opacity .15s ease, color .15s ease;
+}
+.guide-insert-slot:hover .guide-insert-btn, .guide-insert-btn:focus-visible { opacity: 1; color: var(--accent); }
+.guide-insert-btn::before, .guide-insert-btn::after { content: ""; height: 1px; flex: 1; background: rgba(46, 232, 127, .3); }
+
+.guide-add-picker { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border-strong); }
+.guide-add-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.guide-add-picker-label { font-size: 13px; font-weight: 800; color: var(--text-strong); }
+.guide-add-picker-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+.guide-type-card {
+  display: flex; align-items: flex-start; gap: 11px; text-align: left; padding: 13px 14px; border-radius: 11px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.guide-type-card:hover { border-color: rgba(46, 232, 127, .5); background: var(--accent-soft); }
+.guide-type-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.guide-type-icon {
+  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex: none;
+  border-radius: 9px; background: var(--accent-soft); color: var(--accent);
+}
+.guide-type-icon.is-sm { width: 26px; height: 26px; border-radius: 8px; }
+.guide-type-text { display: flex; flex-direction: column; gap: 3px; }
+.guide-type-text strong { font-size: 13.5px; font-weight: 700; color: var(--text-strong); }
+.guide-type-text small { font-size: 11.5px; font-weight: 500; color: var(--muted-2); line-height: 1.4; }
+
+.guide-modules-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  padding: 44px 24px; border-radius: 14px; border: 1px dashed var(--border-strong); color: var(--muted-3);
+}
+.guide-modules-empty strong { font-size: 15px; font-weight: 800; color: var(--text-strong); }
+.guide-modules-empty span { font-size: 13px; font-weight: 500; color: var(--muted-2); max-width: 380px; line-height: 1.5; }
+
+.guide-row-editor { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.guide-row-editor .admin-btn-text { align-self: flex-start; padding-left: 0; }
+.guide-row-editor-legend { display: flex; gap: 8px; padding: 2px 0 0; }
+.guide-row-editor-legend span { flex: 1; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--muted-3); }
+.guide-row-editor-legend span.is-spacer { flex: none; width: 32px; }
+.guide-row-editor-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.guide-row-editor-row input {
+  flex: 1; min-width: 110px; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--border-strong);
+  background: var(--bg); color: var(--text); font-family: inherit; font-size: 13px;
+}
+.guide-row-editor-row input:focus { outline: none; border-color: var(--accent); }
+.guide-row-votes { font-size: 11.5px; font-weight: 700; color: var(--muted-3); white-space: nowrap; }
+
+/* ---------- Modul: tekst ---------- */
+.guide-text-block { display: flex; flex-direction: column; gap: 16px; }
+.guide-text-heading { margin: 0; font-weight: 800; letter-spacing: -.02em; color: var(--text-strong); }
+.guide-text-heading.is-h2 { font-size: 26px; }
+.guide-text-heading.is-h3 { font-size: 19px; }
+.guide-text-p { margin: 0; font-size: 16px; line-height: 1.7; color: var(--text); max-width: 660px; }
+.guide-text-list { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 9px; font-size: 16px; line-height: 1.6; color: var(--text); max-width: 660px; }
+.guide-tip-box { margin: 0; padding: 18px 22px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); font-size: 16px; line-height: 1.6; color: var(--text); max-width: 660px; }
+.guide-tip-box strong { color: var(--accent); font-weight: 700; }
+
+/* ---------- Modul: fil ---------- */
+.guide-file-card { display: flex; align-items: center; gap: 18px; padding: 22px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); flex-wrap: wrap; }
+.guide-file-badge { width: 56px; height: 56px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: 800; }
+.guide-file-info { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 180px; }
+.guide-file-name { font-size: 17px; font-weight: 700; color: var(--text-strong); }
+.guide-file-meta { font-size: 13.5px; font-weight: 500; color: var(--muted-2); }
+.guide-file-btn { display: inline-flex; align-items: center; gap: 9px; padding: 14px 26px; font-size: 15px; }
+.guide-file-missing { font-size: 13px; font-weight: 600; color: var(--muted-3); }
+.guide-file-uploaded { font-size: 11.5px; font-weight: 700; color: var(--accent); }
+
+/* ---------- Modul: tabell ---------- */
+.guide-table-title { margin: 0; font-size: 19px; font-weight: 700; color: var(--text-strong); }
+.guide-table-wrap { border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); overflow-x: auto; }
+.guide-table { width: 100%; min-width: 420px; border-collapse: collapse; font-size: 14.5px; }
+.guide-table th { text-align: left; padding: 14px 20px; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); border-bottom: 1px solid var(--border-strong); background: var(--bg); }
+.guide-table th:last-child, .guide-table td.is-num { text-align: right; }
+.guide-table td { padding: 15px 20px; font-weight: 600; color: var(--text-strong); border-bottom: 1px solid var(--border); }
+.guide-table td.is-num { font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.guide-table td:nth-child(2) { font-weight: 400; color: var(--muted); }
+.guide-table tr:last-child td { border-bottom: none; }
+.guide-table-source { font-size: 12.5px; color: var(--muted-3); }
+
+/* ---------- Modul: gevinst ---------- */
+.guide-gevinst { border-radius: var(--radius-lg); border: 1px solid rgba(46, 232, 127, .28); background: var(--surface); box-shadow: 0 0 0 4px rgba(46, 232, 127, .06); overflow: hidden; display: flex; flex-wrap: wrap; }
+.guide-gevinst-total { padding: 30px; display: flex; flex-direction: column; gap: 10px; justify-content: center; border-right: 1px solid var(--border); flex: 1 1 260px; min-width: 0; }
+.guide-gevinst-label { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); }
+.guide-gevinst-amount { font-size: 42px; line-height: 1; font-weight: 800; letter-spacing: -.03em; color: var(--accent); font-variant-numeric: tabular-nums; }
+.guide-gevinst-note { font-size: 14px; font-weight: 600; color: var(--muted); }
+.guide-gevinst-permonth { display: inline-block; margin-top: 4px; padding: 5px 11px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 11.5px; font-weight: 800; align-self: flex-start; }
+.guide-gevinst-rows { padding: 26px 30px; display: flex; flex-direction: column; gap: 2px; flex: 1 1 300px; min-width: 0; }
+.guide-gevinst-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; }
+.guide-gevinst-row span:first-child { font-weight: 600; color: var(--text); }
+.guide-gevinst-row span:last-child { font-weight: 800; color: var(--text-strong); font-variant-numeric: tabular-nums; text-align: right; }
+.guide-gevinst-row.is-sum { border-bottom: none; padding-top: 13px; }
+.guide-gevinst-row.is-sum span:last-child { color: var(--accent); }
+
+.guide-gevinst-card { padding: 22px; background: var(--surface); border: 1px solid rgba(46, 232, 127, .28); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: 8px; }
+.guide-gevinst-side-label { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); }
+.guide-gevinst-side-amount { font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: var(--accent); line-height: 1.1; }
+.guide-gevinst-side-note { font-size: 13px; font-weight: 500; color: var(--muted); line-height: 1.5; }
+
+/* ---------- Modul: bilde ---------- */
+.guide-image-block { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.guide-image-block img { display: block; width: 100%; height: auto; border-radius: var(--radius-lg); border: 1px solid var(--border-strong); }
+.guide-image-block.is-medium { max-width: 420px; }
+.guide-image-block figcaption { font-size: 13px; font-weight: 500; color: var(--muted-2); line-height: 1.5; }
+.guide-image-block.is-empty {
+  align-items: center; justify-content: center; aspect-ratio: 16 / 9; max-width: 420px;
+  border-radius: var(--radius-lg); border: 1px dashed var(--border-strong); color: var(--muted-3);
+  font-size: 12.5px; font-weight: 600;
+}
+
+/* ---------- Modul: avstemning ---------- */
+.guide-poll { padding: 26px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: 18px; }
+.guide-poll-question { margin: 0; font-size: 19px; font-weight: 700; color: var(--text-strong); }
+.guide-poll-footer { font-size: 13px; font-weight: 500; color: var(--muted-2); }
+.guide-poll-options { display: flex; flex-direction: column; gap: 10px; }
+.guide-poll-option {
+  position: relative; overflow: hidden; text-align: left; padding: 15px 18px; border-radius: 12px;
+  border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); font-family: inherit;
+  font-size: 14.5px; font-weight: 600; cursor: pointer; width: 100%;
+}
+.guide-poll-option:hover:not(:disabled) { border-color: rgba(46, 232, 127, .5); }
+.guide-poll-option:disabled { cursor: default; }
+.guide-poll-option.is-mine { border-color: rgba(46, 232, 127, .5); }
+.guide-poll-option-fill { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(46, 232, 127, .14); transition: width .5s cubic-bezier(.22, 1, .36, 1); }
+.guide-poll-option-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.guide-poll-option-dot { width: 18px; height: 18px; border-radius: 99px; border: 2px solid var(--border-strong); flex-shrink: 0; }
+.guide-poll-option.is-mine .guide-poll-option-dot { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 0 5px, transparent 5px); }
+.guide-poll-option-label { flex: 1; }
+.guide-poll-option-pct { font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+.guide-poll-option.is-mine .guide-poll-option-pct { color: var(--accent); }
+
+/* ---------- Modul: triks-lenke ---------- */
+.guide-trick-card { display: flex; align-items: stretch; gap: 0; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; color: var(--text); }
+a.guide-trick-card:hover { border-color: rgba(46, 232, 127, .35); }
+.guide-trick-card.is-static { cursor: default; }
+.guide-trick-thumb { position: relative; width: 210px; flex-shrink: 0; background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px); display: flex; align-items: center; justify-content: center; }
+.guide-trick-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.guide-trick-body { padding: 24px; display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center; }
+.guide-trick-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.guide-trick-title { font-size: 21px; font-weight: 800; letter-spacing: -.02em; color: var(--text-strong); }
+.guide-trick-intro { font-size: 14px; line-height: 1.55; color: var(--muted); max-width: 420px; }
+.guide-trick-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 14.5px; font-weight: 800; color: var(--accent); }
+
+/* ---------- Innhold-sidefelt ---------- */
+.guide-aside { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 100px; }
+.guide-toc { display: flex; flex-direction: column; gap: 2px; padding: 4px 20px 16px; }
+.guide-toc-link { padding: 8px 0; font-size: 14px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border); }
+.guide-toc-link:last-child { border-bottom: none; }
+.guide-toc-link:hover { color: var(--accent); }
+
+@media (max-width: 900px) { .guide-aside { position: static; } }

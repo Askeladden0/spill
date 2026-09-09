@@ -1,0 +1,821 @@
+/* ==========================================================================
+   Studilla – nytt i moderniseringen
+   Heltefelt med verdiløfte og direktestart, streak, det sosiale laget
+   (følging, meldinger, aktivitet), ukes-/vennerangering, game over-kortet,
+   cookie-linja og tilgjengelighetshjelpere.
+
+   Lastes etter style.css (se build/partials/head.html), så alt her kan
+   overstyre kjernen der det trengs.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Tilgjengelighet
+   -------------------------------------------------------------------------- */
+
+/* Hopp rett til innholdet – første tabulator-stopp på hver side. Lå ikke i
+   den gamle versjonen, så en tastaturbruker måtte gjennom hele toppmenyen på
+   hver eneste sidevisning. */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 10000;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--accent, #2ee87f);
+  color: #0d1117;
+  font-weight: 800;
+  font-size: 14px;
+  text-decoration: none;
+  transition: top .15s ease;
+}
+.skip-link:focus { top: 12px; }
+
+/* Tekst kun for skjermlesere – brukes på <label> der feltet har en synlig
+   plassholder i stedet for en synlig etikett. */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Synlig fokusmarkering med god kontrast, likt over hele siden. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent, #2ee87f);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Respekter systemvalget «mindre bevegelse». Den gamle versjonen hadde én
+   slik regel i hele stilarket, mens siden er full av animasjoner. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .hero-kicker-dot { animation: none !important; }
+}
+
+body.is-dialog-open { overflow: hidden; }
+
+/* --------------------------------------------------------------------------
+   Heltefelt: verdiløfte + direktestart
+   -------------------------------------------------------------------------- */
+
+.hero-section {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.35fr);
+  gap: 32px;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.hero-intro { display: flex; flex-direction: column; gap: 14px; }
+
+.hero-intro h1 {
+  margin: 0;
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -.03em;
+  color: #fff;
+}
+
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: var(--accent, #2ee87f);
+  text-transform: uppercase;
+}
+.hero-kicker-sep { opacity: .5; }
+.hero-kicker-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent, #2ee87f);
+  animation: heroPulse 2s ease-in-out infinite;
+}
+@keyframes heroPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .35; transform: scale(.75); }
+}
+
+.hero-lead {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 16px;
+  line-height: 1.65;
+  color: #96a3b8;
+}
+
+.hero-cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+
+.btn-lg {
+  padding: 15px 30px;
+  font-size: 16px;
+  border-radius: 12px;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  padding: 15px 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: transparent;
+  color: #e8edf5;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.btn-ghost:hover { border-color: rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .04); }
+
+.hero-usps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.hero-usps li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #7c8aa0;
+}
+.hero-usps li::before {
+  content: "";
+  width: 14px; height: 14px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(46, 232, 127, .16);
+  box-shadow: inset 0 0 0 1.5px rgba(46, 232, 127, .55);
+}
+
+.hero-desc {
+  margin: 0 0 16px;
+  max-width: 44ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(232, 237, 245, .82);
+}
+
+/* Spillflaten som erstatter bildet når man trykker start. */
+.hero-card.is-playing { background: #0d1117; }
+
+.hero-stage {
+  display: flex;
+  flex-direction: column;
+  min-height: 460px;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.hero-stage-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+  background: rgba(255, 255, 255, .02);
+}
+.hero-stage-title { font-size: 15px; font-weight: 800; color: #fff; }
+.hero-stage-full {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent, #2ee87f);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.hero-stage-full:hover { text-decoration: underline; }
+
+.hero-stage-inner {
+  position: relative;
+  flex: 1;
+  min-height: 400px;
+  padding: 16px;
+}
+
+@media (max-width: 900px) {
+  .hero-section { grid-template-columns: 1fr; gap: 24px; }
+  .hero-stage, .hero-stage-inner { min-height: 340px; }
+}
+
+/* --------------------------------------------------------------------------
+   Konto-stripe og ressurskort
+   -------------------------------------------------------------------------- */
+
+.signup-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(46, 232, 127, .22);
+  background: linear-gradient(120deg, rgba(46, 232, 127, .08), rgba(46, 232, 127, .02));
+}
+.signup-strip-text { display: flex; flex-direction: column; gap: 4px; }
+.signup-strip-text strong { font-size: 15px; color: #fff; }
+.signup-strip-text span { font-size: 13.5px; line-height: 1.55; color: #96a3b8; }
+
+.section-link {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--accent, #2ee87f);
+  text-decoration: none;
+}
+.section-link:hover { text-decoration: underline; }
+
+.resource-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
+.resource-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 18px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  background: var(--surface, #131a25);
+  text-decoration: none;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.resource-card:hover { transform: translateY(-2px); border-color: rgba(46, 232, 127, .35); }
+.resource-eyebrow {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  color: var(--accent, #2ee87f);
+}
+.resource-title { font-size: 15px; font-weight: 700; color: #fff; }
+.resource-text { font-size: 12.5px; line-height: 1.55; color: #7c8aa0; }
+
+/* --------------------------------------------------------------------------
+   Streak
+   -------------------------------------------------------------------------- */
+
+.streak-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 99px;
+  border: 1px solid rgba(245, 166, 35, .3);
+  background: rgba(245, 166, 35, .12);
+  color: #f5b942;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Game over-kortet
+   -------------------------------------------------------------------------- */
+
+.game-over-card { position: relative; overflow: hidden; }
+
+.game-over-eyebrow {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: rgba(46, 232, 127, .16);
+  color: var(--accent, #2ee87f);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.game-over-figure { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 10px 0 4px; }
+.game-over-figure-num {
+  font-size: clamp(38px, 9vw, 56px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.03em;
+  color: #fff;
+}
+.game-over-figure-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: #7c8aa0;
+}
+
+.game-over-facts {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 16px 0 4px;
+}
+.game-over-fact {
+  flex: 1;
+  max-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .04);
+}
+.game-over-fact-num { font-size: 18px; font-weight: 800; color: #e8edf5; }
+.game-over-fact-num.is-accent { color: var(--accent, #2ee87f); }
+.game-over-fact-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  color: #7c8aa0;
+}
+
+.game-over-note {
+  margin: 14px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #96a3b8;
+}
+
+.game-over-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.game-over-actions .game-over-again { flex: 1.4; }
+.game-over-actions .game-over-next {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.game-over-share {
+  margin-top: 12px;
+  padding: 8px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #7c8aa0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.game-over-share:hover { color: var(--accent, #2ee87f); }
+
+.game-over-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.game-over-confetti-bit {
+  position: absolute;
+  top: -12px;
+  width: 7px;
+  height: 12px;
+  border-radius: 2px;
+  animation: confettiFall 1.9s ease-in forwards;
+}
+@keyframes confettiFall {
+  to { transform: translateY(460px) rotate(540deg); opacity: 0; }
+}
+
+@media (max-width: 420px) {
+  .game-over-actions { flex-direction: column; }
+  .game-over-facts { gap: 6px; }
+}
+
+/* --------------------------------------------------------------------------
+   Toppmeny: uleste meldinger
+   -------------------------------------------------------------------------- */
+
+.nav-link { position: relative; }
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: #ff5a7a;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Venner: aktivitet + meldinger
+   -------------------------------------------------------------------------- */
+
+.social-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 28px;
+  align-items: start;
+}
+.social-col { margin: 0; }
+
+.feed-list, .dm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  background: var(--surface, #131a25);
+  overflow: hidden;
+}
+
+.feed-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, .04);
+  transition: background .12s ease;
+}
+.feed-row:last-child { border-bottom: none; }
+.feed-row:hover { background: rgba(255, 255, 255, .03); }
+.feed-text { flex: 1; font-size: 13.5px; line-height: 1.5; color: #96a3b8; }
+.feed-text strong { color: #e8edf5; font-weight: 700; }
+.feed-score {
+  margin-left: 6px;
+  font-weight: 800;
+  color: var(--accent, #2ee87f);
+}
+.feed-time { font-size: 11.5px; color: #5f6b7d; white-space: nowrap; }
+
+.dm-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 16px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, .04);
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+.dm-row:last-child { border-bottom: none; }
+.dm-row:hover { background: rgba(255, 255, 255, .03); }
+.dm-row.is-unread .dm-row-name { color: #fff; }
+.dm-row.is-unread .dm-row-last { color: #c3ccda; font-weight: 600; }
+
+.dm-row-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dm-row-name { font-size: 14px; font-weight: 700; color: #e8edf5; }
+.dm-row-last {
+  font-size: 12.5px;
+  color: #7c8aa0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dm-row-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.dm-row-time { font-size: 11px; color: #5f6b7d; white-space: nowrap; }
+.dm-row-badge {
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: #ff5a7a;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* Samtalevinduet */
+.dm-thread-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 9, 14, .72);
+  backdrop-filter: blur(3px);
+}
+.dm-thread-overlay[hidden] { display: none; }
+
+.dm-thread-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  height: min(640px, 88vh);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  background: var(--surface, #131a25);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .55);
+  overflow: hidden;
+}
+
+.dm-thread-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+.dm-thread-back {
+  display: inline-flex;
+  padding: 7px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  background: transparent;
+  color: #96a3b8;
+  cursor: pointer;
+}
+.dm-thread-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+}
+.dm-thread-name:hover { text-decoration: underline; }
+.dm-thread-block {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 90, 122, .3);
+  background: transparent;
+  color: #ff8fa5;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dm-thread-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  overflow-y: auto;
+}
+.dm-empty { margin: auto; font-size: 13.5px; color: #7c8aa0; }
+
+.dm-bubble {
+  max-width: 78%;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 13px;
+  border-radius: 14px 14px 14px 4px;
+  background: rgba(255, 255, 255, .06);
+}
+.dm-bubble.is-mine {
+  align-self: flex-end;
+  border-radius: 14px 14px 4px 14px;
+  background: rgba(46, 232, 127, .15);
+}
+.dm-bubble-body { font-size: 14px; line-height: 1.5; color: #e8edf5; word-break: break-word; }
+.dm-bubble-time { font-size: 10.5px; color: #7c8aa0; }
+
+.dm-thread-form {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(255, 255, 255, .07);
+}
+.dm-thread-form input {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  background: #0d1117;
+  color: #e8edf5;
+  font-family: inherit;
+  font-size: 14px;
+}
+.dm-thread-error {
+  margin: 0;
+  padding: 0 14px 12px;
+  font-size: 12.5px;
+  color: #ff8fa5;
+}
+
+.rank-search-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  text-decoration: none;
+}
+.btn-small { padding: 6px 14px; font-size: 12.5px; }
+
+.public-profile-social {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.public-profile-follow-counts { font-size: 13px; color: #7c8aa0; }
+
+/* Rangering: den øverste raden med lister skal skille seg fra triks-filteret. */
+.scope-chips.is-primary .scope-chip {
+  padding: 9px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   Cookie-linja
+   Var tidligere en dialog med mørklagt bakgrunn som dekket hele siden, slik
+   at det første en ny besøkende så var et samtykkeskjema og ingenting annet.
+   Nå ligger førstevalget som en linje nederst, og bare «Tilpass» åpner en
+   ekte dialog.
+   -------------------------------------------------------------------------- */
+
+#scb-overlay { display: none; }
+#scb-overlay.is-open { display: flex; }
+
+#scb-overlay.scb-mode-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 9998;
+  padding: 14px;
+  align-items: center;
+  justify-content: center;
+}
+#scb-overlay.scb-mode-bar #scb-backdrop { display: none; }
+
+#scb-overlay.scb-mode-bar #scb-initial {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 960px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(19, 26, 37, .97);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .45);
+  font-family: "Poppins", system-ui, sans-serif;
+}
+
+.scb-bar-text {
+  flex: 1;
+  min-width: 240px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #96a3b8;
+}
+.scb-bar-text a { color: var(--accent, #2ee87f); }
+
+.scb-bar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Alle tre valgene har samme størrelse og vekt – «Avvis alle» skal ikke være
+   vanskeligere å finne eller trykke på enn «Godta alle». */
+.scb-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: transparent;
+  color: #e8edf5;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.scb-btn-primary {
+  border-color: transparent;
+  background: var(--accent, #2ee87f);
+  color: #0d1117;
+  font-weight: 800;
+}
+.scb-btn-quiet { color: #96a3b8; border-color: transparent; }
+
+#scb-overlay.scb-mode-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+#scb-overlay.scb-mode-modal #scb-backdrop {
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 9, 14, .82);
+  backdrop-filter: blur(3px);
+}
+
+@media (max-width: 640px) {
+  #scb-overlay.scb-mode-bar #scb-initial { flex-direction: column; align-items: stretch; }
+  .scb-bar-actions { justify-content: stretch; }
+  .scb-btn { flex: 1; text-align: center; }
+}
+
+/* --------------------------------------------------------------------------
+   Justeringer av heltekortet nå som det står ved siden av verdiløftet i
+   stedet for i full bredde: navnet var 52px og la seg oppå motivet, og
+   beskrivelsen som kom til gjorde teksten enda vanskeligere å lese.
+   -------------------------------------------------------------------------- */
+
+.hero-section .hero-media { min-height: 420px; }
+
+.hero-section .hero-content { padding: 32px; gap: 14px; }
+
+.hero-section .hero-content h2 {
+  font-size: clamp(28px, 3.4vw, 42px);
+  text-shadow: 0 2px 20px rgba(13, 17, 23, .8);
+}
+
+/* Mørkere og høyere forløp: motivet er ofte lyst og fargerikt (Bubble
+   Shooter, Fruktfusjon), og det gamle forløpet startet for lavt til at
+   teksten fikk nok kontrast. */
+.hero-section .hero-gradient {
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(13, 17, 23, .1) 0%,
+    rgba(13, 17, 23, .55) 40%,
+    rgba(13, 17, 23, .93) 78%,
+    rgba(13, 17, 23, .99) 100%
+  );
+}
+
+/* Seksjonene sto med den gamle luften beregnet for et heltefelt i full
+   bredde, og ga et stort tomrom under det nye. */
+.hero-section + .signup-strip { margin-top: 0; }
+
+/* --------------------------------------------------------------------------
+   Game over-kortet trenger nå en egen flate.
+   Før besto det av tre korte linjer sentrert på et uklart bakteppe, og det
+   holdt. Med skår, rekord, rekke og to knapper ble brettet under lesende
+   gjennom teksten (se skjermbildet i vurderingen), så kortet får et ekte
+   kort-underlag i stedet.
+   -------------------------------------------------------------------------- */
+
+.game-over-card {
+  max-width: 360px;
+  width: min(360px, 88%);
+  padding: 28px 26px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(19, 26, 37, .97);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .55);
+}
+
+.game-over-overlay { background: rgba(13, 17, 23, .88); }
+
+/* Knappeteksten brøt over to linjer i den smale kolonnen. */
+.game-over-actions .btn-primary,
+.game-over-actions .btn-outline {
+  padding: 13px 16px;
+  font-size: 14.5px;
+  white-space: nowrap;
+}
+
+/* Konfettien skal ligge bak innholdet, ikke midt oppi tallene. */
+.game-over-confetti { z-index: 0; }
+.game-over-card > *:not(.game-over-confetti) { position: relative; z-index: 1; }
+
+/* En <a> stylet som knapp. Erstatter mønsteret <a href><button></button></a>,
+   som er ugyldig HTML (klikkbart element inni et klikkbart element) og ga to
+   tabulator-stopp for det samme målet. */
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studilla · Venner og meldinger</title>
+<meta name="description" content="Se hva vennene dine har holdt på med, og send dem en melding.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/style.css" data-studilla-head>
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/social.css">
+</head>
+<body data-page="meldinger">
+<div class="page">
+
+  <div id="site-header"></div>
+
+  <main id="hovedinnhold">
+    <section>
+      <div class="section-heading spread" style="align-items:flex-end;flex-wrap:wrap;gap:20px">
+        <div>
+          <h1>Venner</h1>
+          <span class="section-sub" data-social-sub>Laster …</span>
+        </div>
+        <div class="rank-search-wrap">
+          <label class="visually-hidden" for="friend-search">Søk etter en spiller</label>
+          <input type="search" id="friend-search" class="rank-search-input" placeholder="Finn en spiller å følge …" data-friend-search autocomplete="off">
+          <div class="rank-search-results" data-friend-results hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <section data-signed-out hidden>
+      <div class="rank-me-guest">
+        <span class="section-sub">Logg inn for å følge andre, se hva de driver med og sende meldinger.</span>
+        <a href="login.html" class="btn-primary btn-link">Logg inn</a>
+      </div>
+    </section>
+
+    <section data-social-unavailable hidden>
+      <div class="rank-me-guest">
+        <span class="section-sub">Det sosiale laget er ikke slått på i databasen ennå. Kjør <code>supabase/schema.sql</code> på nytt.</span>
+      </div>
+    </section>
+
+    <div class="social-layout" data-social-main hidden>
+      <section class="social-col">
+        <div class="section-heading spread">
+          <h2>Aktivitet</h2>
+          <span class="section-sub">Fra dem du følger</span>
+        </div>
+        <div class="feed-list" data-feed-list>
+          <div class="leaderboard-empty">Laster …</div>
+        </div>
+      </section>
+
+      <section class="social-col">
+        <div class="section-heading spread">
+          <h2>Meldinger</h2>
+          <span class="section-sub" data-thread-count></span>
+        </div>
+        <div class="dm-list" data-thread-list>
+          <div class="leaderboard-empty">Laster …</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+</div>
+
+<!-- Samtalevindu. Ligger som en dialog over siden i stedet for som en egen
+     side, slik at man kan hoppe mellom samtaler uten sidelastinger. -->
+<div class="dm-thread-overlay" data-dm-overlay hidden role="dialog" aria-modal="true" aria-labelledby="dm-thread-title">
+  <div class="dm-thread-card">
+    <div class="dm-thread-head">
+      <button type="button" class="dm-thread-back" data-dm-close aria-label="Lukk samtalen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      </button>
+      <span data-dm-avatar></span>
+      <a class="dm-thread-name" id="dm-thread-title" data-dm-name href="#">–</a>
+      <button type="button" class="dm-thread-block" data-dm-block>Blokker</button>
+    </div>
+    <div class="dm-thread-body" data-dm-messages></div>
+    <form class="dm-thread-form" data-dm-form>
+      <label class="visually-hidden" for="dm-input">Skriv en melding</label>
+      <input type="text" id="dm-input" data-dm-input maxlength="1000" placeholder="Skriv en melding …" autocomplete="off">
+      <button type="submit" class="btn-primary" data-dm-send>Send</button>
+    </form>
+    <p class="dm-thread-error" data-dm-error hidden></p>
+  </div>
+</div>
+
+<script src="js/consent.js"></script>
+<script src="js/cookie-banner.js"></script>
+<script src="js/feature-flags.js"></script>
+<script src="js/layout-markup.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/avatar-figures.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/social.js"></script>
+<script src="js/visit-tracking.js"></script>
+<script src="js/games-data.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  const Auth = window.StudillaAuth;
+  const Social = window.StudillaSocial;
+  const esc = Social.escapeHTML;
+
+  let profile = null;
+  let openThreadWith = null;
+  let pollTimer = null;
+
+  const els = {
+    sub: document.querySelector("[data-social-sub]"),
+    signedOut: document.querySelector("[data-signed-out]"),
+    unavailable: document.querySelector("[data-social-unavailable]"),
+    main: document.querySelector("[data-social-main]"),
+    feed: document.querySelector("[data-feed-list]"),
+    threads: document.querySelector("[data-thread-list]"),
+    threadCount: document.querySelector("[data-thread-count]"),
+    search: document.querySelector("[data-friend-search]"),
+    results: document.querySelector("[data-friend-results]"),
+    overlay: document.querySelector("[data-dm-overlay]"),
+    dmName: document.querySelector("[data-dm-name]"),
+    dmAvatar: document.querySelector("[data-dm-avatar]"),
+    dmMessages: document.querySelector("[data-dm-messages]"),
+    dmForm: document.querySelector("[data-dm-form]"),
+    dmInput: document.querySelector("[data-dm-input]"),
+    dmError: document.querySelector("[data-dm-error]"),
+    dmBlock: document.querySelector("[data-dm-block]"),
+  };
+
+  function gameName(id) {
+    const g = (window.STUDILLA_GAMES || []).find((x) => x.id === id);
+    return g ? g.name : id;
+  }
+
+  /* ---------------- Aktivitetsfeed ---------------- */
+
+  async function renderFeed() {
+    const rows = await Social.feed(30);
+    if (!rows.length) {
+      els.feed.innerHTML = `
+        <div class="leaderboard-empty">
+          Du følger ingen ennå. Søk opp en spiller øverst, eller finn noen på
+          <a href="rangering.html">rangeringen</a>.
+        </div>`;
+      return;
+    }
+    els.feed.innerHTML = rows
+      .map((r) => `
+        <a class="feed-row" href="spillerprofil.html?u=${encodeURIComponent(r.username)}">
+          ${Auth.avatarHTML(r, 34)}
+          <span class="feed-text">
+            <strong>${esc(r.username)}</strong>
+            ${r.is_personal_best ? "satte ny rekord i" : "spilte"}
+            <strong>${esc(gameName(r.game_id))}</strong>
+            <span class="feed-score">${Math.round(r.score).toLocaleString("no-NO")}</span>
+          </span>
+          <span class="feed-time">${Social.timeAgo(r.created_at)}</span>
+        </a>`)
+      .join("");
+  }
+
+  /* ---------------- Meldingsliste ---------------- */
+
+  async function renderThreads() {
+    const rows = await Social.threads();
+    els.threadCount.textContent = rows.length ? `${rows.length} samtaler` : "";
+    if (!rows.length) {
+      els.threads.innerHTML = `
+        <div class="leaderboard-empty">
+          Ingen meldinger ennå. Åpne en spillerprofil og trykk «Send melding».
+        </div>`;
+      return;
+    }
+    els.threads.innerHTML = rows
+      .map((t) => `
+        <button type="button" class="dm-row ${t.unread ? "is-unread" : ""}" data-open-thread="${t.other_id}" data-username="${esc(t.other_username)}">
+          ${Auth.avatarHTML({ avatar_color: t.other_avatar_color, avatar_icon: t.other_avatar_icon }, 38)}
+          <span class="dm-row-text">
+            <span class="dm-row-name">${esc(t.other_username)}</span>
+            <span class="dm-row-last">${t.last_from_me ? "Du: " : ""}${esc(t.last_body)}</span>
+          </span>
+          <span class="dm-row-meta">
+            <span class="dm-row-time">${Social.timeAgo(t.last_at)}</span>
+            ${t.unread ? `<span class="dm-row-badge">${t.unread}</span>` : ""}
+          </span>
+        </button>`)
+      .join("");
+
+    els.threads.querySelectorAll("[data-open-thread]").forEach((btn) => {
+      btn.addEventListener("click", () => openThread(btn.dataset.openThread, btn.dataset.username));
+    });
+  }
+
+  /* ---------------- Samtalevindu ---------------- */
+
+  async function openThread(userId, username) {
+    openThreadWith = userId;
+    els.dmName.textContent = username;
+    els.dmName.href = `spillerprofil.html?u=${encodeURIComponent(username)}`;
+    els.dmError.hidden = true;
+    els.overlay.hidden = false;
+    document.body.classList.add("is-dialog-open");
+    await renderConversation();
+    els.dmInput.focus();
+    await Social.markRead(userId);
+    renderThreads();
+    Social.refreshUnreadBadge();
+    startPolling();
+  }
+
+  function closeThread() {
+    openThreadWith = null;
+    els.overlay.hidden = true;
+    document.body.classList.remove("is-dialog-open");
+    stopPolling();
+  }
+
+  async function renderConversation() {
+    if (!openThreadWith) return;
+    const messages = await Social.conversation(openThreadWith);
+    if (!messages.length) {
+      els.dmMessages.innerHTML = `<p class="dm-empty">Ingen meldinger ennå. Si hei!</p>`;
+      return;
+    }
+    els.dmMessages.innerHTML = messages
+      .map((m) => `
+        <div class="dm-bubble ${m.sender_id === profile.id ? "is-mine" : ""}">
+          <span class="dm-bubble-body">${esc(m.body)}</span>
+          <span class="dm-bubble-time">${Social.timeAgo(m.created_at)}</span>
+        </div>`)
+      .join("");
+    els.dmMessages.scrollTop = els.dmMessages.scrollHeight;
+  }
+
+  // Enkel polling mens en samtale er åpen. Ikke sanntid, men nok til at et
+  // svar dukker opp uten at man må laste siden på nytt – og den stopper når
+  // vinduet lukkes, så det ligger ingen løkke og går i bakgrunnen.
+  function startPolling() {
+    stopPolling();
+    pollTimer = window.setInterval(async () => {
+      if (document.hidden || !openThreadWith) return;
+      await renderConversation();
+      await Social.markRead(openThreadWith);
+    }, 8000);
+  }
+
+  function stopPolling() {
+    if (pollTimer) window.clearInterval(pollTimer);
+    pollTimer = null;
+  }
+
+  els.dmForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const body = els.dmInput.value.trim();
+    if (!body || !openThreadWith) return;
+    els.dmInput.value = "";
+    els.dmError.hidden = true;
+    try {
+      await Social.send(openThreadWith, body);
+      await renderConversation();
+      renderThreads();
+    } catch (err) {
+      els.dmError.textContent = err.message;
+      els.dmError.hidden = false;
+      els.dmInput.value = body;
+    }
+  });
+
+  document.querySelector("[data-dm-close]").addEventListener("click", closeThread);
+  els.overlay.addEventListener("click", (e) => { if (e.target === els.overlay) closeThread(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !els.overlay.hidden) closeThread();
+  });
+
+  els.dmBlock.addEventListener("click", async () => {
+    if (!openThreadWith) return;
+    if (!window.confirm("Blokkere denne spilleren? Dere kan ikke sende meldinger til hverandre eller følge hverandre etterpå.")) return;
+    await Social.block(openThreadWith);
+    closeThread();
+    renderThreads();
+    renderFeed();
+  });
+
+  /* ---------------- Finn spillere ---------------- */
+
+  let searchTimer = null;
+  els.search.addEventListener("input", () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(runSearch, 200);
+  });
+
+  async function runSearch() {
+    const q = els.search.value.trim();
+    if (!q) {
+      els.results.hidden = true;
+      return;
+    }
+    const players = await Social.findPlayers(q, 8);
+    els.results.innerHTML = players.length
+      ? players.map((p) => `
+          <div class="rank-search-result">
+            <a class="rank-search-identity" href="spillerprofil.html?u=${encodeURIComponent(p.username)}">
+              ${Auth.avatarHTML(p, 32)}
+              <span class="rank-search-name">${esc(p.username)}</span>
+            </a>
+            <button type="button" class="btn-outline btn-small" data-follow="${p.id}">Følg</button>
+          </div>`).join("")
+      : `<div class="rank-search-empty">Fant ingen som matcher «${esc(q)}».</div>`;
+    els.results.hidden = false;
+
+    els.results.querySelectorAll("[data-follow]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        await Social.follow(btn.dataset.follow);
+        btn.textContent = "Følger ✓";
+        renderFeed();
+      });
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".rank-search-wrap")) els.results.hidden = true;
+  });
+
+  /* ---------------- Init ---------------- */
+
+  async function init() {
+    if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
+    profile = await Auth.getCurrentProfile();
+
+    if (!profile) {
+      els.sub.textContent = "Følg andre spillere og hold kontakten";
+      els.signedOut.hidden = false;
+      return;
+    }
+
+    await Promise.all([renderFeed(), renderThreads()]);
+
+    if (!Social.isAvailable()) {
+      els.unavailable.hidden = false;
+      els.sub.textContent = "";
+      return;
+    }
+
+    els.main.hidden = false;
+    const stats = await Social.followStats(profile.id);
+    els.sub.textContent = `${stats.following} du følger · ${stats.followers} følger deg`;
+
+    // Åpne en samtale direkte via ?til=<brukernavn> (lenken fra «Send
+    // melding» på en spillerprofil).
+    const to = new URLSearchParams(window.location.search).get("til");
+    if (to) {
+      const other = await Social.profileByUsername(to);
+      if (other) openThread(other.id, other.username);
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

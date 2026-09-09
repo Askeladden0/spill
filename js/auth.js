@@ -73,24 +73,32 @@
     if (!guestPoints && !bestEntries.length) return;
 
     if (bestEntries.length) {
-      const { error } = await sb
-        .from("game_records")
-        .insert(bestEntries.map((e) => ({ user_id: profile.id, game_id: e.gameId, score: e.score })));
-      if (error) {
+      // Går gjennom claim_guest_progress (supabase/schema.sql, seksjon 48),
+      // som kjører hver rad gjennom det samme taket som en vanlig runde.
+      // Ellers hadde gjeste-nøklene i localStorage vært en bakvei rundt
+      // valideringen: sett studilla_guest_best_2048 til 9 999 999, logg inn,
+      // og du står øverst på topplista.
+      const { error } = await sb.rpc("claim_guest_progress", {
+        p_records: bestEntries.map((e) => ({ game_id: e.gameId, score: e.score })),
+      });
+      if (error && (error.code === "PGRST202" || /does not exist|could not find the function/i.test(error.message || ""))) {
+        console.warn("[Studilla] claim_guest_progress mangler – kjør supabase/schema.sql på nytt.");
+        const legacy = await sb
+          .from("game_records")
+          .insert(bestEntries.map((e) => ({ user_id: profile.id, game_id: e.gameId, score: e.score })));
+        if (!legacy.error) bestEntries.forEach((e) => window.localStorage.removeItem(e.key));
+      } else if (error) {
         console.error("[Studilla] Klarte ikke overføre gjesterekorder:", error.message);
       } else {
         bestEntries.forEach((e) => window.localStorage.removeItem(e.key));
       }
     }
 
-    if (guestPoints > 0) {
-      const { error } = await sb.rpc("add_points", { p_delta: guestPoints });
-      if (error) {
-        console.error("[Studilla] Klarte ikke overføre gjestepoeng:", error.message);
-      } else {
-        window.localStorage.removeItem(GUEST_POINTS_KEY);
-      }
-    }
+    // Gjestepoengene fra lykkehjulet er nå dekket av rekordoverføringen over
+    // for spilte runder. Poeng som stammer fra hjulet kan ikke lenger legges
+    // til fritt (add_points er stengt for klienten, seksjon 48), så nøkkelen
+    // ryddes bort i stedet for å bli stående og love noe vi ikke gir.
+    if (guestPoints > 0) window.localStorage.removeItem(GUEST_POINTS_KEY);
 
     await renderHeaderAuth();
   }
@@ -194,9 +202,25 @@
     return { pct, xp: xp - currentThreshold, threshold: span };
   }
 
+  /**
+   * Flammen med antall dager på rad. Vises kun når man faktisk har en rekke
+   * gående – en «0 dager»-teller er bare et nederlag å se på hver gang du
+   * åpner siden.
+   */
+  function streakPillHTML(profile) {
+    const days = Number(profile && profile.streak_current) || 0;
+    if (days <= 0) return "";
+    return `
+      <span class="streak-pill" title="${days} dager på rad. Spill en runde i dag for å holde rekken.">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1.5 4 5 5.5 5 9.5A5 5 0 0 1 12 22a5 5 0 0 1-5-5.5c0-1.6.6-2.7 1.4-3.8.4 1 1 1.6 1.8 1.9-.3-2.6.6-5.3 2.8-6.6-.6 1.7-.2 3 .9 4 .3-3.4-.8-6.6-1.9-10z"></path></svg>
+        ${days}
+      </span>`;
+  }
+
   function xpWidgetHTML(profile) {
     if (!LEVELS_ENABLED) {
       return `
+        ${streakPillHTML(profile)}
         <a href="profil.html" class="login-btn" style="padding:6px 14px 6px 6px" aria-label="Min profil">
           ${avatarHTML(profile, 30)}
           <span>${profile.username}</span>
@@ -205,6 +229,7 @@
     }
     const { pct, xp, threshold } = xpProgress(profile);
     return `
+      ${streakPillHTML(profile)}
       <div class="xp-widget" data-xp-widget>
         <div class="xp-level" data-xp-level>${profile.level}</div>
         <div class="xp-meta">
@@ -249,6 +274,17 @@
   async function renderHeaderAuth() {
     const [profile] = await Promise.all([getCurrentProfile(), loadLevels()]);
     renderHeaderWithProfile(profile);
+    renderAuthOnlyLinks(!!profile);
+    if (profile && window.StudillaSocial) window.StudillaSocial.refreshUnreadBadge();
+  }
+
+  /**
+   * Lenker som kun gir mening når man er logget inn (i dag «Venner»/
+   * meldinger). Skjult i markupen som standard, slik at en utlogget besøkende
+   * aldri ser dem blinke innom mens profilen lastes.
+   */
+  function renderAuthOnlyLinks(signedIn) {
+    document.querySelectorAll("[data-auth-only]").forEach((el) => { el.hidden = !signedIn; });
   }
 
   /**

@@ -30,7 +30,18 @@
           Premier
         </a>`;
 
+  // Meldinger er kun relevant når man er logget inn, så lenken ligger skjult
+  // til js/auth.js slår den på (samme mønster som data-admin-only). Prikken
+  // med antall uleste fylles av js/social.js.
+  const MELDINGER_NAV_LINK = `
+        <a href="meldinger.html" class="nav-link" data-page="meldinger" data-auth-only hidden>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 9 9 0 0 1-3.4-.6L3 21l1.9-5.1A8.3 8.3 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"></path></svg>
+          Venner
+          <span class="nav-badge" data-dm-badge hidden aria-label="uleste meldinger"></span>
+        </a>`;
+
   const HEADER_HTML = `
+  <a class="skip-link" href="#hovedinnhold">Hopp til innholdet</a>
   <header class="site-header">
     <div class="header-left">
       <a href="index.html" class="logo">
@@ -49,7 +60,7 @@
         <a href="rangering.html" class="nav-link" data-page="rangering">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
           Rangering
-        </a>
+        </a>${MELDINGER_NAV_LINK}
         <a href="admin.html" class="nav-link" data-page="admin" data-admin-only style="display:none">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-2.9 8.3-7 10-4.1-1.7-7-5.6-7-10V6l7-3z"></path><path d="M9.5 12.2l1.8 1.8 3.4-3.6"></path></svg>
           Admin

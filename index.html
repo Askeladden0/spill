@@ -4,19 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Studilla · Nye triks hver dag</title>
-<meta name="description" content="Oppdag nye triks for å spare og tjene penger hver dag. Fullfør daglige utfordringer og samle poeng.">
+<meta name="description" content="Nye triks hver dag. Slå din egen rekord, hold rekken i gang og se hvem av vennene dine som ligger foran. Gratis, uten nedlasting.">
 <meta property="og:title" content="Studilla · Nye triks hver dag">
-<meta property="og:description" content="Oppdag nye triks for å spare og tjene penger hver dag. Fullfør daglige utfordringer og samle poeng.">
+<meta property="og:description" content="Nye triks hver dag. Slå din egen rekord, hold rekken i gang og se hvem av vennene dine som ligger foran.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Studilla">
 <meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="css/style.css" data-studilla-head>
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/social.css">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "Studilla",
-  "description": "Triks for å spare og tjene penger — fullfør daglige utfordringer og samle poeng."
+  "description": "Nye triks hver dag – slå din egen rekord, hold rekken i gang og se hvem av vennene dine som ligger foran."
 }
 </script>
 </head>
@@ -25,21 +28,63 @@
 
   <div id="site-header"></div>
 
-  <main>
-    <section>
-      <div class="section-heading">
-        <h1>Dagens triks</h1>
-        <span class="section-sub" data-daily-countdown>Byttes ut ved midnatt</span>
+  <main id="hovedinnhold">
+    <!-- Førstegangsbesøkende fikk tidligere kun overskriften «Dagens triks»
+         og et bilde – ingen forklaring på hva Studilla er, og ingenting som
+         skjedde før man hadde klikket seg videre til en ny side. Nå står
+         verdiløftet først, og trikset starter i selve heltefeltet. -->
+    <section class="hero-section">
+      <div class="hero-intro">
+        <span class="hero-kicker">
+          <span class="hero-kicker-dot" aria-hidden="true"></span>
+          DAGENS TRIKS
+          <span class="hero-kicker-sep" aria-hidden="true">·</span>
+          <span data-daily-countdown>byttes ved midnatt</span>
+        </span>
+        <h1>Nye triks hver dag</h1>
+        <p class="hero-lead">
+          Korte utfordringer du rekker i en pause. Slå din egen rekord, hold rekken
+          i gang dag etter dag, og se hvem av vennene dine som ligger foran deg.
+        </p>
+        <div class="hero-cta-row">
+          <button type="button" class="btn-primary btn-lg" data-hero-start>Start her</button>
+          <a class="btn-ghost" href="#alle">Se alle triks</a>
+        </div>
+        <ul class="hero-usps">
+          <li>Gratis, ingen nedlasting</li>
+          <li>Nytt triks hver dag</li>
+          <li>Rekord og rangering</li>
+        </ul>
       </div>
+
       <div class="hero-card" data-hero></div>
     </section>
 
-    <section id="spill">
+    <!-- Vises kun for utloggede: hva de går glipp av, uten å stenge dem ute. -->
+    <section class="signup-strip" data-signup-strip hidden>
+      <div class="signup-strip-text">
+        <strong>Rekordene dine ligger bare i denne nettleseren.</strong>
+        <span>Lag en konto på ti sekunder – kun brukernavn og passord – så følger rekorden, rekken og rangeringen med deg.</span>
+      </div>
+      <a class="btn-primary" href="login.html">Lag konto</a>
+    </section>
+
+    <section id="alle">
       <div class="section-heading spread">
         <h2>Alle triks</h2>
         <span class="section-sub" data-game-count></span>
       </div>
       <div class="game-grid" data-game-grid></div>
+    </section>
+
+    <!-- Guidene og dokumentene lå tidligere som en isolert øy bak ett
+         menypunkt. Her får de en inngang fra forsiden. -->
+    <section>
+      <div class="section-heading spread">
+        <h2>Guider og maler</h2>
+        <a class="section-link" href="guider.html">Se alle →</a>
+      </div>
+      <div class="resource-row" data-resource-row></div>
     </section>
   </main>
 
@@ -55,8 +100,11 @@
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/social.js"></script>
 <script src="js/visit-tracking.js"></script>
 <script src="js/games-data.js"></script>
+<script src="js/levelup-modal.js"></script>
+<script src="js/game-runtime.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

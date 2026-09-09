@@ -542,7 +542,7 @@
           <h2>${escapeHTML(featured.title)}</h2>
           <p>${escapeHTML(featured.excerpt)}</p>
           <div class="guide-feature-actions">
-            <a href="guide.html?id=${encodeURIComponent(featured.id)}"><button type="button" class="btn-primary">Les guiden</button></a>
+            <a href="guide.html?id=${encodeURIComponent(featured.id)}" class="btn-primary btn-link">Les guiden</a>
             ${metaBits ? `<span class="section-sub">${escapeHTML(metaBits)}</span>` : ""}
           </div>
         </div>
