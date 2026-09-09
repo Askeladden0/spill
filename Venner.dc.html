@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; background:#0d1117; color:#e8edf5; font-family:'Poppins', system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#2ee87f; text-decoration:none; }
+  a:hover { color:#5cf5a0; }
+  ::selection { background:#2ee87f; color:#0d1117; }
+  input, button { font-family:inherit; }
+  ::-webkit-scrollbar { width:10px; }
+  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.09); border-radius:99px; border:3px solid #131a25; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#0d1117;color:#e8edf5;display:flex;flex-direction:column;padding-bottom:80px">
+
+  <header style="display:flex;align-items:center;justify-content:space-between;gap:32px;padding:0 32px;height:72px;background:#131a25;border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;z-index:20">
+    <div style="display:flex;align-items:center;gap:36px">
+      <a href="index.html" style="display:flex;align-items:center;gap:10px">
+        <span style="width:30px;height:30px;border-radius:9px;background:#0d1117;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"></rect><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"></rect></svg></span>
+        <span style="font-size:20px;font-weight:800;letter-spacing:-.02em;color:#fff">Studi<span style="color:#2ee87f">ll</span>a</span>
+      </a>
+      <nav style="display:flex;align-items:center;gap:8px">
+        <a href="index.html#spill" style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600" style-hover="background:rgba(255,255,255,.05);color:#e8edf5">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
+          Triks
+        </a>
+        <a href="guider.html" style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600" style-hover="background:rgba(255,255,255,.05);color:#e8edf5">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5V5.5z"></path><path d="M8 7.5h7"></path><path d="M8 11h5"></path></svg>
+          Guider
+        </a>
+        <a href="rangering.html" style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600" style-hover="background:rgba(255,255,255,.05);color:#e8edf5">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
+          Rangering
+        </a>
+        <a href="meldinger.html" style="position:relative;display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;background:rgba(46,232,127,.12);color:#2ee87f;font-size:14px;font-weight:600">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 9 9 0 0 1-3.4-.6L3 21l1.9-5.1A8.3 8.3 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"></path></svg>
+          Venner
+          {{ navBadge }}
+        </a>
+      </nav>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <a href="https://www.tiktok.com/@snorre.saus" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#96a3b8;font-size:13px;font-weight:600;white-space:nowrap">
+        <img src="assets/img/snorre-saus-avatar.jpeg" alt="" width="24" height="24" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.09)">
+        <span>Lagd av Snorre Saus</span>
+      </a>
+      <button type="button" style="display:flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer">
+        {{ meAvatarSmall }}
+        Snorrefan
+      </button>
+    </div>
+  </header>
+
+  <main style="max-width:1240px;margin:0 auto;padding:36px 32px 0;display:flex;flex-direction:column;gap:26px;width:100%;flex:1">
+
+    
+
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div>
+        <h1 style="margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em;color:#fff">Venner</h1>
+        <span style="font-size:13px;font-weight:500;color:#7c8aa0">{{ subtitle }}</span>
+      </div><div style="display:flex;align-items:center;gap:10px">
+        {{ unreadSummary }}
+        <button type="button" onClick="{{ openGroup }}" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:12px;border:none;background:#2ee87f;color:#0d1117;font-size:13.5px;font-weight:800;cursor:pointer" style-hover="background:#5cf5a0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Ny gruppechat
+        </button>
+      </div>
+      
+    </div><div style="display:grid;grid-template-columns:330px minmax(0,1fr);border-radius:20px;border:1px solid rgba(255,255,255,.06);background:#131a25;overflow:hidden;height:660px">
+
+      <div style="display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.06);min-width:0">
+        <div style="padding:16px 16px 12px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid rgba(255,255,255,.06)">
+          <input type="search" placeholder="Søk i personer og grupper …" value="{{ q }}" onChange="{{ onSearch }}" style="width:100%;padding:10px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:13.5px;outline:none" style-focus="border-color:#2ee87f">
+          <div style="display:flex;gap:6px">
+            <button type="button" onClick="{{ showDm }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 10px;border-radius:10px;border:none;background:{{ dmTabBg }};color:{{ dmTabColor }};font-size:12.5px;font-weight:700;cursor:pointer">Meldinger {{ dmTabBadge }}</button>
+            <button type="button" onClick="{{ showReq }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 10px;border-radius:10px;border:none;background:{{ reqTabBg }};color:{{ reqTabColor }};font-size:12.5px;font-weight:700;cursor:pointer">La deg til {{ reqTabBadge }}</button>
+          </div>
+        </div>
+
+        <sc-if value="{{ isDmTab }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;overflow-y:auto;min-height:0">
+            <sc-if value="{{ hasUnread }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:center;gap:8px;padding:14px 16px 8px">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#ff8fa5">NYE MELDINGER</span>
+                <span style="flex:1;height:1px;background:rgba(255,90,122,.25)"></span>
+              </div>
+              <sc-for list="{{ unreadThreads }}" as="t" hint-placeholder-count="3">
+                <button type="button" onClick="{{ t.open }}" style="display:flex;align-items:center;gap:12px;width:100%;padding:11px 16px;border:none;border-left:3px solid {{ t.mark }};background:{{ t.bg }};text-align:left;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+                  {{ t.avatarNode }}
+                  <span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0">
+                    <span style="display:flex;align-items:center;gap:7px;min-width:0">
+                      <span style="font-size:14px;font-weight:{{ t.nameWeight }};color:{{ t.nameColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.name }}</span>
+                      {{ t.kindNode }}
+                    </span>
+                    <span style="font-size:12.5px;font-weight:{{ t.lastWeight }};color:{{ t.lastColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.last }}</span>
+                  </span>
+                  <span style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+                    <span style="font-size:11px;color:#5f6b7d;white-space:nowrap">{{ t.time }}</span>
+                    {{ t.badgeNode }}
+                  </span>
+                </button>
+              </sc-for>
+            </sc-if>
+
+            <div style="display:flex;align-items:center;gap:8px;padding:16px 16px 8px">
+              <span style="font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#6b7b93">TIDLIGERE</span>
+              <span style="flex:1;height:1px;background:rgba(255,255,255,.06)"></span>
+            </div>
+            <sc-for list="{{ readThreads }}" as="t" hint-placeholder-count="4">
+              <button type="button" onClick="{{ t.open }}" style="display:flex;align-items:center;gap:12px;width:100%;padding:11px 16px;border:none;border-left:3px solid {{ t.mark }};background:{{ t.bg }};text-align:left;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+                {{ t.avatarNode }}
+                <span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <span style="display:flex;align-items:center;gap:7px;min-width:0">
+                    <span style="font-size:14px;font-weight:{{ t.nameWeight }};color:{{ t.nameColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.name }}</span>
+                    {{ t.kindNode }}
+                  </span>
+                  <span style="font-size:12.5px;font-weight:{{ t.lastWeight }};color:{{ t.lastColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.last }}</span>
+                </span>
+                <span style="font-size:11px;color:#5f6b7d;white-space:nowrap;flex-shrink:0">{{ t.time }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isReqTab }}">
+          <div style="flex:1;overflow-y:auto;min-height:0;padding:8px 0">
+            <sc-for list="{{ requests }}" as="r" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04)">
+                {{ r.avatarNode }}
+                <span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <span style="font-size:14px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</span>
+                  <span style="font-size:12px;color:#7c8aa0">{{ r.meta }}</span>
+                </span>
+                {{ r.actionNode }}
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;flex-direction:column;min-width:0">
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06)">
+          {{ threadAvatar }}
+          <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+            <span style="font-size:15px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ threadName }}</span>
+            <span style="font-size:11.5px;font-weight:500;color:#7c8aa0">{{ threadMeta }}</span>
+          </div>
+          <span style="flex:1"></span>
+          {{ threadActions }}
+        </div>
+
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:20px 22px;overflow-y:auto;min-height:0">
+          <sc-for list="{{ messages }}" as="m" hint-placeholder-count="6">
+            <div style="display:flex;flex-direction:column;align-items:{{ m.align }};gap:3px;margin-top:{{ m.gapTop }}">
+              {{ m.senderNode }}
+              <div style="max-width:70%;display:flex;flex-direction:column;gap:3px;padding:9px 13px;border-radius:{{ m.radius }};background:{{ m.bg }}">
+                <span style="font-size:14px;line-height:1.5;color:#e8edf5;word-break:break-word">{{ m.body }}</span>
+                <span style="font-size:10.5px;color:#7c8aa0">{{ m.time }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;padding:12px 16px 14px;border-top:1px solid rgba(255,255,255,.06)">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            {{ soonActions }}
+          </div>
+          <form onSubmit="{{ onSend }}" style="display:flex;gap:8px">
+            <input type="text" placeholder="Skriv en melding …" value="{{ draft }}" onChange="{{ onDraft }}" maxLength="1000" style="flex:1;padding:12px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:14px;outline:none" style-focus="border-color:#2ee87f">
+            <button type="submit" style="padding:12px 24px;border:none;border-radius:11px;background:#2ee87f;color:#0d1117;font-size:14px;font-weight:800;cursor:pointer" style-hover="background:#5cf5a0">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {{ groupModal }}
+
+  <footer style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;max-width:1240px;width:100%;margin:56px auto 0;padding:24px 32px 0;border-top:1px solid rgba(255,255,255,.06)">
+    <div style="display:flex;align-items:center;gap:9px">
+      <span style="width:22px;height:22px;border-radius:7px;background:#0d1117;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"></rect><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"></rect></svg></span>
+      <span style="font-size:13px;font-weight:500;color:#7c8aa0">© 2026 Studilla</span>
+    </div>
+    <nav style="display:flex;align-items:center;gap:20px;font-size:13px;font-weight:600">
+      <a href="kontakt.html" style="color:#7c8aa0">Kontakt</a>
+      <a href="vilkar.html#personvern" style="color:#7c8aa0">Personvern</a>
+      <a href="vilkar.html" style="color:#7c8aa0">Vilkår</a>
+      <a href="https://www.tiktok.com/@snorre.saus" target="_blank" rel="noopener noreferrer" style="color:#7c8aa0">TikTok</a>
+    </nav>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const HOLE = "#0d1117";
+const FIGURES = {
+  robot: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["rect",{x:3.4,y:3,width:17.2,height:14.6,rx:5}],["rect",{x:11.3,y:0.2,width:1.4,height:3.2,rx:0.7}],["circle",{cx:12,cy:0.9,r:1.3}],["rect",{x:7,y:8,width:3.6,height:3.6,rx:1.2,hole:true}],["rect",{x:13.4,y:8,width:3.6,height:3.6,rx:1.2,hole:true}],["rect",{x:8.8,y:13.6,width:6.4,height:1.7,rx:0.85,hole:true}]],
+  katt: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["polygon",{points:"4.4,7.6 6.2,0.6 11.4,5.4"}],["polygon",{points:"19.6,7.6 17.8,0.6 12.6,5.4"}],["circle",{cx:12,cy:10.2,r:8}],["circle",{cx:8.9,cy:9.4,r:1.7,hole:true}],["circle",{cx:15.1,cy:9.4,r:1.7,hole:true}],["polygon",{points:"10.8,12.6 13.2,12.6 12,14.4",hole:true}],["rect",{x:9.4,y:15,width:5.2,height:1.3,rx:0.65,hole:true}]],
+  spoke: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["circle",{cx:12,cy:10.2,r:8}],["ellipse",{cx:8.9,cy:9.2,rx:1.8,ry:2.4,hole:true}],["ellipse",{cx:15.1,cy:9.2,rx:1.8,ry:2.4,hole:true}],["ellipse",{cx:12,cy:14.4,rx:2.4,ry:1.9,hole:true}]],
+  alien: [["rect",{x:4,y:19,width:16,height:7.5,rx:3.5}],["ellipse",{cx:12,cy:10.4,rx:7.8,ry:8.6}],["rect",{x:11.4,y:0.2,width:1.2,height:2.6,rx:0.6}],["ellipse",{cx:8.4,cy:10.2,rx:2.1,ry:3.4,hole:true}],["ellipse",{cx:15.6,cy:10.2,rx:2.1,ry:3.4,hole:true}],["rect",{x:10.6,y:15.6,width:2.8,height:1.2,rx:0.6,hole:true}]],
+  fugl: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["circle",{cx:12,cy:10.2,r:8}],["circle",{cx:9,cy:8.6,r:2.6,hole:true}],["circle",{cx:15.4,cy:9.2,r:1.3,hole:true}],["polygon",{points:"11.6,11.6 16.4,13.4 11.6,15.4",hole:true}]],
+  bjorn: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["circle",{cx:5.4,cy:4.6,r:3.4}],["circle",{cx:18.6,cy:4.6,r:3.4}],["circle",{cx:12,cy:10.6,r:8}],["circle",{cx:9,cy:9.4,r:1.5,hole:true}],["circle",{cx:15,cy:9.4,r:1.5,hole:true}],["ellipse",{cx:12,cy:14,rx:3.2,ry:2.4,hole:true}],["ellipse",{cx:12,cy:13.2,rx:1.1,ry:0.8}]],
+  krystall: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["circle",{cx:12,cy:10.2,r:8}],["circle",{cx:8.8,cy:8.8,r:1.9,hole:true}],["rect",{x:12.8,y:8.4,width:4,height:1.6,rx:0.8,hole:true}],["rect",{x:8.4,y:12.6,width:7,height:1.9,rx:0.95,hole:true}],["rect",{x:10.6,y:13.6,width:2.8,height:4,rx:1.4,hole:true}]],
+  blekk: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["polygon",{points:"5.6,4 8.8,5.4 6.6,1.4"}],["polygon",{points:"18.4,4 15.2,5.4 17.4,1.4"}],["circle",{cx:12,cy:10.8,r:8}],["circle",{cx:8.3,cy:9.4,r:1.8,hole:true}],["circle",{cx:12,cy:7.4,r:1.4,hole:true}],["circle",{cx:15.7,cy:9.4,r:1.8,hole:true}],["rect",{x:8.2,y:13,width:7.6,height:2.4,rx:1.2,hole:true}],["rect",{x:10,y:13,width:1.3,height:1.1}],["rect",{x:12.7,y:13,width:1.3,height:1.1}]],
+};
+
+function figureSVG(key) {
+  const shapes = (FIGURES[key] || FIGURES.robot).map(([tag, a]) => {
+    const attrs = Object.keys(a).filter((k) => k !== "hole").map((k) => `${k}="${a[k]}"`).join(" ");
+    return `<${tag} ${attrs}${a.hole ? ` fill="${HOLE}"` : ""}></${tag}>`;
+  }).join("");
+  return `<svg width="100%" height="100%" viewBox="1.5 1 21 21" fill="currentColor" style="display:block">${shapes}</svg>`;
+}
+
+const ME = { id: "me", name: "Snorrefan", color: "#2ee87f", fig: "bjorn" };
+const PEOPLE = {
+  p1: { id: "p1", name: "Emiliebg", color: "#f472b6", fig: "katt" },
+  p2: { id: "p2", name: "sondrek", color: "#38bdf8", fig: "robot" },
+  p3: { id: "p3", name: "MatteMia", color: "#ffd166", fig: "fugl" },
+  p4: { id: "p4", name: "kasper.t", color: "#a78bfa", fig: "alien" },
+  p5: { id: "p5", name: "noraaab", color: "#fb923c", fig: "blekk" },
+  p6: { id: "p6", name: "Vegard_09", color: "#ff9385", fig: "spoke" },
+  p7: { id: "p7", name: "linneaks", color: "#e8edf5", fig: "krystall" },
+};
+
+const THREADS = [
+  { id: "g1", kind: "group", name: "3STB tetrisgjengen", members: ["p1", "p2", "p4"], unread: 4, time: "22:26", ts: 9,
+    messages: [
+      { from: "p2", body: "Noen som klarer å slå 41 200 i Tetris?", time: "21:58" },
+      { from: "p4", body: "Jeg prøvde i går, kom til 38k 😤", time: "22:04" },
+      { from: "p1", body: "Har akkurat slått rekorden min i Fruktfusjon", time: "22:19" },
+      { from: "p2", body: "Vi kjører en runde etter skolen i morgen?", time: "22:26" },
+    ] },
+  { id: "p3", kind: "dm", name: "MatteMia", members: ["p3"], unread: 2, time: "21:40", ts: 8,
+    messages: [
+      { from: "p3", body: "Så du kom forbi meg på rangeringen 😅", time: "21:33" },
+      { from: "me", body: "Bare vent til uka er omme", time: "21:36" },
+      { from: "p3", body: "Revansje i Snake i kveld?", time: "21:39" },
+      { from: "p3", body: "Jeg er klar når som helst", time: "21:40" },
+    ] },
+  { id: "p5", kind: "dm", name: "noraaab", members: ["p5"], unread: 1, time: "19:12", ts: 7,
+    messages: [
+      { from: "p5", body: "Hvilken guide brukte du for å spare på mat?", time: "19:12" },
+    ] },
+  { id: "p1", kind: "dm", name: "Emiliebg", members: ["p1"], unread: 0, time: "i går", ts: 6,
+    messages: [
+      { from: "me", body: "Gz med førsteplassen", time: "i går" },
+      { from: "p1", body: "Takk! Du er rett bak meg altså", time: "i går" },
+    ] },
+  { id: "g2", kind: "group", name: "Studilla-klubben", members: ["p3", "p5", "p6", "p7"], unread: 0, time: "i går", ts: 5,
+    messages: [
+      { from: "p6", body: "Nytt dagens triks er ute", time: "i går" },
+      { from: "p7", body: "Bubble Shooter igjen 😴", time: "i går" },
+      { from: "me", body: "Jeg tar en runde nå", time: "i går" },
+    ] },
+  { id: "p2", kind: "dm", name: "sondrek", members: ["p2"], unread: 0, time: "man", ts: 4,
+    messages: [
+      { from: "p2", body: "Sender deg guiden i morgen", time: "man" },
+      { from: "me", body: "Perfekt 👍", time: "man" },
+    ] },
+  { id: "p4", kind: "dm", name: "kasper.t", members: ["p4"], unread: 0, time: "søn", ts: 3,
+    messages: [{ from: "p4", body: "Bra spilt i går!", time: "søn" }] },
+];
+
+const REQUESTS = [
+  { id: "p6", name: "Vegard_09", meta: "La deg til · 2 timer siden", mutual: 3 },
+  { id: "p7", name: "linneaks", meta: "La deg til · i går", mutual: 1 },
+  { id: "p8", name: "Oskar2011", meta: "La deg til · 3 dager siden", mutual: 5 },
+];
+
+class Component extends DCLogic {
+  state = {
+    tab: "dm",
+    active: "g1",
+    q: "",
+    draft: "",
+    threads: THREADS.map((t) => Object.assign({}, t, { messages: t.messages.slice() })),
+    requests: REQUESTS.slice(),
+    accepted: [],
+    groupOpen: false,
+    groupSel: [],
+    groupName: "",
+    toast: null,
+  };
+
+  person(id) { return id === "me" ? ME : (PEOPLE[id] || { id, name: id, color: "#7c8aa0", fig: "robot" }); }
+
+  avatar(p, size, ring) {
+    const pad = Math.max(2, Math.round(size * 0.14));
+    return React.createElement("span", {
+      key: p.id + size,
+      style: {
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        width: size + "px", height: size + "px", borderRadius: Math.round(size * 0.32) + "px",
+        background: p.color, color: HOLE, padding: pad + "px", flexShrink: 0, lineHeight: 1,
+        boxShadow: ring ? "0 0 0 2px #131a25" : "none",
+      },
+      dangerouslySetInnerHTML: { __html: figureSVG(p.fig) },
+    });
+  }
+
+  threadAvatarNode(t, size) {
+    if (t.kind !== "group") return this.avatar(this.person(t.members[0]), size, false);
+    const s = Math.round(size * 0.66);
+    return React.createElement("span", { style: { position: "relative", width: size + "px", height: size + "px", flexShrink: 0 } },
+      React.createElement("span", { style: { position: "absolute", right: 0, top: 0 } }, this.avatar(this.person(t.members[0]), s, true)),
+      React.createElement("span", { style: { position: "absolute", left: 0, bottom: 0 } }, this.avatar(this.person(t.members[1]), s, true)));
+  }
+
+  pill(text, color, bg, border) {
+    return React.createElement("span", { style: { padding: "2px 8px", borderRadius: "99px", background: bg, border: "1px solid " + border, color, fontSize: "10px", fontWeight: 800, letterSpacing: ".04em", whiteSpace: "nowrap", flexShrink: 0 } }, text);
+  }
+
+  soonBtn(label, iconPoints) {
+    return React.createElement("button", {
+      key: label, type: "button", title: "Kommer senere",
+      onClick: () => { this.setState({ toast: label + " kommer senere" }); window.setTimeout(() => this.setState({ toast: null }), 2200); },
+      style: { display: "inline-flex", alignItems: "center", gap: "7px", padding: "7px 12px", borderRadius: "99px", border: "1px dashed rgba(255,179,71,.42)", background: "rgba(255,179,71,.08)", color: "#ffb347", fontSize: "12px", fontWeight: 700, cursor: "pointer" },
+    }, label, React.createElement("span", { style: { padding: "1px 6px", borderRadius: "99px", background: "rgba(255,179,71,.16)", fontSize: "9.5px", fontWeight: 800, letterSpacing: ".05em" } }, "KOMMER"));
+  }
+
+  threadRow(t) {
+    const active = this.state.active === t.id;
+    return {
+      name: t.name,
+      last: (t.messages.length ? (t.messages[t.messages.length - 1].from === "me" ? "Du: " : (t.kind === "group" ? this.person(t.messages[t.messages.length - 1].from).name + ": " : "")) + t.messages[t.messages.length - 1].body : "Ingen meldinger ennå"),
+      time: t.time,
+      avatarNode: this.threadAvatarNode(t, 40),
+      kindNode: t.kind === "group" ? this.pill("GRUPPE", "#96a3b8", "rgba(255,255,255,.05)", "rgba(255,255,255,.09)") : null,
+      badgeNode: t.unread ? React.createElement("span", { style: { minWidth: "18px", padding: "1px 6px", borderRadius: "99px", background: "#ff5a7a", color: "#fff", fontSize: "10.5px", fontWeight: 800, textAlign: "center" } }, t.unread) : null,
+      bg: active ? "rgba(46,232,127,.10)" : "transparent",
+      mark: active ? "#2ee87f" : "transparent",
+      nameWeight: t.unread ? 800 : 700,
+      nameColor: t.unread ? "#fff" : "#e8edf5",
+      lastWeight: t.unread ? 600 : 500,
+      lastColor: t.unread ? "#c3ccda" : "#7c8aa0",
+      open: () => this.setState({
+        active: t.id,
+        threads: this.state.threads.map((x) => (x.id === t.id ? Object.assign({}, x, { unread: 0 }) : x)),
+      }),
+    };
+  }
+
+  renderVals() {
+    const q = this.state.q.trim().toLowerCase();
+    const all = this.state.threads.filter((t) => !q || t.name.toLowerCase().indexOf(q) > -1);
+    const sorted = all.slice().sort((a, b) => b.ts - a.ts);
+    const unreadThreads = sorted.filter((t) => t.unread > 0).map((t) => this.threadRow(t));
+    const readThreads = sorted.filter((t) => !t.unread).map((t) => this.threadRow(t));
+    const unreadTotal = this.state.threads.reduce((n, t) => n + t.unread, 0);
+    const openReq = this.state.requests.length;
+
+    const active = this.state.threads.find((t) => t.id === this.state.active) || this.state.threads[0];
+    const messages = active.messages.map((m, i) => {
+      const mine = m.from === "me";
+      const prev = active.messages[i - 1];
+      const showSender = active.kind === "group" && !mine && (!prev || prev.from !== m.from);
+      return {
+        body: m.body,
+        time: m.time,
+        align: mine ? "flex-end" : "flex-start",
+        gapTop: prev && prev.from === m.from ? "2px" : "12px",
+        radius: mine ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+        bg: mine ? "rgba(46,232,127,.15)" : "rgba(255,255,255,.06)",
+        senderNode: showSender
+          ? React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: 700, color: "#7c8aa0", paddingLeft: "2px" } }, this.avatar(this.person(m.from), 16, false), this.person(m.from).name)
+          : null,
+      };
+    });
+
+    const tabBtn = (on) => ({ bg: on ? "rgba(46,232,127,.12)" : "rgba(255,255,255,.04)", color: on ? "#2ee87f" : "#96a3b8" });
+    const dmT = tabBtn(this.state.tab === "dm");
+    const reqT = tabBtn(this.state.tab === "req");
+    const countPill = (n, color) => (n ? React.createElement("span", { style: { minWidth: "17px", padding: "1px 6px", borderRadius: "99px", background: color, color: "#fff", fontSize: "10px", fontWeight: 800 } }, n) : null);
+
+    const requests = this.state.requests.map((r) => {
+      const p = Object.assign({ fig: "robot", color: "#7c8aa0" }, PEOPLE[r.id] || {}, { id: r.id, name: r.name });
+      const accepted = this.state.accepted.indexOf(r.id) > -1;
+      return {
+        name: r.name,
+        meta: r.meta + " · " + r.mutual + " felles venner",
+        avatarNode: this.avatar(p, 40, false),
+        actionNode: accepted
+          ? React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: "#2ee87f", flexShrink: 0 } },
+              React.createElement("svg", { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("polyline", { points: "20 6 9 17 4 12" })), "Venner")
+          : React.createElement("button", {
+              type: "button",
+              onClick: () => this.setState({ accepted: this.state.accepted.concat([r.id]) }),
+              style: { flexShrink: 0, padding: "7px 14px", borderRadius: "99px", border: "1px solid rgba(46,232,127,.45)", background: "rgba(46,232,127,.14)", color: "#2ee87f", fontSize: "12.5px", fontWeight: 700, cursor: "pointer" },
+            }, "Legg til"),
+      };
+    });
+
+    const soonActions = [
+      this.soonBtn("Inviter til et triks"),
+      this.soonBtn("Send rekorden min"),
+      this.state.toast ? React.createElement("span", { key: "toast", style: { fontSize: "12px", fontWeight: 600, color: "#ffb347" } }, this.state.toast) : null,
+    ];
+
+    const memberNames = active.members.map((id) => this.person(id).name);
+
+    return {
+      meAvatarSmall: this.avatar(ME, 30, false),
+      navBadge: unreadTotal ? React.createElement("span", { style: { display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: "17px", height: "17px", padding: "0 5px", borderRadius: "99px", background: "#ff5a7a", color: "#fff", fontSize: "10.5px", fontWeight: 800, lineHeight: 1 } }, unreadTotal) : null,
+      subtitle: `${this.state.threads.length} samtaler · ${unreadTotal} nye meldinger · ${openReq} som har lagt deg til`,
+      unreadSummary: unreadTotal
+        ? React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: "8px", padding: "9px 14px", borderRadius: "12px", border: "1px solid rgba(255,90,122,.3)", background: "rgba(255,90,122,.1)", color: "#ff8fa5", fontSize: "13px", fontWeight: 700 } },
+            React.createElement("span", { style: { width: "8px", height: "8px", borderRadius: "50%", background: "#ff5a7a" } }), unreadTotal + " nye meldinger")
+        : null,
+      q: this.state.q,
+      onSearch: (e) => this.setState({ q: e.target.value }),
+      isDmTab: this.state.tab === "dm",
+      isReqTab: this.state.tab === "req",
+      showDm: () => this.setState({ tab: "dm" }),
+      showReq: () => this.setState({ tab: "req" }),
+      dmTabBg: dmT.bg, dmTabColor: dmT.color, reqTabBg: reqT.bg, reqTabColor: reqT.color,
+      dmTabBadge: countPill(unreadTotal, "#ff5a7a"),
+      reqTabBadge: countPill(openReq - this.state.accepted.length, "#38bdf8"),
+      hasUnread: unreadThreads.length > 0,
+      unreadThreads, readThreads, requests,
+      threadName: active.name,
+      threadAvatar: this.threadAvatarNode(active, 38),
+      threadMeta: active.kind === "group" ? memberNames.join(", ") + " og deg" : "Venn · aktiv nå",
+      threadActions: React.createElement("div", { style: { display: "flex", gap: "8px" } },
+        React.createElement("a", { href: "spillerprofil.html", style: { padding: "7px 13px", borderRadius: "9px", border: "1px solid rgba(255,255,255,.09)", color: "#96a3b8", fontSize: "12.5px", fontWeight: 700, whiteSpace: "nowrap" } }, active.kind === "group" ? "Se medlemmer" : "Se profil"),
+        React.createElement("button", { type: "button", style: { padding: "7px 13px", borderRadius: "9px", border: "1px solid rgba(255,90,122,.3)", background: "transparent", color: "#ff8fa5", fontSize: "12.5px", fontWeight: 700, cursor: "pointer" } }, "Blokker")),
+      messages,
+      soonActions,
+      draft: this.state.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onSend: (e) => {
+        e.preventDefault();
+        const body = this.state.draft.trim();
+        if (!body) return;
+        this.setState({
+          draft: "",
+          threads: this.state.threads.map((t) => (t.id === active.id
+            ? Object.assign({}, t, { ts: 99, time: "nå", messages: t.messages.concat([{ from: "me", body, time: "nå" }]) })
+            : t)),
+        });
+      },
+      openGroup: () => this.setState({ groupOpen: true, groupSel: [], groupName: "" }),
+      groupModal: this.state.groupOpen ? this.groupModal() : null,
+    };
+  }
+
+  groupModal() {
+    const sel = this.state.groupSel;
+    const toggle = (id) => this.setState({ groupSel: sel.indexOf(id) > -1 ? sel.filter((x) => x !== id) : sel.concat([id]) });
+    const rows = Object.keys(PEOPLE).map((id) => {
+      const p = PEOPLE[id];
+      const on = sel.indexOf(id) > -1;
+      return React.createElement("button", {
+        key: id, type: "button", onClick: () => toggle(id),
+        style: { display: "flex", alignItems: "center", gap: "11px", width: "100%", padding: "9px 12px", borderRadius: "11px", border: "1px solid " + (on ? "rgba(46,232,127,.4)" : "transparent"), background: on ? "rgba(46,232,127,.1)" : "transparent", color: "#e8edf5", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", textAlign: "left" },
+      }, this.avatar(p, 32, false), React.createElement("span", { style: { flex: 1 } }, p.name),
+        React.createElement("span", { style: { width: "18px", height: "18px", borderRadius: "6px", border: "1.5px solid " + (on ? "#2ee87f" : "rgba(255,255,255,.18)"), background: on ? "#2ee87f" : "transparent" } }));
+    });
+
+    const create = () => {
+      if (sel.length < 2) return;
+      const id = "g" + Date.now();
+      const name = this.state.groupName.trim() || sel.map((x) => PEOPLE[x].name).slice(0, 3).join(", ");
+      this.setState({
+        groupOpen: false,
+        active: id,
+        threads: [{ id, kind: "group", name, members: sel, unread: 0, time: "nå", ts: 100, messages: [{ from: "me", body: "Hei! Ny gruppe 🎮", time: "nå" }] }].concat(this.state.threads),
+      });
+    };
+
+    return React.createElement("div", {
+      style: { position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(6,9,14,.72)", backdropFilter: "blur(3px)" },
+      onClick: (e) => { if (e.target === e.currentTarget) this.setState({ groupOpen: false }); },
+    }, React.createElement("div", { style: { width: "100%", maxWidth: "420px", borderRadius: "20px", border: "1px solid rgba(255,255,255,.09)", background: "#131a25", boxShadow: "0 24px 64px rgba(0,0,0,.55)", overflow: "hidden", display: "flex", flexDirection: "column", maxHeight: "80vh" } },
+      React.createElement("div", { style: { padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,.06)" } },
+        React.createElement("div", { style: { fontSize: "16px", fontWeight: 800, color: "#fff" } }, "Ny gruppechat"),
+        React.createElement("div", { style: { fontSize: "12.5px", color: "#7c8aa0", marginTop: "2px" } }, "Velg minst to venner")),
+      React.createElement("div", { style: { padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,.06)" } },
+        React.createElement("input", { type: "text", placeholder: "Navn på gruppa (valgfritt)", value: this.state.groupName, onChange: (e) => this.setState({ groupName: e.target.value }), style: { width: "100%", padding: "11px 14px", borderRadius: "11px", border: "1px solid rgba(255,255,255,.09)", background: "#0d1117", color: "#e8edf5", fontSize: "13.5px", outline: "none", fontFamily: "inherit" } })),
+      React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "8px", display: "flex", flexDirection: "column", gap: "2px" } }, rows),
+      React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,.06)" } },
+        React.createElement("span", { style: { fontSize: "12.5px", color: "#7c8aa0" } }, sel.length + " valgt"),
+        React.createElement("div", { style: { display: "flex", gap: "8px" } },
+          React.createElement("button", { type: "button", onClick: () => this.setState({ groupOpen: false }), style: { padding: "10px 18px", borderRadius: "10px", border: "1px solid rgba(255,255,255,.09)", background: "transparent", color: "#e8edf5", fontSize: "13.5px", fontWeight: 700, cursor: "pointer" } }, "Avbryt"),
+          React.createElement("button", { type: "button", onClick: create, disabled: sel.length < 2, style: { padding: "10px 20px", borderRadius: "10px", border: "none", background: sel.length < 2 ? "rgba(46,232,127,.25)" : "#2ee87f", color: "#0d1117", fontSize: "13.5px", fontWeight: 800, cursor: sel.length < 2 ? "not-allowed" : "pointer" } }, "Opprett")))));
+  }
+}
+</script>
+</body>
+</html>
