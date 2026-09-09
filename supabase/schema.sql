@@ -467,7 +467,11 @@ create unique index if not exists games_single_daily_idx
 
 insert into public.games (id, name, genre, rating, points, time_estimate, description, thumbnail_url, icon_url, is_daily_game, sort_order) values
   ('fruktfusjon', 'Fruktfusjon', 'Puslespill', '4,7', 'Din skår = dine poeng', '~10 min', 'Slipp frukt ned i krukken og slå sammen like frukter til større og større frukter, uten at haugen renner over.', 'assets/img/games/fruktfusjon.svg', 'assets/img/icons/fruktfusjon.svg', false, 1),
-  ('2048', '2048', 'Puslespill', '4,9', 'Din skår = dine poeng', '~5 min', 'Slå sammen brikker med like tall og jag den store 2048-brikken. Skåren din legges rett til poengsummen og nivået ditt.', 'assets/img/games/2048.svg', 'assets/img/icons/2048.svg', true, 2),
+  -- is_daily_game settes kun hvis ingen triks er merket som dagens fra før.
+  -- Samme fallgruve som guides_single_featured_idx lenger nede: «on conflict
+  -- (id)» fanger ikke et brudd på games_single_daily_idx, så hadde man
+  -- slettet 2048 og merket et annet triks som dagens, stoppet hele filen her.
+  ('2048', '2048', 'Puslespill', '4,9', 'Din skår = dine poeng', '~5 min', 'Slå sammen brikker med like tall og jag den store 2048-brikken. Skåren din legges rett til poengsummen og nivået ditt.', 'assets/img/games/2048.svg', 'assets/img/icons/2048.svg', not exists (select 1 from public.games where is_daily_game), 2),
   ('tetris', 'Tetris', 'Puslespill', '4,9', 'Din skår = dine poeng', '~15 min', 'Styr de fargerike klossene mens de faller, fyll hele rader for å sprenge dem, og jag din egen rekord i det klassiske puslespillet.', 'assets/img/games/tetris.svg', 'assets/img/icons/tetris.svg', false, 3),
   ('block-blast', 'Block Blast', 'Puslespill', '4,8', 'Din skår = dine poeng', '~10 min', 'Dra fargerike klosser fra hånden din over på brettet og fyll hele rader eller kolonner for å sprenge dem og score poeng.', 'assets/img/games/block-blast.svg', 'assets/img/icons/block-blast.svg', false, 4),
   ('snake', 'Snake', 'Arkade', '4,6', 'Din skår = dine poeng', '~8 min', 'Styr slangen rundt brettet, spis prikkene og voks deg lengst mulig uten å treffe deg selv eller veggen.', 'assets/img/games/snake.svg', 'assets/img/icons/snake.svg', false, 5),
@@ -1763,8 +1767,21 @@ create policy "guide_files_admin_delete" on storage.objects
 -- Eksempelguiden fra designet ("Hvordan tjene penger på å sitte i
 -- elevrådet") settes inn som utgangspunkt, med én modul av hver type – rediger
 -- eller slett den fritt fra guider.html/guide.html, den er ikke spesialbehandlet.
+--
+-- is_featured settes kun hvis INGEN guide er fremhevet fra før.
+--
+-- «on conflict (id) do nothing» fanger bare konflikter på primærnøkkelen.
+-- Har man slettet denne eksempelguiden fra adminpanelet og fremhevet en
+-- annen i stedet, finnes det ingen id-konflikt – raden settes inn med
+-- is_featured = true, og bryter da den ANDRE unike indeksen
+-- (guides_single_featured_idx, «kun én fremhevet guide»). Resultatet var at
+-- hele schema.sql stoppet med
+--   duplicate key value violates unique constraint "guides_single_featured_idx"
+-- for alle som hadde byttet fremhevet guide, og alt lenger nede i filen ble
+-- aldri kjørt.
 insert into public.guides (id, title, category, excerpt, value_label, read_time, is_featured, sort_order) values
-  ('elevrad-penger', 'Hvordan tjene penger på å sitte i elevrådet', 'Elevrådet', 'Honorar, møtegodtgjørelse, reisedekning og fondene elevrådet kan søke på.', 'Opptil 12 000 kr', '8 min', true, 1)
+  ('elevrad-penger', 'Hvordan tjene penger på å sitte i elevrådet', 'Elevrådet', 'Honorar, møtegodtgjørelse, reisedekning og fondene elevrådet kan søke på.', 'Opptil 12 000 kr', '8 min',
+   not exists (select 1 from public.guides where is_featured), 1)
 on conflict (id) do nothing;
 
 insert into public.guide_modules (guide_id, type, sort_order, data)
