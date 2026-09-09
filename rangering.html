@@ -9,21 +9,17 @@
 <meta property="og:description" content="Se hvem som topper poenglisten hos Studilla.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Studilla">
-<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-<link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
-<meta name="theme-color" content="#0d1117">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-<script defer src="https://cloud.umami.is/script.js" data-website-id="d10b685b-d7f1-4d9c-ad3b-986b69caeb7f"></script>
+<link rel="stylesheet" href="css/style.css" data-studilla-head>
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/social.css">
 </head>
 <body data-page="rangering">
 <div class="page">
 
   <div id="site-header"></div>
 
-  <main>
+  <main id="hovedinnhold">
     <section>
       <div class="section-heading spread" style="align-items:flex-end;flex-wrap:wrap;gap:20px">
         <div>
@@ -36,6 +32,10 @@
         </div>
       </div>
 
+      <!-- To nivåer av filtre: først HVILKEN liste (alle tider / denne uka /
+           venner), så hvilket triks. Ukeslista og vennelista er det som gjør
+           rangeringen mulig å vinne for en fersk spiller. -->
+      <div class="scope-chips is-primary" data-board-chips style="margin-bottom:12px" role="tablist" aria-label="Velg rangering"></div>
       <div class="scope-chips" data-scope-chips style="margin-bottom:22px"></div>
 
       <div class="rank-hero-grid" style="margin-bottom:22px">
@@ -72,11 +72,13 @@
 <script src="js/consent.js"></script>
 <script src="js/cookie-banner.js"></script>
 <script src="js/feature-flags.js"></script>
+<script src="js/layout-markup.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/social.js"></script>
 <script src="js/visit-tracking.js"></script>
 <script src="js/games-data.js"></script>
 <script src="js/leaderboard-data.js"></script>
@@ -95,8 +97,20 @@
   let profile = null;
   let profiles = [];
   let boards = { total: [], perGame: {} };
+  let weeklyBoard = null;
+  let friendIds = [];
   let scope = "total";
+  // Hvilken liste: "all" = alle tider, "week" = denne uka, "friends" = de du følger.
+  // Heter bevisst noe annet enn de lokale `board`-variablene i render-
+  // funksjonene under, som holder selve LISTEN med spillere.
+  let boardScope = "all";
   let expanded = false;
+
+  const BOARDS = [
+    { id: "all", label: "Alle tider" },
+    { id: "week", label: "Denne uka" },
+    { id: "friends", label: "Vennene mine" },
+  ];
 
   function fmt(n) {
     return Math.round(n || 0).toLocaleString("no-NO");
@@ -108,15 +122,52 @@
     return g ? g.name : s;
   }
 
+  function boardLabel() {
+    const b = BOARDS.find((x) => x.id === boardScope);
+    return b ? b.label : "Alle tider";
+  }
+
   function currentBoard() {
-    return scope === "total" ? boards.total : boards.perGame[scope] || [];
+    // Ukeslista finnes bare samlet (ikke per triks): der er tallet summen av
+    // beste runde per triks denne uka, så et per-triks-utvalg ville vært en
+    // annen beregning enn den databasen gjør.
+    if (boardScope === "week") return weeklyBoard || [];
+    const base = scope === "total" ? boards.total : boards.perGame[scope] || [];
+    if (boardScope === "friends") return LB.buildFriendsBoard(base, friendIds, profile && profile.id);
+    return base;
   }
 
   function playerLink(p) {
     return `spillerprofil.html?u=${encodeURIComponent(p.username)}`;
   }
 
+  function renderBoardChips() {
+    const host = document.querySelector("[data-board-chips]");
+    host.innerHTML = BOARDS.map((b) => `
+      <button type="button" role="tab" aria-selected="${boardScope === b.id}"
+        class="scope-chip ${boardScope === b.id ? "is-active" : ""}" data-board="${b.id}">${b.label}</button>
+    `).join("");
+
+    host.querySelectorAll("[data-board]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        boardScope = btn.dataset.board;
+        expanded = false;
+        // Ukeslista hentes først når noen faktisk ber om den.
+        if (boardScope === "week" && !weeklyBoard) {
+          const weekly = await LB.loadWeekly(0);
+          weeklyBoard = weekly ? LB.buildWeeklyBoard(profiles, weekly) : [];
+        }
+        renderAll();
+      });
+    });
+  }
+
   function renderScopeChips() {
+    // Per-triks-utvalget gir ikke mening på ukeslista (se currentBoard).
+    const host = document.querySelector("[data-scope-chips]");
+    host.hidden = boardScope === "week";
+    if (host.hidden) return;
+
     const items = [{ id: "total", label: "Alle triks samlet" }].concat(
       games.map((g) => ({ id: g.id, label: g.name, game: g }))
     );
@@ -145,7 +196,7 @@
       slot.innerHTML = `
         <div class="rank-me-guest">
           <span class="section-sub">Logg inn for å se din plassering og få poeng registrert på rangeringen.</span>
-          <a href="login.html"><button class="btn-primary" type="button">Logg inn</button></a>
+          <a href="login.html" class="btn-primary btn-link">Logg inn</a>
         </div>
       `;
       return;
@@ -156,7 +207,7 @@
       slot.innerHTML = `
         <div class="rank-me-guest">
           <span class="section-sub">Du har ikke spilt «${scopeLabel(scope)}» ennå, så du er ikke rangert her.</span>
-          <a href="index.html#spill"><button class="btn-primary" type="button">Finn et triks</button></a>
+          <a href="index.html#spill" class="btn-primary btn-link">Finn et triks</a>
         </div>
       `;
       return;
@@ -201,7 +252,8 @@
 
   function renderPodium() {
     const board = LB.visiblePlayers(currentBoard());
-    document.querySelector("[data-podium-title]").textContent = `TOPP 3 · ${scopeLabel(scope).toUpperCase()}`;
+    document.querySelector("[data-podium-title]").textContent =
+      `TOPP 3 · ${(boardScope === "week" ? boardLabel() : scopeLabel(scope)).toUpperCase()}`;
     const list = document.querySelector("[data-podium-list]");
 
     if (!board.length) {
@@ -232,7 +284,11 @@
     const shownLabel = document.querySelector("[data-shown-label]");
 
     if (!board.length) {
-      body.innerHTML = `<div class="leaderboard-empty">Ingen har spilt «${scopeLabel(scope)}» ennå. Bli den første!</div>`;
+      body.innerHTML = boardScope === "friends"
+        ? `<div class="leaderboard-empty">Du følger ingen ennå. Søk opp en spiller her eller på <a href="meldinger.html">Venner</a> for å få en liste du faktisk kan vinne.</div>`
+        : boardScope === "week"
+          ? `<div class="leaderboard-empty">Ingen har spilt noe denne uka ennå. Bli den første!</div>`
+          : `<div class="leaderboard-empty">Ingen har spilt «${scopeLabel(scope)}» ennå. Bli den første!</div>`;
       shownLabel.textContent = "";
       toggleBtn.hidden = true;
       return;
@@ -310,11 +366,16 @@
   }
 
   function renderSubtitle() {
+    const n = fmt(LB.visiblePlayers(currentBoard()).length);
+    const what = boardScope === "week" ? "Denne uka" : scopeLabel(scope);
     document.querySelector("[data-rank-subtitle]").textContent =
-      `${scopeLabel(scope)} · ${fmt(LB.visiblePlayers(currentBoard()).length)} spillere rangert`;
+      boardScope === "friends"
+        ? `${what} · blant deg og de ${friendIds.length} du følger`
+        : `${what} · ${n} spillere rangert`;
   }
 
   function renderAll() {
+    renderBoardChips();
     renderScopeChips();
     renderSubtitle();
     renderMeCard();
@@ -377,9 +438,20 @@
     }
     if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
     profile = await Auth.getCurrentProfile();
-    const [loadedProfiles, records] = await Promise.all([LB.loadProfiles(), LB.loadRecords()]);
+    const [loadedProfiles, records, following] = await Promise.all([
+      LB.loadProfiles(),
+      LB.loadRecords(),
+      profile ? window.StudillaSocial.followingIds() : Promise.resolve([]),
+    ]);
     profiles = loadedProfiles;
+    friendIds = following;
     boards = LB.buildBoards(profiles, records);
+
+    // ?spill=<id> åpner rangeringen for ett triks direkte. Brukes blant annet
+    // av rekord-vedleggene i meldinger («Rekord i 2048 → se rangeringen»).
+    const wanted = new URLSearchParams(window.location.search).get("spill");
+    if (wanted && boards.perGame[wanted]) scope = wanted;
+
     renderAll();
   }
 
@@ -387,6 +459,7 @@
 
   window.supabaseClient.auth.onAuthStateChange(async () => {
     profile = await Auth.getCurrentProfile();
+    friendIds = profile ? await window.StudillaSocial.followingIds() : [];
     renderAll();
   });
 })();

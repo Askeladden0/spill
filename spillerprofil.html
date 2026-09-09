@@ -6,21 +6,17 @@
 <title>Studilla · Brukerprofil</title>
 <meta name="description" content="Se en brukers poengsum og prestasjoner på Studilla.">
 <meta name="robots" content="noindex, nofollow">
-<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-<link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
-<meta name="theme-color" content="#0d1117">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-<script defer src="https://cloud.umami.is/script.js" data-website-id="d10b685b-d7f1-4d9c-ad3b-986b69caeb7f"></script>
+<link rel="stylesheet" href="css/style.css" data-studilla-head>
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/social.css">
 </head>
 <body data-page="rangering">
 <div class="page">
 
   <div id="site-header"></div>
 
-  <main>
+  <main id="hovedinnhold">
     <section>
       <a href="rangering.html" class="back-link">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -55,11 +51,23 @@
             <span class="public-profile-stat-num" data-stat-level>–</span>
             <span class="public-profile-stat-label">NIVÅ</span>
           </div>
+          <div class="public-profile-stat">
+            <span class="public-profile-stat-num" data-stat-streak>–</span>
+            <span class="public-profile-stat-label">DAGER PÅ RAD</span>
+          </div>
           <div class="public-profile-stat" data-levels-only>
             <span class="public-profile-stat-num" data-stat-codes>–</span>
             <span class="public-profile-stat-label">RABATTKODER HENTET</span>
           </div>
         </div>
+      </div>
+
+      <!-- Følge/melde-raden. Skjult til vi vet om den som ser på er logget
+           inn og ikke ser på sin egen profil. -->
+      <div class="public-profile-social" data-social-row hidden>
+        <button type="button" class="btn-primary" data-follow-btn>Følg</button>
+        <a class="btn-outline" data-message-btn href="#">Send melding</a>
+        <span class="public-profile-follow-counts" data-follow-counts></span>
       </div>
     </section>
 
@@ -78,11 +86,13 @@
 <script src="js/consent.js"></script>
 <script src="js/cookie-banner.js"></script>
 <script src="js/feature-flags.js"></script>
+<script src="js/layout-markup.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/social.js"></script>
 <script src="js/visit-tracking.js"></script>
 <script src="js/games-data.js"></script>
 <script src="js/leaderboard-data.js"></script>
@@ -94,8 +104,63 @@
   const games = LB.games;
   const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
 
+  const Social = window.StudillaSocial;
+
   function fmt(n) {
     return Math.round(n || 0).toLocaleString("no-NO");
+  }
+
+  /**
+   * «Følg» / «Send melding» + følgertall. Vises kun for innloggede som ser på
+   * en ANNEN spiller – på sin egen offentlige profil er knappene meningsløse,
+   * og for utloggede fører de bare til en innloggingsvegg de ikke ba om.
+   */
+  async function renderSocialRow(player, viewer) {
+    const row = document.querySelector("[data-social-row]");
+    const btn = document.querySelector("[data-follow-btn]");
+    const msg = document.querySelector("[data-message-btn]");
+    const counts = document.querySelector("[data-follow-counts]");
+    if (!viewer || viewer.id === player.id) return;
+
+    let stats;
+    try {
+      stats = await Social.followStats(player.id);
+    } catch (e) {
+      return;
+    }
+    if (!Social.isAvailable()) return;
+
+    row.hidden = false;
+    msg.href = `meldinger.html?til=${encodeURIComponent(player.username)}`;
+
+    function paint() {
+      btn.textContent = stats.is_following ? "Følger ✓" : "Følg";
+      btn.classList.toggle("btn-primary", !stats.is_following);
+      btn.classList.toggle("btn-outline", stats.is_following);
+      counts.textContent =
+        `${fmt(stats.followers)} følgere · ${fmt(stats.following)} følger` +
+        (stats.follows_you ? " · følger deg" : "");
+    }
+    paint();
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        if (stats.is_following) {
+          await Social.unfollow(player.id);
+          stats.is_following = false;
+          stats.followers = Math.max(0, stats.followers - 1);
+        } else {
+          await Social.follow(player.id);
+          stats.is_following = true;
+          stats.followers += 1;
+        }
+        paint();
+      } catch (e) {
+        window.alert(e.message || "Klarte ikke oppdatere følgingen.");
+      }
+      btn.disabled = false;
+    });
   }
 
   async function init() {
@@ -135,8 +200,11 @@
     document.querySelector("[data-stat-points]").textContent = fmt(player.xp);
     document.querySelector("[data-stat-level]").textContent = player.level;
     document.querySelector("[data-stat-codes]").textContent = fmt(codes);
+    document.querySelector("[data-stat-streak]").textContent = fmt(player.streak_current);
 
     document.querySelector("[data-profile-main]").hidden = false;
+
+    renderSocialRow(player, viewer);
 
     const playedGames = games.filter((g) => (boards.perGame[g.id] || []).some((p) => p.id === player.id));
     document.querySelector("[data-scores-sub]").textContent = `${playedGames.length} av ${games.length} spill spilt`;

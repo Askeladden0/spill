@@ -467,7 +467,11 @@ create unique index if not exists games_single_daily_idx
 
 insert into public.games (id, name, genre, rating, points, time_estimate, description, thumbnail_url, icon_url, is_daily_game, sort_order) values
   ('fruktfusjon', 'Fruktfusjon', 'Puslespill', '4,7', 'Din skår = dine poeng', '~10 min', 'Slipp frukt ned i krukken og slå sammen like frukter til større og større frukter, uten at haugen renner over.', 'assets/img/games/fruktfusjon.svg', 'assets/img/icons/fruktfusjon.svg', false, 1),
-  ('2048', '2048', 'Puslespill', '4,9', 'Din skår = dine poeng', '~5 min', 'Slå sammen brikker med like tall og jag den store 2048-brikken. Skåren din legges rett til poengsummen og nivået ditt.', 'assets/img/games/2048.svg', 'assets/img/icons/2048.svg', true, 2),
+  -- is_daily_game settes kun hvis ingen triks er merket som dagens fra før.
+  -- Samme fallgruve som guides_single_featured_idx lenger nede: «on conflict
+  -- (id)» fanger ikke et brudd på games_single_daily_idx, så hadde man
+  -- slettet 2048 og merket et annet triks som dagens, stoppet hele filen her.
+  ('2048', '2048', 'Puslespill', '4,9', 'Din skår = dine poeng', '~5 min', 'Slå sammen brikker med like tall og jag den store 2048-brikken. Skåren din legges rett til poengsummen og nivået ditt.', 'assets/img/games/2048.svg', 'assets/img/icons/2048.svg', not exists (select 1 from public.games where is_daily_game), 2),
   ('tetris', 'Tetris', 'Puslespill', '4,9', 'Din skår = dine poeng', '~15 min', 'Styr de fargerike klossene mens de faller, fyll hele rader for å sprenge dem, og jag din egen rekord i det klassiske puslespillet.', 'assets/img/games/tetris.svg', 'assets/img/icons/tetris.svg', false, 3),
   ('block-blast', 'Block Blast', 'Puslespill', '4,8', 'Din skår = dine poeng', '~10 min', 'Dra fargerike klosser fra hånden din over på brettet og fyll hele rader eller kolonner for å sprenge dem og score poeng.', 'assets/img/games/block-blast.svg', 'assets/img/icons/block-blast.svg', false, 4),
   ('snake', 'Snake', 'Arkade', '4,6', 'Din skår = dine poeng', '~8 min', 'Styr slangen rundt brettet, spis prikkene og voks deg lengst mulig uten å treffe deg selv eller veggen.', 'assets/img/games/snake.svg', 'assets/img/icons/snake.svg', false, 5),
@@ -735,7 +739,11 @@ drop policy if exists "profiles_select_own_or_admin" on public.profiles;
 create policy "profiles_select_own_or_admin" on public.profiles
   for select using (auth.uid() = id or public.is_admin());
 
-create or replace view public.profiles_public as
+-- Slippes først: seksjon 49 utvider den samme viewen med streak-kolonnene,
+-- og `create or replace view` kan ikke fjerne kolonner fra en view som
+-- allerede finnes. Uten dette stopper hele filen på andre gangs kjøring.
+drop view if exists public.profiles_public;
+create view public.profiles_public as
   select id, username, avatar_color, avatar_icon, level, xp, is_hidden, created_at
     from public.profiles;
 
@@ -1599,7 +1607,7 @@ create policy "site_visits_select_admin" on public.site_visits
 --     `guides` er ett kort per guide (tittel, kategori, ingress, "mengde
 --     spart/tjent" og lesetid). `guide_modules` er innholdet i guiden, som en
 --     rekke moduler i rekkefølge (sort_order) – hver modul har en `type`
---     (tekst/fil/tabell/gevinst/poll/triks) og alle detaljene sine i `data`
+--     (tekst/fil/tabell/gevinst/poll/triks/bilde) og alle detaljene sine i `data`
 --     (jsonb), slik at nye felter kan legges til uten skjemaendring.
 --
 --     Det finnes ingen egen adminpanel-seksjon for dette – admin oppretter,
@@ -1618,6 +1626,8 @@ create policy "site_visits_select_admin" on public.site_visits
 --                   RPC-en guide_vote_poll under, ikke direkte av klienten
 --       triks   – { gameId, title, intro, href } – peker enten til et
 --                   eksisterende triks (gameId) eller en egen lenke (href)
+--       bilde   – { url, alt, caption, size ('full'|'medium') } – url peker til
+--                   `guide-images`-bøtta, alt er alt-teksten for skjermlesere
 -- ---------------------------------------------------------------------------
 create table if not exists public.guides (
   id text primary key,
@@ -1632,6 +1642,8 @@ create table if not exists public.guides (
   sort_order int not null default 0,
   updated_at timestamptz not null default now()
 );
+
+alter table public.guides add column if not exists is_hidden boolean not null default false;
 
 -- Kun én guide kan være fremhevet (toppkortet på guider.html) om gangen.
 create unique index if not exists guides_single_featured_idx
@@ -1650,10 +1662,18 @@ create policy "guides_admin_write" on public.guides
 create table if not exists public.guide_modules (
   id bigint generated always as identity primary key,
   guide_id text not null references public.guides (id) on delete cascade,
-  type text not null check (type in ('tekst', 'fil', 'tabell', 'gevinst', 'poll', 'triks')),
+  type text not null check (type in ('tekst', 'fil', 'tabell', 'gevinst', 'poll', 'triks', 'bilde')),
   sort_order int not null default 0,
   data jsonb not null default '{}'::jsonb
 );
+
+-- Modul-typene utvides over tid. `create table if not exists` over rører ikke
+-- en tabell som allerede finnes, så check-en settes eksplisitt på nytt her –
+-- ellers ville nye typer (bilde) blitt avvist i eksisterende prosjekter.
+alter table public.guide_modules drop constraint if exists guide_modules_type_check;
+alter table public.guide_modules
+  add constraint guide_modules_type_check
+  check (type in ('tekst', 'fil', 'tabell', 'gevinst', 'poll', 'triks', 'bilde'));
 
 create index if not exists guide_modules_guide_idx on public.guide_modules (guide_id, sort_order);
 
@@ -1747,8 +1767,21 @@ create policy "guide_files_admin_delete" on storage.objects
 -- Eksempelguiden fra designet ("Hvordan tjene penger på å sitte i
 -- elevrådet") settes inn som utgangspunkt, med én modul av hver type – rediger
 -- eller slett den fritt fra guider.html/guide.html, den er ikke spesialbehandlet.
+--
+-- is_featured settes kun hvis INGEN guide er fremhevet fra før.
+--
+-- «on conflict (id) do nothing» fanger bare konflikter på primærnøkkelen.
+-- Har man slettet denne eksempelguiden fra adminpanelet og fremhevet en
+-- annen i stedet, finnes det ingen id-konflikt – raden settes inn med
+-- is_featured = true, og bryter da den ANDRE unike indeksen
+-- (guides_single_featured_idx, «kun én fremhevet guide»). Resultatet var at
+-- hele schema.sql stoppet med
+--   duplicate key value violates unique constraint "guides_single_featured_idx"
+-- for alle som hadde byttet fremhevet guide, og alt lenger nede i filen ble
+-- aldri kjørt.
 insert into public.guides (id, title, category, excerpt, value_label, read_time, is_featured, sort_order) values
-  ('elevrad-penger', 'Hvordan tjene penger på å sitte i elevrådet', 'Elevrådet', 'Honorar, møtegodtgjørelse, reisedekning og fondene elevrådet kan søke på.', 'Opptil 12 000 kr', '8 min', true, 1)
+  ('elevrad-penger', 'Hvordan tjene penger på å sitte i elevrådet', 'Elevrådet', 'Honorar, møtegodtgjørelse, reisedekning og fondene elevrådet kan søke på.', 'Opptil 12 000 kr', '8 min',
+   not exists (select 1 from public.guides where is_featured), 1)
 on conflict (id) do nothing;
 
 insert into public.guide_modules (guide_id, type, sort_order, data)
@@ -1856,6 +1889,958 @@ select * from (values
   ('nynorsk-oversetter', 'fil', 4, '{"name": "Nynorsk-ordliste (Excel)", "ext": "XLSX", "meta": "Regneark · alle ordene · kolonner for nynorsk og norsk", "url": "documents/Nynorskordliste.xlsx"}'::jsonb)
 ) as v(guide_id, type, sort_order, data)
 where not exists (select 1 from public.guide_modules where guide_id in ('mal-norsk-nynorsk', 'p-matte-snarveier', 'nynorsk-oversetter'));
+
+-- ---------------------------------------------------------------------------
+-- 48. Rekorder skrives ikke lenger rett fra nettleseren.
+--
+--     Slik det var: klienten gjorde `insert into game_records (...)` og kalte
+--     `add_points(p_delta)` med et fritt tall. Begge deler kunne kjøres fra
+--     nettleserkonsollen av hvem som helst som var logget inn:
+--
+--       supabaseClient.rpc('add_points', { p_delta: 10000000 })
+--
+--     Da er hele rangeringen verdiløs. Nå går all poenggivning gjennom
+--     submit_game_score(), som selv regner ut hvor mange poeng skåren er
+--     verdt, håndhever et tak per triks og en fartsgrense per bruker.
+--
+--     Dette gjør det ikke umulig å jukse (all klientkode kan manipuleres),
+--     men det flytter jukset fra «ett linjes kall i konsollen» til «du må
+--     faktisk spille, og du kan ikke få mer enn taket per runde».
+-- ---------------------------------------------------------------------------
+
+-- Tak per runde per triks. null = bruk standardtaket under. Redigeres i
+-- adminpanelet sammen med point_rate.
+alter table public.games add column if not exists max_score numeric;
+
+-- Standardtak for triks som ikke har satt sitt eget. Rundene i dagens triks
+-- ligger typisk på 1 000–30 000, så 250 000 stopper det absurde uten å
+-- ramme en reell topprunde.
+alter table public.app_settings add column if not exists default_max_score numeric not null default 250000;
+
+-- Hvor mange runder én bruker kan levere inn per time. En ivrig spiller
+-- rekker sjelden mer enn 20–30; 120 er romslig, men stopper et skript som
+-- pumper inn tusen runder i minuttet.
+alter table public.app_settings add column if not exists max_scores_per_hour int not null default 120;
+
+create index if not exists game_records_user_created_idx
+  on public.game_records (user_id, created_at desc);
+
+/**
+ * Leverer inn én ferdigspilt runde. Returnerer den oppdaterte profilraden
+ * (samme form som add_points gjorde), slik at klienten kan animere xp/nivå
+ * uten et ekstra oppslag.
+ */
+create or replace function public.submit_game_score(p_game_id text, p_score numeric)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  game public.games;
+  cap numeric;
+  per_hour int;
+  used int;
+  rate numeric;
+  awarded int;
+  updated public.profiles;
+  best_level int;
+begin
+  if uid is null then
+    raise exception 'Du må være logget inn for å lagre en runde';
+  end if;
+
+  if p_score is null or p_score < 0 or p_score <> floor(p_score) then
+    raise exception 'Ugyldig skår';
+  end if;
+
+  select * into game from public.games where id = p_game_id and hidden = false;
+  if game is null then
+    raise exception 'Ukjent triks: %', p_game_id;
+  end if;
+
+  select coalesce(default_max_score, 250000), coalesce(max_scores_per_hour, 120)
+    into cap, per_hour
+    from public.app_settings where id = 1;
+  cap := coalesce(game.max_score, cap, 250000);
+  per_hour := coalesce(per_hour, 120);
+
+  if p_score > cap then
+    raise exception 'Skåren er høyere enn taket for dette trikset (%).', cap;
+  end if;
+
+  if per_hour > 0 then
+    select count(*) into used
+      from public.game_records
+     where user_id = uid
+       and created_at > now() - interval '1 hour';
+    if used >= per_hour then
+      raise exception 'Du har levert inn for mange runder på kort tid. Prøv igjen om litt.';
+    end if;
+  end if;
+
+  insert into public.game_records (user_id, game_id, score) values (uid, p_game_id, p_score);
+
+  -- Poengene regnes ut HER, ikke i nettleseren: klienten sender bare skåren.
+  rate := coalesce(game.point_rate, 1);
+  if rate < 0 then rate := 0; end if;
+  awarded := round(p_score * rate);
+
+  if awarded > 0 then
+    perform set_config('studilla.trusted_profile_write', 'on', true);
+    update public.profiles set xp = xp + awarded where id = uid returning * into updated;
+  else
+    select * into updated from public.profiles where id = uid;
+  end if;
+
+  if updated is null then
+    raise exception 'Fant ingen profil for innlogget bruker';
+  end if;
+
+  select max(level_number) into best_level
+    from public.levels where points_required <= updated.xp;
+
+  if best_level is not null and best_level > updated.level then
+    perform set_config('studilla.trusted_profile_write', 'on', true);
+    update public.profiles set level = best_level where id = uid returning * into updated;
+  end if;
+
+  return updated;
+end;
+$$;
+
+revoke all on function public.submit_game_score(text, numeric) from public;
+grant execute on function public.submit_game_score(text, numeric) to authenticated;
+
+/**
+ * Overfører rekordene en besøkende satte mens hen var utlogget (lagret i
+ * localStorage av js/game-runtime.js) til kontoen ved første innlogging.
+ * Kjører hver rad gjennom det samme taket som submit_game_score, slik at
+ * gjeste-nøkkelen i localStorage ikke blir en bakvei rundt valideringen.
+ *
+ * p_records: [{ "game_id": "2048", "score": 8460 }, ...]
+ */
+create or replace function public.claim_guest_progress(p_records jsonb)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  rec jsonb;
+  updated public.profiles;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være logget inn';
+  end if;
+
+  if p_records is null or jsonb_typeof(p_records) <> 'array' then
+    select * into updated from public.profiles where id = auth.uid();
+    return updated;
+  end if;
+
+  -- Maks 20 rader – flere enn ett per triks gir ingen mening.
+  for rec in select * from jsonb_array_elements(p_records) limit 20 loop
+    begin
+      updated := public.submit_game_score(rec->>'game_id', (rec->>'score')::numeric);
+    exception when others then
+      -- En ugyldig rad (ukjent triks, over taket) skal ikke stoppe resten.
+      null;
+    end;
+  end loop;
+
+  if updated is null then
+    select * into updated from public.profiles where id = auth.uid();
+  end if;
+  return updated;
+end;
+$$;
+
+revoke all on function public.claim_guest_progress(jsonb) from public;
+grant execute on function public.claim_guest_progress(jsonb) to authenticated;
+
+-- Direkte innsetting i game_records er nå stengt: alt går via RPC-en over,
+-- som kjører som SECURITY DEFINER og derfor ikke berøres av denne policyen.
+drop policy if exists "game_records_insert_own" on public.game_records;
+
+-- add_points ga fritt spillerom til å legge til vilkårlig mange poeng.
+-- Lykkehjulet (spin_wheel) kaller den fortsatt internt – den er SECURITY
+-- DEFINER og kjører som eieren, så den mister ikke tilgangen her.
+revoke execute on function public.add_points(int) from authenticated;
+
+/**
+ * Lykkehjulet fikk tidligere premien sendt inn fra klienten
+ * (spin_wheel(p_delta)), så «vinn 1000 poeng» kunne bli «vinn 10 000 000».
+ * Premien avgrenses nå til det admin faktisk har lagt inn som segmenter på
+ * hjulet, med en absolutt øvre grense i tillegg.
+ */
+alter table public.app_settings add column if not exists wheel_max_prize int not null default 1000;
+
+create or replace function public.spin_wheel(p_delta int)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  per_day int;
+  used int;
+  max_prize int;
+begin
+  if p_delta is null or p_delta <= 0 then
+    raise exception 'p_delta må være et positivt tall';
+  end if;
+
+  select coalesce(wheel_spins_per_day, 1), coalesce(wheel_max_prize, 1000)
+    into per_day, max_prize
+    from public.app_settings where id = 1;
+  if per_day is null then per_day := 1; end if;
+  if max_prize is null then max_prize := 1000; end if;
+
+  if p_delta > max_prize then
+    raise exception 'Premien er høyere enn det hjulet kan gi.';
+  end if;
+
+  if per_day > 0 then
+    select count(*) into used
+      from public.wheel_spins
+     where user_id = auth.uid()
+       and spun_on = (now() at time zone 'utc')::date;
+
+    if used >= per_day then
+      raise exception 'Du har brukt opp spinnene dine for i dag. Kom tilbake i morgen!';
+    end if;
+  end if;
+
+  insert into public.wheel_spins (user_id, points) values (auth.uid(), p_delta);
+
+  return public.add_points(p_delta);
+end;
+$$;
+
+revoke all on function public.spin_wheel(int) from public;
+grant execute on function public.spin_wheel(int) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 49. Streak – grunnen til å komme tilbake i morgen.
+--
+--     Dagens triks roterte allerede på døgnnummer, men ingenting fortalte
+--     spilleren at det var noe å miste ved å hoppe over en dag. Streaken
+--     teller sammenhengende dager med minst én ferdigspilt runde, og gir en
+--     liten poengbonus som vokser med lengden.
+--
+--     Dagsgrensen følger norsk tid (Europe/Oslo), ikke UTC: en runde spilt
+--     kl. 23:30 og en kl. 00:30 skal telle som to dager for spilleren, slik
+--     hen selv opplever døgnet.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists streak_current int not null default 0;
+alter table public.profiles add column if not exists streak_best int not null default 0;
+alter table public.profiles add column if not exists streak_last_day date;
+
+alter table public.app_settings add column if not exists streak_bonus_base int not null default 25;
+alter table public.app_settings add column if not exists streak_bonus_max int not null default 250;
+
+/**
+ * Registrerer at brukeren har spilt i dag og oppdaterer streaken.
+ * Returnerer:
+ *   { streak, best, bonus, is_new_day, broke_from }
+ * der bonus er poengene som ble lagt til (0 hvis dagen allerede var talt),
+ * og broke_from er streaken som gikk tapt hvis det er mer enn én dag siden
+ * sist – slik at UIen kan si «du mistet en 6-dagers rekke» i stedet for å la
+ * tallet bare hoppe til 1.
+ */
+create or replace function public.touch_daily_streak()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  today date := (now() at time zone 'Europe/Oslo')::date;
+  prof public.profiles;
+  new_streak int;
+  broke_from int := 0;
+  bonus int := 0;
+  base int;
+  cap int;
+begin
+  if uid is null then
+    return jsonb_build_object('streak', 0, 'best', 0, 'bonus', 0, 'is_new_day', false, 'broke_from', 0);
+  end if;
+
+  select * into prof from public.profiles where id = uid;
+  if prof is null then
+    raise exception 'Fant ingen profil for innlogget bruker';
+  end if;
+
+  if prof.streak_last_day = today then
+    return jsonb_build_object(
+      'streak', prof.streak_current, 'best', prof.streak_best,
+      'bonus', 0, 'is_new_day', false, 'broke_from', 0
+    );
+  end if;
+
+  if prof.streak_last_day = today - 1 then
+    new_streak := prof.streak_current + 1;
+  else
+    broke_from := case when prof.streak_current > 1 then prof.streak_current else 0 end;
+    new_streak := 1;
+  end if;
+
+  select coalesce(streak_bonus_base, 25), coalesce(streak_bonus_max, 250)
+    into base, cap from public.app_settings where id = 1;
+  base := coalesce(base, 25);
+  cap := coalesce(cap, 250);
+  bonus := least(cap, base * new_streak);
+
+  perform set_config('studilla.trusted_profile_write', 'on', true);
+  update public.profiles
+     set streak_current = new_streak,
+         streak_best = greatest(streak_best, new_streak),
+         streak_last_day = today,
+         xp = xp + bonus
+   where id = uid
+   returning * into prof;
+
+  return jsonb_build_object(
+    'streak', prof.streak_current,
+    'best', prof.streak_best,
+    'bonus', bonus,
+    'is_new_day', true,
+    'broke_from', broke_from
+  );
+end;
+$$;
+
+revoke all on function public.touch_daily_streak() from public;
+grant execute on function public.touch_daily_streak() to authenticated;
+
+-- Streak-feltene må beskyttes på samme måte som level/xp: uten dette kunne
+-- en bruker skrive `update profiles set streak_current = 365` på sin egen rad
+-- (RLS tillater oppdatering av egen profil), og streaken ville vært like
+-- verdiløs som poengsummen var før seksjon 48.
+create or replace function public.guard_privileged_profile_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not public.is_admin()
+     and coalesce(current_setting('studilla.trusted_profile_write', true), '') <> 'on' then
+    new.is_admin := old.is_admin;
+    new.level := old.level;
+    new.xp := old.xp;
+    new.streak_current := old.streak_current;
+    new.streak_best := old.streak_best;
+    new.streak_last_day := old.streak_last_day;
+  end if;
+  return new;
+end;
+$$;
+
+-- streak-feltene skal være synlige på offentlige profiler og i rangeringen.
+--
+-- MERK: `create or replace view` kan ikke legge til kolonner i en view som
+-- allerede finnes med færre – den feiler med «cannot drop columns from view».
+-- Seksjon 24 over definerer den samme viewen uten streak-kolonnene, så ved
+-- en ny kjøring av hele filen (som er den vanlige måten å migrere på her)
+-- ville dette stoppet skriptet. Derfor slippes den først.
+drop view if exists public.profiles_public;
+create view public.profiles_public as
+  select id, username, avatar_color, avatar_icon, level, xp, is_hidden, created_at,
+         streak_current, streak_best
+    from public.profiles;
+
+grant select on public.profiles_public to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 50. user_blocks – blokkering.
+--
+--     Målgruppen er skoleelever. Et sosialt lag uten blokkering er ikke
+--     ferdig, det er en fremtidig sak for den som drifter siden. En
+--     blokkering stopper både meldinger og følging begge veier.
+-- ---------------------------------------------------------------------------
+create table if not exists public.user_blocks (
+  blocker_id uuid not null references auth.users (id) on delete cascade,
+  blocked_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (blocker_id, blocked_id),
+  constraint user_blocks_not_self check (blocker_id <> blocked_id)
+);
+
+alter table public.user_blocks enable row level security;
+
+-- Man ser kun sine egne blokkeringer (den blokkerte skal ikke få vite det),
+-- og kan bare opprette/slette sine egne.
+drop policy if exists "user_blocks_select_own" on public.user_blocks;
+create policy "user_blocks_select_own" on public.user_blocks
+  for select using (auth.uid() = blocker_id);
+
+drop policy if exists "user_blocks_insert_own" on public.user_blocks;
+create policy "user_blocks_insert_own" on public.user_blocks
+  for insert with check (auth.uid() = blocker_id);
+
+drop policy if exists "user_blocks_delete_own" on public.user_blocks;
+create policy "user_blocks_delete_own" on public.user_blocks
+  for delete using (auth.uid() = blocker_id);
+
+/** Er det en blokkering i noen retning mellom to brukere? */
+create or replace function public.is_blocked_between(a uuid, b uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1 from public.user_blocks
+     where (blocker_id = a and blocked_id = b)
+        or (blocker_id = b and blocked_id = a)
+  );
+$$;
+
+grant execute on function public.is_blocked_between(uuid, uuid) to authenticated;
+
+-- Blokkering fjerner eksisterende følging begge veier, ellers blir man
+-- stående i hverandres lister uten å kunne se det.
+create or replace function public.drop_follows_on_block()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  delete from public.follows
+   where (follower_id = new.blocker_id and following_id = new.blocked_id)
+      or (follower_id = new.blocked_id and following_id = new.blocker_id);
+  return new;
+end;
+$$;
+
+drop trigger if exists user_blocks_drop_follows on public.user_blocks;
+create trigger user_blocks_drop_follows
+  after insert on public.user_blocks
+  for each row execute function public.drop_follows_on_block();
+
+-- ---------------------------------------------------------------------------
+-- 51. follows – å følge andre spillere.
+--
+--     Dette er ryggraden i både vennerangeringen («hvordan ligger jeg an mot
+--     dem jeg faktisk kjenner?») og aktivitetsfeeden. Følging er ensidig som
+--     på TikTok/Instagram – ingen godkjenning, men man kan blokkere (se 51).
+-- ---------------------------------------------------------------------------
+create table if not exists public.follows (
+  follower_id uuid not null references auth.users (id) on delete cascade,
+  following_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (follower_id, following_id),
+  constraint follows_not_self check (follower_id <> following_id)
+);
+
+create index if not exists follows_following_idx on public.follows (following_id);
+
+alter table public.follows enable row level security;
+
+-- Hvem som følger hvem er offentlig (som på de fleste sosiale sider), men
+-- man kan bare opprette og slette sine EGNE følginger.
+drop policy if exists "follows_select_all" on public.follows;
+create policy "follows_select_all" on public.follows for select using (true);
+
+drop policy if exists "follows_insert_own" on public.follows;
+create policy "follows_insert_own" on public.follows
+  for insert with check (
+    auth.uid() = follower_id
+    and not exists (
+      select 1 from public.user_blocks b
+       where b.blocker_id = follows.following_id and b.blocked_id = auth.uid()
+    )
+  );
+
+drop policy if exists "follows_delete_own" on public.follows;
+create policy "follows_delete_own" on public.follows
+  for delete using (auth.uid() = follower_id or auth.uid() = following_id);
+
+/**
+ * Antall følgere / følger for en spiller, og om DU følger hen. Ett kall i
+ * stedet for tre, siden dette vises på hver eneste spillerprofil.
+ */
+create or replace function public.follow_stats(p_user_id uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select jsonb_build_object(
+    'followers', (select count(*) from public.follows where following_id = p_user_id),
+    'following', (select count(*) from public.follows where follower_id = p_user_id),
+    'is_following', (select exists (
+       select 1 from public.follows
+        where follower_id = auth.uid() and following_id = p_user_id)),
+    'follows_you', (select exists (
+       select 1 from public.follows
+        where follower_id = p_user_id and following_id = auth.uid()))
+  );
+$$;
+
+revoke all on function public.follow_stats(uuid) from public;
+grant execute on function public.follow_stats(uuid) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 52. direct_messages – meldinger mellom to spillere.
+--
+--     Bevisst enkelt: én tabell, to parter, ingen gruppechat. thread_key er
+--     de to bruker-idene sortert og limt sammen, slik at begge retninger
+--     havner i samme samtale uten en egen conversations-tabell.
+-- ---------------------------------------------------------------------------
+create table if not exists public.direct_messages (
+  id bigint generated always as identity primary key,
+  sender_id uuid not null references auth.users (id) on delete cascade,
+  recipient_id uuid not null references auth.users (id) on delete cascade,
+  thread_key text not null,
+  body text not null,
+  created_at timestamptz not null default now(),
+  read_at timestamptz,
+  constraint direct_messages_body_length check (char_length(body) between 1 and 1000),
+  constraint direct_messages_not_self check (sender_id <> recipient_id)
+);
+
+create index if not exists direct_messages_thread_idx
+  on public.direct_messages (thread_key, created_at desc);
+create index if not exists direct_messages_recipient_unread_idx
+  on public.direct_messages (recipient_id) where read_at is null;
+
+alter table public.direct_messages enable row level security;
+
+/** Samtalenøkkel for to brukere – uavhengig av rekkefølge. */
+create or replace function public.dm_thread_key(a uuid, b uuid)
+returns text
+language sql
+immutable
+as $$
+  select case when a < b then a::text || ':' || b::text else b::text || ':' || a::text end;
+$$;
+
+grant execute on function public.dm_thread_key(uuid, uuid) to authenticated;
+
+-- Kun de to partene i samtalen kan lese meldingene. Ingen policy for insert:
+-- all sending går gjennom send_direct_message() under, som håndhever
+-- blokkering og fartsgrense.
+drop policy if exists "direct_messages_select_own" on public.direct_messages;
+create policy "direct_messages_select_own" on public.direct_messages
+  for select using (auth.uid() = sender_id or auth.uid() = recipient_id);
+
+-- Mottakeren kan markere som lest (og kun det – body/sender er beskyttet av
+-- triggeren under). Avsenderen kan slette sin egen melding.
+drop policy if exists "direct_messages_update_recipient" on public.direct_messages;
+create policy "direct_messages_update_recipient" on public.direct_messages
+  for update using (auth.uid() = recipient_id) with check (auth.uid() = recipient_id);
+
+drop policy if exists "direct_messages_delete_sender" on public.direct_messages;
+create policy "direct_messages_delete_sender" on public.direct_messages
+  for delete using (auth.uid() = sender_id);
+
+/**
+ * Mottakerens update-policy over ville ellers latt hen skrive om selve
+ * meldingsteksten hen har fått. Denne triggeren låser alt annet enn read_at.
+ */
+create or replace function public.guard_direct_message_update()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.sender_id is distinct from old.sender_id
+     or new.recipient_id is distinct from old.recipient_id
+     or new.body is distinct from old.body
+     or new.thread_key is distinct from old.thread_key
+     or new.created_at is distinct from old.created_at then
+    raise exception 'Kun lesetidspunktet kan endres på en melding';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists direct_messages_guard_update on public.direct_messages;
+create trigger direct_messages_guard_update
+  before update on public.direct_messages
+  for each row execute function public.guard_direct_message_update();
+
+alter table public.app_settings add column if not exists dm_max_per_hour int not null default 60;
+alter table public.app_settings add column if not exists dm_enabled boolean not null default true;
+
+/**
+ * Sender en melding. Håndhever blokkering, fartsgrense og at meldinger i det
+ * hele tatt er skrudd på (admin kan slå av hele DM-funksjonen fra
+ * adminpanelet hvis den blir misbrukt).
+ */
+create or replace function public.send_direct_message(p_recipient uuid, p_body text)
+returns public.direct_messages
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  msg public.direct_messages;
+  per_hour int;
+  enabled boolean;
+  used int;
+  clean text;
+begin
+  if uid is null then
+    raise exception 'Du må være logget inn for å sende meldinger';
+  end if;
+  if p_recipient is null or p_recipient = uid then
+    raise exception 'Ugyldig mottaker';
+  end if;
+  if not exists (select 1 from public.profiles where id = p_recipient) then
+    raise exception 'Fant ikke mottakeren';
+  end if;
+
+  select coalesce(dm_enabled, true), coalesce(dm_max_per_hour, 60)
+    into enabled, per_hour from public.app_settings where id = 1;
+  if enabled is false then
+    raise exception 'Meldinger er midlertidig slått av.';
+  end if;
+  per_hour := coalesce(per_hour, 60);
+
+  if public.is_blocked_between(uid, p_recipient) then
+    raise exception 'Du kan ikke sende melding til denne spilleren.';
+  end if;
+
+  clean := btrim(p_body);
+  if clean = '' then
+    raise exception 'Meldingen er tom';
+  end if;
+
+  if per_hour > 0 then
+    select count(*) into used from public.direct_messages
+     where sender_id = uid and created_at > now() - interval '1 hour';
+    if used >= per_hour then
+      raise exception 'Du har sendt mange meldinger på kort tid. Prøv igjen om litt.';
+    end if;
+  end if;
+
+  insert into public.direct_messages (sender_id, recipient_id, thread_key, body)
+  values (uid, p_recipient, public.dm_thread_key(uid, p_recipient), left(clean, 1000))
+  returning * into msg;
+
+  return msg;
+end;
+$$;
+
+revoke all on function public.send_direct_message(uuid, text) from public;
+grant execute on function public.send_direct_message(uuid, text) to authenticated;
+
+/**
+ * Innboksen: én rad per samtale med siste melding, motpartens profil og
+ * antall uleste. Gjøres i databasen fordi klienten ellers måtte hente ALLE
+ * meldinger og gruppere dem selv.
+ */
+create or replace function public.dm_threads()
+returns table (
+  thread_key text,
+  other_id uuid,
+  other_username text,
+  other_avatar_color text,
+  other_avatar_icon text,
+  last_body text,
+  last_at timestamptz,
+  last_from_me boolean,
+  unread int
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  with mine as (
+    select * from public.direct_messages
+     where sender_id = auth.uid() or recipient_id = auth.uid()
+  ),
+  latest as (
+    select distinct on (thread_key) *
+      from mine
+     order by thread_key, created_at desc
+  )
+  select l.thread_key,
+         case when l.sender_id = auth.uid() then l.recipient_id else l.sender_id end as other_id,
+         p.username, p.avatar_color, p.avatar_icon,
+         l.body, l.created_at,
+         l.sender_id = auth.uid() as last_from_me,
+         (select count(*)::int from mine m
+           where m.thread_key = l.thread_key
+             and m.recipient_id = auth.uid()
+             and m.read_at is null) as unread
+    from latest l
+    join public.profiles p
+      on p.id = case when l.sender_id = auth.uid() then l.recipient_id else l.sender_id end
+   order by l.created_at desc;
+$$;
+
+revoke all on function public.dm_threads() from public;
+grant execute on function public.dm_threads() to authenticated;
+
+/** Antall uleste meldinger totalt – til prikken i toppmenyen. */
+create or replace function public.dm_unread_count()
+returns int
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select count(*)::int from public.direct_messages
+   where recipient_id = auth.uid() and read_at is null;
+$$;
+
+revoke all on function public.dm_unread_count() from public;
+grant execute on function public.dm_unread_count() to authenticated;
+
+/** Marker alle meldinger fra én motpart som lest. */
+create or replace function public.dm_mark_read(p_other uuid)
+returns int
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  n int;
+begin
+  update public.direct_messages
+     set read_at = now()
+   where recipient_id = auth.uid() and sender_id = p_other and read_at is null;
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+
+revoke all on function public.dm_mark_read(uuid) from public;
+grant execute on function public.dm_mark_read(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 53. Ukentlig rangering.
+--
+--     Den globale totallista er demotiverende for nye spillere: den som har
+--     spilt siden mars ligger uoppnåelig langt foran, uansett hvor bra du
+--     gjør det i dag. Ukeslista nullstilles hver mandag, så alle starter likt
+--     og en fersk spiller kan faktisk vinne noe.
+-- ---------------------------------------------------------------------------
+create index if not exists game_records_created_idx on public.game_records (created_at);
+
+/**
+ * Ukens poeng per spiller: summen av BESTE runde per triks denne uka, ikke
+ * summen av alle runder. Ellers vinner den som spiller flest korte runder,
+ * ikke den som spiller best.
+ *
+ * p_week_offset: 0 = denne uka, -1 = forrige uke.
+ */
+create or replace function public.weekly_leaderboard(p_week_offset int default 0)
+returns table (user_id uuid, score numeric, matches int)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  with bounds as (
+    select date_trunc('week', (now() at time zone 'Europe/Oslo'))
+             + make_interval(weeks => coalesce(p_week_offset, 0)) as start_at
+  ),
+  window_records as (
+    select r.user_id, r.game_id, r.score
+      from public.game_records r, bounds b
+     where r.created_at >= b.start_at at time zone 'Europe/Oslo'
+       and r.created_at <  (b.start_at + interval '7 days') at time zone 'Europe/Oslo'
+  ),
+  best_per_game as (
+    select user_id, game_id, max(score) as best, count(*)::int as plays
+      from window_records group by user_id, game_id
+  )
+  select user_id, sum(best) as score, sum(plays)::int as matches
+    from best_per_game
+   group by user_id;
+$$;
+
+revoke all on function public.weekly_leaderboard(int) from public;
+grant execute on function public.weekly_leaderboard(int) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 54. Aktivitetsfeed – hva de du følger har gjort.
+--
+--     Gir følgingen en grunn til å eksistere utover et tall på profilen: du
+--     ser at kompisen slo rekorden sin i går, og vil slå den tilbake.
+-- ---------------------------------------------------------------------------
+create or replace function public.following_feed(p_limit int default 30)
+returns table (
+  user_id uuid,
+  username text,
+  avatar_color text,
+  avatar_icon text,
+  game_id text,
+  score numeric,
+  created_at timestamptz,
+  is_personal_best boolean
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  with followed as (
+    select following_id as id from public.follows where follower_id = auth.uid()
+  ),
+  recent as (
+    select r.*, row_number() over (partition by r.user_id, r.game_id order by r.created_at desc) as rn
+      from public.game_records r
+     where r.user_id in (select id from followed)
+       and r.created_at > now() - interval '30 days'
+  )
+  select r.user_id, p.username, p.avatar_color, p.avatar_icon,
+         r.game_id, r.score, r.created_at,
+         r.score >= coalesce((select max(x.score) from public.game_records x
+                               where x.user_id = r.user_id and x.game_id = r.game_id), 0) as is_personal_best
+    from recent r
+    join public.profiles p on p.id = r.user_id
+   where r.rn <= 3
+     and not p.is_hidden
+   order by r.created_at desc
+   limit least(coalesce(p_limit, 30), 100);
+$$;
+
+revoke all on function public.following_feed(int) from public;
+grant execute on function public.following_feed(int) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 55. Rangeringen hentet tidligere ALLE rader i game_records med ett
+--     select – som stopper på Supabase sin grense på 1000 rader og gjør at
+--     topplista stille begynner å vise feil tall så snart siden har litt
+--     trafikk. Aggregeringen flyttes derfor inn i databasen.
+-- ---------------------------------------------------------------------------
+create or replace function public.leaderboard_totals()
+returns table (user_id uuid, game_id text, best numeric, matches int)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select user_id, game_id, max(score) as best, count(*)::int as matches
+    from public.game_records
+   group by user_id, game_id;
+$$;
+
+revoke all on function public.leaderboard_totals() from public;
+grant execute on function public.leaderboard_totals() to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 56. Innstillinger for det sosiale laget, på brukernivå.
+--     Den som ikke vil ha meldinger fra fremmede skal slippe.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists dm_from_followers_only boolean not null default false;
+
+-- Håndheves i send_direct_message: bygges inn her i stedet for i en egen
+-- versjon av funksjonen, slik at det bare finnes ett sted å lese reglene.
+create or replace function public.send_direct_message(p_recipient uuid, p_body text)
+returns public.direct_messages
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  msg public.direct_messages;
+  per_hour int;
+  enabled boolean;
+  used int;
+  clean text;
+  followers_only boolean;
+begin
+  if uid is null then
+    raise exception 'Du må være logget inn for å sende meldinger';
+  end if;
+  if p_recipient is null or p_recipient = uid then
+    raise exception 'Ugyldig mottaker';
+  end if;
+
+  select dm_from_followers_only into followers_only
+    from public.profiles where id = p_recipient;
+  if followers_only is null then
+    raise exception 'Fant ikke mottakeren';
+  end if;
+
+  select coalesce(dm_enabled, true), coalesce(dm_max_per_hour, 60)
+    into enabled, per_hour from public.app_settings where id = 1;
+  if enabled is false then
+    raise exception 'Meldinger er midlertidig slått av.';
+  end if;
+  per_hour := coalesce(per_hour, 60);
+
+  if public.is_blocked_between(uid, p_recipient) then
+    raise exception 'Du kan ikke sende melding til denne spilleren.';
+  end if;
+
+  -- «Kun fra dem jeg følger»: mottakeren må følge avsenderen. Har de allerede
+  -- en samtale gående, slipper man gjennom – ellers ville innstillingen
+  -- kuttet en pågående samtale midt i.
+  if followers_only
+     and not exists (select 1 from public.follows
+                      where follower_id = p_recipient and following_id = uid)
+     and not exists (select 1 from public.direct_messages
+                      where thread_key = public.dm_thread_key(uid, p_recipient)
+                        and sender_id = p_recipient) then
+    raise exception 'Denne spilleren tar kun imot meldinger fra dem hen følger.';
+  end if;
+
+  clean := btrim(p_body);
+  if clean = '' then
+    raise exception 'Meldingen er tom';
+  end if;
+
+  if per_hour > 0 then
+    select count(*) into used from public.direct_messages
+     where sender_id = uid and created_at > now() - interval '1 hour';
+    if used >= per_hour then
+      raise exception 'Du har sendt mange meldinger på kort tid. Prøv igjen om litt.';
+    end if;
+  end if;
+
+  insert into public.direct_messages (sender_id, recipient_id, thread_key, body)
+  values (uid, p_recipient, public.dm_thread_key(uid, p_recipient), left(clean, 1000))
+  returning * into msg;
+
+  return msg;
+end;
+$$;
+
+revoke all on function public.send_direct_message(uuid, text) from public;
+grant execute on function public.send_direct_message(uuid, text) to authenticated;
+
+/**
+ * Slår opp en spiller på brukernavn – trengs for «send melding»-lenker og
+ * for å finne noen å følge uten å laste hele brukerlisten.
+ */
+create or replace function public.find_players(p_query text, p_limit int default 10)
+returns table (
+  id uuid, username text, avatar_color text, avatar_icon text,
+  level int, xp int, streak_current int
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select id, username, avatar_color, avatar_icon, level, xp, streak_current
+    from public.profiles
+   where is_hidden = false
+     and username ilike '%' || coalesce(p_query, '') || '%'
+     and id <> coalesce(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid)
+   order by xp desc
+   limit least(coalesce(p_limit, 10), 25);
+$$;
+
+revoke all on function public.find_players(text, int) from public;
+grant execute on function public.find_players(text, int) to anon, authenticated;
 
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din

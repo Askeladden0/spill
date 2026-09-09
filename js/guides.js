@@ -39,6 +39,36 @@
   function coerceModuleId(raw) { return /^\d+$/.test(raw) ? Number(raw) : raw; }
   function friendlyError(error) { return (error && error.message) || "Noe gikk galt. Prøv igjen."; }
 
+  // Inline SVG-ikoner. Emoji-glyfene (✎/🗑) som sto her før ble tegnet ulikt i
+  // hver nettleser og var vanskelige å se mot mørk bakgrunn – disse arver
+  // currentColor og har lik strektykkelse som resten av grensesnittet.
+  const ICON_PATHS = {
+    edit: '<path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>',
+    trash: '<path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6M14 11v6"></path>',
+    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle>',
+    eyeOff: '<path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6.4 0 10 6 10 6a17.8 17.8 0 0 1-3.3 4"></path><path d="M6.6 6.7A17.6 17.6 0 0 0 2 12s3.6 7 10 7a9.8 9.8 0 0 0 5.1-1.4"></path><path d="M3 3l18 18"></path>',
+    up: '<path d="M12 19V5"></path><path d="M6 11l6-6 6 6"></path>',
+    down: '<path d="M12 5v14"></path><path d="M18 13l-6 6-6-6"></path>',
+    plus: '<path d="M12 5v14M5 12h14"></path>',
+    x: '<path d="M18 6 6 18M6 6l12 12"></path>',
+    check: '<path d="M20 6 9 17l-5-5"></path>',
+    image: '<rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="8.5" cy="9.5" r="1.5"></circle><path d="m4 17 5-5 4 4 3-2 4 4"></path>',
+    text: '<path d="M4 6h16M4 12h16M4 18h10"></path>',
+    file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"></path><path d="M14 3v5h5"></path><path d="M12 12v5"></path><path d="m9.5 14.5 2.5 2.5 2.5-2.5"></path>',
+    table: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10M15 10v10"></path>',
+    coins: '<circle cx="12" cy="12" r="9"></circle><path d="M14.5 9h-3.2a1.8 1.8 0 0 0 0 3.6h1.4a1.8 1.8 0 0 1 0 3.6H9.5"></path><path d="M12 7.5v9"></path>',
+    poll: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path>',
+    game: '<path d="M6 12h4M8 10v4"></path><circle cx="16" cy="11" r="1"></circle><circle cx="18.5" cy="13.5" r="1"></circle><rect x="2" y="6" width="20" height="12" rx="5"></rect>',
+    drag: '<circle cx="9" cy="6" r="1.4"></circle><circle cx="15" cy="6" r="1.4"></circle><circle cx="9" cy="12" r="1.4"></circle><circle cx="15" cy="12" r="1.4"></circle><circle cx="9" cy="18" r="1.4"></circle><circle cx="15" cy="18" r="1.4"></circle>',
+    settings: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"></path>'
+  };
+  function icon(name, size) {
+    const d = ICON_PATHS[name];
+    if (!d) return "";
+    const s = size || 16;
+    return `<svg class="guide-ico" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  }
+
   let toastTimer = null;
   function flash(msg) {
     const el = document.querySelector("[data-toast]");
@@ -49,9 +79,17 @@
     toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
   }
 
-  const MODULE_LABELS = { tekst: "Tekst", fil: "Nedlasting", tabell: "Tabell", gevinst: "Gevinst", poll: "Avstemning", triks: "Triks" };
+  const MODULE_LABELS = { tekst: "Tekst", fil: "Nedlasting", tabell: "Tabell", gevinst: "Gevinst", poll: "Avstemning", triks: "Triks", bilde: "Bilde" };
+  const MODULE_ICONS = { tekst: "text", fil: "file", tabell: "table", gevinst: "coins", poll: "poll", triks: "game", bilde: "image" };
+  // Rekkefølgen her styrer rekkefølgen i "legg til modul"-velgeren.
   const MODULE_TYPES = [
-    ["tekst", "Tekst"], ["fil", "Fil"], ["tabell", "Tabell"], ["gevinst", "Gevinst"], ["poll", "Avstemning"], ["triks", "Triks-lenke"]
+    ["tekst", "Tekst", "Overskrift, avsnitt, punktliste og en tips-boks."],
+    ["bilde", "Bilde", "Et bilde eller skjermbilde, med valgfri bildetekst."],
+    ["fil", "Nedlasting", "Last opp en mal eller et dokument leseren kan laste ned."],
+    ["tabell", "Tabell", "Tre kolonner med tall eller fakta."],
+    ["gevinst", "Gevinst", "Regnestykke som summerer hva leseren kan tjene."],
+    ["poll", "Avstemning", "Spørsmål med svaralternativer leserne kan stemme på."],
+    ["triks", "Triks", "Kort som lenker til et triks på siden, eller en egen lenke."]
   ];
 
   function defaultModuleData(type) {
@@ -62,6 +100,7 @@
       case "gevinst": return { heading: "Dette kan du tjene", note: "", gains: [] };
       case "poll": return { question: "", options: [{ label: "", votes: 0 }, { label: "", votes: 0 }] };
       case "triks": return { gameId: null, title: "", intro: "", href: null };
+      case "bilde": return { url: null, alt: "", caption: "", size: "full" };
       default: return {};
     }
   }
@@ -75,6 +114,7 @@
       case "poll": return data.question && (data.options || []).filter((o) => o.label).length >= 2
         ? null : "Skriv et spørsmål og minst to svaralternativer.";
       case "triks": return (data.gameId || data.title) ? null : "Velg et triks, eller gi lenken en tittel.";
+      case "bilde": return data.url ? null : "Last opp et bilde først.";
       default: return null;
     }
   }
@@ -113,11 +153,23 @@
       d.title = (d.title || "").trim();
       d.intro = (d.intro || "").trim();
       d.href = (d.href || "").trim() || null;
+    } else if (type === "bilde") {
+      d.url = d.url || null;
+      d.alt = (d.alt || "").trim();
+      d.caption = (d.caption || "").trim();
+      d.size = d.size === "medium" ? "medium" : "full";
     }
     return d;
   }
 
   function gevinstSum(d) { return (d.gains || []).reduce((s, g) => s + (Number(g.amountKr) || 0), 0); }
+
+  // Kort oppsummering av en modul, brukt i slette-bekreftelsen og i
+  // modul-headeren slik at admin ser hvilken modul en knapp gjelder.
+  function moduleSummary(m) {
+    const label = moduleTOCLabel(m);
+    return label || (MODULE_LABELS[m.type] || m.type);
+  }
 
   // =====================================================================
   // State
@@ -128,14 +180,44 @@
     guideDraft: null,      // guide-info-skjemaet (nytt eller redigering av eksisterende)
     moduleDraft: null,     // modul-skjemaet på guide.html
     addPickerOpen: false,
+    addPickerIndex: null,  // hvor i lista den nye modulen skal settes inn (null = til slutt)
+    previewMode: false,    // admin ser siden akkurat slik en besøkende gjør
+    saving: false,         // hindrer dobbelttrykk på lagre-knappene
   };
   let currentGuideId = null;
 
+  // Admin-kontrollene skjules i forhåndsvisningsmodus, men admin beholder
+  // fortsatt tilgang til skjulte guider (visibleGuides under).
+  function canEdit() { return state.isAdmin && !state.previewMode; }
+
+  // Snapshot av skjemaet slik det så ut da det ble åpnet, slik at vi bare
+  // maser om ulagrede endringer når noe faktisk er endret.
+  function draftSnapshot(draft) {
+    if (!draft) return null;
+    const { uploadBusy, ...rest } = draft;
+    return JSON.stringify(rest);
+  }
+  function markPristine(draft) {
+    if (draft) draft.pristine = draftSnapshot(Object.assign({}, draft, { pristine: undefined }));
+    return draft;
+  }
+  function isDirty(draft) {
+    if (!draft) return false;
+    return draftSnapshot(Object.assign({}, draft, { pristine: undefined })) !== draft.pristine;
+  }
+  function hasUnsavedChanges() { return isDirty(state.guideDraft) || isDirty(state.moduleDraft); }
+
+  // Brukes før man åpner et annet skjema, forhåndsviser eller forlater siden.
+  function confirmDiscard() {
+    if (!hasUnsavedChanges()) return true;
+    return window.confirm("Du har endringer som ikke er lagret. Vil du forkaste dem?");
+  }
+
   function emptyGuideDraft() {
-    return { id: null, tempId: "new-" + Date.now(), title: "", category: "", excerpt: "", valueLabel: "", readTime: "", coverUrl: null, featured: false, uploadBusy: false };
+    return markPristine({ id: null, tempId: "new-" + Date.now(), title: "", category: "", excerpt: "", valueLabel: "", coverUrl: null, featured: false, uploadBusy: false });
   }
   function guideDraftFrom(g) {
-    return { id: g.id, tempId: g.id, title: g.title, category: g.category, excerpt: g.excerpt, valueLabel: g.valueLabel, readTime: g.readTime, coverUrl: g.coverUrl, featured: g.featured, hidden: g.hidden, uploadBusy: false };
+    return markPristine({ id: g.id, tempId: g.id, title: g.title, category: g.category, excerpt: g.excerpt, valueLabel: g.valueLabel, coverUrl: g.coverUrl, featured: g.featured, hidden: g.hidden, uploadBusy: false });
   }
   function getCurrentGuide() { return Guides.list().find((g) => g.id === currentGuideId) || null; }
   // Skjulte guider (g.hidden) er bare synlige for admin – brukes på guider.html
@@ -145,93 +227,260 @@
   // =====================================================================
   // Guide-info-skjema (delt mellom "+ Ny guide" og "Rediger guide-info")
   // =====================================================================
+  // Felles bilde-opplaster: stort felt der bildet selv er kontrollen, i stedet
+  // for en tekstknapp ved siden av en liten miniatyr. Støtter både klikk og
+  // dra-og-slipp (se "drop"-lytteren nederst i fila).
+  function dropzoneHTML(o) {
+    const has = !!o.url;
+    return `
+      <div class="guide-dropzone${has ? " has-image" : ""}${o.busy ? " is-busy" : ""}" style="--dz-ratio:${o.ratio || "16 / 9"}">
+        <label class="guide-dropzone-target">
+          ${has ? `<img src="${escapeHTML(o.url)}" alt="">` : `
+            <span class="guide-dropzone-empty">
+              ${icon("image", 26)}
+              <strong>Slipp et bilde her, eller klikk for å velge</strong>
+              <small>${escapeHTML(o.hint || "")}</small>
+            </span>`}
+          ${o.busy ? `<span class="guide-dropzone-busy">Laster opp …</span>` : ""}
+          <input type="file" accept="image/png,image/jpeg,image/webp" ${o.uploadAttr} ${o.busy ? "disabled" : ""}>
+        </label>
+        ${has ? `
+          <div class="guide-dropzone-actions">
+            <label class="guide-action-btn">
+              ${icon("image", 15)}<span>Bytt bilde</span>
+              <input type="file" accept="image/png,image/jpeg,image/webp" ${o.uploadAttr} ${o.busy ? "disabled" : ""} hidden>
+            </label>
+            ${o.removeAttr ? `<button type="button" class="guide-action-btn is-danger" ${o.removeAttr}>${icon("trash", 15)}<span>Fjern</span></button>` : ""}
+          </div>` : ""}
+      </div>
+    `;
+  }
+
+  // Live-forhåndsvisning av kortet slik det vil se ut på guider.html. Gjør at
+  // man ser konsekvensen av tittel, ingress, bilde og "mengde spart" med én
+  // gang, i stedet for å måtte lagre og gå tilbake til oversikten.
+  function guideCardPreviewHTML(draft) {
+    return `
+      <div class="guide-preview-pane">
+        <span class="guide-form-legend">Slik ser kortet ut</span>
+        <div class="guide-card guide-card-preview${draft.hidden ? " is-hidden-guide" : ""}">
+          <span class="guide-card-thumb">
+            ${draft.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(draft.coverUrl)}" alt="">` : `<span class="guide-card-thumb-slot">${icon("image", 20)}</span>`}
+            <span class="guide-card-gradient"></span>
+            <h3 class="guide-card-title">${escapeHTML(draft.title) || '<span class="is-placeholder">Overskriften din havner her</span>'}</h3>
+          </span>
+          ${draft.hidden ? `<span class="guide-status-badge is-hidden">${icon("eyeOff", 13)}Skjult</span>` : ""}
+          ${draft.featured ? `<span class="guide-status-badge is-featured">Fremhevet</span>` : ""}
+          <div class="guide-card-body">
+            <p class="guide-card-excerpt">${escapeHTML(draft.excerpt) || '<span class="is-placeholder">Ingressen vises her.</span>'}</p>
+            <div class="guide-card-foot">
+              <span class="guide-card-value">${escapeHTML(draft.valueLabel) || '<span class="is-placeholder">Mengde spart/tjent</span>'}</span>
+            </div>
+          </div>
+        </div>
+        <span class="guide-field-hint">${draft.category
+          ? `Ligger under filteret <strong>${escapeHTML(draft.category)}</strong>.`
+          : "Uten kategori vises guiden bare under «Alle»."}</span>
+      </div>
+    `;
+  }
+
   function guideFormHTML(draft, opts) {
     opts = opts || {};
+    const cats = Array.from(new Set(Guides.list().map((g) => g.category).filter(Boolean)));
     return `
       <div class="admin-card guide-form">
-        <div class="admin-row-detail" style="padding:0;border:none">
-          <label class="admin-field is-wide">Overskrift
-            <input type="text" data-gf="title" value="${escapeHTML(draft.title)}" placeholder="F.eks. Hvordan tjene penger på å sitte i elevrådet">
-          </label>
-          <label class="admin-field">Kategori
-            <input type="text" data-gf="category" value="${escapeHTML(draft.category)}" placeholder="F.eks. Elevrådet">
-          </label>
-          <label class="admin-field">Lesetid
-            <input type="text" data-gf="readTime" value="${escapeHTML(draft.readTime)}" placeholder="F.eks. 8 min">
-          </label>
-          <label class="admin-field is-wide">Ingress (vises på kortet og øverst i guiden)
-            <textarea data-gf="excerpt" rows="2" placeholder="Kort beskrivelse av guiden">${escapeHTML(draft.excerpt)}</textarea>
-          </label>
-          <label class="admin-field">Mengde spart/tjent
-            <input type="text" data-gf="valueLabel" value="${escapeHTML(draft.valueLabel)}" placeholder="F.eks. Opptil 12 000 kr">
-          </label>
-          <label class="admin-field">Toppbilde
-            <span class="admin-upload-row">
-              <label class="admin-upload-btn${draft.uploadBusy ? " is-busy" : ""}">
-                ${draft.uploadBusy ? "Laster opp …" : (draft.coverUrl ? "Bytt bilde" : "Last opp PNG/JPG")}
-                <input type="file" accept="image/png,image/jpeg,image/webp" data-gf-upload ${draft.uploadBusy ? "disabled" : ""}>
-              </label>
-            </span>
-          </label>
-          ${opts.isNew ? "" : `
-          <label class="admin-field" style="flex-direction:row;align-items:center;gap:10px;padding-top:26px">
-            <button type="button" class="admin-switch${draft.featured ? " is-on" : ""}" data-gf-toggle="featured" aria-label="Vis som fremhevet guide">
-              <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
-            </button>
-            <span style="font-size:12.5px;font-weight:600;color:var(--muted)">Vis som fremhevet guide øverst</span>
-          </label>
-          <label class="admin-field" style="flex-direction:row;align-items:center;gap:10px;padding-top:26px">
-            <button type="button" class="admin-switch${draft.hidden ? " is-on" : ""}" data-gf-toggle="hidden" aria-label="Skjul guiden for besøkende">
-              <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
-            </button>
-            <span style="font-size:12.5px;font-weight:600;color:var(--muted)">Skjul guiden (kun synlig for admin)</span>
-          </label>`}
+        <div class="guide-form-head">
+          <span class="guide-form-title">${icon(opts.isNew ? "plus" : "edit", 17)}${opts.isNew ? "Ny guide" : "Rediger guide-info"}</span>
+          <button type="button" class="guide-form-close" data-gf-cancel aria-label="Lukk skjemaet">${icon("x", 16)}</button>
         </div>
-        <div class="admin-row-actions">
-          <button type="button" class="btn-outline" data-gf-cancel>Avbryt</button>
-          <button type="button" class="admin-btn-ghost is-accent" data-gf-save>${opts.isNew ? "Opprett guide" : "Lagre"}</button>
+
+        <div class="guide-form-layout">
+          <div class="guide-form-body">
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Overskrift og ingress</span>
+              <label class="admin-field is-wide">Overskrift
+                <input type="text" class="is-title-input" data-gf="title" value="${escapeHTML(draft.title)}" placeholder="Hvordan tjene penger på å sitte i elevrådet">
+              </label>
+              <label class="admin-field is-wide">Ingress
+                <textarea data-gf="excerpt" rows="3" maxlength="300" placeholder="Kort beskrivelse av hva leseren sitter igjen med">${escapeHTML(draft.excerpt)}</textarea>
+                <span class="guide-field-hint"><span data-gf-count="excerpt">${(draft.excerpt || "").length}</span>/300 tegn · brukes også i Google-treffet.</span>
+              </label>
+            </section>
+
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Toppbilde</span>
+              ${dropzoneHTML({
+                url: draft.coverUrl, busy: draft.uploadBusy, uploadAttr: "data-gf-upload",
+                removeAttr: draft.coverUrl ? "data-gf-remove-cover" : null, ratio: "16 / 9",
+                hint: "PNG, JPG eller WEBP · maks 5 MB · best i 16:9",
+              })}
+            </section>
+
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Kategori</span>
+              ${cats.length ? `<div class="guide-choice-row">
+                ${cats.map((c) => `<button type="button" class="guide-choice${draft.category === c ? " is-active" : ""}" data-gf-choice="category" data-value="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join("")}
+                ${draft.category ? `<button type="button" class="guide-choice is-clear" data-gf-choice="category" data-value="">${icon("x", 13)}Ingen</button>` : ""}
+              </div>` : ""}
+              <label class="admin-field is-wide">${cats.length ? "… eller skriv en ny" : "Kategori"}
+                <input type="text" data-gf="category" value="${escapeHTML(draft.category)}" placeholder="F.eks. Elevrådet">
+                <span class="guide-field-hint">Kategorien blir en filterknapp på oversikten.</span>
+              </label>
+            </section>
+
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Mengde spart eller tjent</span>
+              <div class="guide-choice-row">
+                ${["Opptil 5 000 kr", "Opptil 12 000 kr", "Spar timer i uka"].map((v) => `
+                  <button type="button" class="guide-choice${draft.valueLabel === v ? " is-active" : ""}" data-gf-choice="valueLabel" data-value="${escapeHTML(v)}">${escapeHTML(v)}</button>
+                `).join("")}
+              </div>
+              <label class="admin-field is-wide">Egen tekst
+                <input type="text" data-gf="valueLabel" value="${escapeHTML(draft.valueLabel)}" placeholder="F.eks. Opptil 12 000 kr">
+                <span class="guide-field-hint">Den grønne teksten nederst på kortet.</span>
+              </label>
+            </section>
+
+            ${opts.isNew ? "" : `
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Synlighet</span>
+              <div class="guide-toggle-list">
+                <div class="guide-toggle-row${draft.featured ? " is-on" : ""}">
+                  <button type="button" class="admin-switch${draft.featured ? " is-on" : ""}" data-gf-toggle="featured" role="switch" aria-checked="${draft.featured ? "true" : "false"}" aria-label="Vis som fremhevet guide">
+                    <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
+                  </button>
+                  <span class="guide-toggle-text">
+                    <strong>Fremhev øverst på oversikten</strong>
+                    <small>Kun én guide kan være fremhevet om gangen.</small>
+                  </span>
+                </div>
+                <div class="guide-toggle-row is-warn${draft.hidden ? " is-on" : ""}">
+                  <button type="button" class="admin-switch is-warn${draft.hidden ? " is-on" : ""}" data-gf-toggle="hidden" role="switch" aria-checked="${draft.hidden ? "true" : "false"}" aria-label="Skjul guiden for besøkende">
+                    <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
+                  </button>
+                  <span class="guide-toggle-text">
+                    <strong>Skjul guiden</strong>
+                    <small>${draft.hidden ? "Guiden er usynlig for besøkende – kun admin ser den." : "Guiden er publisert og synlig for alle."}</small>
+                  </span>
+                </div>
+              </div>
+            </section>`}
+          </div>
+
+          <aside class="guide-form-side">
+            ${guideCardPreviewHTML(draft)}
+          </aside>
+        </div>
+
+        <div class="guide-form-foot">
+          <span class="guide-form-hint">Esc avbryter · ${cmdKeyLabel()} + S lagrer</span>
+          <div class="admin-row-actions">
+            <button type="button" class="btn-outline" data-gf-cancel>Avbryt</button>
+            <button type="button" class="admin-btn-ghost is-accent" data-gf-save ${state.saving ? "disabled" : ""}>
+              ${state.saving ? "Lagrer …" : (opts.isNew ? "Opprett guide" : "Lagre endringer")}
+            </button>
+          </div>
         </div>
       </div>
     `;
   }
 
+  function cmdKeyLabel() {
+    return /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent) ? "⌘" : "Ctrl";
+  }
+
   async function saveGuideDraft() {
     const d = state.guideDraft;
-    if (!d) return;
+    if (!d || state.saving) return;
     const title = d.title.trim();
-    if (!title) return flash("Guiden må ha en overskrift.");
+    if (!title) { flash("Guiden må ha en overskrift."); focusField('[data-gf="title"]'); return; }
 
     const fields = {
       title, category: d.category.trim(), excerpt: d.excerpt.trim(),
-      valueLabel: d.valueLabel.trim(), readTime: d.readTime.trim(), coverUrl: d.coverUrl,
+      valueLabel: d.valueLabel.trim(), coverUrl: d.coverUrl,
     };
     if (d.id !== null) { fields.featured = !!d.featured; fields.hidden = !!d.hidden; }
 
-    if (d.id === null) {
-      const { data, error } = await Guides.createGuide(fields);
+    state.saving = true;
+    renderAll();
+    try {
+      if (d.id === null) {
+        const { data, error } = await Guides.createGuide(fields);
+        if (error) return flash(friendlyError(error));
+        state.guideDraft = null;
+        flash("Guide opprettet");
+        window.location.href = `guide.html?id=${encodeURIComponent(data.id)}&edit=1`;
+        return;
+      }
+
+      const { error } = await Guides.updateGuide(d.id, fields);
       if (error) return flash(friendlyError(error));
       state.guideDraft = null;
-      flash("Guide opprettet");
-      window.location.href = `guide.html?id=${encodeURIComponent(data.id)}&edit=1`;
-      return;
+      flash("Guide-info lagret");
+    } finally {
+      state.saving = false;
+      renderAll();
     }
+  }
 
-    const { error } = await Guides.updateGuide(d.id, fields);
-    if (error) return flash(friendlyError(error));
-    state.guideDraft = null;
-    flash("Lagret!");
+  // Rask av/på for synlighet, uten å måtte åpne hele guide-info-skjemaet.
+  async function toggleGuideHidden(id) {
+    const g = Guides.list().find((x) => x.id === id);
+    if (!g || state.saving) return;
+    const next = !g.hidden;
+    state.saving = true;
+    renderAll();
+    const { error } = await Guides.updateGuide(id, { hidden: next });
+    state.saving = false;
+    if (error) { flash(friendlyError(error)); renderAll(); return; }
+    if (state.guideDraft && state.guideDraft.id === id) state.guideDraft.hidden = next;
+    flash(next ? "Guiden er skjult for besøkende" : "Guiden er publisert");
     renderAll();
   }
 
   async function deleteGuideFlow(id) {
     const g = Guides.list().find((x) => x.id === id);
     if (!g) return;
-    if (!window.confirm(`Slette guiden «${g.title}»? Dette kan ikke angres.`)) return;
+    const moduleCount = Guides.modulesFor(id).length;
+    const extra = moduleCount ? `\n\nGuiden har ${moduleCount} modul${moduleCount === 1 ? "" : "er"} som slettes samtidig.` : "";
+    if (!window.confirm(`Slette guiden «${g.title}»?${extra}\n\nDette kan ikke angres. Vil du heller skjule guiden, avbryt og bruk «Skjul» i stedet.`)) return;
     const { error } = await Guides.deleteGuide(id);
     if (error) return flash(friendlyError(error));
     flash("Guide slettet");
     if (isGuidePage && currentGuideId === id) { window.location.href = "guider.html"; return; }
     renderAll();
+  }
+
+  // Forhåndsvisningen av kortet oppdateres direkte i DOM mens man skriver.
+  // Et fullt re-render ville flyttet markøren til slutten av tekstfeltet.
+  function updateGuidePreview() {
+    const d = state.guideDraft;
+    const pane = document.querySelector(".guide-preview-pane");
+    if (!d || !pane) return;
+    const set = (sel, value, placeholder) => {
+      const el = pane.querySelector(sel);
+      if (!el) return;
+      if (value) el.textContent = value;
+      else el.innerHTML = `<span class="is-placeholder">${escapeHTML(placeholder)}</span>`;
+    };
+    set(".guide-card-title", d.title, "Overskriften din havner her");
+    set(".guide-card-excerpt", d.excerpt, "Ingressen vises her.");
+    set(".guide-card-value", d.valueLabel, "Mengde spart/tjent");
+    const hint = pane.querySelector(".guide-field-hint");
+    if (hint) {
+      hint.innerHTML = d.category
+        ? `Ligger under filteret <strong>${escapeHTML(d.category)}</strong>.`
+        : "Uten kategori vises guiden bare under «Alle».";
+    }
+  }
+
+  // Etter et re-render er DOM-noden byttet ut, så fokus må settes på nytt.
+  function focusField(selector) {
+    requestAnimationFrame(() => {
+      const el = document.querySelector(selector);
+      if (el) { el.focus(); if (el.select) el.select(); }
+    });
   }
 
   async function onGuideCoverUpload(input) {
@@ -247,6 +496,12 @@
     renderAll();
   }
 
+  function removeGuideCover() {
+    if (!state.guideDraft) return;
+    state.guideDraft.coverUrl = null;
+    renderAll();
+  }
+
   // =====================================================================
   // guider.html – oversikt
   // =====================================================================
@@ -259,7 +514,7 @@
     const list = visibleGuides();
     if (countEl) countEl.textContent = `${list.length} guide${list.length === 1 ? "" : "r"}`;
     const newBtn = document.querySelector("[data-guide-new]");
-    if (newBtn) newBtn.hidden = !state.isAdmin;
+    if (newBtn) newBtn.hidden = !canEdit();
   }
 
   function renderFeature() {
@@ -279,7 +534,7 @@
       return;
     }
 
-    const metaBits = [featured.readTime, featured.updatedAt ? `Oppdatert ${formatDate(featured.updatedAt)}` : ""].filter(Boolean).join(" · ");
+    const metaBits = [featured.updatedAt ? `Oppdatert ${formatDate(featured.updatedAt)}` : ""].filter(Boolean).join(" · ");
     el.innerHTML = `
       <div class="guide-feature">
         <div class="guide-feature-text">
@@ -287,7 +542,7 @@
           <h2>${escapeHTML(featured.title)}</h2>
           <p>${escapeHTML(featured.excerpt)}</p>
           <div class="guide-feature-actions">
-            <a href="guide.html?id=${encodeURIComponent(featured.id)}"><button type="button" class="btn-primary">Les guiden</button></a>
+            <a href="guide.html?id=${encodeURIComponent(featured.id)}" class="btn-primary btn-link">Les guiden</a>
             ${metaBits ? `<span class="section-sub">${escapeHTML(metaBits)}</span>` : ""}
           </div>
         </div>
@@ -310,26 +565,34 @@
     if (state.guideDraft && state.guideDraft.id === g.id) {
       return `<div class="guide-card is-editing">${guideFormHTML(state.guideDraft, { isNew: false })}</div>`;
     }
+    const admin = canEdit();
+    const isHidden = !!g.hidden;
     return `
-      <div class="guide-card${g.hidden ? " is-hidden-guide" : ""}">
+      <div class="guide-card${isHidden && admin ? " is-hidden-guide" : ""}">
         <a href="guide.html?id=${encodeURIComponent(g.id)}" class="guide-card-thumb">
-          ${g.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(g.coverUrl)}" alt="">` : `<span class="guide-card-thumb-slot">[ guide-bilde ]</span>`}
+          ${g.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(g.coverUrl)}" alt="">` : `<span class="guide-card-thumb-slot">${icon("image", 20)}</span>`}
           <div class="guide-card-gradient"></div>
           <h3 class="guide-card-title">${escapeHTML(g.title)}</h3>
         </a>
-        ${state.isAdmin && g.hidden ? `<span class="guide-card-hidden-badge">Skjult</span>` : ""}
-        ${state.isAdmin ? `
-          <div class="guide-card-admin-actions">
-            <button type="button" class="guide-icon-btn" data-guide-card-edit="${escapeHTML(g.id)}" title="Rediger">✎</button>
-            <button type="button" class="guide-icon-btn is-danger" data-guide-card-delete="${escapeHTML(g.id)}" title="Slett">🗑</button>
-          </div>
-        ` : ""}
+        ${isHidden && admin ? `<span class="guide-status-badge is-hidden">${icon("eyeOff", 13)}Skjult</span>` : ""}
+        ${g.featured && admin ? `<span class="guide-status-badge is-featured">Fremhevet</span>` : ""}
         <div class="guide-card-body">
           <p class="guide-card-excerpt">${escapeHTML(g.excerpt)}</p>
           <div class="guide-card-foot">
             <span class="guide-card-value">${escapeHTML(g.valueLabel)}</span>
-            ${g.readTime ? `<span class="guide-card-time">${escapeHTML(g.readTime)}</span>` : ""}
           </div>
+          ${admin ? `
+          <div class="guide-card-admin-bar">
+            <button type="button" class="guide-action-btn" data-guide-card-edit="${escapeHTML(g.id)}">
+              ${icon("edit", 15)}<span>Rediger</span>
+            </button>
+            <button type="button" class="guide-action-btn${isHidden ? " is-warn" : ""}" data-guide-card-hide="${escapeHTML(g.id)}">
+              ${icon(isHidden ? "eye" : "eyeOff", 15)}<span>${isHidden ? "Publiser" : "Skjul"}</span>
+            </button>
+            <button type="button" class="guide-action-btn is-danger" data-guide-card-delete="${escapeHTML(g.id)}">
+              ${icon("trash", 15)}<span>Slett</span>
+            </button>
+          </div>` : ""}
         </div>
       </div>
     `;
@@ -353,16 +616,37 @@
   // =====================================================================
   // guide.html – én guide
   // =====================================================================
-  function addModulePickerHTML() {
-    if (state.moduleDraft && state.moduleDraft.isNew) return moduleEditorHTML(state.moduleDraft);
-    if (!state.addPickerOpen) return `<button type="button" class="btn-outline" data-guide-add-open>+ Legg til modul</button>`;
+  function addModulePickerHTML(atIndex) {
+    const isInline = atIndex !== null && atIndex !== undefined;
+    const openHere = state.addPickerOpen && state.addPickerIndex === (isInline ? atIndex : null);
+    const draftHere = state.moduleDraft && state.moduleDraft.isNew
+      && state.moduleDraft.insertIndex === (isInline ? atIndex : null);
+
+    if (draftHere) return moduleEditorHTML(state.moduleDraft);
+
+    if (!openHere) {
+      return isInline
+        ? `<button type="button" class="guide-insert-btn" data-guide-add-open="${atIndex}" aria-label="Sett inn modul her">${icon("plus", 14)}<span>Sett inn modul her</span></button>`
+        : `<button type="button" class="guide-add-btn" data-guide-add-open="end">${icon("plus", 17)}Legg til modul</button>`;
+    }
+
     return `
       <div class="guide-add-picker">
-        <span class="guide-add-picker-label">Velg modultype:</span>
-        <div class="guide-add-picker-options">
-          ${MODULE_TYPES.map(([t, label]) => `<button type="button" class="admin-btn-ghost" data-guide-add-type="${t}">${label}</button>`).join("")}
+        <div class="guide-add-picker-head">
+          <span class="guide-add-picker-label">Hva vil du legge til${isInline ? " her" : ""}?</span>
+          <button type="button" class="guide-form-close" data-guide-add-close aria-label="Avbryt">${icon("x", 15)}</button>
         </div>
-        <button type="button" class="admin-btn-text" data-guide-add-close>Avbryt</button>
+        <div class="guide-add-picker-options">
+          ${MODULE_TYPES.map(([t, label, desc]) => `
+            <button type="button" class="guide-type-card" data-guide-add-type="${t}" data-guide-add-index="${isInline ? atIndex : ""}">
+              <span class="guide-type-icon">${icon(MODULE_ICONS[t] || "text", 18)}</span>
+              <span class="guide-type-text">
+                <strong>${escapeHTML(label)}</strong>
+                <small>${escapeHTML(desc)}</small>
+              </span>
+            </button>
+          `).join("")}
+        </div>
       </div>
     `;
   }
@@ -378,6 +662,9 @@
         const game = m.data.gameId ? (window.STUDILLA_GAMES || []).find((x) => x.id === m.data.gameId) : null;
         return (game && game.name) || m.data.title || "Triks";
       }
+      // Bilder får ingen oppføring i innholdsfortegnelsen – de hører til
+      // avsnittet over, og ville bare fylt lista med "Bilde"-lenker.
+      case "bilde": return null;
       default: return null;
     }
   }
@@ -491,7 +778,6 @@
     const inner = `
       <div class="guide-trick-thumb">${thumb ? `<img src="${escapeHTML(thumb)}" alt="">` : `<span class="hero-placeholder-label">[ triks-bilde ]</span>`}</div>
       <div class="guide-trick-body">
-        <span class="guide-trick-eyebrow">Øv på dette i et triks</span>
         <span class="guide-trick-title">${escapeHTML(title)}</span>
         ${intro ? `<span class="guide-trick-intro">${escapeHTML(intro)}</span>` : ""}
         <span class="guide-trick-cta">Spill trikset →</span>
@@ -502,8 +788,21 @@
       : `<div class="guide-trick-card is-static">${inner}</div>`;
   }
 
+  function bildeBodyHTML(d) {
+    if (!d.url) {
+      return `<div class="guide-image-block is-empty">${icon("image", 22)}<span>${state.isAdmin ? "Ingen fil lastet opp ennå" : ""}</span></div>`;
+    }
+    return `
+      <figure class="guide-image-block${d.size === "medium" ? " is-medium" : ""}">
+        <img src="${escapeHTML(d.url)}" alt="${escapeHTML(d.alt || "")}" loading="lazy">
+        ${d.caption ? `<figcaption>${escapeHTML(d.caption)}</figcaption>` : ""}
+      </figure>
+    `;
+  }
+
   function moduleBodyHTML(m) {
     switch (m.type) {
+      case "bilde": return bildeBodyHTML(m.data);
       case "tekst": return tekstBodyHTML(m.data);
       case "fil": return filBodyHTML(m.data);
       case "tabell": return tabellBodyHTML(m.data);
@@ -517,25 +816,33 @@
   function moduleBlockHTML(m, index, total) {
     const isEditing = state.moduleDraft && !state.moduleDraft.isNew && state.moduleDraft.id === m.id;
     const idAttr = escapeHTML(String(m.id));
-    const adminToolbar = state.isAdmin ? `
-      <div class="guide-module-toolbar">
-        <button type="button" class="guide-icon-btn" data-module-up="${idAttr}" ${index === 0 ? "disabled" : ""} title="Flytt opp">↑</button>
-        <button type="button" class="guide-icon-btn" data-module-down="${idAttr}" ${index === total - 1 ? "disabled" : ""} title="Flytt ned">↓</button>
-        <button type="button" class="guide-icon-btn" data-module-edit="${idAttr}" title="Rediger">✎</button>
-        <button type="button" class="guide-icon-btn is-danger" data-module-delete="${idAttr}" title="Slett">🗑</button>
-      </div>
-    ` : "";
+    const admin = canEdit();
 
-    const moduleHead = state.isAdmin ? `
+    const moduleHead = admin ? `
       <div class="guide-module-head">
-        <span class="guide-module-eyebrow">Modul · ${escapeHTML(MODULE_LABELS[m.type] || m.type)}</span>
+        <span class="guide-module-eyebrow">
+          <span class="guide-module-num">${index + 1}</span>
+          ${icon(MODULE_ICONS[m.type] || "text", 14)}
+          ${escapeHTML(MODULE_LABELS[m.type] || m.type)}
+        </span>
         <div class="guide-module-divider"></div>
-        ${adminToolbar}
+        <div class="guide-module-toolbar">
+          <span class="guide-move-group">
+            <button type="button" class="guide-icon-btn" data-module-up="${idAttr}" ${index === 0 ? "disabled" : ""} title="Flytt opp" aria-label="Flytt modulen opp">${icon("up", 15)}</button>
+            <button type="button" class="guide-icon-btn" data-module-down="${idAttr}" ${index === total - 1 ? "disabled" : ""} title="Flytt ned" aria-label="Flytt modulen ned">${icon("down", 15)}</button>
+          </span>
+          <button type="button" class="guide-action-btn${isEditing ? " is-active" : ""}" data-module-edit="${idAttr}" aria-label="Rediger modulen">
+            ${icon("edit", 15)}<span>${isEditing ? "Redigerer" : "Rediger"}</span>
+          </button>
+          <button type="button" class="guide-action-btn is-danger" data-module-delete="${idAttr}" aria-label="Slett modulen">
+            ${icon("trash", 15)}<span>Slett</span>
+          </button>
+        </div>
       </div>
     ` : "";
 
     return `
-      <section class="guide-module" id="module-${idAttr}">
+      <section class="guide-module${admin ? " is-editable" : ""}${isEditing ? " is-editing" : ""}" id="module-${idAttr}">
         ${moduleHead}
         ${isEditing ? moduleEditorHTML(state.moduleDraft) : moduleBodyHTML(m)}
       </section>
@@ -613,6 +920,10 @@
         </label>
       </div>
       <div class="guide-row-editor">
+        <span class="guide-form-legend">Rader</span>
+        ${rows.length ? `<div class="guide-row-editor-legend">
+          <span>${escapeHTML(cols[0])}</span><span>${escapeHTML(cols[1])}</span><span>${escapeHTML(cols[2])}</span><span class="is-spacer"></span>
+        </div>` : `<span class="guide-field-hint">Ingen rader ennå.</span>`}
         ${rows.map((r, i) => `
           <div class="guide-row-editor-row">
             <input type="text" placeholder="Kolonne 1" data-row-list="rows" data-row-index="${i}" data-row-field="a" value="${escapeHTML(r.a || "")}">
@@ -638,6 +949,8 @@
         </label>
       </div>
       <div class="guide-row-editor">
+        <span class="guide-form-legend">Poster</span>
+        ${gains.length ? "" : `<span class="guide-field-hint">Legg til minst én post – summen regnes ut automatisk.</span>`}
         ${gains.map((g, i) => `
           <div class="guide-row-editor-row">
             <input type="text" placeholder="Beskrivelse" data-row-list="gains" data-row-index="${i}" data-row-field="label" value="${escapeHTML(g.label || "")}">
@@ -660,6 +973,7 @@
         </label>
       </div>
       <div class="guide-row-editor">
+        <span class="guide-form-legend">Svaralternativer</span>
         ${options.map((o, i) => `
           <div class="guide-row-editor-row">
             <input type="text" placeholder="Svaralternativ" data-row-list="options" data-row-index="${i}" data-row-field="label" value="${escapeHTML(o.label || "")}">
@@ -675,42 +989,112 @@
   function triksEditorHTML(d) {
     const games = window.STUDILLA_GAMES || [];
     const usingGame = !!d.gameId;
+    const game = usingGame ? games.find((g) => g.id === d.gameId) : null;
     return `
-      <div class="admin-row-detail" style="padding:0;border:none">
-        <label class="admin-field is-wide">Triks
-          <select data-mf="gameId" data-mod-game-select>
-            <option value="" ${!usingGame ? "selected" : ""}>— Egendefinert lenke —</option>
-            ${games.map((g) => `<option value="${escapeHTML(g.id)}" ${d.gameId === g.id ? "selected" : ""}>${escapeHTML(g.name)}</option>`).join("")}
-          </select>
-        </label>
-        ${!usingGame ? `
-        <label class="admin-field is-wide">Tittel
-          <input type="text" data-mf="title" value="${escapeHTML(d.title || "")}">
-        </label>
-        <label class="admin-field is-wide">Lenke (URL)
-          <input type="text" data-mf="href" value="${escapeHTML(d.href || "")}" placeholder="https://…">
-        </label>` : ""}
-        <label class="admin-field is-wide">Tekst (valgfri – overstyrer beskrivelsen)
-          <input type="text" data-mf="intro" value="${escapeHTML(d.intro || "")}">
-        </label>
+      <div class="guide-form-section">
+        <span class="guide-form-legend">Hva skal kortet lenke til?</span>
+        <div class="guide-form-grid">
+          <label class="admin-field is-wide">Triks på Studilla
+            <select data-mf="gameId" data-mod-game-select>
+              <option value="" ${!usingGame ? "selected" : ""}>— Egendefinert lenke —</option>
+              ${games.map((g) => `<option value="${escapeHTML(g.id)}" ${d.gameId === g.id ? "selected" : ""}>${escapeHTML(g.name)}</option>`).join("")}
+            </select>
+            <span class="guide-field-hint">${games.length
+              ? "Velger du et triks henter kortet navn, bilde og beskrivelse automatisk."
+              : "Fant ingen triks å velge mellom – bruk en egendefinert lenke."}</span>
+          </label>
+          ${usingGame ? `
+          <div class="admin-field is-wide">Valgt triks
+            <div class="guide-picked-game">
+              ${game && game.thumbnail ? `<img src="${escapeHTML(game.thumbnail)}" alt="">` : `<span class="guide-picked-game-slot">${icon("game", 18)}</span>`}
+              <span class="guide-picked-game-name">${escapeHTML((game && game.name) || d.gameId)}</span>
+            </div>
+          </div>` : `
+          <label class="admin-field is-wide">Tittel
+            <input type="text" data-mf="title" value="${escapeHTML(d.title || "")}" placeholder="F.eks. Budsjett-byggeren">
+          </label>
+          <label class="admin-field is-wide">Lenke (URL)
+            <input type="text" data-mf="href" value="${escapeHTML(d.href || "")}" placeholder="https://…">
+          </label>`}
+        </div>
+      </div>
+      <div class="guide-form-section">
+        <span class="guide-form-legend">Tekst på kortet</span>
+        <div class="guide-form-grid">
+          <label class="admin-field is-wide">Beskrivelse (valgfri)
+            <input type="text" data-mf="intro" value="${escapeHTML(d.intro || "")}" placeholder="La stå tom for å bruke trikset sin egen beskrivelse">
+            <span class="guide-field-hint">Overstyrer beskrivelsen som følger med trikset.</span>
+          </label>
+        </div>
+      </div>
+    `;
+  }
+
+  function bildeEditorHTML(draft) {
+    const d = draft.data;
+    return `
+      <div class="guide-form-section">
+        <span class="guide-form-legend">Bilde</span>
+        ${dropzoneHTML({
+          url: d.url, busy: draft.uploadBusy, uploadAttr: "data-mod-image-upload",
+          removeAttr: d.url ? "data-mod-image-remove" : null, ratio: "16 / 9",
+          hint: "PNG, JPG eller WEBP · maks 5 MB",
+        })}
+      </div>
+      <div class="guide-form-section">
+        <span class="guide-form-legend">Tekst</span>
+        <div class="guide-form-grid">
+          <label class="admin-field is-wide">Alt-tekst
+            <input type="text" data-mf="alt" value="${escapeHTML(d.alt || "")}" placeholder="Beskriv hva bildet viser">
+            <span class="guide-field-hint">Leses opp for blinde og vises hvis bildet ikke laster. La stå tom hvis bildet bare er pynt.</span>
+          </label>
+          <label class="admin-field is-wide">Bildetekst (valgfri)
+            <input type="text" data-mf="caption" value="${escapeHTML(d.caption || "")}" placeholder="F.eks. Slik ser budsjettlinja ut i praksis">
+            <span class="guide-field-hint">Vises i grått under bildet.</span>
+          </label>
+        </div>
+      </div>
+      <div class="guide-form-section">
+        <span class="guide-form-legend">Bredde</span>
+        <div class="guide-choice-row">
+          ${[["full", "Full bredde"], ["medium", "Halv bredde"]].map(([v, label]) => `
+            <button type="button" class="guide-choice${(d.size === "medium" ? "medium" : "full") === v ? " is-active" : ""}" data-mf-choice="size" data-value="${v}">${label}</button>
+          `).join("")}
+        </div>
       </div>
     `;
   }
 
   function moduleEditorHTML(draft) {
-    const body = draft.type === "tekst" ? tekstEditorHTML(draft.data)
+    const body = draft.type === "bilde" ? bildeEditorHTML(draft)
+      : draft.type === "tekst" ? tekstEditorHTML(draft.data)
       : draft.type === "fil" ? filEditorHTML(draft)
       : draft.type === "tabell" ? tabellEditorHTML(draft.data)
       : draft.type === "gevinst" ? gevinstEditorHTML(draft.data)
       : draft.type === "poll" ? pollEditorHTML(draft.data)
       : draft.type === "triks" ? triksEditorHTML(draft.data)
       : "";
+    const label = MODULE_LABELS[draft.type] || draft.type;
     return `
       <div class="admin-card guide-module-editor">
-        ${body}
-        <div class="admin-row-actions">
-          <button type="button" class="btn-outline" data-mod-cancel>Avbryt</button>
-          <button type="button" class="admin-btn-ghost is-accent" data-mod-save>${draft.isNew ? "Legg til modul" : "Lagre modul"}</button>
+        <div class="guide-form-head">
+          <span class="guide-form-title">
+            <span class="guide-type-icon is-sm">${icon(MODULE_ICONS[draft.type] || "text", 15)}</span>
+            ${draft.isNew ? `Ny modul · ${escapeHTML(label)}` : `Rediger ${escapeHTML(label.toLowerCase())}`}
+          </span>
+          <button type="button" class="guide-form-close" data-mod-cancel aria-label="Lukk skjemaet">${icon("x", 16)}</button>
+        </div>
+        <div class="guide-form-body">
+          ${body}
+        </div>
+        <div class="guide-form-foot">
+          <span class="guide-form-hint">Esc avbryter · ${cmdKeyLabel()} + S lagrer</span>
+          <div class="admin-row-actions">
+            <button type="button" class="btn-outline" data-mod-cancel>Avbryt</button>
+            <button type="button" class="admin-btn-ghost is-accent" data-mod-save ${state.saving ? "disabled" : ""}>
+              ${state.saving ? "Lagrer …" : (draft.isNew ? "Legg til modul" : "Lagre modul")}
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -720,7 +1104,31 @@
     const el = document.querySelector("[data-guide-modules]");
     if (!el) return;
     const modules = Guides.modulesFor(g.id).slice().sort((a, b) => a.sortOrder - b.sortOrder);
-    el.innerHTML = modules.map((m, i) => moduleBlockHTML(m, i, modules.length)).join("");
+    const admin = canEdit();
+
+    if (!modules.length) {
+      el.innerHTML = admin
+        ? `<div class="guide-modules-empty">
+             ${icon("text", 24)}
+             <strong>Guiden har ingen innhold ennå</strong>
+             <span>Legg til den første modulen nedenfor – tekst, tabell, nedlasting, gevinst eller avstemning.</span>
+           </div>`
+        : "";
+      return;
+    }
+
+    // Mellom hver modul ligger et lite innsettingspunkt, slik at man slipper
+    // å legge modulen til nederst og deretter flytte den oppover med pilene.
+    const parts = [];
+    modules.forEach((m, i) => {
+      if (admin) {
+        const open = (state.addPickerOpen && state.addPickerIndex === i)
+          || (state.moduleDraft && state.moduleDraft.isNew && state.moduleDraft.insertIndex === i);
+        parts.push(`<div class="guide-insert-slot${open ? " is-open" : ""}">${addModulePickerHTML(i)}</div>`);
+      }
+      parts.push(moduleBlockHTML(m, i, modules.length));
+    });
+    el.innerHTML = parts.join("");
   }
 
   function renderTOC(g) {
@@ -774,13 +1182,28 @@
     document.querySelector("[data-guide-title]").textContent = g.title;
     document.querySelector("[data-guide-excerpt]").textContent = g.excerpt;
     document.querySelector("[data-guide-updated]").textContent = g.updatedAt ? `Oppdatert ${formatDate(g.updatedAt)}` : "";
-    document.querySelector("[data-guide-time]").textContent = g.readTime ? `${g.readTime} lesing` : "";
 
     const cover = document.querySelector("[data-guide-cover]");
     cover.innerHTML = g.coverUrl ? `<img src="${escapeHTML(g.coverUrl)}" alt="">` : `<span class="hero-placeholder-label">[ toppbilde 16:7 ]</span>`;
 
     const adminBar = document.querySelector("[data-guide-admin-bar]");
-    if (adminBar) adminBar.hidden = !state.isAdmin;
+    if (adminBar) {
+      adminBar.hidden = !state.isAdmin;
+      adminBar.innerHTML = state.isAdmin ? guideAdminBarHTML(g) : "";
+    }
+
+    const banner = document.querySelector("[data-guide-hidden-banner]");
+    if (banner) {
+      banner.hidden = !(state.isAdmin && g.hidden);
+      banner.innerHTML = (state.isAdmin && g.hidden) ? `
+        <span class="guide-banner-icon">${icon("eyeOff", 18)}</span>
+        <span class="guide-banner-text">
+          <strong>Denne guiden er skjult</strong>
+          <small>Besøkende får «Fant ikke guiden» hvis de åpner lenken. Bare du som admin ser den nå.</small>
+        </span>
+        <button type="button" class="admin-btn-ghost is-accent" data-guide-hide-toggle ${state.saving ? "disabled" : ""}>Publiser guiden</button>
+      ` : "";
+    }
 
     const editPanel = document.querySelector("[data-guide-edit-panel]");
     if (editPanel) {
@@ -795,9 +1218,42 @@
 
     const addModuleEl = document.querySelector("[data-guide-add-module]");
     if (addModuleEl) {
-      addModuleEl.hidden = !state.isAdmin;
-      addModuleEl.innerHTML = state.isAdmin ? addModulePickerHTML() : "";
+      addModuleEl.hidden = !canEdit();
+      addModuleEl.innerHTML = canEdit() ? addModulePickerHTML(null) : "";
     }
+
+    document.body.classList.toggle("is-guide-admin", canEdit());
+  }
+
+  // Verktøylinja på guide.html. Rendres fra JS slik at knappene kan speile
+  // gjeldende tilstand (skjult/publisert, forhåndsvisning av/på).
+  function guideAdminBarHTML(g) {
+    if (state.previewMode) {
+      return `
+        <span class="guide-admin-bar-label is-preview">${icon("eye", 14)}Forhåndsvisning – du ser siden som en besøkende</span>
+        <div class="guide-admin-bar-actions">
+          <button type="button" class="admin-btn-ghost is-accent" data-guide-preview-toggle>Avslutt forhåndsvisning</button>
+        </div>
+      `;
+    }
+    const editingInfo = state.guideDraft && state.guideDraft.id === g.id;
+    return `
+      <span class="guide-admin-bar-label">${icon("settings", 14)}Adminverktøy</span>
+      <div class="guide-admin-bar-actions">
+        <button type="button" class="guide-action-btn${editingInfo ? " is-active" : ""}" data-guide-edit>
+          ${icon("edit", 15)}<span>${editingInfo ? "Lukk guide-info" : "Rediger guide-info"}</span>
+        </button>
+        <button type="button" class="guide-action-btn${g.hidden ? " is-warn" : ""}" data-guide-hide-toggle ${state.saving ? "disabled" : ""}>
+          ${icon(g.hidden ? "eye" : "eyeOff", 15)}<span>${g.hidden ? "Publiser" : "Skjul"}</span>
+        </button>
+        <button type="button" class="guide-action-btn" data-guide-preview-toggle>
+          ${icon("eye", 15)}<span>Forhåndsvis</span>
+        </button>
+        <button type="button" class="guide-action-btn is-danger" data-guide-delete>
+          ${icon("trash", 15)}<span>Slett guide</span>
+        </button>
+      </div>
+    `;
   }
 
   function renderAll() { renderGuiderPage(); renderGuidePage(); }
@@ -805,52 +1261,102 @@
   // =====================================================================
   // Modul-handlinger
   // =====================================================================
-  function openAddPicker() { state.addPickerOpen = true; renderAll(); }
-  function closeAddPicker() { state.addPickerOpen = false; renderAll(); }
-
-  function startAddModule(type) {
-    state.addPickerOpen = false;
-    state.moduleDraft = { id: null, type, data: defaultModuleData(type), isNew: true, uploadBusy: false };
+  function openAddPicker(index) {
+    if (!confirmDiscard()) return;
+    state.guideDraft = null;
+    state.moduleDraft = null;
+    state.addPickerOpen = true;
+    state.addPickerIndex = index;
     renderAll();
-    const el = document.querySelector("[data-guide-add-module]");
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function closeAddPicker() { state.addPickerOpen = false; state.addPickerIndex = null; renderAll(); }
+
+  function startAddModule(type, insertIndex) {
+    state.addPickerOpen = false;
+    state.addPickerIndex = null;
+    state.moduleDraft = markPristine({
+      id: null, type, data: defaultModuleData(type), isNew: true,
+      uploadBusy: false, insertIndex: insertIndex === undefined ? null : insertIndex,
+    });
+    renderAll();
+    scrollToEditor();
   }
 
   function startEditModule(moduleId) {
     const m = Guides.modulesFor(currentGuideId).find((x) => x.id === moduleId);
     if (!m) return;
-    state.moduleDraft = { id: m.id, type: m.type, data: JSON.parse(JSON.stringify(m.data)), isNew: false, uploadBusy: false };
+    // Andre trykk på samme "Rediger"-knapp lukker skjemaet igjen.
+    if (state.moduleDraft && !state.moduleDraft.isNew && state.moduleDraft.id === moduleId) {
+      cancelModuleEdit();
+      return;
+    }
+    if (!confirmDiscard()) return;
+    state.guideDraft = null;
+    state.addPickerOpen = false;
+    state.addPickerIndex = null;
+    state.moduleDraft = markPristine({ id: m.id, type: m.type, data: JSON.parse(JSON.stringify(m.data)), isNew: false, uploadBusy: false, insertIndex: null });
     renderAll();
+    scrollToEditor();
+  }
+
+  // Etter render: rull det åpne skjemaet inn i bildet og sett fokus i første
+  // felt, så man kan begynne å skrive med én gang.
+  function scrollToEditor() {
+    requestAnimationFrame(() => {
+      const editor = document.querySelector(".guide-module-editor, .guide-form");
+      if (!editor) return;
+      editor.scrollIntoView({ behavior: "smooth", block: "center" });
+      const first = editor.querySelector("input:not([type=file]), textarea, select");
+      if (first) first.focus({ preventScroll: true });
+    });
   }
 
   function cancelModuleEdit() { state.moduleDraft = null; renderAll(); }
 
   async function saveModuleEdit() {
     const draft = state.moduleDraft;
-    if (!draft) return;
+    if (!draft || state.saving) return;
     const data = sanitizeModuleData(draft.type, draft.data);
     const err = validateModuleData(draft.type, data);
     if (err) return flash(err);
 
-    if (draft.isNew) {
-      const mods = Guides.modulesFor(currentGuideId);
-      const nextOrder = (Math.max(0, ...mods.map((m) => m.sortOrder || 0)) || 0) + 1;
-      const { error } = await Guides.addModule(currentGuideId, draft.type, data, nextOrder);
-      if (error) return flash(friendlyError(error));
-      flash("Modul lagt til");
-    } else {
-      const { error } = await Guides.updateModule(currentGuideId, draft.id, data);
-      if (error) return flash(friendlyError(error));
-      flash("Modul lagret");
-    }
-    state.moduleDraft = null;
+    state.saving = true;
     renderAll();
+    try {
+      if (draft.isNew) {
+        const mods = Guides.modulesFor(currentGuideId).slice().sort((a, b) => a.sortOrder - b.sortOrder);
+        const nextOrder = (Math.max(0, ...mods.map((m) => m.sortOrder || 0)) || 0) + 1;
+        const { data: added, error } = await Guides.addModule(currentGuideId, draft.type, data, nextOrder);
+        if (error) return flash(friendlyError(error));
+
+        // Lagt inn mellom to eksisterende moduler: modulen havner nederst i
+        // basen, så vi sender rekkefølgen på nytt med den flyttet på plass.
+        if (draft.insertIndex !== null && draft.insertIndex !== undefined && added) {
+          const ids = mods.map((m) => m.id);
+          ids.splice(draft.insertIndex, 0, added.id);
+          const { error: reorderError } = await Guides.reorderModules(currentGuideId, ids);
+          if (reorderError) flash(friendlyError(reorderError));
+        }
+        flash("Modul lagt til");
+      } else {
+        const { error } = await Guides.updateModule(currentGuideId, draft.id, data);
+        if (error) return flash(friendlyError(error));
+        flash("Modul lagret");
+      }
+      state.moduleDraft = null;
+    } finally {
+      state.saving = false;
+      renderAll();
+    }
   }
 
   async function deleteModuleFlow(moduleId) {
-    if (!window.confirm("Slette denne modulen? Dette kan ikke angres.")) return;
+    const m = Guides.modulesFor(currentGuideId).find((x) => x.id === moduleId);
+    if (!m) return;
+    if (!window.confirm(`Slette modulen «${moduleSummary(m)}»?\n\nDette kan ikke angres.`)) return;
     const { error } = await Guides.deleteModule(currentGuideId, moduleId);
     if (error) return flash(friendlyError(error));
+    if (state.moduleDraft && state.moduleDraft.id === moduleId) state.moduleDraft = null;
     flash("Modul slettet");
     renderAll();
   }
@@ -864,6 +1370,15 @@
     const { error } = await Guides.reorderModules(currentGuideId, mods.map((m) => m.id));
     if (error) return flash(friendlyError(error));
     renderAll();
+    // Rendret på nytt = ny DOM-node; flytt fokus tilbake til samme knapp slik
+    // at man kan trykke flere ganger på rad uten å lete etter den igjen.
+    requestAnimationFrame(() => {
+      const attr = dir === -1 ? "data-module-up" : "data-module-down";
+      const btn = document.querySelector(`[${attr}="${CSS.escape(String(moduleId))}"]`);
+      if (btn && !btn.disabled) btn.focus({ preventScroll: true });
+      const section = document.getElementById(`module-${moduleId}`);
+      if (section) section.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   }
 
   async function onModFileUpload(input) {
@@ -879,6 +1394,19 @@
     draft.data.ext = data.ext;
     if (!draft.data.meta) draft.data.meta = `${data.ext} · ${data.sizeLabel}`;
     if (!draft.data.name) draft.data.name = file.name.replace(/\.[^.]+$/, "");
+    renderAll();
+  }
+
+  async function onModImageUpload(input) {
+    const file = input.files[0];
+    const draft = state.moduleDraft;
+    if (!file || !draft) return;
+    draft.uploadBusy = true;
+    renderAll();
+    const { data, error } = await Guides.uploadImage(currentGuideId, file);
+    draft.uploadBusy = false;
+    if (error) { flash(friendlyError(error)); renderAll(); return; }
+    draft.data.url = data;
     renderAll();
   }
 
@@ -935,8 +1463,11 @@
   // =====================================================================
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-guide-new]") || e.target.closest("[data-guide-new-inline]")) {
+      if (!confirmDiscard()) return;
       state.guideDraft = emptyGuideDraft();
+      state.moduleDraft = null;
       renderAll();
+      scrollToEditor();
       return;
     }
     const filterBtn = e.target.closest("[data-guide-filter]");
@@ -945,20 +1476,54 @@
     const cardEdit = e.target.closest("[data-guide-card-edit]");
     if (cardEdit) {
       const g = Guides.list().find((x) => x.id === cardEdit.dataset.guideCardEdit);
-      if (g) { state.guideDraft = guideDraftFrom(g); renderAll(); }
+      if (g && confirmDiscard()) { state.guideDraft = guideDraftFrom(g); renderAll(); scrollToEditor(); }
       return;
     }
+    const cardHide = e.target.closest("[data-guide-card-hide]");
+    if (cardHide) { toggleGuideHidden(cardHide.dataset.guideCardHide); return; }
     const cardDelete = e.target.closest("[data-guide-card-delete]");
     if (cardDelete) { deleteGuideFlow(cardDelete.dataset.guideCardDelete); return; }
 
     if (e.target.closest("[data-guide-edit]")) {
       const g = getCurrentGuide();
-      if (g) { state.guideDraft = (state.guideDraft && state.guideDraft.id === g.id) ? null : guideDraftFrom(g); renderAll(); }
+      if (!g) return;
+      if (state.guideDraft && state.guideDraft.id === g.id) { state.guideDraft = null; renderAll(); return; }
+      if (!confirmDiscard()) return;
+      state.moduleDraft = null;
+      state.guideDraft = guideDraftFrom(g);
+      renderAll();
+      scrollToEditor();
+      return;
+    }
+    if (e.target.closest("[data-guide-hide-toggle]")) { toggleGuideHidden(currentGuideId); return; }
+    if (e.target.closest("[data-guide-preview-toggle]")) {
+      if (!state.previewMode && !confirmDiscard()) return;
+      state.previewMode = !state.previewMode;
+      if (state.previewMode) { state.guideDraft = null; state.moduleDraft = null; state.addPickerOpen = false; }
+      renderAll();
+      if (!state.previewMode) flash("Tilbake i redigeringsmodus");
       return;
     }
     if (e.target.closest("[data-guide-delete]")) { deleteGuideFlow(currentGuideId); return; }
 
     if (e.target.closest("[data-gf-cancel]")) { state.guideDraft = null; renderAll(); return; }
+    if (e.target.closest("[data-gf-remove-cover]")) { removeGuideCover(); return; }
+    const gfChoice = e.target.closest("[data-gf-choice]");
+    if (gfChoice && state.guideDraft) {
+      state.guideDraft[gfChoice.dataset.gfChoice] = gfChoice.dataset.value;
+      renderAll();
+      return;
+    }
+    const mfChoice = e.target.closest("[data-mf-choice]");
+    if (mfChoice && state.moduleDraft) {
+      state.moduleDraft.data[mfChoice.dataset.mfChoice] = mfChoice.dataset.value;
+      renderAll();
+      return;
+    }
+    if (e.target.closest("[data-mod-image-remove]")) {
+      if (state.moduleDraft) { state.moduleDraft.data.url = null; renderAll(); }
+      return;
+    }
     if (e.target.closest("[data-gf-save]")) { saveGuideDraft(); return; }
     const gfToggle = e.target.closest("[data-gf-toggle]");
     if (gfToggle && state.guideDraft) {
@@ -968,10 +1533,19 @@
       return;
     }
 
-    if (e.target.closest("[data-guide-add-open]")) { openAddPicker(); return; }
+    const addOpen = e.target.closest("[data-guide-add-open]");
+    if (addOpen) {
+      const raw = addOpen.dataset.guideAddOpen;
+      openAddPicker(raw === "end" || raw === "" ? null : Number(raw));
+      return;
+    }
     if (e.target.closest("[data-guide-add-close]")) { closeAddPicker(); return; }
     const addType = e.target.closest("[data-guide-add-type]");
-    if (addType) { startAddModule(addType.dataset.guideAddType); return; }
+    if (addType) {
+      const raw = addType.dataset.guideAddIndex;
+      startAddModule(addType.dataset.guideAddType, raw === "" || raw === undefined ? null : Number(raw));
+      return;
+    }
 
     const modEdit = e.target.closest("[data-module-edit]");
     if (modEdit) { startEditModule(coerceModuleId(modEdit.dataset.moduleEdit)); return; }
@@ -1001,6 +1575,9 @@
     const modFile = e.target.closest("[data-mod-file-upload]");
     if (modFile) { onModFileUpload(modFile); return; }
 
+    const modImage = e.target.closest("[data-mod-image-upload]");
+    if (modImage) { onModImageUpload(modImage); return; }
+
     const gameSelect = e.target.closest("[data-mod-game-select]");
     if (gameSelect) { onModGameSelect(gameSelect); return; }
 
@@ -1010,7 +1587,7 @@
 
   document.addEventListener("input", (e) => {
     const gf = e.target.closest("[data-gf]");
-    if (gf && state.guideDraft) { state.guideDraft[gf.dataset.gf] = gf.value; return; }
+    if (gf && state.guideDraft) { state.guideDraft[gf.dataset.gf] = gf.value; updateGuidePreview(); return; }
 
     const mf = e.target.closest("[data-mf]");
     if (mf && state.moduleDraft && mf.tagName !== "SELECT") {
@@ -1029,6 +1606,66 @@
 
     const rowField = e.target.closest("[data-row-field]");
     if (rowField) onRowFieldInput(rowField);
+  });
+
+  // Tegnteller for ingressen oppdateres uten re-render, slik at markøren i
+  // tekstfeltet ikke hopper til slutten mens man skriver.
+  document.addEventListener("input", (e) => {
+    const gf = e.target.closest('[data-gf="excerpt"]');
+    if (!gf) return;
+    const counter = document.querySelector('[data-gf-count="excerpt"]');
+    if (counter) counter.textContent = String(gf.value.length);
+  });
+
+  // Dra-og-slipp rett på bildefeltet. Filen sendes gjennom samme
+  // opplastingsfunksjon som filvelgeren, via en midlertidig DataTransfer.
+  ["dragenter", "dragover"].forEach((evt) => document.addEventListener(evt, (e) => {
+    const dz = e.target.closest && e.target.closest(".guide-dropzone");
+    if (!dz) return;
+    e.preventDefault();
+    dz.classList.add("is-dragover");
+  }));
+  document.addEventListener("dragleave", (e) => {
+    const dz = e.target.closest && e.target.closest(".guide-dropzone");
+    if (dz && !dz.contains(e.relatedTarget)) dz.classList.remove("is-dragover");
+  });
+  document.addEventListener("drop", (e) => {
+    const dz = e.target.closest && e.target.closest(".guide-dropzone");
+    if (!dz) return;
+    e.preventDefault();
+    dz.classList.remove("is-dragover");
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    const input = dz.querySelector('input[type="file"]');
+    if (!file || !input) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    if (input.hasAttribute("data-gf-upload")) onGuideCoverUpload(input);
+    else if (input.hasAttribute("data-mod-image-upload")) onModImageUpload(input);
+  });
+
+  // Esc lukker skjemaet, Cmd/Ctrl+S lagrer det som står åpent.
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && (state.guideDraft || state.moduleDraft || state.addPickerOpen)) {
+      if (state.addPickerOpen && !state.guideDraft && !state.moduleDraft) { closeAddPicker(); return; }
+      if (!confirmDiscard()) return;
+      state.guideDraft = null;
+      state.moduleDraft = null;
+      renderAll();
+      return;
+    }
+    if ((e.metaKey || e.ctrlKey) && (e.key === "s" || e.key === "S")) {
+      if (state.moduleDraft) { e.preventDefault(); saveModuleEdit(); return; }
+      if (state.guideDraft) { e.preventDefault(); saveGuideDraft(); return; }
+    }
+  });
+
+  // Siste sikring mot å miste et halvferdig skjema ved refresh eller
+  // navigering – nettleseren viser sin egen "forlate siden?"-dialog.
+  window.addEventListener("beforeunload", (e) => {
+    if (!hasUnsavedChanges() || state.saving) return;
+    e.preventDefault();
+    e.returnValue = "";
   });
 
   // =====================================================================
