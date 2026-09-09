@@ -33,16 +33,15 @@
     const root = document.createElement("div");
     root.id = "studilla-cookie-banner";
     root.innerHTML =
-      '<div id="scb-overlay" style="position:fixed;inset:0;z-index:9998;display:none;align-items:center;justify-content:center;padding:24px;">' +
-        '<div id="scb-backdrop" style="position:absolute;inset:0;background:rgba(6,9,14,.82);backdrop-filter:blur(3px);"></div>' +
-        '<div id="scb-initial" style="position:relative;z-index:1;width:100%;max-width:440px;background:#131a25;border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:32px 32px 28px;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.5);font-family:\'Poppins\',system-ui,sans-serif;">' +
-          '<div style="display:flex;flex-direction:column;gap:8px;">' +
-            '<h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;color:#ffffff;">Vi bruker cookies🍪</h2>' +
-            '<p style="margin:0;font-size:13.5px;line-height:1.6;color:#96a3b8;">Studilla bruker cookies for at siden skal fungere og for å samle inn statistikk og vise relevant markedsføring. Les mer i <a href="' + POLICY_URL + '" style="color:#2ee87f;">vilkårene</a>.</p>' +
-          '</div>' +
-          '<div style="display:flex;gap:10px;width:100%;margin-top:4px;">' +
-            '<button type="button" id="scb-customize" style="flex:1;padding:13px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8edf5;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">Tilpass</button>' +
-            '<button type="button" id="scb-accept-all" style="flex:1;padding:13px;border:none;border-radius:10px;background:#2ee87f;color:#0d1117;font-size:14px;font-weight:800;letter-spacing:-.01em;cursor:pointer;">Godta alle</button>' +
+      '<div id="scb-overlay" class="scb-mode-bar" role="region" aria-label="Informasjonskapsler">' +
+        '<div id="scb-backdrop"></div>' +
+        '<div id="scb-initial">' +
+          '<p class="scb-bar-text">Studilla bruker informasjonskapsler for at siden skal fungere, og – hvis du sier ja – til statistikk og markedsføring. '+
+            '<a href="' + POLICY_URL + '">Les mer</a>.</p>' +
+          '<div class="scb-bar-actions">' +
+            '<button type="button" id="scb-customize" class="scb-btn scb-btn-quiet">Tilpass</button>' +
+            '<button type="button" id="scb-reject-all" class="scb-btn scb-btn-plain">Avvis alle</button>' +
+            '<button type="button" id="scb-accept-all" class="scb-btn scb-btn-primary">Godta alle</button>' +
           '</div>' +
         '</div>' +
         '<div id="scb-preferences" style="display:none;position:relative;z-index:1;width:100%;max-width:460px;background:#131a25;border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:30px 30px 26px;flex-direction:column;gap:18px;box-shadow:0 24px 64px rgba(0,0,0,.5);font-family:\'Poppins\',system-ui,sans-serif;">' +
@@ -117,7 +116,13 @@
       marketingDot.setAttribute("style", dotStyle(marketingInput.checked));
     }
 
+    // To visninger, to former: førstevalget er en linje nederst på siden som
+    // IKKE stenger innholdet (en ny besøkende fikk tidligere en mørklagt side
+    // med en dialog foran seg som det eneste hen så), mens «Tilpass» åpner en
+    // ekte dialog fordi den faktisk krever et valg.
     function showInitial() {
+      overlay.classList.add("scb-mode-bar");
+      overlay.classList.remove("scb-mode-modal");
       initialView.style.display = "flex";
       preferencesView.style.display = "none";
     }
@@ -126,22 +131,31 @@
       statsInput.checked = !!(current && current.stats);
       marketingInput.checked = !!(current && current.marketing);
       syncToggleUI();
+      overlay.classList.remove("scb-mode-bar");
+      overlay.classList.add("scb-mode-modal");
       initialView.style.display = "none";
       preferencesView.style.display = "flex";
     }
     function openBanner(view) {
-      overlay.style.display = "flex";
+      overlay.classList.add("is-open");
       if (view === "preferences") showPreferences();
       else showInitial();
     }
     function closeBanner() {
-      overlay.style.display = "none";
+      overlay.classList.remove("is-open");
     }
 
     root.querySelector("#scb-customize").addEventListener("click", showPreferences);
     root.querySelector("#scb-back").addEventListener("click", showInitial);
     root.querySelector("#scb-accept-all").addEventListener("click", function () {
       window.StudillaConsent.save({ stats: true, marketing: true });
+      closeBanner();
+    });
+    // «Avvis alle» skal være like lett tilgjengelig som «Godta alle» – det er
+    // både kravet fra Datatilsynet og en enklere side å komme i gang med.
+    // Den lå tidligere gjemt bak «Tilpass».
+    root.querySelector("#scb-reject-all").addEventListener("click", function () {
+      window.StudillaConsent.save({ stats: false, marketing: false });
       closeBanner();
     });
     root.querySelector("#scb-reject").addEventListener("click", function () {

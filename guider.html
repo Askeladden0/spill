@@ -10,13 +10,16 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Studilla">
 <link rel="stylesheet" href="css/style.css" data-studilla-head>
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/social.css">
 </head>
 <body data-page="guider">
 <div class="page">
 
   <div id="site-header"></div>
 
-  <main>
+  <main id="hovedinnhold">
     <section>
       <div class="section-heading" style="justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px">
         <div>
@@ -38,6 +41,38 @@
       <div class="guide-filters" data-guide-filters></div>
 
       <div class="guide-grid" data-guide-grid></div>
+    </section>
+
+    <!-- Filene i documents/ (hjelpehefte, matteskjema, nynorskordliste) lå i
+         repoet uten å være lenket fra noen side. De er noe av det mest
+         konkret nyttige på Studilla, så de får en egen seksjon her. -->
+    <section>
+      <div class="section-heading spread">
+        <h2>Maler og filer</h2>
+        <span class="section-sub">Last ned og bruk med en gang</span>
+      </div>
+      <div class="resource-row">
+        <a class="resource-card" href="documents/Snorres_hjelpehefte.pdf" download target="_blank" rel="noopener">
+          <span class="resource-eyebrow">PDF</span>
+          <span class="resource-title">Snorres hjelpehefte</span>
+          <span class="resource-text">Samlet hjelp til de fagene folk spør mest om.</span>
+        </a>
+        <a class="resource-card" href="documents/Snorres_hjelpehefte.docx" download target="_blank" rel="noopener">
+          <span class="resource-eyebrow">WORD</span>
+          <span class="resource-title">Hjelpeheftet som Word</span>
+          <span class="resource-text">Samme hefte, til å redigere selv.</span>
+        </a>
+        <a class="resource-card" href="documents/Snorres_Matteskjema.xlsx" download target="_blank" rel="noopener">
+          <span class="resource-eyebrow">REGNEARK</span>
+          <span class="resource-title">Matteskjema</span>
+          <span class="resource-text">Ferdig oppsett du bare fyller inn tallene i.</span>
+        </a>
+        <a class="resource-card" href="documents/Nynorskordliste.xlsx" download target="_blank" rel="noopener">
+          <span class="resource-eyebrow">REGNEARK</span>
+          <span class="resource-title">Nynorskordliste</span>
+          <span class="resource-text">Ordene folk pleier å bomme på, i én liste.</span>
+        </a>
+      </div>
     </section>
   </main>
 
