@@ -4,6 +4,11 @@ Always merge after writing code
 
 Never add category tags to games or ratings
 
+Hver gang `supabase/schema.sql` oppdateres, skal Supabase-connectoren
+brukes til å oppdatere SQL-en i det faktiske Supabase-prosjektet (f.eks.
+`mcp__Supabase__apply_migration` eller `mcp__Supabase__execute_sql`), ikke
+bare skrives til filen lokalt.
+
 ## Å gjøre en bruker til admin i Supabase
 
 `profiles.is_admin` er beskyttet av triggeren `guard_profile_privileges`
