@@ -2421,36 +2421,6 @@ html.is-player-view main { max-width: none; }
 .rank-search-meta { font-size: 12px; font-weight: 600; color: var(--muted-2); white-space: nowrap; }
 .rank-search-empty { padding: 16px; font-size: 13px; color: var(--muted-2); text-align: center; }
 
-.scope-chips { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
-
-.scope-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 15px;
-  border-radius: 99px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--muted);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color .15s ease, background .15s ease, color .15s ease;
-}
-
-.scope-chip .game-icon-badge { border-radius: 5px; }
-
-.scope-chip:hover { border-color: rgba(46, 232, 127, .4); }
-
-.scope-chip.is-active {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: rgba(46, 232, 127, .4);
-}
-
-.rank-hero-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; }
-
 .rank-me-card {
   border-radius: var(--radius-lg);
   border: 1px solid rgba(46, 232, 127, .22);
@@ -2502,44 +2472,13 @@ html.is-player-view main { max-width: none; }
 .rank-me-stat-label { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; color: var(--muted-2); }
 .rank-me-gap { font-size: 12.5px; font-weight: 500; color: var(--muted); }
 
-.rank-podium-card {
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 18px 22px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.rank-podium-title { font-size: 12px; font-weight: 700; letter-spacing: .09em; color: var(--muted-2); }
-.rank-podium-list { display: flex; flex-direction: column; gap: 10px; }
-.rank-podium-row { display: flex; align-items: center; gap: 12px; color: inherit; }
-.rank-podium-row:hover .rank-podium-name { color: var(--accent); }
-
-.rank-podium-medal {
-  width: 26px;
-  height: 26px;
-  flex: none;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--bg);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.rank-podium-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color .15s ease; }
-.rank-podium-score { font-size: 14px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
-.rank-podium-empty { font-size: 13px; color: var(--muted-2); }
 
 .leaderboard-panel { border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface); overflow: hidden; }
 
 .leaderboard-head,
 .leaderboard-row {
   display: grid;
-  grid-template-columns: 64px 1fr 96px 120px 120px;
+  grid-template-columns: 74px minmax(0, 1fr) 110px 120px;
   gap: 16px;
   align-items: center;
 }
@@ -2591,12 +2530,6 @@ html.is-player-view main { max-width: none; }
 
 .leaderboard-empty { padding: 40px 24px; text-align: center; font-size: 14px; color: var(--muted-2); }
 
-.leaderboard-panel.levels-hidden .leaderboard-head,
-.leaderboard-panel.levels-hidden .leaderboard-row {
-  grid-template-columns: 64px 1fr 120px 120px;
-}
-.leaderboard-panel.levels-hidden [data-levels-only] { display: none; }
-
 .leaderboard-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; }
 
 .btn-outline {
@@ -2640,6 +2573,192 @@ html.is-player-view main { max-width: none; }
 .mygame-bar { height: 5px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; }
 .mygame-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
 
+/* --------------------------------------------------------------------------
+   Rangering: filtermenyer, medaljer og trikskort
+   Filtrene lå tidligere som to rader med chips (én for liste, én for triks),
+   som ble en lang linje så snart det kom flere triks. Nå er hver akse –
+   triks, periode og hvem – en egen nedtrekksmeny med fast bredde.
+   -------------------------------------------------------------------------- */
+.rank-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.rank-menu { position: relative; }
+
+.rank-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .15s ease;
+}
+.rank-menu-btn:hover { border-color: rgba(46, 232, 127, .4); }
+.rank-menu-eyebrow { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-3); }
+.rank-menu-value { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+.rank-menu-chevron { flex-shrink: 0; transition: transform .15s ease; }
+.rank-menu-btn[aria-expanded="true"] .rank-menu-chevron { transform: rotate(180deg); }
+
+.rank-menu-list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 230px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, .45);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rank-menu-list[hidden] { display: none; }
+
+.rank-menu-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+.rank-menu-opt:hover { background: rgba(255, 255, 255, .05); }
+.rank-menu-opt-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-menu-opt.is-active { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.rank-menu-opt[disabled] { color: var(--muted-3); cursor: not-allowed; }
+.rank-menu-opt[disabled]:hover { background: transparent; }
+
+.rank-menu-soon {
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: rgba(255, 179, 71, .13);
+  border: 1px solid rgba(255, 179, 71, .42);
+  color: #ffb347;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+/* Topp 3 får medalje i selve tabellen i stedet for et eget podium-kort. */
+.leaderboard-medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 800;
+}
+.leaderboard-rank-num {
+  display: inline-flex;
+  justify-content: center;
+  width: 30px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.friend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: rgba(56, 189, 248, .12);
+  border: 1px solid rgba(56, 189, 248, .35);
+  color: #7cd4fd;
+  font-size: 10.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rank-section-heading { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 0 0 18px; }
+.rank-section-heading h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; color: var(--text-strong); }
+.rank-section-heading h3 { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -.01em; color: var(--text-strong); }
+
+/* Trikskort: stort cover til venstre, tallene og «Start» til høyre. */
+.trickcard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+
+.trickcard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(128px, auto);
+  align-items: stretch;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  color: inherit;
+  transition: border-color .15s ease;
+}
+.trickcard:hover { border-color: rgba(46, 232, 127, .35); }
+
+.trickcard-cover {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 132px;
+  background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px);
+}
+.trickcard-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.trickcard-fade {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 70%;
+  background: linear-gradient(180deg, rgba(13, 17, 23, 0) 0%, rgba(13, 17, 23, .7) 55%, rgba(13, 17, 23, .96) 100%);
+}
+.trickcard-name {
+  position: relative;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--text-strong);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, .5);
+}
+
+.trickcard-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 16px 16px 18px;
+  border-left: 1px solid var(--border);
+}
+.trickcard-stat { display: flex; flex-direction: column; }
+.trickcard-score { font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: var(--accent); line-height: 1.2; }
+.trickcard-rank { font-size: 16px; font-weight: 800; color: var(--text-strong); line-height: 1.2; }
+.trickcard-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--muted-2); }
+.trickcard-start {
+  display: block;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 13.5px;
+  font-weight: 800;
+  text-align: center;
+  transition: background .15s ease;
+}
+.trickcard:hover .trickcard-start { background: var(--accent-light); }
+
 /* ---------- Offentlig spillerprofil ---------- */
 .public-profile-header {
   display: flex;
@@ -2675,12 +2794,9 @@ html.is-player-view main { max-width: none; }
   main > section[style*="340px"],
   .premier-layout { grid-template-columns: 1fr !important; }
   .premier-side { position: static; }
-  .rank-hero-grid { grid-template-columns: 1fr; }
   .mygames-grid { grid-template-columns: repeat(2, 1fr); }
-  .leaderboard-head, .leaderboard-row { grid-template-columns: 48px 1fr 90px 90px; }
-  .leaderboard-head span:nth-child(4), .leaderboard-matches { display: none; }
-  .leaderboard-panel.levels-hidden .leaderboard-head,
-  .leaderboard-panel.levels-hidden .leaderboard-row { grid-template-columns: 48px 1fr 90px; }
+  .leaderboard-head, .leaderboard-row { grid-template-columns: 52px minmax(0, 1fr) 90px; }
+  .leaderboard-head span:nth-child(3), .leaderboard-matches { display: none; }
 }
 
 /* ---------- Nivå opp-modal ---------- */
@@ -2939,6 +3055,13 @@ html.is-player-view main { max-width: none; }
   .rank-me-card { flex-direction: column; text-align: center; }
   .rank-me-stats { justify-content: center; }
   .mygames-grid { grid-template-columns: 1fr; }
+  .leaderboard-head, .leaderboard-row { grid-template-columns: 40px minmax(0, 1fr) 84px; gap: 10px; padding-left: 14px; padding-right: 14px; }
+  .leaderboard-foot { padding-left: 14px; padding-right: 14px; }
+  .leaderboard-medal, .leaderboard-rank-num { width: 26px; height: 26px; font-size: 12.5px; }
+  .friend-badge-text { display: none; }
+  .friend-badge { padding: 4px 6px; }
+  .rank-filters { gap: 8px; }
+  .rank-menu-btn { padding: 8px 12px; font-size: 13px; }
   .public-profile-header { flex-direction: column; text-align: center; }
   .public-profile-stats { margin-left: 0; justify-content: center; }
 }

@@ -2842,6 +2842,59 @@ $$;
 revoke all on function public.find_players(text, int) from public;
 grant execute on function public.find_players(text, int) to anon, authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 57. Rangering per periode og triks.
+--
+--     weekly_leaderboard (seksjon 53) dekket bare «denne uka», og bare for
+--     alle triks samlet. Rangeringssiden lar deg nå kombinere periode
+--     (i dag / denne uka / denne måneden / alle tider) med ett enkelt triks,
+--     og da må databasen regne ut summen – henter nettleseren rådataene
+--     selv, kutter Supabase svaret på 1 000 rader uten å si fra, og lista
+--     begynner å vise feil tall.
+--
+--     Poengsummen er den samme som ellers på siden: beste runde per triks,
+--     summert. p_game_id = null gir alle triks samlet.
+-- ---------------------------------------------------------------------------
+create or replace function public.period_leaderboard(
+  p_period text default 'all',
+  p_game_id text default null
+)
+returns table (user_id uuid, score numeric, matches int)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  with bounds as (
+    select case lower(coalesce(p_period, 'all'))
+             when 'today' then date_trunc('day',   (now() at time zone 'Europe/Oslo'))
+             when 'week'  then date_trunc('week',  (now() at time zone 'Europe/Oslo'))
+             when 'month' then date_trunc('month', (now() at time zone 'Europe/Oslo'))
+             else null
+           end as start_at
+  ),
+  window_records as (
+    select r.user_id, r.game_id, r.score
+      from public.game_records r, bounds b
+     where (b.start_at is null or r.created_at >= b.start_at at time zone 'Europe/Oslo')
+       and (p_game_id is null or r.game_id = p_game_id)
+  ),
+  best_per_game as (
+    select user_id, game_id, max(score) as best, count(*)::int as plays
+      from window_records group by user_id, game_id
+  )
+  select user_id, sum(best) as score, sum(plays)::int as matches
+    from best_per_game
+   group by user_id;
+$$;
+
+revoke all on function public.period_leaderboard(text, text) from public;
+grant execute on function public.period_leaderboard(text, text) to anon, authenticated;
+
+-- Indeksen gjør periodefiltreringen billig når det begynner å bli mange
+-- runder i game_records.
+create index if not exists game_records_created_idx on public.game_records (created_at);
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

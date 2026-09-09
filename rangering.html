@@ -24,31 +24,23 @@
       <div class="section-heading spread" style="align-items:flex-end;flex-wrap:wrap;gap:20px">
         <div>
           <h1>Rangering</h1>
-          <span class="section-sub" data-rank-subtitle>Laster rangering …</span>
         </div>
         <div class="rank-search-wrap">
+          <!-- Søket filtrerer selve tabellen i stedet for å åpne en egen
+               liste med treff: da ser du plasseringen og poengene til den du
+               søker opp, ikke bare navnet. -->
           <input type="search" class="rank-search-input" placeholder="Søk etter en spiller …" data-search-input autocomplete="off">
-          <div class="rank-search-results" data-search-results hidden></div>
         </div>
       </div>
 
-      <!-- To nivåer av filtre: først HVILKEN liste (alle tider / denne uka /
-           venner), så hvilket triks. Ukeslista og vennelista er det som gjør
-           rangeringen mulig å vinne for en fersk spiller. -->
-      <div class="scope-chips is-primary" data-board-chips style="margin-bottom:12px" role="tablist" aria-label="Velg rangering"></div>
-      <div class="scope-chips" data-scope-chips style="margin-bottom:22px"></div>
+      <!-- Tre akser å filtrere på – triks, periode og hvem – som hver sin
+           nedtrekksmeny. Som chips ble dette en lang linje så snart det kom
+           flere triks. -->
+      <div class="rank-filters" data-filters style="margin-bottom:18px"></div>
 
-      <div class="rank-hero-grid" style="margin-bottom:22px">
-        <div data-rank-me-slot></div>
-        <div class="rank-podium-card">
-          <span class="rank-podium-title" data-podium-title>TOPP 3</span>
-          <div class="rank-podium-list" data-podium-list></div>
-        </div>
-      </div>
-
-      <div class="leaderboard-panel" data-leaderboard-panel>
+      <div class="leaderboard-panel">
         <div class="leaderboard-head">
-          <span>PLASS</span><span>SPILLER</span><span data-levels-only>NIVÅ</span><span>KAMPER</span><span>POENG</span>
+          <span>PLASS</span><span>SPILLER</span><span>KAMPER</span><span>POENG</span>
         </div>
         <div class="leaderboard-body" data-leaderboard-body>
           <div class="leaderboard-empty">Laster brukere …</div>
@@ -60,9 +52,21 @@
       </div>
     </section>
 
-    <section data-mygames-section hidden>
-      <div class="section-heading"><h2>Din score per triks</h2></div>
-      <div class="mygames-grid" data-mygames-grid></div>
+    <section>
+      <div class="rank-section-heading">
+        <h2>Deg</h2>
+        <span class="section-sub" data-me-scope></span>
+      </div>
+
+      <div data-rank-me-slot style="margin-bottom:20px"></div>
+
+      <div data-mygames-section hidden>
+        <div class="rank-section-heading">
+          <h3>Din score per triks</h3>
+          <span class="section-sub">Beste runde i hvert triks</span>
+        </div>
+        <div class="trickcard-grid" data-mygames-grid></div>
+      </div>
     </section>
   </main>
 
@@ -88,109 +92,272 @@
   "use strict";
   const Auth = window.StudillaAuth;
   const LB = window.StudillaLeaderboard;
+  const esc = window.StudillaSocial.escapeHTML;
   const games = LB.games;
   const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
 
-  const VISIBLE_ROWS = 20;
+  const VISIBLE_ROWS = 10;
   const MEDAL_COLORS = ["#f5c451", "#c9d2de", "#d08a52"];
+
+  const PERIODS = [
+    { id: "all", label: "Alle tider" },
+    { id: "month", label: "Denne måneden" },
+    { id: "week", label: "Denne uka" },
+    { id: "today", label: "I dag" },
+  ];
+
+  const CROWDS = [
+    { id: "alle", label: "Alle spillere" },
+    { id: "venner", label: "Vennene mine" },
+    { id: "skole", label: "Skolen min", soon: true },
+  ];
 
   let profile = null;
   let profiles = [];
   let boards = { total: [], perGame: {} };
-  let weeklyBoard = null;
   let friendIds = [];
-  let scope = "total";
-  // Hvilken liste: "all" = alle tider, "week" = denne uka, "friends" = de du følger.
-  // Heter bevisst noe annet enn de lokale `board`-variablene i render-
-  // funksjonene under, som holder selve LISTEN med spillere.
-  let boardScope = "all";
-  let expanded = false;
 
-  const BOARDS = [
-    { id: "all", label: "Alle tider" },
-    { id: "week", label: "Denne uka" },
-    { id: "friends", label: "Vennene mine" },
-  ];
+  // Filtrene: hvilket triks, hvilken periode og hvem som er med.
+  let game = "total";
+  let period = "all";
+  let crowd = "alle";
+
+  let query = "";
+  let expanded = false;
+  let openMenu = null;
+
+  // Periodelistene hentes først når noen faktisk ber om dem, og huskes per
+  // kombinasjon av periode og triks. `null` betyr «henter nå».
+  const periodBoards = new Map();
 
   function fmt(n) {
     return Math.round(n || 0).toLocaleString("no-NO");
   }
 
-  function scopeLabel(s) {
-    if (s === "total") return "Alle triks samlet";
-    const g = games.find((x) => x.id === s);
-    return g ? g.name : s;
+  function gameLabel() {
+    if (game === "total") return "Alle triks samlet";
+    const g = games.find((x) => x.id === game);
+    return g ? g.name : "Alle triks samlet";
   }
 
-  function boardLabel() {
-    const b = BOARDS.find((x) => x.id === boardScope);
-    return b ? b.label : "Alle tider";
+  function periodLabel() {
+    const p = PERIODS.find((x) => x.id === period);
+    return p ? p.label : "Alle tider";
   }
 
+  function periodKey() {
+    return period + "|" + game;
+  }
+
+  /**
+   * Lista slik den ser ut med dagens filtre. Returnerer null mens en
+   * periodeliste fortsatt hentes, slik at tabellen kan si «Laster …» i
+   * stedet for å blinke «ingen spillere».
+   */
   function currentBoard() {
-    // Ukeslista finnes bare samlet (ikke per triks): der er tallet summen av
-    // beste runde per triks denne uka, så et per-triks-utvalg ville vært en
-    // annen beregning enn den databasen gjør.
-    if (boardScope === "week") return weeklyBoard || [];
-    const base = scope === "total" ? boards.total : boards.perGame[scope] || [];
-    if (boardScope === "friends") return LB.buildFriendsBoard(base, friendIds, profile && profile.id);
+    let base;
+    if (period === "all") {
+      base = game === "total" ? boards.total : boards.perGame[game] || [];
+    } else {
+      base = periodBoards.get(periodKey());
+      if (!base) return null;
+    }
+    if (crowd === "venner") {
+      return LB.buildFriendsBoard(base, friendIds, profile && profile.id);
+    }
     return base;
+  }
+
+  /** Henter periodelista hvis vi ikke har den fra før, og tegner på nytt. */
+  async function ensureBoard() {
+    if (period === "all") return;
+    const key = periodKey();
+    if (periodBoards.has(key)) return;
+    periodBoards.set(key, null);
+    const rows = await LB.loadPeriod(period, game === "total" ? null : game);
+    periodBoards.set(key, LB.buildPeriodBoard(profiles, rows || []));
+    renderAll();
   }
 
   function playerLink(p) {
     return `spillerprofil.html?u=${encodeURIComponent(p.username)}`;
   }
 
-  function renderBoardChips() {
-    const host = document.querySelector("[data-board-chips]");
-    host.innerHTML = BOARDS.map((b) => `
-      <button type="button" role="tab" aria-selected="${boardScope === b.id}"
-        class="scope-chip ${boardScope === b.id ? "is-active" : ""}" data-board="${b.id}">${b.label}</button>
-    `).join("");
-
-    host.querySelectorAll("[data-board]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        boardScope = btn.dataset.board;
-        expanded = false;
-        // Ukeslista hentes først når noen faktisk ber om den.
-        if (boardScope === "week" && !weeklyBoard) {
-          const weekly = await LB.loadWeekly(0);
-          weeklyBoard = weekly ? LB.buildWeeklyBoard(profiles, weekly) : [];
-        }
-        renderAll();
-      });
-    });
+  // ---------- Filtermenyer ----------
+  function menuDefs() {
+    return [
+      {
+        key: "game",
+        eyebrow: "Triks",
+        value: `${game === "total" ? "" : window.gameIconHTML(games.find((g) => g.id === game) || {}, 18)}<span>${esc(gameLabel())}</span>`,
+        options: [{ id: "total", label: "Alle triks samlet", active: game === "total" }].concat(
+          games.map((g) => ({ id: g.id, label: g.name, icon: window.gameIconHTML(g, 18), active: game === g.id }))
+        ),
+        pick(id) { game = id; },
+      },
+      {
+        key: "period",
+        eyebrow: "Periode",
+        value: `<span>${periodLabel()}</span>`,
+        options: PERIODS.map((p) => ({ id: p.id, label: p.label, active: period === p.id })),
+        pick(id) { period = id; },
+      },
+      {
+        key: "crowd",
+        eyebrow: "Hvem",
+        value: `<span>${(CROWDS.find((c) => c.id === crowd) || CROWDS[0]).label}</span>`,
+        options: CROWDS.map((c) => ({ id: c.id, label: c.label, active: crowd === c.id, soon: c.soon })),
+        pick(id) { crowd = id; },
+      },
+    ];
   }
 
-  function renderScopeChips() {
-    // Per-triks-utvalget gir ikke mening på ukeslista (se currentBoard).
-    const host = document.querySelector("[data-scope-chips]");
-    host.hidden = boardScope === "week";
-    if (host.hidden) return;
+  const CHECK_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2ee87f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+  const CHEVRON_SVG = '<svg class="rank-menu-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c8aa0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
 
-    const items = [{ id: "total", label: "Alle triks samlet" }].concat(
-      games.map((g) => ({ id: g.id, label: g.name, game: g }))
-    );
-    document.querySelector("[data-scope-chips]").innerHTML = items
+  function renderFilters() {
+    document.querySelector("[data-filters]").innerHTML = menuDefs()
+      .map((menu) => `
+        <div class="rank-menu" data-menu="${menu.key}">
+          <button type="button" class="rank-menu-btn" data-menu-toggle aria-expanded="${openMenu === menu.key}" aria-haspopup="true">
+            <span class="rank-menu-eyebrow">${menu.eyebrow}</span>
+            <span class="rank-menu-value">${menu.value}</span>
+            ${CHEVRON_SVG}
+          </button>
+          <div class="rank-menu-list" role="menu" ${openMenu === menu.key ? "" : "hidden"}>
+            ${menu.options.map((o) => `
+              <button type="button" role="menuitem" class="rank-menu-opt ${o.active ? "is-active" : ""}"
+                data-option="${o.id}" ${o.soon ? "disabled" : ""}>
+                ${o.icon || ""}
+                <span class="rank-menu-opt-label">${esc(o.label)}</span>
+                ${o.soon ? '<span class="rank-menu-soon">KOMMER</span>' : o.active ? CHECK_SVG : ""}
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      `)
+      .join("");
+  }
+
+  document.addEventListener("click", (e) => {
+    const toggle = e.target.closest("[data-menu-toggle]");
+    if (toggle) {
+      const key = toggle.closest("[data-menu]").dataset.menu;
+      openMenu = openMenu === key ? null : key;
+      renderFilters();
+      return;
+    }
+
+    const opt = e.target.closest(".rank-menu-opt");
+    if (opt && !opt.disabled) {
+      const key = opt.closest("[data-menu]").dataset.menu;
+      const def = menuDefs().find((m) => m.key === key);
+      def.pick(opt.dataset.option);
+      openMenu = null;
+      expanded = false;
+      renderAll();
+      ensureBoard();
+      return;
+    }
+
+    if (openMenu && !e.target.closest("[data-menu]")) {
+      openMenu = null;
+      renderFilters();
+    }
+  });
+
+  // ---------- Tabellen ----------
+  function emptyMessage() {
+    if (crowd === "venner" && !profile) {
+      return `<div class="leaderboard-empty">Logg inn for å se rangeringen blant dem du følger.</div>`;
+    }
+    if (crowd === "venner") {
+      return `<div class="leaderboard-empty">Du følger ingen ennå. Søk opp en spiller her eller på <a href="meldinger.html">Venner</a> for å få en liste du faktisk kan vinne.</div>`;
+    }
+    if (period !== "all") {
+      return `<div class="leaderboard-empty">Ingen har spilt «${esc(gameLabel())}» i denne perioden ennå. Bli den første!</div>`;
+    }
+    return `<div class="leaderboard-empty">Ingen har spilt «${esc(gameLabel())}» ennå. Bli den første!</div>`;
+  }
+
+  function rankCell(p) {
+    return p.rank <= 3
+      ? `<span class="leaderboard-medal" style="background:${MEDAL_COLORS[p.rank - 1]}">${p.rank}</span>`
+      : `<span class="leaderboard-rank-num">${p.rank}</span>`;
+  }
+
+  function tagCell(p) {
+    if (profile && p.id === profile.id) return '<span class="you-badge">DEG</span>';
+    if (friendIds.indexOf(p.id) > -1) {
+      return '<span class="friend-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span class="friend-badge-text">VENN</span></span>';
+    }
+    return "";
+  }
+
+  function renderTable() {
+    const body = document.querySelector("[data-leaderboard-body]");
+    const toggleBtn = document.querySelector("[data-toggle-rows]");
+    const shownLabel = document.querySelector("[data-shown-label]");
+    const fullBoard = currentBoard();
+
+    if (!fullBoard) {
+      body.innerHTML = `<div class="leaderboard-empty">Laster rangeringen …</div>`;
+      shownLabel.textContent = "";
+      toggleBtn.hidden = true;
+      return;
+    }
+
+    const board = LB.visiblePlayers(fullBoard);
+    if (!board.length) {
+      body.innerHTML = emptyMessage();
+      shownLabel.textContent = "";
+      toggleBtn.hidden = true;
+      return;
+    }
+
+    const q = query.trim().toLowerCase();
+    const filtered = q ? board.filter((p) => p.username.toLowerCase().indexOf(q) > -1) : board;
+
+    if (!filtered.length) {
+      body.innerHTML = `<div class="leaderboard-empty">Fant ingen spillere som matcher «${esc(query)}».</div>`;
+      shownLabel.textContent = "";
+      toggleBtn.hidden = true;
+      return;
+    }
+
+    const visible = expanded ? filtered : filtered.slice(0, VISIBLE_ROWS);
+    // Ligger du langt nede på lista skal du likevel se din egen rad, slik at
+    // du slipper å trykke «Vis alle» for å finne deg selv.
+    const me = profile && fullBoard.find((p) => p.id === profile.id);
+    const meInVisible = me && visible.some((p) => p.id === me.id);
+    const shown = me && !meInVisible && !q ? visible.concat([me]) : visible;
+
+    body.innerHTML = shown
       .map(
-        (c) => `
-        <button type="button" class="scope-chip ${scope === c.id ? "is-active" : ""}" data-scope="${c.id}">${c.game ? window.gameIconHTML(c.game, 16) : ""}${c.label}</button>
+        (p) => `
+        <a class="leaderboard-row ${profile && p.id === profile.id ? "is-me" : ""}" href="${playerLink(p)}">
+          <span>${rankCell(p)}</span>
+          <span class="leaderboard-player">
+            ${Auth.avatarHTML(p, 30)}
+            <span class="leaderboard-player-name">${esc(p.username)}</span>
+            ${tagCell(p)}
+          </span>
+          <span class="leaderboard-matches">${fmt(p.matches)}</span>
+          <span class="leaderboard-score">${fmt(p.score)}</span>
+        </a>
       `
       )
       .join("");
 
-    document.querySelectorAll("[data-scope]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        scope = btn.dataset.scope;
-        expanded = false;
-        renderAll();
-      });
-    });
+    shownLabel.textContent = `Viser ${shown.length} av ${filtered.length} spillere`;
+    toggleBtn.hidden = filtered.length <= VISIBLE_ROWS;
+    toggleBtn.textContent = expanded ? "Vis færre" : `Vis alle ${filtered.length}`;
   }
 
+  // ---------- «Deg» ----------
   function renderMeCard() {
     const slot = document.querySelector("[data-rank-me-slot]");
-    const board = currentBoard();
+    document.querySelector("[data-me-scope]").textContent = `${gameLabel()} · ${periodLabel()}`;
 
     if (!profile) {
       slot.innerHTML = `
@@ -202,22 +369,22 @@
       return;
     }
 
+    const board = currentBoard();
+    if (!board) {
+      slot.innerHTML = `<div class="rank-me-guest"><span class="section-sub">Laster plasseringen din …</span></div>`;
+      return;
+    }
+
     const me = board.find((p) => p.id === profile.id);
     if (!me) {
       slot.innerHTML = `
         <div class="rank-me-guest">
-          <span class="section-sub">Du har ikke spilt «${scopeLabel(scope)}» ennå, så du er ikke rangert her.</span>
+          <span class="section-sub">Du har ikke spilt «${esc(gameLabel())}» i denne perioden, så du er ikke rangert her.</span>
           <a href="index.html#spill" class="btn-primary btn-link">Finn et triks</a>
         </div>
       `;
       return;
     }
-
-    const ahead = board[Math.max(0, me.rank - 2)];
-    const gap = ahead && ahead.id !== me.id ? ahead.score - me.score : 0;
-    const gapText = gap > 0
-      ? `${fmt(gap)} poeng opp til plass ${me.rank - 1}`
-      : "Du er på topp i denne listen";
 
     slot.innerHTML = `
       <div class="rank-me-card">
@@ -230,8 +397,8 @@
           <div class="rank-me-identity">
             ${Auth.avatarHTML(me, 34)}
             <div style="display:flex;flex-direction:column">
-              <span class="rank-me-name">Deg — ${me.username}</span>
-              <span class="rank-me-scope">${scopeLabel(scope)}${LEVELS_ENABLED ? ` · Nivå ${me.level}` : ""}</span>
+              <span class="rank-me-name">Deg — ${esc(me.username)}</span>
+              <span class="rank-me-scope">${gameLabel()} · ${periodLabel()}${LEVELS_ENABLED ? ` · Nivå ${me.level}` : ""}</span>
             </div>
           </div>
           <div class="rank-me-stats">
@@ -244,82 +411,9 @@
               <span class="rank-me-stat-label">KAMPER</span>
             </div>
           </div>
-          <span class="rank-me-gap">${gapText}</span>
         </div>
       </div>
     `;
-  }
-
-  function renderPodium() {
-    const board = LB.visiblePlayers(currentBoard());
-    document.querySelector("[data-podium-title]").textContent =
-      `TOPP 3 · ${(boardScope === "week" ? boardLabel() : scopeLabel(scope)).toUpperCase()}`;
-    const list = document.querySelector("[data-podium-list]");
-
-    if (!board.length) {
-      list.innerHTML = `<span class="rank-podium-empty">Ingen brukere ennå.</span>`;
-      return;
-    }
-
-    list.innerHTML = board
-      .slice(0, 3)
-      .map(
-        (p, i) => `
-        <a class="rank-podium-row" href="${playerLink(p)}">
-          <span class="rank-podium-medal" style="background:${MEDAL_COLORS[i]}">${p.rank}</span>
-          ${Auth.avatarHTML(p, 30)}
-          <span class="rank-podium-name">${p.username}</span>
-          <span class="rank-podium-score">${fmt(p.score)}</span>
-        </a>
-      `
-      )
-      .join("");
-  }
-
-  function renderTable() {
-    const fullBoard = currentBoard();
-    const board = LB.visiblePlayers(fullBoard);
-    const body = document.querySelector("[data-leaderboard-body]");
-    const toggleBtn = document.querySelector("[data-toggle-rows]");
-    const shownLabel = document.querySelector("[data-shown-label]");
-
-    if (!board.length) {
-      body.innerHTML = boardScope === "friends"
-        ? `<div class="leaderboard-empty">Du følger ingen ennå. Søk opp en spiller her eller på <a href="meldinger.html">Venner</a> for å få en liste du faktisk kan vinne.</div>`
-        : boardScope === "week"
-          ? `<div class="leaderboard-empty">Ingen har spilt noe denne uka ennå. Bli den første!</div>`
-          : `<div class="leaderboard-empty">Ingen har spilt «${scopeLabel(scope)}» ennå. Bli den første!</div>`;
-      shownLabel.textContent = "";
-      toggleBtn.hidden = true;
-      return;
-    }
-
-    const visible = expanded ? board : board.slice(0, VISIBLE_ROWS);
-    const meInVisible = profile && visible.some((p) => p.id === profile.id);
-    const me = profile && fullBoard.find((p) => p.id === profile.id);
-    const shown = me && !meInVisible ? visible.concat([me]) : visible;
-
-    body.innerHTML = shown
-      .map(
-        (p) => `
-        <a class="leaderboard-row ${profile && p.id === profile.id ? "is-me" : ""}" href="${playerLink(p)}">
-          <span class="leaderboard-rank ${p.rank <= 3 ? "is-top" : ""}">${p.rank}</span>
-          <span class="leaderboard-player">
-            ${Auth.avatarHTML(p, 30)}
-            <span class="leaderboard-player-name">${p.username}</span>
-            ${profile && p.id === profile.id ? '<span class="you-badge">DEG</span>' : ""}
-          </span>
-          ${LEVELS_ENABLED ? `<span class="leaderboard-level">${p.level}</span>` : ""}
-          <span class="leaderboard-matches">${fmt(p.matches)}</span>
-          <span class="leaderboard-score">${fmt(p.score)}</span>
-        </a>
-      `
-      )
-      .join("");
-
-    shownLabel.textContent = `Viser ${shown.length} av ${board.length} spillere`;
-    toggleBtn.hidden = board.length <= VISIBLE_ROWS;
-    toggleBtn.textContent = expanded ? "Vis færre" : `Vis alle ${board.length}`;
   }
 
   function renderMyGames() {
@@ -330,57 +424,39 @@
     }
     section.hidden = false;
 
-    const maxScore = Math.max(1, ...games.map((g) => {
-      const board = boards.perGame[g.id] || [];
-      return board.length ? board[0].score : 1;
-    }));
-
     document.querySelector("[data-mygames-grid]").innerHTML = games
       .map((g) => {
         const board = boards.perGame[g.id] || [];
         const me = board.find((p) => p.id === profile.id);
-        const pct = me ? Math.max(4, Math.round((me.score / maxScore) * 100)) : 0;
+        const href = `player.html?id=${encodeURIComponent(g.id)}`;
         return `
-          <a class="mygame-card" href="player.html?id=${encodeURIComponent(g.id)}">
-            <div class="mygame-head">
-              <span style="display:flex;align-items:center;gap:8px">
-                ${window.gameIconHTML(g, 22)}
-                <span class="mygame-name">${g.name}</span>
+          <a class="trickcard" href="${href}">
+            <span class="trickcard-cover">
+              ${g.thumbnail ? `<img class="trickcard-cover-img" src="${g.thumbnail}" alt="" loading="lazy">` : ""}
+              <span class="trickcard-fade"></span>
+              <span class="trickcard-name">${esc(g.name)}</span>
+            </span>
+            <span class="trickcard-side">
+              <span class="trickcard-stat">
+                <span class="trickcard-score">${me ? fmt(me.score) : "–"}</span>
+                <span class="trickcard-label">POENG</span>
               </span>
-            </div>
-            <div class="mygame-stats">
-              <div>
-                <div class="mygame-score">${me ? fmt(me.score) : "–"}</div>
-                <span class="mygame-label">POENG</span>
-              </div>
-              <div style="text-align:right">
-                <div class="mygame-rank">${me ? "#" + me.rank : "Ikke spilt"}</div>
-                <span class="mygame-label">PLASSERING</span>
-              </div>
-            </div>
-            <div class="mygame-bar"><div class="mygame-bar-fill" style="width:${pct}%"></div></div>
+              <span class="trickcard-stat">
+                <span class="trickcard-rank">${me ? "#" + me.rank : "Ikke spilt"}</span>
+                <span class="trickcard-label">PLASSERING</span>
+              </span>
+              <span class="trickcard-start">Start</span>
+            </span>
           </a>
         `;
       })
       .join("");
   }
 
-  function renderSubtitle() {
-    const n = fmt(LB.visiblePlayers(currentBoard()).length);
-    const what = boardScope === "week" ? "Denne uka" : scopeLabel(scope);
-    document.querySelector("[data-rank-subtitle]").textContent =
-      boardScope === "friends"
-        ? `${what} · blant deg og de ${friendIds.length} du følger`
-        : `${what} · ${n} spillere rangert`;
-  }
-
   function renderAll() {
-    renderBoardChips();
-    renderScopeChips();
-    renderSubtitle();
-    renderMeCard();
-    renderPodium();
+    renderFilters();
     renderTable();
+    renderMeCard();
     renderMyGames();
   }
 
@@ -389,53 +465,15 @@
     renderTable();
   });
 
-  // ---------- Søk ----------
   const searchInput = document.querySelector("[data-search-input]");
-  const searchResults = document.querySelector("[data-search-results]");
-
-  function renderSearch(query) {
-    const q = query.trim().toLowerCase();
-    if (!q) {
-      searchResults.hidden = true;
-      searchResults.innerHTML = "";
-      return;
-    }
-
-    const matches = LB.visiblePlayers(profiles)
-      .filter((p) => p.username.toLowerCase().includes(q))
-      .sort((a, b) => b.xp - a.xp)
-      .slice(0, 8);
-
-    searchResults.innerHTML = matches.length
-      ? matches
-          .map(
-            (p) => `
-            <a class="rank-search-result" href="${playerLink(p)}">
-              ${Auth.avatarHTML(p, 32)}
-              <span class="rank-search-name">${p.username}</span>
-              <span class="rank-search-meta">${LEVELS_ENABLED ? `Nivå ${p.level} · ` : ""}${fmt(p.xp)} p</span>
-            </a>
-          `
-          )
-          .join("")
-      : `<div class="rank-search-empty">Fant ingen brukere som matcher «${query}».</div>`;
-
-    searchResults.hidden = false;
-  }
-
-  searchInput.addEventListener("input", (e) => renderSearch(e.target.value));
-  searchInput.addEventListener("focus", (e) => {
-    if (e.target.value.trim()) renderSearch(e.target.value);
-  });
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".rank-search-wrap")) searchResults.hidden = true;
+  searchInput.addEventListener("input", (e) => {
+    query = e.target.value;
+    expanded = false;
+    renderTable();
   });
 
   // ---------- Init ----------
   async function init() {
-    if (!LEVELS_ENABLED) {
-      document.querySelector("[data-leaderboard-panel]").classList.add("levels-hidden");
-    }
     if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
     profile = await Auth.getCurrentProfile();
     const [loadedProfiles, records, following] = await Promise.all([
