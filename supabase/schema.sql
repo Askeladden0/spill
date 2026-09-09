@@ -735,7 +735,11 @@ drop policy if exists "profiles_select_own_or_admin" on public.profiles;
 create policy "profiles_select_own_or_admin" on public.profiles
   for select using (auth.uid() = id or public.is_admin());
 
-create or replace view public.profiles_public as
+-- Slippes først: seksjon 49 utvider den samme viewen med streak-kolonnene,
+-- og `create or replace view` kan ikke fjerne kolonner fra en view som
+-- allerede finnes. Uten dette stopper hele filen på andre gangs kjøring.
+drop view if exists public.profiles_public;
+create view public.profiles_public as
   select id, username, avatar_color, avatar_icon, level, xp, is_hidden, created_at
     from public.profiles;
 
@@ -2221,7 +2225,14 @@ end;
 $$;
 
 -- streak-feltene skal være synlige på offentlige profiler og i rangeringen.
-create or replace view public.profiles_public as
+--
+-- MERK: `create or replace view` kan ikke legge til kolonner i en view som
+-- allerede finnes med færre – den feiler med «cannot drop columns from view».
+-- Seksjon 24 over definerer den samme viewen uten streak-kolonnene, så ved
+-- en ny kjøring av hele filen (som er den vanlige måten å migrere på her)
+-- ville dette stoppet skriptet. Derfor slippes den først.
+drop view if exists public.profiles_public;
+create view public.profiles_public as
   select id, username, avatar_color, avatar_icon, level, xp, is_hidden, created_at,
          streak_current, streak_best
     from public.profiles;

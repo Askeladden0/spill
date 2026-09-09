@@ -4,7 +4,9 @@
 **Metode:** Kodegjennomgang + faktisk gjennomspilling i Chromium (Playwright) på
 desktop (1440×900) og mobil (390×844, touch). Alle seks triks er lastet og
 spilt, 2048 til game over, og nybegynnerflyten er gått gjennom fra en helt
-tom nettleserprofil.
+tom nettleserprofil. All ny SQL er kjørt og testet mot en ekte PostgreSQL 16
+lokalt, med en liten etterligning av Supabase (`auth.users`, `auth.uid()`,
+rollene `anon`/`authenticated`, `storage`-skjemaet).
 
 **Kontekst for tallene:** testmiljøet har ikke nettverkstilgang til Supabase.
 Det er ikke bare en begrensning – det er en nyttig test, for det viser
@@ -352,6 +354,20 @@ tålmodig person kan fortsatt sende inn en troverdig, men uekte skår. Men det
 flytter jukset fra «én linje i konsollen» til «du må jobbe for det, og du kan
 ikke få mer enn taket per runde». Det er forskjellen på at topplista er
 meningsløs og at den er verdt å konkurrere om.
+
+**Verifisert lokalt** mot PostgreSQL 16: en gyldig runde går gjennom og gir
+riktig xp og nivå; en skår over taket avvises; et ukjent triks avvises;
+streaken teller opp én gang per dag og gir bonus; et forsøk på å sette
+`streak_current = 365` direkte på egen profilrad blir stille reversert av
+triggeren; blokkering stopper meldinger og fjerner følging begge veier; uke-
+og totalrangeringen gir riktige tall.
+
+Underveis i den valideringen fant jeg en feil jeg selv hadde innført:
+`schema.sql` skal kunne kjøres på nytt fra topp til bunn (det er slik
+migrasjoner gjøres her), men `create or replace view` kan ikke fjerne
+kolonner fra en view som allerede finnes med flere. Andre gangs kjøring
+stoppet derfor på `profiles_public`. Rettet ved å slippe viewen først begge
+steder; verifisert med tre kjøringer på rad uten feil.
 
 ---
 
