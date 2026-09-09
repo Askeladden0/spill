@@ -44,8 +44,8 @@
       </div>
     </section>
 
-    <div class="social-layout" data-social-main hidden>
-      <section class="social-col">
+    <div class="social-main" data-social-main hidden>
+      <section class="venner-feed-col">
         <div class="section-heading spread">
           <h2>Aktivitet</h2>
           <span class="section-sub">Fra dem du følger</span>
@@ -55,61 +55,68 @@
         </div>
       </section>
 
-      <section class="social-col">
-        <div class="section-heading spread">
-          <h2>Meldinger</h2>
+      <!-- Meldinger. Ett samlet panel med tråd-lista til venstre og den
+           åpne samtalen til høyre, i stedet for at samtalen henger som en
+           dialog over resten av siden. -->
+      <section class="venner-panel" data-venner-panel>
+        <div class="venner-sidebar">
+          <div class="section-heading" style="padding:0 2px">
+            <h2>Meldinger</h2>
+          </div>
+          <div class="dm-list" data-thread-list>
+            <div class="leaderboard-empty">Laster …</div>
+          </div>
         </div>
-        <div class="dm-list" data-thread-list>
-          <div class="leaderboard-empty">Laster …</div>
+
+        <div class="venner-chat">
+          <div class="venner-chat-empty" data-dm-empty>
+            <p>Velg en samtale for å se meldingene.</p>
+          </div>
+
+          <div class="venner-chat-active" data-dm-active hidden>
+            <div class="dm-thread-head">
+              <button type="button" class="dm-thread-back" data-dm-close aria-label="Tilbake til meldingslista">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              </button>
+              <span data-dm-avatar></span>
+              <a class="dm-thread-name" id="dm-thread-title" data-dm-name href="#">–</a>
+              <button type="button" class="dm-thread-block" data-dm-block>Blokker</button>
+            </div>
+            <div class="dm-thread-body" data-dm-messages></div>
+            <div class="dm-compose">
+              <!-- Velgeren for vedlegg. Innholdet fylles av JS-en under, ett av tre
+                   sett: triks, guider eller rekorder. -->
+              <div class="dm-attach-panel" data-attach-panel hidden></div>
+
+              <!-- Vedlegget man har valgt, før meldingen er sendt. Man kan fortsatt
+                   skrive en tekst til under. -->
+              <div class="dm-attach-chip" data-attach-chip hidden></div>
+
+              <form class="dm-thread-form" data-dm-form>
+                <div class="dm-attach-bar" role="group" aria-label="Legg ved">
+                  <button type="button" class="dm-attach-btn" data-attach-open="spill" aria-expanded="false" title="Send et triks" aria-label="Send et triks">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
+                  </button>
+                  <button type="button" class="dm-attach-btn" data-attach-open="guide" aria-expanded="false" title="Send en guide" aria-label="Send en guide">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5V5.5z"></path><path d="M8 7.5h7"></path><path d="M8 11h5"></path></svg>
+                  </button>
+                  <button type="button" class="dm-attach-btn" data-attach-open="rekord" aria-expanded="false" title="Send rekorden din" aria-label="Send rekorden din">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
+                  </button>
+                </div>
+                <label class="visually-hidden" for="dm-input">Skriv en melding</label>
+                <input type="text" id="dm-input" data-dm-input maxlength="1000" placeholder="Skriv en melding …" autocomplete="off">
+                <button type="submit" class="btn-primary" data-dm-send>Send</button>
+              </form>
+            </div>
+            <p class="dm-thread-error" data-dm-error hidden></p>
+          </div>
         </div>
       </section>
     </div>
   </main>
 
   <div id="site-footer"></div>
-</div>
-
-<!-- Samtalevindu. Ligger som en dialog over siden i stedet for som en egen
-     side, slik at man kan hoppe mellom samtaler uten sidelastinger. -->
-<div class="dm-thread-overlay" data-dm-overlay hidden role="dialog" aria-modal="true" aria-labelledby="dm-thread-title">
-  <div class="dm-thread-card">
-    <div class="dm-thread-head">
-      <button type="button" class="dm-thread-back" data-dm-close aria-label="Lukk samtalen">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-      </button>
-      <span data-dm-avatar></span>
-      <a class="dm-thread-name" id="dm-thread-title" data-dm-name href="#">–</a>
-      <button type="button" class="dm-thread-block" data-dm-block>Blokker</button>
-    </div>
-    <div class="dm-thread-body" data-dm-messages></div>
-    <div class="dm-compose">
-      <!-- Velgeren for vedlegg. Innholdet fylles av JS-en under, ett av tre
-           sett: triks, guider eller rekorder. -->
-      <div class="dm-attach-panel" data-attach-panel hidden></div>
-
-      <!-- Vedlegget man har valgt, før meldingen er sendt. Man kan fortsatt
-           skrive en tekst til under. -->
-      <div class="dm-attach-chip" data-attach-chip hidden></div>
-
-      <form class="dm-thread-form" data-dm-form>
-        <div class="dm-attach-bar" role="group" aria-label="Legg ved">
-          <button type="button" class="dm-attach-btn" data-attach-open="spill" aria-expanded="false" title="Send et triks" aria-label="Send et triks">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
-          </button>
-          <button type="button" class="dm-attach-btn" data-attach-open="guide" aria-expanded="false" title="Send en guide" aria-label="Send en guide">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5V5.5z"></path><path d="M8 7.5h7"></path><path d="M8 11h5"></path></svg>
-          </button>
-          <button type="button" class="dm-attach-btn" data-attach-open="rekord" aria-expanded="false" title="Send rekorden din" aria-label="Send rekorden din">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
-          </button>
-        </div>
-        <label class="visually-hidden" for="dm-input">Skriv en melding</label>
-        <input type="text" id="dm-input" data-dm-input maxlength="1000" placeholder="Skriv en melding …" autocomplete="off">
-        <button type="submit" class="btn-primary" data-dm-send>Send</button>
-      </form>
-    </div>
-    <p class="dm-thread-error" data-dm-error hidden></p>
-  </div>
 </div>
 
 <script src="js/consent.js"></script>
@@ -144,11 +151,13 @@
     main: document.querySelector("[data-social-main]"),
     feed: document.querySelector("[data-feed-list]"),
     threads: document.querySelector("[data-thread-list]"),
+    panel: document.querySelector("[data-venner-panel]"),
+    chatEmpty: document.querySelector("[data-dm-empty]"),
+    chatActive: document.querySelector("[data-dm-active]"),
     attachPanel: document.querySelector("[data-attach-panel]"),
     attachChip: document.querySelector("[data-attach-chip]"),
     search: document.querySelector("[data-friend-search]"),
     results: document.querySelector("[data-friend-results]"),
-    overlay: document.querySelector("[data-dm-overlay]"),
     dmName: document.querySelector("[data-dm-name]"),
     dmAvatar: document.querySelector("[data-dm-avatar]"),
     dmMessages: document.querySelector("[data-dm-messages]"),
@@ -216,7 +225,7 @@
     }
     els.threads.innerHTML = rows
       .map((t) => `
-        <button type="button" class="dm-row ${t.unread ? "is-unread" : ""}" data-open-thread="${t.other_id}" data-username="${esc(t.other_username)}">
+        <button type="button" class="dm-row ${t.unread ? "is-unread" : ""} ${t.other_id === openThreadWith ? "is-open" : ""}" data-open-thread="${t.other_id}" data-username="${esc(t.other_username)}">
           ${Auth.avatarHTML({ avatar_color: t.other_avatar_color, avatar_icon: t.other_avatar_icon }, 38)}
           <span class="dm-row-text">
             <span class="dm-row-name">${esc(t.other_username)}</span>
@@ -501,7 +510,11 @@
     renderPendingAttachment();
   }
 
-  /* ---------------- Samtalevindu ---------------- */
+  /* ---------------- Samtalepanel ---------------- */
+  /* Den åpne samtalen ligger inne i samme kort som tråd-lista, ikke som en
+     dialog over resten av siden – man kan bytte mellom samtaler uten at
+     noe hopper. På smale skjermer bytter panelet til å vise ett av de to
+     om gangen, styrt av .is-chat-open på .venner-panel (se social.css). */
 
   async function openThread(userId, username) {
     openThreadWith = userId;
@@ -509,8 +522,9 @@
     els.dmName.href = `spillerprofil.html?u=${encodeURIComponent(username)}`;
     els.dmError.hidden = true;
     clearAttachment();
-    els.overlay.hidden = false;
-    document.body.classList.add("is-dialog-open");
+    els.chatEmpty.hidden = true;
+    els.chatActive.hidden = false;
+    els.panel.classList.add("is-chat-open");
     await renderConversation();
     els.dmInput.focus();
     await Social.markRead(userId);
@@ -522,9 +536,11 @@
   function closeThread() {
     openThreadWith = null;
     clearAttachment();
-    els.overlay.hidden = true;
-    document.body.classList.remove("is-dialog-open");
+    els.chatActive.hidden = true;
+    els.chatEmpty.hidden = false;
+    els.panel.classList.remove("is-chat-open");
     stopPolling();
+    renderThreads();
   }
 
   async function renderConversation() {
@@ -552,7 +568,7 @@
 
   // Enkel polling mens en samtale er åpen. Ikke sanntid, men nok til at et
   // svar dukker opp uten at man må laste siden på nytt – og den stopper når
-  // vinduet lukkes, så det ligger ingen løkke og går i bakgrunnen.
+  // panelet lukkes, så det ligger ingen løkke og går i bakgrunnen.
   function startPolling() {
     stopPolling();
     pollTimer = window.setInterval(async () => {
@@ -591,11 +607,9 @@
   });
 
   document.querySelector("[data-dm-close]").addEventListener("click", closeThread);
-  els.overlay.addEventListener("click", (e) => { if (e.target === els.overlay) closeThread(); });
   document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape" || els.overlay.hidden) return;
+    if (e.key !== "Escape") return;
     if (openPicker) closePicker();
-    else closeThread();
   });
 
   els.dmBlock.addEventListener("click", async () => {
