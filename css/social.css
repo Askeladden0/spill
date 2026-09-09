@@ -70,8 +70,6 @@ select:focus-visible,
   .hero-kicker-dot { animation: none !important; }
 }
 
-body.is-dialog-open { overflow: hidden; }
-
 /* --------------------------------------------------------------------------
    Heltefelt: verdiløfte + direktestart
    -------------------------------------------------------------------------- */
@@ -431,17 +429,25 @@ body.is-dialog-open { overflow: hidden; }
 
 /* --------------------------------------------------------------------------
    Venner: aktivitet + meldinger
+
+   Meldingene er ett samlet panel – tråd-lista til venstre, den åpne
+   samtalen til høyre i samme kort – i stedet for to separate lister og en
+   dialog som legger seg over resten av siden.
    -------------------------------------------------------------------------- */
 
-.social-layout {
+.social-main {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
   gap: 28px;
   align-items: start;
 }
-.social-col { margin: 0; }
+@media (max-width: 900px) {
+  .social-main { grid-template-columns: 1fr; }
+}
 
-.feed-list, .dm-list {
+.venner-feed-col { margin: 0; }
+
+.feed-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -449,6 +455,75 @@ body.is-dialog-open { overflow: hidden; }
   border: 1px solid rgba(255, 255, 255, .07);
   background: var(--surface, #131a25);
   overflow: hidden;
+}
+
+.venner-panel {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  height: 620px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  background: var(--surface, #131a25);
+  overflow: hidden;
+}
+
+.venner-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid rgba(255, 255, 255, .06);
+}
+.venner-sidebar .section-heading { padding: 14px 16px 8px; }
+.venner-sidebar .section-heading h2 { font-size: 15px; }
+
+.dm-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.venner-chat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.venner-chat-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  font-size: 13.5px;
+  color: #7c8aa0;
+}
+.venner-chat-active {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.venner-chat-active[hidden] { display: none; }
+
+/* Mobil: ett panel om gangen. Lista er full bredde til man åpner en
+   samtale, da bytter kortet til å vise bare den – med en tilbake-knapp i
+   samtaletoppen (dm-thread-back) for å komme tilbake til lista igjen. */
+@media (max-width: 720px) {
+  .venner-panel {
+    grid-template-columns: 1fr;
+    height: 74vh;
+    min-height: 460px;
+  }
+  .venner-sidebar { border-right: none; }
+  .venner-chat { display: none; }
+  .venner-panel.is-chat-open .venner-sidebar { display: none; }
+  .venner-panel.is-chat-open .venner-chat { display: flex; }
+}
+@media (min-width: 721px) {
+  .dm-thread-back { display: none; }
 }
 
 .feed-row {
@@ -489,6 +564,7 @@ body.is-dialog-open { overflow: hidden; }
 .dm-row:hover { background: rgba(255, 255, 255, .03); }
 .dm-row.is-unread .dm-row-name { color: #fff; }
 .dm-row.is-unread .dm-row-last { color: #c3ccda; font-weight: 600; }
+.dm-row.is-open { background: rgba(46, 232, 127, .1); box-shadow: inset 3px 0 0 var(--accent, #2ee87f); }
 
 .dm-row-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .dm-row-name { font-size: 14px; font-weight: 700; color: #e8edf5; }
@@ -512,33 +588,8 @@ body.is-dialog-open { overflow: hidden; }
   text-align: center;
 }
 
-/* Samtalevinduet */
-.dm-thread-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(6, 9, 14, .72);
-  backdrop-filter: blur(3px);
-}
-.dm-thread-overlay[hidden] { display: none; }
-
-.dm-thread-card {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 480px;
-  height: min(640px, 88vh);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, .09);
-  background: var(--surface, #131a25);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, .55);
-  overflow: hidden;
-}
-
+/* Samtalepanelet – del av .venner-chat-active, ikke lenger en dialog over
+   resten av siden. */
 .dm-thread-head {
   display: flex;
   align-items: center;
