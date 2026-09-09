@@ -32,12 +32,15 @@ on conflict (id) do nothing;
 -- Migrering: eksisterende installasjoner som fortsatt har de gamle
 -- emoji-verdiene (fra før figur-avatarene ble innført) får de nye
 -- standardfigurene/-fargene i stedet, slik at avataren ikke blir tom.
+-- Ikoner som er opplastede bilder (URL-er til avatar-images-bucketen,
+-- se seksjon 31b) er ikke gamle emoji og skal ikke rulles tilbake her.
 update public.avatar_options
    set colors = array['#2ee87f', '#38bdf8', '#a78bfa', '#f472b6', '#ffd166', '#fb923c', '#ff9385', '#e8edf5'],
        icons = array['robot', 'katt', 'spoke', 'alien', 'fugl', 'bjorn', 'krystall', 'blekk'],
        updated_at = now()
  where id = 1
-   and not (icons <@ array['robot', 'katt', 'spoke', 'alien', 'fugl', 'bjorn', 'krystall', 'blekk']);
+   and not (icons <@ array['robot', 'katt', 'spoke', 'alien', 'fugl', 'bjorn', 'krystall', 'blekk'])
+   and not exists (select 1 from unnest(icons) i where i like 'http%');
 
 -- ---------------------------------------------------------------------------
 -- 2. profiles – ett rad per bruker (1:1 med auth.users).
@@ -71,10 +74,12 @@ alter table public.profiles add column if not exists is_hidden boolean not null 
 
 -- Migrering: eksisterende profiler med et gammelt emoji-avatar_icon (fra før
 -- figur-avatarene ble innført) får standardfiguren "robot" i stedet, slik at
--- avataren ikke blir tom.
+-- avataren ikke blir tom. avatar_icon som er en URL (opplastet profilbilde,
+-- se seksjon 31b) er ikke gammel emoji og skal ikke rulles tilbake.
 update public.profiles
    set avatar_icon = 'robot'
- where avatar_icon not in ('robot', 'katt', 'spoke', 'alien', 'fugl', 'bjorn', 'krystall', 'blekk');
+ where avatar_icon not in ('robot', 'katt', 'spoke', 'alien', 'fugl', 'bjorn', 'krystall', 'blekk')
+   and avatar_icon not like 'http%';
 
 -- ---------------------------------------------------------------------------
 -- 3. game_records – historikk over poengsummer per spiller/spill.
@@ -971,6 +976,34 @@ create policy "reward_images_admin_update" on storage.objects
 drop policy if exists "reward_images_admin_delete" on storage.objects;
 create policy "reward_images_admin_delete" on storage.objects
   for delete to authenticated using (bucket_id = 'reward-images' and public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 31b. Storage-bucket for opplastede profilbilder, lastet opp fra
+--      adminpanelet (admin.html) under "Profilbilder". Samme mønster som
+--      reward-images (seksjon 31). URL-en til et opplastet bilde lagres
+--      direkte i avatar_options.icons (seksjon 1) og profiles.avatar_icon
+--      (seksjon 2) i stedet for en av de innebygde figur-nøklene.
+-- ---------------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('avatar-images', 'avatar-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "avatar_images_select_all" on storage.objects;
+create policy "avatar_images_select_all" on storage.objects
+  for select using (bucket_id = 'avatar-images');
+
+drop policy if exists "avatar_images_admin_write" on storage.objects;
+create policy "avatar_images_admin_write" on storage.objects
+  for insert to authenticated with check (bucket_id = 'avatar-images' and public.is_admin());
+
+drop policy if exists "avatar_images_admin_update" on storage.objects;
+create policy "avatar_images_admin_update" on storage.objects
+  for update to authenticated using (bucket_id = 'avatar-images' and public.is_admin())
+  with check (bucket_id = 'avatar-images' and public.is_admin());
+
+drop policy if exists "avatar_images_admin_delete" on storage.objects;
+create policy "avatar_images_admin_delete" on storage.objects
+  for delete to authenticated using (bucket_id = 'avatar-images' and public.is_admin());
 
 -- ---------------------------------------------------------------------------
 -- 32. RPC: admin_preview_case – lar en admin spinne kassen et ubegrenset
