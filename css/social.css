@@ -603,11 +603,188 @@ body.is-dialog-open { overflow: hidden; }
 .dm-bubble-body { font-size: 14px; line-height: 1.5; color: #e8edf5; word-break: break-word; }
 .dm-bubble-time { font-size: 10.5px; color: #7c8aa0; }
 
+.dm-compose {
+  position: relative;
+  border-top: 1px solid rgba(255, 255, 255, .07);
+}
 .dm-thread-form {
   display: flex;
+  align-items: center;
   gap: 8px;
   padding: 12px 14px;
-  border-top: 1px solid rgba(255, 255, 255, .07);
+}
+
+/* --------------------------------------------------------------------------
+   Vedlegg i meldinger: triks, guider og rekorder
+   -------------------------------------------------------------------------- */
+
+/* De tre knappene til venstre for skrivefeltet – samme ikoner som toppmenyen. */
+.dm-attach-bar { display: flex; gap: 2px; }
+.dm-attach-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #96a3b8;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.dm-attach-btn:hover { background: rgba(255, 255, 255, .06); color: #e8edf5; }
+.dm-attach-btn.is-active {
+  background: rgba(46, 232, 127, .14);
+  color: var(--accent, #2ee87f);
+}
+
+/* Lista man velger fra. Legger seg over samtalen i stedet for å dytte den. */
+.dm-attach-panel {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(100% - 1px);
+  z-index: 2;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: #131a25;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .45);
+  overflow: hidden;
+}
+.dm-attach-panel[hidden] { display: none; }
+.dm-attach-panel-head {
+  padding: 11px 14px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #7c8aa0;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+.dm-attach-options { max-height: 260px; overflow-y: auto; }
+.dm-attach-option {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .04);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.dm-attach-option:last-child { border-bottom: none; }
+.dm-attach-option:hover { background: rgba(255, 255, 255, .04); }
+.dm-attach-option-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dm-attach-option-title { font-size: 13.5px; font-weight: 700; color: #e8edf5; }
+.dm-attach-option-sub {
+  font-size: 12px;
+  color: #7c8aa0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Rundt ikon der triksene har coverbildet sitt. */
+.dm-attach-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(46, 232, 127, .12);
+  color: var(--accent, #2ee87f);
+}
+
+/* Det valgte vedlegget, over skrivefeltet. */
+.dm-attach-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 14px 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(46, 232, 127, .3);
+  background: rgba(46, 232, 127, .08);
+}
+.dm-attach-chip[hidden] { display: none; }
+.dm-attach-chip-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.dm-attach-chip-eyebrow {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--accent, #2ee87f);
+}
+.dm-attach-chip-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e8edf5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dm-attach-chip-remove {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #96a3b8;
+  cursor: pointer;
+}
+.dm-attach-chip-remove:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+
+/* Vedlegget slik det ser ut inne i en sendt melding. */
+.dm-bubble.has-attachment { max-width: 90%; }
+.dm-attach-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(0, 0, 0, .25);
+  text-decoration: none;
+}
+.dm-attach-card:hover { border-color: rgba(46, 232, 127, .4); }
+.dm-attach-card-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.dm-attach-card-eyebrow {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--accent, #2ee87f);
+}
+.dm-attach-card-title { font-size: 13.5px; font-weight: 700; color: #e8edf5; }
+.dm-attach-card-sub {
+  font-size: 12px;
+  color: #96a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dm-attach-card-action {
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent, #2ee87f);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .dm-attach-btn { width: 32px; height: 32px; }
+  .dm-attach-card-action { display: none; }
 }
 .dm-thread-form input {
   flex: 1;
