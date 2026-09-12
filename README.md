@@ -3,6 +3,54 @@
 Statisk frontend + Supabase-backend for spillnettsiden, basert på designfilen
 `Spillnettside.dc.html`. Mørkt tema, grønn aksentfarge (`#2ee87f`), Poppins-font.
 
+## Bygg og kjøring
+
+Nettsiden er fortsatt helt statisk – ingen rammeverk, ingen avhengigheter.
+Det eneste som er lagt til er et lite byggesteg (`build/build.mjs`, ren Node)
+som gjør to ting:
+
+1. **Setter sammen sidene fra felles deler.** Det som er likt på alle sidene
+   – favicon, fonter, stilark, analytics – ligger i `build/partials/head.html`
+   og ingen andre steder. Toppmeny og bunnmeny ligger i `js/layout-markup.js`
+   og skrives rett inn i HTML-en, slik at menylenkene finnes i sidekilden
+   (bedre for SEO) og siden ikke hopper når JavaScript kjører.
+2. **Cache-busting.** Alle lokale lenker til `css/`, `js/`, `assets/` og
+   `documents/` får `?v=<innholdshash>`, så nettlesere henter nye filer med
+   det samme etter en utrulling – i stedet for å bli sittende med gamle.
+
+```bash
+npm run build   # bygger nettstedet til dist/
+npm run dev     # bygger og starter en lokal server på http://localhost:8000
+```
+
+`dist/` er generert og ligger i `.gitignore`. Det er `dist/` GitHub Pages
+publiserer (se `.github/workflows/static.yml`) – ikke repoet slik det står.
+Feiler bygget, stopper utrullingen.
+
+### Åpne kildefilene direkte
+
+Du kan fortsatt dobbeltklikke en HTML-fil og få riktig design uten å bygge.
+Head-markøren i hver side er med vilje en ekte stilark-lenke:
+
+```html
+<link rel="stylesheet" href="css/style.css" data-studilla-head>
+```
+
+Byggesteget bytter hele den taggen ut med det felles head-innholdet. Ubygget
+mangler du bare favicon, fonter og analytics – meny og bunnmeny settes inn av
+`js/layout.js` som før.
+
+### Når du legger til en ny side
+
+1. Kopier `<head>`-en fra en eksisterende side: `charset`, `viewport`, egen
+   `<title>` og `description`, og head-markøren over.
+2. Ta med `<div id="site-header"></div>` og `<div id="site-footer"></div>`
+   der meny og bunnmeny skal være.
+3. Last `js/layout-markup.js` rett før `js/layout.js`.
+
+Bygget feiler med en tydelig melding hvis markøren mangler, eller hvis en side
+lenker til en fil som ikke finnes.
+
 ## Filstruktur
 
 ```
@@ -26,11 +74,18 @@ spill/
 │   ├── games-data.js      Midlertidig "database" med spillobjekter (se under)
 │   ├── guides-data.js     Samme mønster som games-data.js, men for guider/moduler (se under)
 │   ├── guides.js          Rendring + admin-redigering for guider.html/guide.html
-│   ├── layout.js          Delt topp-nav/bunnmeny + markering av aktivt menypunkt
+│   ├── layout-markup.js   HTML-en for topp-nav og bunnmeny – eneste kilde, leses
+│   │                      både av layout.js i nettleseren og av byggesteget
+│   ├── layout.js          Setter inn header/footer (hvis bygget ikke har gjort det),
+│   │                      markerer aktivt menypunkt og styrer mobilmenyen
 │   ├── main.js            Rendrer heltefelt, spillrutenett og spillside
 │   ├── admin.js           All logikk for adminpanelet (admin.html)
 │   ├── supabase-config.js Supabase-nøkler (må fylles inn, se SUPABASE_SETUP.md)
 │   └── auth.js            Delt innloggingslogikk: header-avatar, admin-lenke, tilgangssjekk
+├── build/
+│   ├── build.mjs           Byggesteget: felles head/meny + cache-busting → dist/
+│   └── partials/
+│       └── head.html       Delt <head>-innhold for alle sidene
 ├── supabase/
 │   └── schema.sql          Databaseskjema: profiler, avatar-innstillinger, spillrekorder, nivåer,
 │                          rabattkoder, guider/guide-moduler, RLS

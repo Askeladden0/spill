@@ -74,7 +74,7 @@
   const icon = isGuide ? "📄" : "🎮";
   const title = isGuide ? "Denne guiden har flyttet!" : "Dette spillet har flyttet!";
   const body = isGuide
-    ? "Dette er min nye side for guider og ressurser – med flere guider, filer og maler."
+    ? "Dette er min nye nettside – med guider og spill, pluss flere filer og maler."
     : "Dette er min nye spillnettside – med flere spill, poeng og rangeringer.";
   const btnText = isGuide ? "Kult, la oss se!" : "Kult, la oss spille!";
 

@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studilla · Venner og meldinger</title>
+<meta name="description" content="Se vennene dine, svar på venneforespørsler og send dem en melding.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/style.css" data-studilla-head>
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/social.css">
+</head>
+<body data-page="meldinger">
+<div class="page">
+
+  <div id="site-header"></div>
+
+  <main id="hovedinnhold">
+    <section>
+      <div class="section-heading spread" style="align-items:flex-end;flex-wrap:wrap;gap:20px">
+        <div>
+          <h1>Venner</h1>
+          <span class="section-sub" data-social-sub>Laster …</span>
+        </div>
+        <div class="rank-search-wrap">
+          <label class="visually-hidden" for="friend-search">Søk etter en spiller</label>
+          <input type="search" id="friend-search" class="rank-search-input" placeholder="Finn en spiller å legge til …" data-friend-search autocomplete="off">
+          <div class="rank-search-results" data-friend-results hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <section data-signed-out hidden>
+      <div class="rank-me-guest">
+        <span class="section-sub">Logg inn for å legge til venner og sende meldinger.</span>
+        <a href="login.html" class="btn-primary btn-link">Logg inn</a>
+      </div>
+    </section>
+
+    <section data-social-unavailable hidden>
+      <div class="rank-me-guest">
+        <span class="section-sub">Det sosiale laget er ikke slått på i databasen ennå. Kjør <code>supabase/schema.sql</code> på nytt.</span>
+      </div>
+    </section>
+
+    <div class="social-main" data-social-main hidden>
+      <!-- Venstre spalte: forespørsler og selve vennelista. Aktivitetsfeeden
+           lå her før; den hører hjemme på profilen til den det gjelder og
+           ligger nå på spillerprofil.html. -->
+      <section class="venner-feed-col">
+        <div class="friend-requests" data-requests-card hidden>
+          <div class="section-heading spread">
+            <h2>Venneforespørsler</h2>
+            <span class="section-sub" data-requests-count></span>
+          </div>
+          <div class="feed-list" data-requests-list></div>
+        </div>
+
+        <div class="section-heading spread" style="margin-top:22px">
+          <h2>Vennene dine</h2>
+          <span class="section-sub" data-friends-count></span>
+        </div>
+        <div class="feed-list" data-friends-list>
+          <div class="leaderboard-empty">Laster …</div>
+        </div>
+
+        <div data-outgoing-wrap hidden style="margin-top:22px">
+          <div class="section-heading spread">
+            <h2>Sendt av deg</h2>
+            <span class="section-sub">Venter på svar</span>
+          </div>
+          <div class="feed-list" data-outgoing-list></div>
+        </div>
+      </section>
+
+      <!-- Meldinger. Ett samlet panel med tråd-lista til venstre og den
+           åpne samtalen til høyre, i stedet for at samtalen henger som en
+           dialog over resten av siden. Lista inneholder både vanlige
+           samtaler og gruppechatter. -->
+      <section class="venner-panel" data-venner-panel>
+        <div class="venner-sidebar">
+          <div class="section-heading spread" style="padding:0 2px">
+            <h2>Meldinger</h2>
+            <button type="button" class="btn-outline btn-small" data-new-group>+ Ny gruppe</button>
+          </div>
+          <div class="dm-list" data-thread-list>
+            <div class="leaderboard-empty">Laster …</div>
+          </div>
+        </div>
+
+        <div class="venner-chat">
+          <div class="venner-chat-empty" data-dm-empty>
+            <p>Velg en samtale for å se meldingene.</p>
+          </div>
+
+          <div class="venner-chat-active" data-dm-active hidden>
+            <div class="dm-thread-head">
+              <button type="button" class="dm-thread-back" data-dm-close aria-label="Tilbake til meldingslista">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              </button>
+              <span data-dm-avatar></span>
+              <a class="dm-thread-name" id="dm-thread-title" data-dm-name href="#">–</a>
+              <span class="dm-thread-sub" data-dm-sub></span>
+              <button type="button" class="dm-thread-action" data-group-add hidden>Legg til</button>
+              <button type="button" class="dm-thread-action" data-group-leave hidden>Forlat</button>
+              <button type="button" class="dm-thread-block" data-dm-block hidden>Blokker</button>
+            </div>
+            <div class="dm-thread-body" data-dm-messages></div>
+            <div class="dm-compose">
+              <!-- Velgeren for vedlegg. Innholdet fylles av JS-en under, ett av tre
+                   sett: triks, guider eller rekorder. -->
+              <div class="dm-attach-panel" data-attach-panel hidden></div>
+
+              <!-- Vedlegget man har valgt, før meldingen er sendt. Man kan fortsatt
+                   skrive en tekst til under. -->
+              <div class="dm-attach-chip" data-attach-chip hidden></div>
+
+              <form class="dm-thread-form" data-dm-form>
+                <div class="dm-attach-bar" role="group" aria-label="Legg ved">
+                  <button type="button" class="dm-attach-btn" data-attach-open="spill" aria-expanded="false" title="Send et triks" aria-label="Send et triks">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
+                  </button>
+                  <button type="button" class="dm-attach-btn" data-attach-open="guide" aria-expanded="false" title="Send en guide" aria-label="Send en guide">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5V5.5z"></path><path d="M8 7.5h7"></path><path d="M8 11h5"></path></svg>
+                  </button>
+                  <button type="button" class="dm-attach-btn" data-attach-open="rekord" aria-expanded="false" title="Send rekorden din" aria-label="Send rekorden din">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
+                  </button>
+                </div>
+                <label class="visually-hidden" for="dm-input">Skriv en melding</label>
+                <input type="text" id="dm-input" data-dm-input maxlength="1000" placeholder="Skriv en melding …" autocomplete="off">
+                <button type="submit" class="btn-primary" data-dm-send>Send</button>
+              </form>
+            </div>
+            <p class="dm-thread-error" data-dm-error hidden></p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+</div>
+
+<!-- Ny gruppechat: navn + hvilke venner som skal være med. -->
+<div class="modal-overlay" data-group-modal hidden>
+  <div class="modal-backdrop" data-group-modal-backdrop></div>
+  <div class="modal-card">
+    <button type="button" class="modal-close" data-group-modal-close aria-label="Lukk">×</button>
+    <h2 class="modal-title" data-group-modal-title>Ny gruppechat</h2>
+    <label class="settings-label" for="group-name">Navn på gruppa</label>
+    <input type="text" id="group-name" class="rank-search-input" maxlength="60" placeholder="F.eks. Klasse 2B" data-group-name autocomplete="off">
+    <p class="settings-label" style="margin-top:14px">Hvem skal være med?</p>
+    <div class="group-member-picker" data-group-picker></div>
+    <p class="auth-error" data-group-error hidden></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button type="button" class="btn-outline" data-group-modal-close>Avbryt</button>
+      <button type="button" class="btn-primary" data-group-save>Opprett gruppe</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/consent.js"></script>
+<script src="js/cookie-banner.js"></script>
+<script src="js/feature-flags.js"></script>
+<script src="js/layout-markup.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/avatar-figures.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/social.js"></script>
+<script src="js/visit-tracking.js"></script>
+<script src="js/games-data.js"></script>
+<script src="js/guides-data.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  const Auth = window.StudillaAuth;
+  const Social = window.StudillaSocial;
+  const esc = Social.escapeHTML;
+
+  let profile = null;
+  // Den åpne samtalen: { kind: "dm" | "group", id, name }.
+  let openChat = null;
+  let pollTimer = null;
+  let friends = [];
+
+  const els = {
+    sub: document.querySelector("[data-social-sub]"),
+    signedOut: document.querySelector("[data-signed-out]"),
+    unavailable: document.querySelector("[data-social-unavailable]"),
+    main: document.querySelector("[data-social-main]"),
+    requestsCard: document.querySelector("[data-requests-card]"),
+    requestsList: document.querySelector("[data-requests-list]"),
+    requestsCount: document.querySelector("[data-requests-count]"),
+    friendsList: document.querySelector("[data-friends-list]"),
+    friendsCount: document.querySelector("[data-friends-count]"),
+    outgoingWrap: document.querySelector("[data-outgoing-wrap]"),
+    outgoingList: document.querySelector("[data-outgoing-list]"),
+    threads: document.querySelector("[data-thread-list]"),
+    panel: document.querySelector("[data-venner-panel]"),
+    chatEmpty: document.querySelector("[data-dm-empty]"),
+    chatActive: document.querySelector("[data-dm-active]"),
+    attachPanel: document.querySelector("[data-attach-panel]"),
+    attachChip: document.querySelector("[data-attach-chip]"),
+    search: document.querySelector("[data-friend-search]"),
+    results: document.querySelector("[data-friend-results]"),
+    dmName: document.querySelector("[data-dm-name]"),
+    dmSub: document.querySelector("[data-dm-sub]"),
+    dmAvatar: document.querySelector("[data-dm-avatar]"),
+    dmMessages: document.querySelector("[data-dm-messages]"),
+    dmForm: document.querySelector("[data-dm-form]"),
+    dmInput: document.querySelector("[data-dm-input]"),
+    dmError: document.querySelector("[data-dm-error]"),
+    dmBlock: document.querySelector("[data-dm-block]"),
+    groupAdd: document.querySelector("[data-group-add]"),
+    groupLeave: document.querySelector("[data-group-leave]"),
+    groupModal: document.querySelector("[data-group-modal]"),
+    groupModalTitle: document.querySelector("[data-group-modal-title]"),
+    groupName: document.querySelector("[data-group-name]"),
+    groupPicker: document.querySelector("[data-group-picker]"),
+    groupError: document.querySelector("[data-group-error]"),
+    groupSave: document.querySelector("[data-group-save]"),
+  };
+
+  function gameName(id) {
+    const g = (window.STUDILLA_GAMES || []).find((x) => x.id === id);
+    return g ? g.name : id;
+  }
+
+  /* ---------------- Venneforespørsler og vennelista ---------------- */
+
+  async function renderRequests() {
+    const [incoming, outgoing] = await Promise.all([
+      Social.incomingRequests(),
+      Social.outgoingRequests(),
+    ]);
+
+    els.requestsCard.hidden = !incoming.length;
+    els.requestsCount.textContent = incoming.length
+      ? `${incoming.length} venter på svar` : "";
+    els.requestsList.innerHTML = incoming
+      .map((r) => `
+        <div class="feed-row is-request">
+          <a class="feed-identity" href="spillerprofil.html?u=${encodeURIComponent(r.username)}">
+            ${Auth.avatarHTML(r, 34)}
+            <span class="feed-text"><strong>${esc(r.username)}</strong> vil bli venn med deg</span>
+          </a>
+          <span class="feed-actions">
+            <button type="button" class="btn-primary btn-small" data-accept="${r.user_id}">Godta</button>
+            <button type="button" class="btn-outline btn-small" data-decline="${r.user_id}">Avslå</button>
+          </span>
+        </div>`)
+      .join("");
+
+    els.outgoingWrap.hidden = !outgoing.length;
+    els.outgoingList.innerHTML = outgoing
+      .map((r) => `
+        <div class="feed-row is-request">
+          <a class="feed-identity" href="spillerprofil.html?u=${encodeURIComponent(r.username)}">
+            ${Auth.avatarHTML(r, 30)}
+            <span class="feed-text"><strong>${esc(r.username)}</strong></span>
+          </a>
+          <button type="button" class="btn-outline btn-small" data-cancel-request="${r.user_id}">Trekk tilbake</button>
+        </div>`)
+      .join("");
+  }
+
+  async function renderFriends() {
+    friends = await Social.friendsList();
+    els.friendsCount.textContent = friends.length
+      ? `${friends.length} ${friends.length === 1 ? "venn" : "venner"}` : "";
+
+    if (!friends.length) {
+      els.friendsList.innerHTML = `
+        <div class="leaderboard-empty">
+          Du har ingen venner her ennå. Søk opp en spiller øverst, eller finn noen på
+          <a href="rangering.html">rangeringen</a>.
+        </div>`;
+      return;
+    }
+
+    els.friendsList.innerHTML = friends
+      .map((f) => `
+        <div class="feed-row is-friend">
+          <a class="feed-identity" href="spillerprofil.html?u=${encodeURIComponent(f.username)}">
+            ${Auth.avatarHTML(f, 34)}
+            <span class="feed-text">
+              <strong>${esc(f.username)}</strong>
+              <span class="feed-sub">${Math.round(f.xp || 0).toLocaleString("no-NO")} poeng</span>
+            </span>
+          </a>
+          <span class="feed-actions">
+            <button type="button" class="icon-btn" data-message-friend="${f.user_id}" data-username="${esc(f.username)}" title="Send melding" aria-label="Send melding til ${esc(f.username)}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 9 9 0 0 1-3.4-.6L3 21l1.9-5.1A8.3 8.3 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"></path></svg>
+            </button>
+            <button type="button" class="icon-btn is-danger" data-remove-friend="${f.user_id}" data-username="${esc(f.username)}" title="Fjern venn" aria-label="Fjern ${esc(f.username)} som venn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21c0-4 3.1-6 7-6 1.4 0 2.7.3 3.8.7"></path><line x1="16" y1="16" x2="22" y2="16"></line></svg>
+            </button>
+          </span>
+        </div>`)
+      .join("");
+  }
+
+  /* ---------------- Meldingsliste ---------------- */
+
+  /**
+   * Forhåndsvisningen i meldingslista. En melding med vedlegg har et lite
+   * merke først i teksten – det skal vises som «Spill dette trikset», ikke
+   * som rå kode.
+   */
+  function threadPreview(body) {
+    const parsed = Social.parseBody(body);
+    if (!parsed.attachment) return parsed.text;
+    const view = attachmentView(parsed.attachment);
+    const label = view ? view.eyebrow : "Vedlegg";
+    return parsed.text ? `${label} · ${parsed.text}` : label;
+  }
+
+  /** Gruppene har ikke profilbilde – de får en initial i en farget boks. */
+  function groupAvatarHTML(name, size) {
+    const letter = (String(name || "?").trim()[0] || "?").toUpperCase();
+    return `<span class="group-avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.42)}px">${esc(letter)}</span>`;
+  }
+
+  async function renderThreads() {
+    const [dms, groups] = await Promise.all([Social.threads(), Social.groupThreads()]);
+
+    const rows = dms.map((t) => ({
+      kind: "dm",
+      id: t.other_id,
+      name: t.other_username,
+      avatar: Auth.avatarHTML({ avatar_color: t.other_avatar_color, avatar_icon: t.other_avatar_icon }, 38),
+      last: `${t.last_from_me ? "Du: " : ""}${threadPreview(t.last_body)}`,
+      at: t.last_at,
+      unread: t.unread,
+    })).concat(groups.map((g) => ({
+      kind: "group",
+      id: g.group_id,
+      name: g.name,
+      avatar: groupAvatarHTML(g.name, 38),
+      last: g.last_body
+        ? `${g.last_from_me ? "Du: " : (g.last_sender ? g.last_sender + ": " : "")}${threadPreview(g.last_body)}`
+        : `${g.member_count} medlemmer · ingen meldinger ennå`,
+      at: g.last_at,
+      unread: g.unread,
+    })));
+
+    rows.sort((a, b) => new Date(b.at) - new Date(a.at));
+
+    if (!rows.length) {
+      els.threads.innerHTML = `
+        <div class="leaderboard-empty">
+          Ingen meldinger ennå. Trykk meldingsikonet ved en venn, eller lag en gruppe.
+        </div>`;
+      return;
+    }
+
+    const isOpen = (r) => openChat && openChat.kind === r.kind && String(openChat.id) === String(r.id);
+
+    els.threads.innerHTML = rows
+      .map((r) => `
+        <button type="button" class="dm-row ${r.unread ? "is-unread" : ""} ${isOpen(r) ? "is-open" : ""}" data-open-chat="${r.kind}" data-chat-id="${esc(String(r.id))}" data-chat-name="${esc(r.name)}">
+          ${r.avatar}
+          <span class="dm-row-text">
+            <span class="dm-row-name">${esc(r.name)}</span>
+            <span class="dm-row-last">${esc(r.last)}</span>
+          </span>
+          <span class="dm-row-meta">
+            <span class="dm-row-time">${Social.timeAgo(r.at)}</span>
+            ${r.unread ? `<span class="dm-row-badge">${r.unread}</span>` : ""}
+          </span>
+        </button>`)
+      .join("");
+
+    els.threads.querySelectorAll("[data-open-chat]").forEach((btn) => {
+      btn.addEventListener("click", () => openThread(btn.dataset.openChat, btn.dataset.chatId, btn.dataset.chatName));
+    });
+  }
+
+  /* ---------------- Vedlegg: triks, guider og rekorder ---------------- */
+  /*
+   * De tre knappene over skrivefeltet er de samme tre tingene som ligger i
+   * toppmenyen: triks, guider og rangering. Trykker man på en av dem, får
+   * man opp en liste med noe å sende – et triks den andre kan spille, en
+   * guide hen kan lese, eller sin egen rekord (i ett triks eller totalt,
+   * med lenke til rangeringen). Valget henger som et vedlegg over
+   * skrivefeltet, og man kan fortsatt skrive en tekst til før man sender.
+   */
+
+  const ATTACH_KINDS = {
+    spill: { label: "Triks", empty: "Ingen triks å sende ennå." },
+    guide: { label: "Guider", empty: "Ingen guider å sende ennå." },
+    rekord: { label: "Rekorder", empty: "Du har ingen rekorder ennå. Spill et triks først!" },
+  };
+
+  let pendingAttachment = null;
+  let openPicker = null;
+  let myRecords = null; // { [gameId]: beste skår }, hentes første gang man åpner rekord-lista
+
+  function games() {
+    return window.STUDILLA_GAMES || [];
+  }
+
+  function gameById(id) {
+    return games().find((g) => g.id === id) || null;
+  }
+
+  function guideById(id) {
+    return (window.STUDILLA_GUIDES || []).find((g) => g.id === id) || null;
+  }
+
+  function fmtScore(n) {
+    return Math.round(Number(n) || 0).toLocaleString("no-NO");
+  }
+
+  /** Beste skår per triks for den innloggede. */
+  async function loadMyRecords() {
+    if (myRecords) return myRecords;
+    myRecords = {};
+    if (!profile) return myRecords;
+    const { data, error } = await window.supabaseClient
+      .from("game_records")
+      .select("game_id, score")
+      .eq("user_id", profile.id)
+      .order("score", { ascending: false })
+      .limit(500);
+    if (!error) {
+      (data || []).forEach((r) => {
+        const cur = myRecords[r.game_id] || 0;
+        if (Number(r.score) > cur) myRecords[r.game_id] = Number(r.score);
+      });
+    }
+    return myRecords;
+  }
+
+  /** Alternativene i én velger: { ref, value, title, sub, icon } */
+  async function pickerOptions(kind) {
+    if (kind === "spill") {
+      return games().map((g) => ({
+        ref: g.id,
+        title: g.name,
+        sub: g.time || "",
+        icon: window.gameIconHTML(g, 24),
+      }));
+    }
+
+    if (kind === "guide") {
+      if (window.STUDILLA_GUIDES_READY) await window.STUDILLA_GUIDES_READY;
+      return (window.STUDILLA_GUIDES || []).map((g) => ({
+        ref: g.id,
+        title: g.title,
+        sub: g.excerpt || "",
+        icon: kindIconHTML("guide"),
+      }));
+    }
+
+    const records = await loadMyRecords();
+    const options = [];
+    if (profile && Number(profile.xp) > 0) {
+      options.push({
+        ref: "alle",
+        value: String(Math.round(Number(profile.xp) || 0)),
+        title: "Poengene mine gjennom alle tider",
+        sub: `${fmtScore(profile.xp)} poeng totalt`,
+        icon: kindIconHTML("rekord"),
+      });
+    }
+    games().forEach((g) => {
+      if (!records[g.id]) return;
+      options.push({
+        ref: g.id,
+        value: String(Math.round(records[g.id])),
+        title: g.name,
+        sub: `Rekord: ${fmtScore(records[g.id])} poeng`,
+        icon: window.gameIconHTML(g, 24),
+      });
+    });
+    return options;
+  }
+
+  /** Samme ikon som i toppmenyen, brukt både i velgeren og på vedleggskortet. */
+  function kindIconHTML(kind) {
+    const paths = {
+      spill: '<line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect>',
+      guide: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5V5.5z"></path><path d="M8 7.5h7"></path><path d="M8 11h5"></path>',
+      rekord: '<rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect>',
+    };
+    return `<span class="dm-attach-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[kind] || ""}</svg></span>`;
+  }
+
+  /**
+   * Hvordan et vedlegg ser ut – både som forhåndsvisning over skrivefeltet og
+   * som kort inne i meldingsboblen. Returnerer null hvis vedlegget peker på
+   * noe som ikke finnes lenger (slettet triks eller guide).
+   */
+  function attachmentView(att) {
+    if (!att) return null;
+
+    if (att.kind === "spill") {
+      const game = gameById(att.ref);
+      if (!game) return null;
+      return {
+        eyebrow: "Spill dette trikset",
+        title: game.name,
+        sub: game.time || "",
+        icon: window.gameIconHTML(game, 30),
+        href: `player.html?id=${encodeURIComponent(game.id)}`,
+        action: "Spill",
+      };
+    }
+
+    if (att.kind === "guide") {
+      const guide = guideById(att.ref);
+      return {
+        eyebrow: "Les denne guiden",
+        title: guide ? guide.title : "Guide",
+        sub: guide && guide.excerpt ? guide.excerpt : "",
+        icon: kindIconHTML("guide"),
+        href: `guide.html?id=${encodeURIComponent(att.ref)}`,
+        action: "Les",
+      };
+    }
+
+    if (att.kind === "rekord") {
+      const allTime = att.ref === "alle";
+      const game = allTime ? null : gameById(att.ref);
+      if (!allTime && !game) return null;
+      return {
+        eyebrow: allTime ? "Rekord gjennom alle tider" : `Rekord i ${game.name}`,
+        title: `${fmtScore(att.value)} poeng`,
+        sub: allTime ? "Se hele rangeringen" : "Klarer du å slå den?",
+        icon: allTime ? kindIconHTML("rekord") : window.gameIconHTML(game, 30),
+        href: allTime ? "rangering.html" : `rangering.html?spill=${encodeURIComponent(game.id)}`,
+        action: "Rangering",
+      };
+    }
+
+    return null;
+  }
+
+  function attachmentCardHTML(att) {
+    const view = attachmentView(att);
+    if (!view) return "";
+    return `
+      <a class="dm-attach-card" href="${view.href}">
+        ${view.icon}
+        <span class="dm-attach-card-text">
+          <span class="dm-attach-card-eyebrow">${esc(view.eyebrow)}</span>
+          <span class="dm-attach-card-title">${esc(view.title)}</span>
+          ${view.sub ? `<span class="dm-attach-card-sub">${esc(view.sub)}</span>` : ""}
+        </span>
+        <span class="dm-attach-card-action">${esc(view.action)} →</span>
+      </a>`;
+  }
+
+  function renderPendingAttachment() {
+    const view = attachmentView(pendingAttachment);
+    if (!view) {
+      pendingAttachment = null;
+      els.attachChip.hidden = true;
+      els.attachChip.innerHTML = "";
+      return;
+    }
+    els.attachChip.innerHTML = `
+      ${view.icon}
+      <span class="dm-attach-chip-text">
+        <span class="dm-attach-chip-eyebrow">${esc(view.eyebrow)}</span>
+        <span class="dm-attach-chip-title">${esc(view.title)}</span>
+      </span>
+      <button type="button" class="dm-attach-chip-remove" data-attach-clear aria-label="Fjern vedlegget">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>
+      </button>`;
+    els.attachChip.hidden = false;
+  }
+
+  function closePicker() {
+    openPicker = null;
+    els.attachPanel.hidden = true;
+    els.attachPanel.innerHTML = "";
+    document.querySelectorAll("[data-attach-open]").forEach((b) => {
+      b.classList.remove("is-active");
+      b.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  async function showPicker(kind) {
+    if (openPicker === kind) {
+      closePicker();
+      return;
+    }
+    closePicker();
+    openPicker = kind;
+    const meta = ATTACH_KINDS[kind];
+    els.attachPanel.innerHTML = `<div class="dm-attach-panel-head">${esc(meta.label)}</div><div class="leaderboard-empty">Laster …</div>`;
+    els.attachPanel.hidden = false;
+
+    const btn = document.querySelector(`[data-attach-open="${kind}"]`);
+    if (btn) {
+      btn.classList.add("is-active");
+      btn.setAttribute("aria-expanded", "true");
+    }
+
+    const options = await pickerOptions(kind);
+    if (openPicker !== kind) return; // rakk å bytte velger mens dataene lastet
+
+    els.attachPanel.innerHTML = `
+      <div class="dm-attach-panel-head">${esc(meta.label)}</div>
+      <div class="dm-attach-options">
+        ${options.length
+          ? options.map((o) => `
+              <button type="button" class="dm-attach-option" data-pick-ref="${esc(o.ref)}" data-pick-value="${esc(o.value || "")}">
+                ${o.icon}
+                <span class="dm-attach-option-text">
+                  <span class="dm-attach-option-title">${esc(o.title)}</span>
+                  ${o.sub ? `<span class="dm-attach-option-sub">${esc(o.sub)}</span>` : ""}
+                </span>
+              </button>`).join("")
+          : `<div class="leaderboard-empty">${esc(meta.empty)}</div>`}
+      </div>`;
+
+    els.attachPanel.querySelectorAll("[data-pick-ref]").forEach((opt) => {
+      opt.addEventListener("click", () => {
+        pendingAttachment = { kind, ref: opt.dataset.pickRef, value: opt.dataset.pickValue || "" };
+        closePicker();
+        renderPendingAttachment();
+        els.dmInput.focus();
+      });
+    });
+  }
+
+  document.querySelectorAll("[data-attach-open]").forEach((btn) => {
+    btn.addEventListener("click", () => showPicker(btn.dataset.attachOpen));
+  });
+
+  els.attachChip.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-attach-clear]")) return;
+    pendingAttachment = null;
+    renderPendingAttachment();
+  });
+
+  function clearAttachment() {
+    pendingAttachment = null;
+    closePicker();
+    renderPendingAttachment();
+  }
+
+  /* ---------------- Samtalepanel ---------------- */
+  /* Den åpne samtalen ligger inne i samme kort som tråd-lista, ikke som en
+     dialog over resten av siden – man kan bytte mellom samtaler uten at
+     noe hopper. På smale skjermer bytter panelet til å vise ett av de to
+     om gangen, styrt av .is-chat-open på .venner-panel (se social.css).
+     Panelet håndterer både vanlige samtaler og gruppechatter; det som
+     skiller dem er hodet øverst og hvem som står som avsender. */
+
+  async function openThread(kind, id, name) {
+    openChat = { kind, id: kind === "group" ? Number(id) : id, name };
+    els.dmName.textContent = name;
+    els.dmError.hidden = true;
+    clearAttachment();
+    els.chatEmpty.hidden = true;
+    els.chatActive.hidden = false;
+    els.panel.classList.add("is-chat-open");
+
+    const isGroup = kind === "group";
+    els.dmName.href = isGroup ? "#" : `spillerprofil.html?u=${encodeURIComponent(name)}`;
+
+    // Gruppene har en initial i en farget boks, samtalene profilbildet til den
+    // andre. Slås opp her fordi samtalen også kan åpnes fra vennelista og fra
+    // ?til=<brukernavn>, der vi ikke har avataren fra før.
+    let avatar = isGroup ? groupAvatarHTML(name, 34) : "";
+    if (!isGroup) {
+      const other = await Social.profileByUsername(name);
+      if (other) avatar = Auth.avatarHTML(other, 34);
+    }
+    els.dmAvatar.outerHTML = `<span data-dm-avatar>${avatar}</span>`;
+    els.dmAvatar = document.querySelector("[data-dm-avatar]");
+    els.dmBlock.hidden = isGroup;
+    els.groupAdd.hidden = !isGroup;
+    els.groupLeave.hidden = !isGroup;
+    els.dmSub.textContent = "";
+
+    if (isGroup) {
+      const members = await Social.groupMembers(openChat.id);
+      els.dmSub.textContent = `${members.length} medlemmer: ${members.map((m) => m.username).join(", ")}`;
+    }
+
+    await renderConversation();
+    els.dmInput.focus();
+    await markChatRead();
+    renderThreads();
+    Social.refreshUnreadBadge();
+    startPolling();
+  }
+
+  async function markChatRead() {
+    if (!openChat) return;
+    if (openChat.kind === "group") await Social.groupMarkRead(openChat.id);
+    else await Social.markRead(openChat.id);
+  }
+
+  function closeThread() {
+    openChat = null;
+    clearAttachment();
+    els.chatActive.hidden = true;
+    els.chatEmpty.hidden = false;
+    els.panel.classList.remove("is-chat-open");
+    stopPolling();
+    renderThreads();
+  }
+
+  function bubbleHTML(opts) {
+    const card = attachmentCardHTML(opts.attachment);
+    return `
+      <div class="dm-bubble ${opts.mine ? "is-mine" : ""} ${card ? "has-attachment" : ""}">
+        ${opts.senderName ? `<span class="dm-bubble-sender">${esc(opts.senderName)}</span>` : ""}
+        ${card}
+        ${opts.text ? `<span class="dm-bubble-body">${esc(opts.text)}</span>` : ""}
+        <span class="dm-bubble-time">${Social.timeAgo(opts.at)}</span>
+      </div>`;
+  }
+
+  async function renderConversation() {
+    if (!openChat) return;
+    const isGroup = openChat.kind === "group";
+    const messages = isGroup
+      ? await Social.groupConversation(openChat.id)
+      : await Social.conversation(openChat.id);
+
+    if (!messages.length) {
+      els.dmMessages.innerHTML = `<p class="dm-empty">Ingen meldinger ennå. Si hei!</p>`;
+      return;
+    }
+
+    els.dmMessages.innerHTML = messages
+      .map((m) => {
+        const parsed = Social.parseBody(m.body);
+        const mine = m.sender_id === profile.id;
+        return bubbleHTML({
+          mine,
+          // I en gruppe må man se hvem som skrev hva; i en tomannssamtale er
+          // det bare støy.
+          senderName: isGroup && !mine ? m.sender_username : "",
+          attachment: parsed.attachment,
+          text: parsed.text,
+          at: m.created_at,
+        });
+      })
+      .join("");
+    els.dmMessages.scrollTop = els.dmMessages.scrollHeight;
+  }
+
+  // Enkel polling mens en samtale er åpen. Ikke sanntid, men nok til at et
+  // svar dukker opp uten at man må laste siden på nytt – og den stopper når
+  // panelet lukkes, så det ligger ingen løkke og går i bakgrunnen.
+  function startPolling() {
+    stopPolling();
+    pollTimer = window.setInterval(async () => {
+      if (document.hidden || !openChat) return;
+      await renderConversation();
+      await markChatRead();
+    }, 8000);
+  }
+
+  function stopPolling() {
+    if (pollTimer) window.clearInterval(pollTimer);
+    pollTimer = null;
+  }
+
+  els.dmForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const text = els.dmInput.value.trim();
+    // Et vedlegg alene er en gyldig melding – man MÅ ikke skrive noe i tillegg.
+    const attachment = pendingAttachment;
+    const body = Social.buildBody(attachment, text);
+    if (!body || !openChat) return;
+    els.dmInput.value = "";
+    clearAttachment();
+    els.dmError.hidden = true;
+    try {
+      if (openChat.kind === "group") await Social.sendGroupMessage(openChat.id, body);
+      else await Social.send(openChat.id, body);
+      await renderConversation();
+      renderThreads();
+    } catch (err) {
+      els.dmError.textContent = err.message;
+      els.dmError.hidden = false;
+      els.dmInput.value = text;
+      pendingAttachment = attachment;
+      renderPendingAttachment();
+    }
+  });
+
+  document.querySelector("[data-dm-close]").addEventListener("click", closeThread);
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (openPicker) return closePicker();
+    if (!els.groupModal.hidden) closeGroupModal();
+  });
+
+  els.dmBlock.addEventListener("click", async () => {
+    if (!openChat || openChat.kind !== "dm") return;
+    if (!window.confirm("Blokkere denne spilleren? Dere kan ikke sende meldinger til hverandre eller være venner etterpå.")) return;
+    await Social.block(openChat.id);
+    closeThread();
+    refreshAll();
+  });
+
+  els.groupLeave.addEventListener("click", async () => {
+    if (!openChat || openChat.kind !== "group") return;
+    if (!window.confirm(`Forlate «${openChat.name}»? Du ser ikke meldingene i gruppa etterpå.`)) return;
+    await Social.leaveGroup(openChat.id);
+    closeThread();
+  });
+
+  /* ---------------- Gruppechat: opprett og legg til ---------------- */
+
+  // Modalen brukes både til å lage en ny gruppe og til å legge flere venner
+  // inn i en gruppe man allerede er i – forskjellen er om groupTarget er satt.
+  let groupTarget = null;
+
+  function openGroupModal(target) {
+    groupTarget = target || null;
+    els.groupError.hidden = true;
+    els.groupModalTitle.textContent = groupTarget ? "Legg til venner" : "Ny gruppechat";
+    els.groupName.value = "";
+    // Legger man til i en gruppe som finnes, skal navnefeltet være borte.
+    document.querySelector("label[for='group-name']").hidden = !!groupTarget;
+    els.groupName.hidden = !!groupTarget;
+    els.groupSave.textContent = groupTarget ? "Legg til" : "Opprett gruppe";
+    renderGroupPicker([]);
+    els.groupModal.hidden = false;
+    if (!groupTarget) els.groupName.focus();
+  }
+
+  function closeGroupModal() {
+    els.groupModal.hidden = true;
+    groupTarget = null;
+  }
+
+  function renderGroupPicker(exclude) {
+    const list = friends.filter((f) => exclude.indexOf(f.user_id) === -1);
+    if (!list.length) {
+      els.groupPicker.innerHTML = `<div class="leaderboard-empty">Du må ha venner før du kan lage en gruppe.</div>`;
+      return;
+    }
+    els.groupPicker.innerHTML = list
+      .map((f) => `
+        <label class="group-member-option">
+          <input type="checkbox" value="${f.user_id}">
+          ${Auth.avatarHTML(f, 28)}
+          <span>${esc(f.username)}</span>
+        </label>`)
+      .join("");
+  }
+
+  document.querySelector("[data-new-group]").addEventListener("click", () => openGroupModal(null));
+
+  els.groupAdd.addEventListener("click", async () => {
+    if (!openChat || openChat.kind !== "group") return;
+    const members = await Social.groupMembers(openChat.id);
+    openGroupModal(openChat.id);
+    renderGroupPicker(members.map((m) => m.user_id));
+  });
+
+  document.querySelectorAll("[data-group-modal-close], [data-group-modal-backdrop]")
+    .forEach((el) => el.addEventListener("click", closeGroupModal));
+
+  els.groupSave.addEventListener("click", async () => {
+    const picked = [...els.groupPicker.querySelectorAll("input:checked")].map((i) => i.value);
+    els.groupError.hidden = true;
+
+    if (!picked.length) {
+      els.groupError.textContent = "Velg minst én venn.";
+      els.groupError.hidden = false;
+      return;
+    }
+
+    try {
+      if (groupTarget) {
+        await Social.addGroupMembers(groupTarget, picked);
+        const id = groupTarget;
+        const name = openChat ? openChat.name : "";
+        closeGroupModal();
+        await openThread("group", id, name);
+        return;
+      }
+
+      const name = els.groupName.value.trim();
+      if (!name) {
+        els.groupError.textContent = "Gruppa må ha et navn.";
+        els.groupError.hidden = false;
+        return;
+      }
+      const id = await Social.createGroup(name, picked);
+      closeGroupModal();
+      await renderThreads();
+      await openThread("group", id, name);
+    } catch (err) {
+      els.groupError.textContent = err.message;
+      els.groupError.hidden = false;
+    }
+  });
+
+  /* ---------------- Knapper i vennelista ---------------- */
+
+  document.addEventListener("click", async (e) => {
+    const accept = e.target.closest("[data-accept]");
+    if (accept) {
+      accept.disabled = true;
+      try { await Social.respondFriendRequest(accept.dataset.accept, true); }
+      catch (err) { window.alert(err.message); }
+      return refreshAll();
+    }
+
+    const decline = e.target.closest("[data-decline]");
+    if (decline) {
+      decline.disabled = true;
+      try { await Social.respondFriendRequest(decline.dataset.decline, false); }
+      catch (err) { window.alert(err.message); }
+      return refreshAll();
+    }
+
+    const cancel = e.target.closest("[data-cancel-request]");
+    if (cancel) {
+      cancel.disabled = true;
+      await Social.cancelFriendRequest(cancel.dataset.cancelRequest);
+      return refreshAll();
+    }
+
+    const msg = e.target.closest("[data-message-friend]");
+    if (msg) return openThread("dm", msg.dataset.messageFriend, msg.dataset.username);
+
+    const remove = e.target.closest("[data-remove-friend]");
+    if (remove) {
+      if (!window.confirm(`Fjerne ${remove.dataset.username} som venn?`)) return;
+      await Social.removeFriend(remove.dataset.removeFriend);
+      return refreshAll();
+    }
+  });
+
+  /* ---------------- Finn spillere ---------------- */
+
+  let searchTimer = null;
+  els.search.addEventListener("input", () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(runSearch, 200);
+  });
+
+  async function runSearch() {
+    const q = els.search.value.trim();
+    if (!q) {
+      els.results.hidden = true;
+      return;
+    }
+    const players = await Social.findPlayers(q, 8);
+    const friendIds = friends.map((f) => f.user_id);
+    els.results.innerHTML = players.length
+      ? players.map((p) => `
+          <div class="rank-search-result">
+            <a class="rank-search-identity" href="spillerprofil.html?u=${encodeURIComponent(p.username)}">
+              ${Auth.avatarHTML(p, 32)}
+              <span class="rank-search-name">${esc(p.username)}</span>
+            </a>
+            ${friendIds.indexOf(p.id) > -1
+              ? `<span class="section-sub">Venn ✓</span>`
+              : `<button type="button" class="btn-outline btn-small" data-add-friend="${p.id}">Legg til venn</button>`}
+          </div>`).join("")
+      : `<div class="rank-search-empty">Fant ingen som matcher «${esc(q)}».</div>`;
+    els.results.hidden = false;
+
+    els.results.querySelectorAll("[data-add-friend]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        try {
+          const outcome = await Social.addFriend(btn.dataset.addFriend);
+          btn.textContent = outcome === "friends" ? "Venn ✓" : "Forespørsel sendt";
+        } catch (err) {
+          btn.disabled = false;
+          window.alert(err.message);
+          return;
+        }
+        refreshAll();
+      });
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".rank-search-wrap")) els.results.hidden = true;
+    if (openPicker && !e.target.closest(".dm-attach-panel") && !e.target.closest(".dm-attach-bar")) {
+      closePicker();
+    }
+  });
+
+  /* ---------------- Init ---------------- */
+
+  async function refreshAll() {
+    await Promise.all([renderRequests(), renderFriends(), renderThreads()]);
+    const stats = await Social.friendStats(profile.id);
+    els.sub.textContent = `${stats.friends} ${stats.friends === 1 ? "venn" : "venner"}`;
+    Social.refreshUnreadBadge();
+  }
+
+  async function init() {
+    if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
+    profile = await Auth.getCurrentProfile();
+
+    if (!profile) {
+      els.sub.textContent = "Legg til venner og hold kontakten";
+      els.signedOut.hidden = false;
+      return;
+    }
+
+    await renderThreads();
+
+    if (!Social.isAvailable()) {
+      els.unavailable.hidden = false;
+      els.sub.textContent = "";
+      return;
+    }
+
+    els.main.hidden = false;
+    await refreshAll();
+
+    // Åpne en samtale direkte via ?til=<brukernavn> (lenken fra «Send
+    // melding» på en spillerprofil) eller ?gruppe=<id> (fra sprettoppvarselet).
+    const params = new URLSearchParams(window.location.search);
+    const to = params.get("til");
+    const group = params.get("gruppe");
+    if (to) {
+      const other = await Social.profileByUsername(to);
+      if (other) openThread("dm", other.id, other.username);
+    } else if (group) {
+      const g = (await Social.groupThreads()).find((x) => String(x.group_id) === String(group));
+      if (g) openThread("group", g.group_id, g.name);
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

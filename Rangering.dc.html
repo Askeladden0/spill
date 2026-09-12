@@ -7,354 +7,431 @@
 </head>
 <body>
 <x-dc>
-<helmet data-dc-atomics>
+<helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
 <style>
-  html,body{margin:0;padding:0;background:#0d1117;font-family:Poppins,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-  a{color:#2ee87f;text-decoration:none}
-  a:hover{color:#5cf5a0}
-  ::selection{background:#2ee87f;color:#0d1117}
+  html, body { margin:0; padding:0; background:#0d1117; color:#e8edf5; font-family:'Poppins', system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#2ee87f; text-decoration:none; }
+  a:hover { color:#5cf5a0; }
+  ::selection { background:#2ee87f; color:#0d1117; }
+  input { font-family:inherit; }
+  button { font-family:inherit; }
 </style>
 </helmet>
-<div style="min-height:100vh;background:#0d1117;color:#e8edf5;padding-bottom:60px">
+
+<div style="min-height:100vh;background:#0d1117;color:#e8edf5;display:flex;flex-direction:column;padding-bottom:80px">
 
   <header style="display:flex;align-items:center;justify-content:space-between;gap:32px;padding:0 32px;height:72px;background:#131a25;border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;z-index:20">
     <div style="display:flex;align-items:center;gap:36px">
-      <a href="Spillnettside.dc.html" style="display:flex;align-items:center;gap:10px">
-        <div style="width:30px;height:30px;border-radius:9px;background:#2ee87f;display:flex;align-items:center;justify-content:center;color:#0d1117;font-weight:800;font-size:16px">P</div>
-        <span style="font-size:20px;font-weight:800;letter-spacing:-.02em;color:#fff">PIXEL<span style="color:#2ee87f">PLAY</span></span>
+      <a href="index.html" style="display:flex;align-items:center;gap:10px">
+        <span style="width:30px;height:30px;border-radius:9px;background:#0d1117;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"></rect><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"></rect></svg></span>
+        <span style="font-size:20px;font-weight:800;letter-spacing:-.02em;color:#fff">Studi<span style="color:#2ee87f">ll</span>a</span>
       </a>
       <nav style="display:flex;align-items:center;gap:8px">
-        <a href="Spillnettside.dc.html" style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600" style-hover="color:#e8edf5;background:rgba(255,255,255,.05)">
+        <a href="index.html#spill" style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600" style-hover="background:rgba(255,255,255,.05);color:#e8edf5">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
-          Spill
+          Triks
         </a>
-        <a href="Premier.dc.html" style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600" style-hover="color:#e8edf5;background:rgba(255,255,255,.05)">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
-          Premier
+        <a href="guider.html" style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600" style-hover="background:rgba(255,255,255,.05);color:#e8edf5">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5V5.5z"></path><path d="M8 7.5h7"></path><path d="M8 11h5"></path></svg>
+          Guider
         </a>
-        <a href="#rangering" style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;background:rgba(46,232,127,.12);color:#2ee87f;font-size:14px;font-weight:600" style-hover="background:rgba(46,232,127,.2)">
+        <a href="rangering.html" style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;background:rgba(46,232,127,.12);color:#2ee87f;font-size:14px;font-weight:600">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
           Rangering
+        </a>
+        <a href="meldinger.html" style="position:relative;display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;color:#96a3b8;font-size:14px;font-weight:600" style-hover="background:rgba(255,255,255,.05);color:#e8edf5">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 9 9 0 0 1-3.4-.6L3 21l1.9-5.1A8.3 8.3 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"></path></svg>
+          Venner
+          <span style="display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 5px;border-radius:99px;background:#ff5a7a;color:#fff;font-size:10.5px;font-weight:800;line-height:1">3</span>
         </a>
       </nav>
     </div>
     <div style="display:flex;align-items:center;gap:14px">
-      <div style="display:flex;align-items:center;gap:12px;padding:8px 14px 8px 12px;border-radius:12px;background:#0d1117;border:1px solid rgba(255,255,255,.07)">
-        <div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:rgba(46,232,127,.14);color:#2ee87f;font-size:12px;font-weight:800">12</div>
-        <div style="display:flex;flex-direction:column;gap:5px;width:132px">
-          <div style="display:flex;justify-content:space-between;font-size:10.5px;font-weight:600;color:#96a3b8;letter-spacing:.02em">
-            <span>NIVÅ 12</span><span style="color:#e8edf5">640/1000</span>
-          </div>
-          <div style="height:6px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden">
-            <div style="width:64%;height:100%;border-radius:99px;background:linear-gradient(90deg,#2ee87f,#8bf0b4)"></div>
-          </div>
-        </div>
-      </div>
-      <button style="display:flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border-radius:12px;border:1px solid rgba(255,255,255,.07);background:#0d1117;color:#e8edf5;font-family:inherit;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer" style-hover="border-color:rgba(46,232,127,.5)">
-        <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#2a3546,#1a2231);display:flex;align-items:center;justify-content:center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#96a3b8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
-        </div>
-        Logg inn
+      <a href="https://www.tiktok.com/@snorre.saus" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#96a3b8;font-size:13px;font-weight:600;white-space:nowrap">
+        <img src="assets/img/snorre-saus-avatar.jpeg" alt="" width="24" height="24" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.09)">
+        <span>Lagd av Snorre Saus</span>
+      </a>
+      <button type="button" style="display:flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer">
+        {{ meAvatarSmall }}
+        Snorrefan
       </button>
     </div>
   </header>
 
-  <main id="rangering" style="max-width:1240px;margin:0 auto;padding:36px 32px 0;display:flex;flex-direction:column;gap:26px">
+  <main style="max-width:1240px;margin:0 auto;padding:36px 32px 0;display:flex;flex-direction:column;gap:44px;width:100%;flex:1">
 
-    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <h1 style="margin:0;font-size:28px;font-weight:800;letter-spacing:-.03em;color:#fff">Rangering</h1>
-        <p style="margin:0;font-size:14px;color:#96a3b8">{{ subtitle }}</p>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="display:flex;padding:4px;border-radius:12px;background:#131a25;border:1px solid rgba(255,255,255,.07);gap:4px">
-          <button onClick="{{ setMonthly }}" style="padding:9px 18px;border:none;border-radius:9px;background:{{ monthlyBg }};color:{{ monthlyFg }};font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">Denne måneden</button>
-          <button onClick="{{ setAllTime }}" style="padding:9px 18px;border:none;border-radius:9px;background:{{ allTimeBg }};color:{{ allTimeFg }};font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">Tidenes beste</button>
+    <section>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:0 0 20px">
+        <div>
+          <h1 style="margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em;color:#fff">Rangering</h1>
+          <span style="font-size:13px;font-weight:500;color:#7c8aa0">{{ subtitle }}</span>
+        </div>
+        <div style="position:relative;max-width:320px;width:100%">
+          <input type="search" placeholder="Søk etter en spiller …" value="{{ q }}" onChange="{{ onSearch }}" autoComplete="off" style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#e8edf5;font-size:14px;outline:none" style-focus="border-color:#2ee87f">
         </div>
       </div>
-    </div>
 
-    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
-      <sc-for list="{{ scopeChips }}" as="c" hint-placeholder-count="6">
-        <button onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:8px;padding:8px 15px;border-radius:99px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="border-color:rgba(46,232,127,.4)">{{ c.label }}</button>
-      </sc-for>
-    </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px">
+        <sc-for list="{{ menus }}" as="menu" hint-placeholder-count="3">
+          <div style="position:relative">
+            <button type="button" onClick="{{ menu.toggle }}" style="display:inline-flex;align-items:center;gap:10px;padding:9px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:#131a25;color:#e8edf5;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="border-color:rgba(46,232,127,.4)">
+              <span style="font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6b7b93">{{ menu.eyebrow }}</span>
+              <span style="display:inline-flex;align-items:center;gap:7px">{{ menu.valueNode }}</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c8aa0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <sc-if value="{{ menu.open }}">
+              <div style="position:absolute;z-index:30;top:calc(100% + 8px);left:0;min-width:230px;padding:6px;border-radius:14px;border:1px solid rgba(255,255,255,.09);background:#131a25;box-shadow:0 20px 48px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:2px">
+                <sc-for list="{{ menu.options }}" as="opt" hint-placeholder-count="3">
+                  <button type="button" onClick="{{ opt.select }}" disabled="{{ opt.disabled }}" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:none;border-radius:10px;background:{{ opt.bg }};color:{{ opt.color }};font-size:13.5px;font-weight:{{ opt.weight }};text-align:left;cursor:{{ opt.cursor }}" style-hover="background:rgba(255,255,255,.05)">
+                    {{ opt.iconNode }}
+                    <span style="flex:1;min-width:0">{{ opt.label }}</span>
+                    {{ opt.tailNode }}
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
 
-    <section style="display:grid;grid-template-columns:1.35fr 1fr;gap:20px">
-      <div style="border-radius:18px;border:1px solid rgba(46,232,127,.22);background:linear-gradient(140deg,#172130,#131a25);padding:22px 26px;display:flex;align-items:center;gap:24px">
+      <div style="border-radius:20px;border:1px solid rgba(255,255,255,.06);background:#131a25;overflow:hidden">
+        <div style="display:grid;grid-template-columns:74px minmax(0,1fr) 110px 120px;gap:16px;align-items:center;padding:14px 24px;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px;font-weight:700;letter-spacing:.09em;color:#7c8aa0">
+          <span>PLASS</span><span>SPILLER</span><span style="text-align:right">KAMPER</span><span style="text-align:right">POENG</span>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ rows }}" as="row" hint-placeholder-count="8">
+            <div onMouseEnter="{{ row.enter }}" onMouseLeave="{{ row.leave }}" style="position:relative;display:grid;grid-template-columns:74px minmax(0,1fr) 110px 120px;gap:16px;align-items:center;padding:11px 24px;border-bottom:1px solid rgba(255,255,255,.06);background:{{ row.bg }}">
+              <span style="display:flex;align-items:center">{{ row.rankNode }}</span>
+              <a href="spillerprofil.html" style="display:flex;align-items:center;gap:11px;min-width:0;color:inherit">
+                {{ row.avatarNode }}
+                <span style="font-size:14px;font-weight:{{ row.nameWeight }};color:{{ row.nameColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.username }}</span>
+                {{ row.tagNode }}
+              </a>
+              <span style="text-align:right;font-size:13.5px;font-weight:500;color:#7c8aa0;font-variant-numeric:tabular-nums">{{ row.matches }}</span>
+              <span style="text-align:right;font-size:14.5px;font-weight:700;color:{{ row.scoreColor }};font-variant-numeric:tabular-nums">{{ row.score }}</span>
+              {{ row.hoverActionNode }}
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px">
+          <span style="font-size:13px;font-weight:500;color:#7c8aa0">{{ shownLabel }}</span>
+          <button type="button" onClick="{{ toggleExpanded }}" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8edf5;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="border-color:rgba(46,232,127,.5);color:#2ee87f">{{ expandLabel }}</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div style="display:flex;align-items:baseline;gap:12px;margin:0 0 18px">
+        <h2 style="margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff">Deg</h2>
+        <span style="font-size:13px;font-weight:500;color:#7c8aa0">{{ meScopeLabel }}</span>
+      </div>
+
+      <div style="border-radius:20px;border:1px solid rgba(46,232,127,.22);background:linear-gradient(140deg,#172130,#131a25);padding:22px 26px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:0 0 20px">
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:98px;height:98px;flex:none;border-radius:22px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.3)">
           <span style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#2ee87f">PLASS</span>
-          <span style="font-size:30px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1.1">{{ myRank }}</span>
-          <span style="font-size:10.5px;font-weight:600;color:#7c8aa0">av {{ totalPlayers }}</span>
+          <span style="font-size:30px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1.1">{{ meRank }}</span>
+          <span style="font-size:10.5px;font-weight:600;color:#7c8aa0">av {{ meTotal }}</span>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
           <div style="display:flex;align-items:center;gap:11px">
-            <div style="width:34px;height:34px;border-radius:11px;background:#2ee87f;color:#0d1117;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">NB</div>
+            {{ meAvatar }}
             <div style="display:flex;flex-direction:column">
-              <span style="font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff">Deg — nikbjor</span>
-              <span style="font-size:12.5px;font-weight:500;color:#7c8aa0">{{ myScopeLabel }}</span>
+              <span style="font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff">Deg — Snorrefan</span>
+              <span style="font-size:12.5px;font-weight:500;color:#7c8aa0">{{ meScopeLabel }}</span>
             </div>
           </div>
           <div style="display:flex;align-items:flex-end;gap:22px">
             <div style="display:flex;flex-direction:column">
-              <span style="font-size:26px;font-weight:800;letter-spacing:-.03em;color:#2ee87f;line-height:1.1">{{ myScore }}</span>
+              <span style="font-size:26px;font-weight:800;letter-spacing:-.03em;color:#2ee87f;line-height:1.1">{{ meScore }}</span>
               <span style="font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#7c8aa0">POENG</span>
             </div>
             <div style="display:flex;flex-direction:column">
-              <span style="font-size:16px;font-weight:700;color:{{ myDeltaColor }};line-height:1.5">{{ myDelta }}</span>
-              <span style="font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#7c8aa0">SIDEN I GÅR</span>
+              <span style="font-size:26px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1.1">{{ meMatches }}</span>
+              <span style="font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#7c8aa0">KAMPER</span>
             </div>
           </div>
-          <span style="font-size:12.5px;font-weight:500;color:#96a3b8">{{ myGapText }}</span>
+          <span style="font-size:12.5px;font-weight:500;color:#96a3b8">{{ meGap }}</span>
         </div>
       </div>
 
-      <div style="border-radius:18px;border:1px solid rgba(255,255,255,.07);background:#131a25;padding:18px 22px 20px;display:flex;flex-direction:column;gap:14px">
-        <span style="font-size:12px;font-weight:700;letter-spacing:.09em;color:#7c8aa0">TOPP 3 · {{ scopeLabelUpper }}</span>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <sc-for list="{{ podium }}" as="p" hint-placeholder-count="3">
-            <div style="display:flex;align-items:center;gap:12px">
-              <div style="width:26px;height:26px;flex:none;border-radius:8px;background:{{ p.medalBg }};color:#0d1117;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">{{ p.rank }}</div>
-              <div style="width:30px;height:30px;flex:none;border-radius:10px;background:rgba(255,255,255,.06);color:#96a3b8;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800">{{ p.initials }}</div>
-              <span style="flex:1;min-width:0;font-size:14px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</span>
-              <span style="font-size:14px;font-weight:700;color:#e8edf5;font-variant-numeric:tabular-nums">{{ p.score }}</span>
-            </div>
-          </sc-for>
-        </div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin:0 0 14px">
+        <h3 style="margin:0;font-size:15px;font-weight:800;letter-spacing:-.01em;color:#fff">Din score per triks</h3>
+        <span style="font-size:13px;font-weight:500;color:#7c8aa0">Beste runde i hvert triks</span>
       </div>
-    </section>
-
-    <section style="border-radius:18px;border:1px solid rgba(255,255,255,.07);background:#131a25;overflow:hidden">
-      <div style="display:grid;grid-template-columns:64px 1fr 96px 120px 120px;gap:16px;padding:14px 24px;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px;font-weight:700;letter-spacing:.09em;color:#7c8aa0">
-        <span>PLASS</span><span>SPILLER</span><span style="text-align:right">NIVÅ</span><span style="text-align:right">KAMPER</span><span style="text-align:right">POENG</span>
-      </div>
-      <div style="display:flex;flex-direction:column">
-        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="14">
-          <div style="display:grid;grid-template-columns:64px 1fr 96px 120px 120px;gap:16px;align-items:center;padding:11px 24px;border-bottom:1px solid rgba(255,255,255,.04);background:{{ r.rowBg }}" style-hover="background:rgba(255,255,255,.035)">
-            <div style="display:flex;align-items:center;gap:7px">
-              <span style="font-size:14px;font-weight:800;color:{{ r.rankColor }};font-variant-numeric:tabular-nums">{{ r.rank }}</span>
-              <span style="font-size:10.5px;font-weight:700;color:{{ r.moveColor }}">{{ r.move }}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:11px;min-width:0">
-              <div style="width:30px;height:30px;flex:none;border-radius:10px;background:{{ r.avatarBg }};color:{{ r.avatarFg }};display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800">{{ r.initials }}</div>
-              <span style="font-size:14px;font-weight:{{ r.nameWeight }};color:{{ r.nameColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</span>
-              <span style="padding:3px 9px;border-radius:99px;background:rgba(46,232,127,.12);color:#2ee87f;font-size:10.5px;font-weight:700;display:{{ r.youBadge }}">DEG</span>
-            </div>
-            <span style="text-align:right;font-size:13.5px;font-weight:600;color:#96a3b8;font-variant-numeric:tabular-nums">{{ r.level }}</span>
-            <span style="text-align:right;font-size:13.5px;font-weight:500;color:#7c8aa0;font-variant-numeric:tabular-nums">{{ r.matches }}</span>
-            <span style="text-align:right;font-size:14.5px;font-weight:700;color:{{ r.scoreColor }};font-variant-numeric:tabular-nums">{{ r.score }}</span>
-          </div>
-        </sc-for>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px">
-        <span style="font-size:13px;font-weight:500;color:#7c8aa0">{{ shownLabel }}</span>
-        <button onClick="{{ toggleAll }}" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#e8edf5;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="border-color:rgba(46,232,127,.5);color:#2ee87f">{{ toggleLabel }}</button>
-      </div>
-    </section>
-
-    <section style="display:flex;flex-direction:column;gap:14px">
-      <h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;color:#fff">Din score per spill</h2>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
         <sc-for list="{{ myGames }}" as="g" hint-placeholder-count="6">
-          <button onClick="{{ g.onClick }}" style="text-align:left;display:flex;flex-direction:column;gap:12px;padding:16px 18px;border-radius:14px;background:#131a25;border:1px solid {{ g.border }};cursor:pointer;font-family:inherit" style-hover="border-color:rgba(46,232,127,.35)">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <a href="player.html" style="text-align:left;display:flex;flex-direction:column;gap:12px;padding:16px 18px;border-radius:14px;background:#131a25;border:1px solid rgba(255,255,255,.06);color:inherit" style-hover="border-color:rgba(46,232,127,.35)">
+            <span style="display:flex;align-items:center;gap:8px">
+              <img src="{{ g.icon }}" alt="" width="22" height="22" style="width:22px;height:22px;border-radius:7px;background:#0d1117;object-fit:cover;flex-shrink:0">
               <span style="font-size:14.5px;font-weight:700;color:#fff">{{ g.name }}</span>
-              <span style="font-size:11.5px;font-weight:700;color:#7c8aa0">{{ g.genre }}</span>
-            </div>
-            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
-              <div style="display:flex;flex-direction:column">
+            </span>
+            <span style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+              <span style="display:flex;flex-direction:column">
                 <span style="font-size:20px;font-weight:800;letter-spacing:-.02em;color:#2ee87f;line-height:1.2">{{ g.score }}</span>
                 <span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#7c8aa0">POENG</span>
-              </div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end">
-                <span style="font-size:16px;font-weight:800;color:#e8edf5;line-height:1.2">{{ g.rank }}</span>
+              </span>
+              <span style="display:flex;flex-direction:column;text-align:right">
+                <span style="font-size:16px;font-weight:800;color:#fff;line-height:1.2">{{ g.rank }}</span>
                 <span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#7c8aa0">PLASSERING</span>
-              </div>
-            </div>
-            <div style="height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden">
-              <div style="width:{{ g.pct }};height:100%;border-radius:99px;background:linear-gradient(90deg,#2ee87f,#8bf0b4)"></div>
-            </div>
-          </button>
+              </span>
+            </span>
+          </a>
         </sc-for>
       </div>
     </section>
   </main>
 
-  <footer style="max-width:1240px;margin:64px auto 0;padding:24px 32px 0;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.07)">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="width:24px;height:24px;border-radius:7px;background:#2ee87f;display:flex;align-items:center;justify-content:center;color:#0d1117;font-weight:800;font-size:13px">P</div>
+  <footer style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;max-width:1240px;width:100%;margin:56px auto 0;padding:24px 32px 0;border-top:1px solid rgba(255,255,255,.06)">
+    <div style="display:flex;align-items:center;gap:9px">
+      <span style="width:22px;height:22px;border-radius:7px;background:#0d1117;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"></rect><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"></rect></svg></span>
       <span style="font-size:13px;font-weight:500;color:#7c8aa0">© 2026 Studilla</span>
     </div>
-    <nav style="display:flex;align-items:center;gap:28px">
-      <a href="#kontakt" style="font-size:13.5px;font-weight:600;color:#96a3b8" style-hover="color:#2ee87f">Kontakt</a>
-      <a href="#personvern" style="font-size:13.5px;font-weight:600;color:#96a3b8" style-hover="color:#2ee87f">Personvern</a>
-      <a href="#vilkar" style="font-size:13.5px;font-weight:600;color:#96a3b8" style-hover="color:#2ee87f">Vilkår</a>
+    <nav style="display:flex;align-items:center;gap:20px;font-size:13px;font-weight:600">
+      <a href="kontakt.html" style="color:#7c8aa0">Kontakt</a>
+      <a href="vilkar.html#personvern" style="color:#7c8aa0">Personvern</a>
+      <a href="vilkar.html" style="color:#7c8aa0">Vilkår</a>
+      <a href="https://www.tiktok.com/@snorre.saus" target="_blank" rel="noopener noreferrer" style="color:#7c8aa0">TikTok</a>
     </nav>
   </footer>
 </div>
-
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:1600}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultPeriod&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;all&quot;,&quot;month&quot;,&quot;week&quot;,&quot;today&quot;],&quot;default&quot;:&quot;all&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rangering&quot;}}">
+const HOLE = "#0d1117";
+const FIGURES = {
+  robot: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["rect",{x:3.4,y:3,width:17.2,height:14.6,rx:5}],["rect",{x:11.3,y:0.2,width:1.4,height:3.2,rx:0.7}],["circle",{cx:12,cy:0.9,r:1.3}],["rect",{x:7,y:8,width:3.6,height:3.6,rx:1.2,hole:true}],["rect",{x:13.4,y:8,width:3.6,height:3.6,rx:1.2,hole:true}],["rect",{x:8.8,y:13.6,width:6.4,height:1.7,rx:0.85,hole:true}]],
+  katt: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["polygon",{points:"4.4,7.6 6.2,0.6 11.4,5.4"}],["polygon",{points:"19.6,7.6 17.8,0.6 12.6,5.4"}],["circle",{cx:12,cy:10.2,r:8}],["circle",{cx:8.9,cy:9.4,r:1.7,hole:true}],["circle",{cx:15.1,cy:9.4,r:1.7,hole:true}],["polygon",{points:"10.8,12.6 13.2,12.6 12,14.4",hole:true}],["rect",{x:9.4,y:15,width:5.2,height:1.3,rx:0.65,hole:true}]],
+  spoke: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["circle",{cx:12,cy:10.2,r:8}],["ellipse",{cx:8.9,cy:9.2,rx:1.8,ry:2.4,hole:true}],["ellipse",{cx:15.1,cy:9.2,rx:1.8,ry:2.4,hole:true}],["ellipse",{cx:12,cy:14.4,rx:2.4,ry:1.9,hole:true}]],
+  alien: [["rect",{x:4,y:19,width:16,height:7.5,rx:3.5}],["ellipse",{cx:12,cy:10.4,rx:7.8,ry:8.6}],["rect",{x:11.4,y:0.2,width:1.2,height:2.6,rx:0.6}],["ellipse",{cx:8.4,cy:10.2,rx:2.1,ry:3.4,hole:true}],["ellipse",{cx:15.6,cy:10.2,rx:2.1,ry:3.4,hole:true}],["rect",{x:10.6,y:15.6,width:2.8,height:1.2,rx:0.6,hole:true}]],
+  fugl: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["circle",{cx:12,cy:10.2,r:8}],["circle",{cx:9,cy:8.6,r:2.6,hole:true}],["circle",{cx:15.4,cy:9.2,r:1.3,hole:true}],["polygon",{points:"11.6,11.6 16.4,13.4 11.6,15.4",hole:true}]],
+  bjorn: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["circle",{cx:5.4,cy:4.6,r:3.4}],["circle",{cx:18.6,cy:4.6,r:3.4}],["circle",{cx:12,cy:10.6,r:8}],["circle",{cx:9,cy:9.4,r:1.5,hole:true}],["circle",{cx:15,cy:9.4,r:1.5,hole:true}],["ellipse",{cx:12,cy:14,rx:3.2,ry:2.4,hole:true}],["ellipse",{cx:12,cy:13.2,rx:1.1,ry:0.8}]],
+  krystall: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["circle",{cx:12,cy:10.2,r:8}],["circle",{cx:8.8,cy:8.8,r:1.9,hole:true}],["rect",{x:12.8,y:8.4,width:4,height:1.6,rx:0.8,hole:true}],["rect",{x:8.4,y:12.6,width:7,height:1.9,rx:0.95,hole:true}],["rect",{x:10.6,y:13.6,width:2.8,height:4,rx:1.4,hole:true}]],
+  blekk: [["rect",{x:2,y:18.4,width:20,height:8,rx:4}],["polygon",{points:"5.6,4 8.8,5.4 6.6,1.4"}],["polygon",{points:"18.4,4 15.2,5.4 17.4,1.4"}],["circle",{cx:12,cy:10.8,r:8}],["circle",{cx:8.3,cy:9.4,r:1.8,hole:true}],["circle",{cx:12,cy:7.4,r:1.4,hole:true}],["circle",{cx:15.7,cy:9.4,r:1.8,hole:true}],["rect",{x:8.2,y:13,width:7.6,height:2.4,rx:1.2,hole:true}],["rect",{x:10,y:13,width:1.3,height:1.1}],["rect",{x:12.7,y:13,width:1.3,height:1.1}]],
+};
+
+function figureSVG(key) {
+  const shapes = (FIGURES[key] || FIGURES.robot).map(([tag, a]) => {
+    const attrs = Object.keys(a).filter((k) => k !== "hole").map((k) => `${k}="${a[k]}"`).join(" ");
+    return `<${tag} ${attrs}${a.hole ? ` fill="${HOLE}"` : ""}></${tag}>`;
+  }).join("");
+  return `<svg width="100%" height="100%" viewBox="1.5 1 21 21" fill="currentColor" style="display:block">${shapes}</svg>`;
+}
+
+const GAMES = [
+  { id: "fruktfusjon", name: "Fruktfusjon", icon: "assets/img/icons/fruktfusjon.svg" },
+  { id: "2048", name: "2048", icon: "assets/img/icons/2048.svg" },
+  { id: "tetris", name: "Tetris", icon: "assets/img/icons/tetris.svg" },
+  { id: "block-blast", name: "Block Blast", icon: "assets/img/icons/block-blast.svg" },
+  { id: "snake", name: "Snake", icon: "assets/img/icons/snake.svg" },
+  { id: "bubble-shooter", name: "Bubble Shooter", icon: "assets/img/icons/bubble-shooter.svg" },
+];
+
+const PERIODS = [
+  { id: "all", label: "Alle tider" },
+  { id: "month", label: "Denne måneden" },
+  { id: "week", label: "Denne uka" },
+  { id: "today", label: "I dag" },
+];
+
+const PLAYERS = [
+  { id: "p1", username: "Emiliebg", xp: 128400, matches: 412, color: "#f472b6", fig: "katt", friend: true },
+  { id: "p2", username: "sondrek", xp: 119200, matches: 388, color: "#38bdf8", fig: "robot" },
+  { id: "p3", username: "MatteMia", xp: 104800, matches: 351, color: "#ffd166", fig: "fugl", friend: true },
+  { id: "p4", username: "kasper.t", xp: 96100, matches: 402, color: "#a78bfa", fig: "alien" },
+  { id: "me", username: "Snorrefan", xp: 89500, matches: 274, color: "#2ee87f", fig: "bjorn", me: true },
+  { id: "p5", username: "noraaab", xp: 84300, matches: 240, color: "#fb923c", fig: "blekk", friend: true },
+  { id: "p6", username: "Vegard_09", xp: 78800, matches: 299, color: "#ff9385", fig: "spoke" },
+  { id: "p7", username: "linneaks", xp: 71200, matches: 188, color: "#e8edf5", fig: "krystall" },
+  { id: "p8", username: "trickmaster", xp: 66400, matches: 322, color: "#38bdf8", fig: "blekk" },
+  { id: "p9", username: "ida.marie", xp: 59900, matches: 176, color: "#a78bfa", fig: "katt", friend: true },
+  { id: "p10", username: "Oskar2011", xp: 54100, matches: 205, color: "#2ee87f", fig: "robot" },
+  { id: "p11", username: "hanna.b", xp: 48700, matches: 149, color: "#ffd166", fig: "fugl" },
+  { id: "p12", username: "jonasrs", xp: 41200, matches: 167, color: "#f472b6", fig: "alien" },
+  { id: "p13", username: "amaliee", xp: 36800, matches: 121, color: "#fb923c", fig: "spoke" },
+];
+
+const MEDALS = ["#f5c451", "#c9d2de", "#d08a52"];
+
+function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 997; return h; }
+const fmt = (n) => Math.round(n || 0).toLocaleString("no-NO");
+
 class Component extends DCLogic {
-  state = { period: "month", scope: "total", expanded: false };
+  state = {
+    game: "total",
+    period: this.props.defaultPeriod || "all",
+    crowd: "alle",
+    open: null,
+    hover: null,
+    q: "",
+    expanded: false,
+    added: [],
+  };
 
-  games = [
-    { name: "Skyfall Tactics", genre: "Strategi" },
-    { name: "Neon Drift", genre: "Racing" },
-    { name: "Dypets Vokter", genre: "Eventyr" },
-    { name: "Frostmark", genre: "RPG" },
-    { name: "Rift Runners", genre: "Action" },
-    { name: "Bricks & Bolts", genre: "Puslespill" }
-  ];
+  componentDidMount() {
+    this._close = (e) => { if (!e.target.closest("[data-menu]")) this.setState({ open: null }); };
+    document.addEventListener("click", this._close, true);
+  }
+  componentWillUnmount() { document.removeEventListener("click", this._close, true); }
 
-  names = ["Mari Johansen","Sondre Aas","Amina Hassan","Trym Kvam","Ida Berg","Oskar Lie","Nora Solheim","Jonas Ruud","Selma Dahl","Henrik Vik","Live Moen","Kasper Ho","Thea Nygård","Emil Strand","Vilde Rønning","Adrian Sæter","Frida Ellingsen","Markus Tveit","Hedda Lund","Jakob Fjeld","Iben Storli","Noah Kristiansen","Sara Bakken","Filip Owe","Malin Riise","Elias Haug","Tuva Sandvik","Isak Bråten","Julie Nordby","Leon Myhre","Ingrid Holt","Aksel Grønn","Emma Lindgren","Sindre Foss","Alma Wold","Kian Reite","Maja Ås","Theo Halvorsen","Sofie Rud","Mathias Enger","Linnea Borg","Kristian Sund","Oda Fjellheim","Benjamin Rye","Ellinor Haga","Simen Dale","Ronja Krogh","Andreas Sivertsen","Nadia Amin","Herman Bråthen","Signe Torp","Even Nilsen","Aurora Skei","Lucas Hovden","Mia Sæbø","Daniel Løken","Karoline Rist","Sander Bye","Emilie Skog","Vegard Hauge","Alva Nesheim","Martin Kjos","Hanna Vold","Jesper Ødegård","Line Fredheim","Kaja Nordvik","Gustav Rein","Amalie Stene","Petter Holm","Solveig Aune","Nikolai Rustad","Celine Bugge","Erik Fossum","Miriam Dyrnes","Håkon Berge","Ada Lyng","Tobias Ekre","Runa Hylland","Kim Aasen","Tiril Skaug","Jørgen Rise","Elise Kolstad","Anton Vaage","Silje Marken","Kevin Torvik","Live Skjelbred","Fredrik Aakre"];
-
-  hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
-
-  board() {
-    const { period, scope } = this.state;
-    const salt = period + "|" + scope;
-    const base = scope === "total" ? 48000 : 12000;
-    const list = this.names.map((n, i) => {
-      const h = this.hash(n + salt);
-      const jitter = (h % 1000) / 1000;
-      const score = Math.round((base * (1 - i / 130) * (period === "month" ? 0.22 : 1) * (0.86 + jitter * 0.3)) / 10) * 10;
-      return {
-        name: n,
-        score,
-        level: 3 + (h % 26),
-        matches: 40 + (h % 900),
-        move: (h % 7) - 3
-      };
+  avatar(p, size, ring) {
+    const pad = Math.max(2, Math.round(size * 0.14));
+    return React.createElement("span", {
+      style: {
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        width: size + "px", height: size + "px", borderRadius: Math.round(size * 0.3) + "px",
+        background: p.color, color: HOLE, padding: pad + "px", flexShrink: 0, lineHeight: 1,
+        boxShadow: ring ? "0 0 0 2px #131a25, 0 0 0 3.5px #2ee87f" : "none",
+      },
+      dangerouslySetInnerHTML: { __html: figureSVG(p.fig) },
     });
-    const meBase = scope === "total" ? 26400 : 5900;
-    const meH = this.hash("nikbjor" + salt);
-    list.push({
-      name: "nikbjor",
-      score: Math.round((meBase * (period === "month" ? 0.24 : 1) * (0.9 + (meH % 100) / 500)) / 10) * 10,
-      level: 12,
-      matches: period === "month" ? 61 : 734,
-      move: 2,
-      me: true
-    });
-    // fill up to 220 fictional players below
-    for (let i = 0; i < 130; i++) {
-      const n = "spiller_" + (1000 + i * 7);
-      const h = this.hash(n + salt);
-      list.push({
-        name: n,
-        score: Math.round((base * 0.5 * (1 - i / 300) * (period === "month" ? 0.22 : 1) * (0.6 + (h % 400) / 1000)) / 10) * 10,
-        level: 2 + (h % 18),
-        matches: 12 + (h % 400),
-        move: (h % 7) - 3
-      });
-    }
-    list.sort((a, b) => b.score - a.score);
-    return list.map((p, i) => ({ ...p, rank: i + 1 }));
   }
 
-  fmt(n) { return n.toLocaleString("nb-NO").replace(/\u00A0/g, " "); }
-  initials(n) {
-    const parts = n.split(" ");
-    return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : n.slice(0, 2).toUpperCase();
+  isFriend(p) { return !!p.friend || this.state.added.indexOf(p.id) > -1; }
+
+  scoreFor(p) {
+    const { game, period } = this.state;
+    let s = p.xp, m = p.matches;
+    if (game !== "total") {
+      const f = 0.09 + (hash(p.id + game) % 33) / 100;
+      s = Math.round(s * f); m = Math.round(m * f * 1.4) + 1;
+    }
+    const pf = { all: 1, month: 0.34, week: 0.14, today: 0.04 }[period];
+    return { score: Math.round(s * pf), matches: Math.max(1, Math.round(m * pf)) };
+  }
+
+  board() {
+    const list = PLAYERS.map((p) => Object.assign({}, p, this.scoreFor(p)))
+      .sort((a, b) => b.score - a.score)
+      .map((p, i) => Object.assign(p, { rank: i + 1 }));
+    return list;
+  }
+
+  gameLabel() {
+    if (this.state.game === "total") return "Alle triks samlet";
+    const g = GAMES.find((x) => x.id === this.state.game);
+    return g ? g.name : "Alle triks samlet";
+  }
+
+  buildMenus() {
+    const set = (patch) => this.setState(Object.assign({ open: null }, patch));
+    const opt = (label, active, onSelect, iconNode, disabled, tailNode) => ({
+      label, iconNode: iconNode || null, tailNode: tailNode || null, disabled: !!disabled,
+      bg: active ? "rgba(46,232,127,.12)" : "transparent",
+      color: disabled ? "#6b7b93" : active ? "#2ee87f" : "#e8edf5",
+      weight: active ? 700 : 500,
+      cursor: disabled ? "not-allowed" : "pointer",
+      select: disabled ? (e) => e.preventDefault() : onSelect,
+    });
+    const icon = (src) => React.createElement("img", { src, width: 18, height: 18, alt: "", style: { width: "18px", height: "18px", borderRadius: "6px", background: "#0d1117", objectFit: "cover", flexShrink: 0 } });
+    const soon = React.createElement("span", { style: { padding: "3px 8px", borderRadius: "99px", background: "rgba(255,179,71,.13)", border: "1px solid rgba(255,179,71,.42)", color: "#ffb347", fontSize: "10px", fontWeight: 800, letterSpacing: ".04em" } }, "KOMMER");
+    const check = React.createElement("svg", { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "#2ee87f", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("polyline", { points: "20 6 9 17 4 12" }));
+
+    const g = this.state.game;
+    const gameOpts = [opt("Alle triks samlet", g === "total", () => set({ game: "total" }), null, false, g === "total" ? check : null)]
+      .concat(GAMES.map((x) => opt(x.name, g === x.id, () => set({ game: x.id }), icon(x.icon), false, g === x.id ? check : null)));
+
+    const periodOpts = PERIODS.map((x) => opt(x.label, this.state.period === x.id, () => set({ period: x.id }), null, false, this.state.period === x.id ? check : null));
+
+    const crowdOpts = [
+      opt("Alle spillere", this.state.crowd === "alle", () => set({ crowd: "alle" }), null, false, this.state.crowd === "alle" ? check : null),
+      opt("Skolen min", false, null, null, true, soon),
+    ];
+
+    const value = (text, iconNode) => React.createElement(React.Fragment, null, iconNode || null, React.createElement("span", null, text));
+    const gi = g === "total" ? null : icon((GAMES.find((x) => x.id === g) || {}).icon);
+    const periodLabel = (PERIODS.find((x) => x.id === this.state.period) || PERIODS[0]).label;
+
+    return [
+      { key: "game", eyebrow: "Triks", valueNode: value(this.gameLabel(), gi), options: gameOpts, open: this.state.open === "game", toggle: () => this.setState({ open: this.state.open === "game" ? null : "game" }) },
+      { key: "period", eyebrow: "Periode", valueNode: value(periodLabel), options: periodOpts, open: this.state.open === "period", toggle: () => this.setState({ open: this.state.open === "period" ? null : "period" }) },
+      { key: "crowd", eyebrow: "Hvem", valueNode: value("Alle spillere"), options: crowdOpts, open: this.state.open === "crowd", toggle: () => this.setState({ open: this.state.open === "crowd" ? null : "crowd" }) },
+    ];
+  }
+
+  rowNodes(p) {
+    const friend = this.isFriend(p);
+    const top = p.rank <= 3;
+    const rankNode = top
+      ? React.createElement("span", { style: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: "50%", background: MEDALS[p.rank - 1], color: "#0d1117", fontSize: "13px", fontWeight: 800, boxShadow: "0 0 0 3px " + MEDALS[p.rank - 1] + "22" } }, p.rank)
+      : React.createElement("span", { style: { display: "inline-flex", justifyContent: "center", width: 30, fontSize: "14px", fontWeight: 800, color: "#7c8aa0", fontVariantNumeric: "tabular-nums" } }, p.rank);
+
+    let tagNode = null;
+    if (p.me) tagNode = React.createElement("span", { style: { padding: "3px 9px", borderRadius: "99px", background: "rgba(46,232,127,.12)", color: "#2ee87f", fontSize: "10.5px", fontWeight: 700, flexShrink: 0 } }, "DEG");
+    else if (friend) tagNode = React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 9px", borderRadius: "99px", background: "rgba(56,189,248,.12)", border: "1px solid rgba(56,189,248,.35)", color: "#7cd4fd", fontSize: "10.5px", fontWeight: 700, flexShrink: 0 } },
+      React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.6, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("polyline", { points: "20 6 9 17 4 12" })), "VENN");
+
+    let hoverActionNode = null;
+    if (!p.me && !friend && this.state.hover === p.id) {
+      hoverActionNode = React.createElement("button", {
+        type: "button",
+        onClick: (e) => { e.preventDefault(); this.setState({ added: this.state.added.concat([p.id]) }); },
+        style: { position: "absolute", right: "24px", top: "50%", transform: "translateY(-50%)", display: "inline-flex", alignItems: "center", gap: "7px", padding: "7px 13px", borderRadius: "99px", border: "1px solid rgba(46,232,127,.45)", background: "rgba(46,232,127,.14)", color: "#2ee87f", fontSize: "12.5px", fontWeight: 700, cursor: "pointer", backdropFilter: "blur(4px)" },
+      }, React.createElement("svg", { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.6, strokeLinecap: "round" }, React.createElement("line", { x1: 12, y1: 5, x2: 12, y2: 19 }), React.createElement("line", { x1: 5, y1: 12, x2: 19, y2: 12 })), "Legg til venn");
+    }
+
+    return { rankNode, tagNode, hoverActionNode, friend };
   }
 
   renderVals() {
-    const { period, scope, expanded } = this.state;
-    const all = this.board();
-    const me = all.find(p => p.me);
-    const top = all.slice(0, 100);
-    const visible = expanded ? top : top.slice(0, 20);
-    const meInVisible = visible.some(p => p.me);
-    const shown = meInVisible ? visible : visible.concat([me]);
+    const full = this.board();
+    const q = this.state.q.trim().toLowerCase();
+    const filtered = q ? full.filter((p) => p.username.toLowerCase().indexOf(q) > -1) : full;
+    const limit = this.state.expanded ? filtered.length : 10;
+    const visible = filtered.slice(0, limit);
 
-    const scopeLabel = scope === "total" ? "Alle spill samlet" : this.games.find(g => g.name === scope).name;
-    const periodLabel = period === "month" ? "August 2026" : "Tidenes beste";
-
-    const ahead = all[Math.max(0, me.rank - 2)];
-    const gap = ahead && !ahead.me ? ahead.score - me.score : 0;
-
-    const rows = shown.map(p => ({
-      rank: p.rank,
-      name: p.name,
-      initials: this.initials(p.name),
-      level: p.level,
-      matches: this.fmt(p.matches),
-      score: this.fmt(p.score),
-      move: p.move === 0 ? "–" : (p.move > 0 ? "▲" + p.move : "▼" + Math.abs(p.move)),
-      moveColor: p.move === 0 ? "#4d5a6e" : (p.move > 0 ? "#2ee87f" : "#e8607a"),
-      rankColor: p.rank <= 3 ? "#2ee87f" : "#e8edf5",
-      rowBg: p.me ? "rgba(46,232,127,.09)" : "transparent",
-      nameColor: p.me ? "#2ee87f" : "#e8edf5",
-      nameWeight: p.me ? 800 : 600,
-      scoreColor: p.me ? "#2ee87f" : "#fff",
-      avatarBg: p.me ? "#2ee87f" : "rgba(255,255,255,.06)",
-      avatarFg: p.me ? "#0d1117" : "#96a3b8",
-      youBadge: p.me ? "inline-block" : "none"
-    }));
-
-    const podium = all.slice(0, 3).map((p, i) => ({
-      rank: p.rank,
-      name: p.name,
-      initials: this.initials(p.name),
-      score: this.fmt(p.score),
-      medalBg: ["#f5c451", "#c9d2de", "#d08a52"][i]
-    }));
-
-    const myGames = this.games.map(g => {
-      const h = this.hash(g.name + "nikbjor" + period);
-      const sc = Math.round(((period === "month" ? 1400 : 6200) * (0.4 + (h % 100) / 100)) / 10) * 10;
-      const rk = 4 + (h % 260);
+    const rows = visible.map((p) => {
+      const n = this.rowNodes(p);
       return {
-        name: g.name,
-        genre: g.genre,
-        score: this.fmt(sc),
-        rank: "#" + rk,
-        pct: Math.max(6, Math.round(100 - rk / 3.2)) + "%",
-        border: scope === g.name ? "rgba(46,232,127,.45)" : "rgba(255,255,255,.06)",
-        onClick: () => this.setState({ scope: g.name, expanded: false })
+        username: p.username,
+        matches: fmt(p.matches),
+        score: fmt(p.score),
+        rankNode: n.rankNode,
+        tagNode: n.tagNode,
+        hoverActionNode: n.hoverActionNode,
+        avatarNode: this.avatar(p, 30, n.friend || p.me),
+        bg: p.me ? "rgba(46,232,127,.12)" : this.state.hover === p.id ? "rgba(255,255,255,.035)" : "transparent",
+        nameWeight: p.me ? 800 : 600,
+        nameColor: p.me ? "#2ee87f" : "#e8edf5",
+        scoreColor: p.me ? "#2ee87f" : "#fff",
+        enter: () => this.setState({ hover: p.id }),
+        leave: () => this.setState({ hover: null }),
       };
     });
 
-    const scopeChips = [{ name: "total", label: "Alle spill samlet" }]
-      .concat(this.games.map(g => ({ name: g.name, label: g.name })))
-      .map(c => {
-        const on = scope === c.name;
-        return {
-          label: c.label,
-          bg: on ? "rgba(46,232,127,.14)" : "#131a25",
-          fg: on ? "#2ee87f" : "#96a3b8",
-          border: on ? "rgba(46,232,127,.4)" : "rgba(255,255,255,.07)",
-          onClick: () => this.setState({ scope: c.name, expanded: false })
-        };
-      });
+    const me = full.find((p) => p.me);
+    const ahead = full[Math.max(0, me.rank - 2)];
+    const gap = ahead && ahead.id !== me.id ? ahead.score - me.score : 0;
+    const friendCount = PLAYERS.filter((p) => this.isFriend(p)).length;
+    const periodLabel = (PERIODS.find((x) => x.id === this.state.period) || PERIODS[0]).label;
+
+    const myGames = GAMES.map((g) => {
+      const f = 0.09 + (hash("me" + g.id) % 33) / 100;
+      const score = Math.round(me.xp * f);
+      const rank = 1 + (hash(g.id) % 14);
+      return { name: g.name, icon: g.icon, score: fmt(score), rank: "#" + rank };
+    });
 
     return {
-      subtitle: periodLabel + " · " + scopeLabel + " · topp 100 spillere",
-      scopeLabelUpper: scopeLabel.toUpperCase(),
-      myScopeLabel: scopeLabel + " · " + periodLabel,
-      monthlyBg: period === "month" ? "#2ee87f" : "transparent",
-      monthlyFg: period === "month" ? "#0d1117" : "#96a3b8",
-      allTimeBg: period === "all" ? "#2ee87f" : "transparent",
-      allTimeFg: period === "all" ? "#0d1117" : "#96a3b8",
-      setMonthly: () => this.setState({ period: "month", expanded: false }),
-      setAllTime: () => this.setState({ period: "all", expanded: false }),
-      scopeChips,
-      myRank: "#" + me.rank,
-      totalPlayers: this.fmt(all.length),
-      myScore: this.fmt(me.score),
-      myDelta: "+" + this.fmt(period === "month" ? 340 : 340),
-      myDeltaColor: "#2ee87f",
-      myGapText: gap > 0 ? this.fmt(gap) + " poeng opp til plass " + (me.rank - 1) : "Du er på topp i denne listen",
-      podium,
+      menus: this.buildMenus(),
       rows,
-      shownLabel: "Viser " + shown.length + " av topp 100",
-      toggleLabel: expanded ? "Vis færre" : "Vis alle 100",
-      toggleAll: () => this.setState({ expanded: !expanded }),
-      myGames
+      q: this.state.q,
+      onSearch: (e) => this.setState({ q: e.target.value, expanded: false }),
+      subtitle: `${this.gameLabel()} · ${periodLabel.toLowerCase()} · ${fmt(full.length)} spillere · ${friendCount} venner`,
+      shownLabel: `Viser ${visible.length} av ${filtered.length} spillere`,
+      expandLabel: this.state.expanded ? "Vis færre" : `Vis alle ${filtered.length}`,
+      toggleExpanded: () => this.setState({ expanded: !this.state.expanded }),
+      meAvatar: this.avatar(me, 34, false),
+      meAvatarSmall: this.avatar(me, 30, false),
+      meRank: me.rank,
+      meTotal: fmt(full.length),
+      meScore: fmt(me.score),
+      meMatches: fmt(me.matches),
+      meScopeLabel: `${this.gameLabel()} · ${periodLabel}`,
+      meGap: gap > 0 ? `${fmt(gap)} poeng opp til plass ${me.rank - 1}` : "Du er på topp i denne listen",
+      myGames,
     };
   }
 }

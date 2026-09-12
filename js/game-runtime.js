@@ -130,6 +130,29 @@
     return Math.max(0, Math.round(score * pointRateFor(gameId)));
   }
 
+  /**
+   * Er feilen fra Supabase «denne funksjonen finnes ikke»? Da er ikke
+   * supabase/schema.sql kjørt på nytt etter at seksjon 48 kom inn, og vi
+   * faller tilbake til den gamle skrivemåten i stedet for at ingen rekorder
+   * lagres i det hele tatt. Se submitScore under.
+   */
+  function isMissingFunction(error) {
+    if (!error) return false;
+    const msg = (error.message || "") + " " + (error.details || "");
+    return error.code === "PGRST202" || /does not exist|could not find the function/i.test(msg);
+  }
+
+  let warnedAboutMigration = false;
+
+  function warnMigration(what) {
+    if (warnedAboutMigration) return;
+    warnedAboutMigration = true;
+    console.warn(
+      `[Studilla] ${what} finnes ikke i databasen ennå. Kjør supabase/schema.sql på nytt ` +
+      "(seksjon 48) – inntil da lagres rekorder på den gamle, usikrede måten."
+    );
+  }
+
   async function submitScore(gameId, score, profile) {
     const rounded = Math.round(score);
     if (!Number.isFinite(rounded) || rounded <= 0) {
@@ -139,19 +162,26 @@
     const awarded = pointsFor(gameId, rounded);
 
     if (profile) {
-      const { error: insertError } = await sb
-        .from("game_records")
-        .insert({ user_id: profile.id, game_id: gameId, score: rounded });
-      if (insertError) {
-        console.error("[Studilla] Klarte ikke lagre rekord:", insertError.message);
-      }
+      // Rekorden lagres og poengene regnes ut SERVER-SIDE (se
+      // supabase/schema.sql, seksjon 48). Tidligere gjorde klienten et rått
+      // insert i game_records og kalte add_points() med et tall den valgte
+      // selv – begge deler kunne kjøres fra nettleserkonsollen med hvilken
+      // som helst verdi, så hele rangeringen kunne forfalskes på ett sekund.
+      let updatedProfile = null;
+      const { data, error } = await sb.rpc("submit_game_score", {
+        p_game_id: gameId,
+        p_score: rounded,
+      });
 
-      // add_points returnerer den oppdaterte profilraden direkte, så vi
-      // slipper å hente den på nytt i et eget kall etterpå (som kan gi
-      // race/cache-problemer og vise gammel xp/nivå i UIen).
-      const { data: updatedProfile, error: rpcError } = await sb.rpc("add_points", { p_delta: awarded });
-      if (rpcError) {
-        console.error("[Studilla] Klarte ikke oppdatere xp/nivå:", rpcError.message);
+      if (error && isMissingFunction(error)) {
+        warnMigration("submit_game_score");
+        await sb.from("game_records").insert({ user_id: profile.id, game_id: gameId, score: rounded });
+        const legacy = await sb.rpc("add_points", { p_delta: awarded });
+        updatedProfile = legacy.data || null;
+      } else if (error) {
+        console.error("[Studilla] Klarte ikke lagre rekord:", error.message);
+      } else {
+        updatedProfile = data || null;
       }
 
       const best = await loadBest(gameId, profile);
@@ -174,6 +204,82 @@
     });
 
     return { saved: true, best, profile: null };
+  }
+
+  /**
+   * Melder fra til databasen om at spilleren har fullført en runde i dag, og
+   * får tilbake streaken + eventuell dagsbonus (se supabase/schema.sql,
+   * seksjon 49). Feiler stille: en manglende streak skal aldri stoppe
+   * game over-kortet fra å vises.
+   */
+  async function touchStreak() {
+    try {
+      const { data, error } = await sb.rpc("touch_daily_streak");
+      if (error || !data) return null;
+      return data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** Neste triks i rekkefølgen på forsiden – brukes av «prøv et annet». */
+  function nextGameAfter(gameId) {
+    const games = window.STUDILLA_GAMES || [];
+    if (games.length < 2) return null;
+    const i = games.findIndex((g) => g.id === gameId);
+    return games[(Math.max(0, i) + 1) % games.length] || null;
+  }
+
+  /**
+   * Liten konfetti-byge på ny rekord. Rene DOM-elementer med CSS-animasjon,
+   * ingen canvas eller bibliotek – og hoppes helt over for de som har bedt om
+   * mindre bevegelse i systeminnstillingene.
+   */
+  function fireConfetti(host) {
+    if (!host) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const colors = ["#2ee87f", "#7cf0ad", "#f5c451", "#8ab4ff", "#ff8fb1"];
+    host.innerHTML = "";
+    for (let i = 0; i < 28; i++) {
+      const bit = document.createElement("i");
+      bit.className = "game-over-confetti-bit";
+      bit.style.left = `${Math.random() * 100}%`;
+      bit.style.background = colors[i % colors.length];
+      bit.style.animationDelay = `${Math.random() * 0.25}s`;
+      bit.style.transform = `rotate(${Math.random() * 360}deg)`;
+      host.appendChild(bit);
+    }
+    window.setTimeout(() => { host.innerHTML = ""; }, 2200);
+  }
+
+  /**
+   * «Utfordre en venn»: deler en lenke rett til trikset med skåren i teksten.
+   * Bruker nettleserens egen delefunksjon der den finnes (mobil), og faller
+   * ellers tilbake til å kopiere lenken.
+   */
+  function setupShare(btn, gameId, score) {
+    if (!btn) return;
+    const games = window.STUDILLA_GAMES || [];
+    const game = games.find((g) => g.id === gameId);
+    const name = game ? game.name : "Studilla";
+    const url = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(gameId)}`;
+    const text = `Jeg fikk ${score.toLocaleString("no-NO")} i ${name} på Studilla. Klarer du å slå meg?`;
+
+    btn.hidden = false;
+    btn.textContent = "Utfordre en venn";
+    btn.onclick = async () => {
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: "Studilla", text, url });
+          return;
+        }
+        await navigator.clipboard.writeText(`${text} ${url}`);
+        btn.textContent = "Lenke kopiert ✓";
+        window.setTimeout(() => { btn.textContent = "Utfordre en venn"; }, 2000);
+      } catch (e) {
+        // Avbrutt deling eller blokkert utklippstavle – ikke noe å melde om.
+      }
+    };
   }
 
   function hudHTML() {
@@ -209,11 +315,39 @@
         <div class="game-play-area" data-game-play-area></div>
         <div class="game-milestone-toast" data-game-milestone></div>
       </div>
-      <div class="game-over-overlay" data-game-over hidden>
+      <div class="game-over-overlay" data-game-over hidden role="dialog" aria-modal="true" aria-labelledby="game-over-title">
         <div class="game-over-card">
-          <h3 data-game-over-title>Spillet er over</h3>
-          <p class="game-over-score" data-game-over-score></p>
-          <p class="section-sub" data-game-over-best></p>
+          <div class="game-over-confetti" data-game-over-confetti aria-hidden="true"></div>
+
+          <span class="game-over-eyebrow" data-game-over-eyebrow hidden>NY REKORD</span>
+          <h3 id="game-over-title" data-game-over-title>Runden er over</h3>
+
+          <div class="game-over-figure">
+            <span class="game-over-figure-num" data-game-over-score>0</span>
+            <span class="game-over-figure-label" data-game-over-score-label>POENG</span>
+          </div>
+
+          <!-- Tre nøkkeltall i stedet for én linje tekst: rekorden din, hvor
+               mange dager på rad du har spilt, og hva runden ga i poeng.
+               Poenget er at kortet skal svare på «gikk det bra?» uten at
+               spilleren må lese en setning. -->
+          <div class="game-over-facts">
+            <div class="game-over-fact">
+              <span class="game-over-fact-num" data-game-over-best-num>–</span>
+              <span class="game-over-fact-label">DIN REKORD</span>
+            </div>
+            <div class="game-over-fact" data-game-over-streak-fact hidden>
+              <span class="game-over-fact-num" data-game-over-streak-num>–</span>
+              <span class="game-over-fact-label">DAGER PÅ RAD</span>
+            </div>
+            <div class="game-over-fact" data-game-over-earned-fact hidden>
+              <span class="game-over-fact-num is-accent" data-game-over-earned>–</span>
+              <span class="game-over-fact-label">POENG TJENT</span>
+            </div>
+          </div>
+
+          <p class="game-over-note" data-game-over-note hidden></p>
+
           <div class="game-over-level" data-game-over-level hidden>
             <div class="game-over-level-labels">
               <span data-game-over-level-label>Nivå</span>
@@ -222,7 +356,15 @@
             <div class="game-over-level-bar"><div class="game-over-level-fill" data-game-over-level-fill></div></div>
             <p class="game-over-levelup" data-game-over-levelup>Nivå opp!</p>
           </div>
-          <button type="button" class="btn-primary" data-game-over-restart>Spill igjen</button>
+
+          <!-- «Én runde til» skal være det enkleste å gjøre: primærknappen,
+               forhåndsvalgt for tastatur, og Enter/mellomrom virker uten å
+               treffe den med musa. -->
+          <div class="game-over-actions">
+            <button type="button" class="btn-primary game-over-again" data-game-over-restart>Én runde til</button>
+            <a class="btn-outline game-over-next" data-game-over-next href="#">Prøv et annet triks</a>
+          </div>
+          <button type="button" class="game-over-share" data-game-over-share hidden>Utfordre en venn</button>
         </div>
       </div>
     `;
@@ -334,8 +476,18 @@
       milestone: container.querySelector("[data-game-milestone]"),
       overlay: container.querySelector("[data-game-over]"),
       overlayTitle: container.querySelector("[data-game-over-title]"),
+      overlayEyebrow: container.querySelector("[data-game-over-eyebrow]"),
       overlayScore: container.querySelector("[data-game-over-score]"),
-      overlayBest: container.querySelector("[data-game-over-best]"),
+      overlayScoreLabel: container.querySelector("[data-game-over-score-label]"),
+      overlayBestNum: container.querySelector("[data-game-over-best-num]"),
+      overlayStreakFact: container.querySelector("[data-game-over-streak-fact]"),
+      overlayStreakNum: container.querySelector("[data-game-over-streak-num]"),
+      overlayEarnedFact: container.querySelector("[data-game-over-earned-fact]"),
+      overlayEarned: container.querySelector("[data-game-over-earned]"),
+      overlayNote: container.querySelector("[data-game-over-note]"),
+      overlayConfetti: container.querySelector("[data-game-over-confetti]"),
+      overlayNext: container.querySelector("[data-game-over-next]"),
+      overlayShare: container.querySelector("[data-game-over-share]"),
       overlayRestart: container.querySelector("[data-game-over-restart]"),
       overlayLevel: container.querySelector("[data-game-over-level]"),
       overlayLevelLabel: container.querySelector("[data-game-over-level-label]"),
@@ -509,27 +661,74 @@
         const isNewBest = result.saved && score > prevBest;
         const roundedScore = Math.max(0, Math.round(score));
         const leveledUp = !!(newProfile && prevProfile && newProfile.level > prevProfile.level);
-
-        els.overlayTitle.textContent = opts.title || "Spillet er over";
         const awardedPoints = pointsFor(gameId, roundedScore);
-        els.overlayScore.textContent = awardedPoints === roundedScore
-          ? `Du fikk ${roundedScore.toLocaleString("no-NO")} poeng.`
-          : `Du fikk ${roundedScore.toLocaleString("no-NO")} i skår – det ble ${awardedPoints.toLocaleString("no-NO")} poeng.`;
-        els.overlayBest.textContent = isNewBest
-          ? "Ny personlig rekord! 🎉"
-          : `Rekord: ${best.toLocaleString("no-NO")} poeng.`;
+
+        // Streaken oppdateres når runden er ferdig, ikke når siden lastes:
+        // det er en fullført runde som teller som «du spilte i dag».
+        const streak = prevProfile ? await touchStreak() : null;
+
+        els.overlayTitle.textContent = opts.title || (isNewBest ? "Ny rekord!" : "Runden er over");
+        els.overlayEyebrow.hidden = !isNewBest;
+        els.overlayScore.textContent = roundedScore.toLocaleString("no-NO");
+        els.overlayScoreLabel.textContent = awardedPoints === roundedScore ? "POENG" : "SKÅR";
+        els.overlayBestNum.textContent = best.toLocaleString("no-NO");
+
+        const showStreak = !!(streak && streak.streak > 0);
+        els.overlayStreakFact.hidden = !showStreak;
+        if (showStreak) els.overlayStreakNum.textContent = String(streak.streak);
+
+        const showEarned = awardedPoints !== roundedScore || (streak && streak.bonus > 0);
+        els.overlayEarnedFact.hidden = !showEarned;
+        if (showEarned) {
+          els.overlayEarned.textContent = `+${(awardedPoints + ((streak && streak.bonus) || 0)).toLocaleString("no-NO")}`;
+        }
+
+        // Én linje som forteller hva som skjedde ut over tallene – enten
+        // dagsbonusen, en mistet rekke, eller (for utloggede) hva de går
+        // glipp av ved å ikke ha konto.
+        let note = "";
+        if (!prevProfile) {
+          note = "Du er ikke logget inn – rekorden ligger kun i denne nettleseren.";
+        } else if (streak && streak.bonus > 0 && streak.streak > 1) {
+          note = `${streak.streak} dager på rad! +${streak.bonus} bonuspoeng.`;
+        } else if (streak && streak.bonus > 0) {
+          note = streak.broke_from > 0
+            ? `Rekken din på ${streak.broke_from} dager røk – du er i gang igjen. +${streak.bonus} poeng.`
+            : `Første runde i dag – +${streak.bonus} bonuspoeng.`;
+        }
+        els.overlayNote.hidden = !note;
+        els.overlayNote.textContent = note;
+
+        if (isNewBest) fireConfetti(els.overlayConfetti);
+
+        // «Prøv et annet triks» peker på neste triks i listen, ikke tilbake
+        // til menyen: ett klikk videre i stedet for to.
+        const nextGame = nextGameAfter(gameId);
+        if (nextGame) {
+          els.overlayNext.hidden = false;
+          els.overlayNext.href = `player.html?id=${encodeURIComponent(nextGame.id)}`;
+          els.overlayNext.textContent = `Prøv ${nextGame.name}`;
+        } else {
+          els.overlayNext.hidden = true;
+        }
+
+        setupShare(els.overlayShare, gameId, roundedScore);
+
         if (LEVELS_ENABLED) {
           animateOverlayLevel(prevProfile, newProfile);
         } else {
           els.overlayLevel.hidden = true;
         }
         els.overlay.hidden = false;
+        // Fokus på «Én runde til» slik at Enter starter en ny runde med det
+        // samme – både for tastaturbrukere og for den som bare vil videre.
+        try { els.overlayRestart.focus({ preventScroll: true }); } catch (e) {}
 
         if (LEVELS_ENABLED && leveledUp && window.StudillaLevelUp) {
           window.StudillaLevelUp.show(prevProfile, newProfile);
         }
 
-        return { isNewBest, best, leveledUp };
+        return { isNewBest, best, leveledUp, streak };
       },
     };
   }

@@ -1,0 +1,38 @@
+<!--
+  Delt <head>-innhold for alle sidene på Studilla.
+
+  Alt som er likt på tvers av sidene bor HER og ingen andre steder. Sidene
+  beholder bare det som er unikt for dem: title, description, og eventuelle
+  og:-tagger, robots-tagger og JSON-LD.
+
+  Byggesteget (build/build.mjs) bytter ut head-markøren i hver side
+
+      <link rel="stylesheet" href="css/style.css" data-studilla-head>
+
+  med innholdet i denne filen, og legger på ?v=innholdshash på alle lokale
+  css/js/asset-lenker. Markøren er en ekte stilark-lenke, slik at kildefilene
+  ser riktige ut om man åpner dem uten å bygge; siden hele taggen byttes ut,
+  havner stilarket bare én gang i den ferdige siden.
+
+  Selve denne kommentaren blir strippet bort og havner aldri ut på sidene.
+-->
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
+<meta name="theme-color" content="#0d1117">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/social.css">
+<script defer src="https://cloud.umami.is/script.js" data-website-id="d10b685b-d7f1-4d9c-ad3b-986b69caeb7f"></script>
+<script>
+/* Slår opp innholdshash for moduler som lastes dynamisk fra JavaScript, der
+   byggesteget ikke kan skrive om src-en. Uten bygg returneres stien uendret. */
+window.studillaAsset = function (path) {
+  var hash = (window.STUDILLA_ASSET_HASHES || {})[path];
+  return hash ? path + "?v=" + hash : path;
+};
+</script>
+{{assetHashes}}

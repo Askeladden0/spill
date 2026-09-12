@@ -6,21 +6,17 @@
 <title>Studilla · Brukerprofil</title>
 <meta name="description" content="Se en brukers poengsum og prestasjoner på Studilla.">
 <meta name="robots" content="noindex, nofollow">
-<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-<link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
-<meta name="theme-color" content="#0d1117">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-<script defer src="https://cloud.umami.is/script.js" data-website-id="d10b685b-d7f1-4d9c-ad3b-986b69caeb7f"></script>
+<link rel="stylesheet" href="css/style.css" data-studilla-head>
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/social.css">
 </head>
 <body data-page="rangering">
 <div class="page">
 
   <div id="site-header"></div>
 
-  <main>
+  <main id="hovedinnhold">
     <section>
       <a href="rangering.html" class="back-link">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -55,12 +51,37 @@
             <span class="public-profile-stat-num" data-stat-level>–</span>
             <span class="public-profile-stat-label">NIVÅ</span>
           </div>
+          <div class="public-profile-stat">
+            <span class="public-profile-stat-num" data-stat-streak>–</span>
+            <span class="public-profile-stat-label">DAGER PÅ RAD</span>
+          </div>
           <div class="public-profile-stat" data-levels-only>
             <span class="public-profile-stat-num" data-stat-codes>–</span>
             <span class="public-profile-stat-label">RABATTKODER HENTET</span>
           </div>
         </div>
       </div>
+
+      <!-- Venne-/melde-raden. Skjult til vi vet om den som ser på er logget
+           inn og ikke ser på sin egen profil. -->
+      <div class="public-profile-social" data-social-row hidden>
+        <button type="button" class="btn-primary" data-friend-btn>Legg til venn</button>
+        <button type="button" class="btn-outline" data-decline-btn hidden>Avslå</button>
+        <a class="btn-outline" data-message-btn href="#">Send melding</a>
+        <button type="button" class="btn-outline is-danger-outline" data-block-btn>Blokker</button>
+        <span class="public-profile-follow-counts" data-friend-counts></span>
+      </div>
+    </section>
+
+    <!-- Aktiviteten til denne spilleren. Lå tidligere som én samlet feed på
+         Venner-siden; den hører hjemme hos den det gjelder. Vises for
+         venner (og for deg selv på din egen offentlige profil). -->
+    <section data-activity-section hidden>
+      <div class="section-heading spread">
+        <h2>Aktivitet</h2>
+        <span class="section-sub" data-activity-sub></span>
+      </div>
+      <div class="feed-list" data-activity-list></div>
     </section>
 
     <section data-scores-section hidden>
@@ -78,11 +99,14 @@
 <script src="js/consent.js"></script>
 <script src="js/cookie-banner.js"></script>
 <script src="js/feature-flags.js"></script>
+<script src="js/layout-markup.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/social.js"></script>
+<script src="js/dm-popup.js"></script>
 <script src="js/visit-tracking.js"></script>
 <script src="js/games-data.js"></script>
 <script src="js/leaderboard-data.js"></script>
@@ -94,8 +118,175 @@
   const games = LB.games;
   const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
 
+  const Social = window.StudillaSocial;
+
   function fmt(n) {
     return Math.round(n || 0).toLocaleString("no-NO");
+  }
+
+  /**
+   * «Legg til venn» / «Send melding» / «Blokker» + vennetall. Vises kun for
+   * innloggede som ser på en ANNEN spiller – på sin egen offentlige profil er
+   * knappene meningsløse, og for utloggede fører de bare til en
+   * innloggingsvegg de ikke ba om.
+   *
+   * Vennskap er gjensidig, så knappen har fire tilstander: ingenting ennå,
+   * du har sendt en forespørsel, hen har sendt deg en, og dere er venner.
+   */
+  async function renderSocialRow(player, viewer) {
+    const row = document.querySelector("[data-social-row]");
+    const btn = document.querySelector("[data-friend-btn]");
+    const declineBtn = document.querySelector("[data-decline-btn]");
+    const msg = document.querySelector("[data-message-btn]");
+    const blockBtn = document.querySelector("[data-block-btn]");
+    const counts = document.querySelector("[data-friend-counts]");
+    if (!viewer || viewer.id === player.id) return;
+
+    let stats;
+    try {
+      stats = await Social.friendStats(player.id);
+    } catch (e) {
+      return;
+    }
+    if (!Social.isAvailable()) return;
+
+    row.hidden = false;
+    msg.href = `meldinger.html?til=${encodeURIComponent(player.username)}`;
+
+    function paint() {
+      if (stats.is_blocked) {
+        btn.textContent = "Blokkert";
+        btn.disabled = true;
+      } else if (stats.is_friend) {
+        btn.textContent = "Venner ✓";
+        btn.disabled = false;
+      } else if (stats.request_incoming) {
+        btn.textContent = "Godta venneforespørsel";
+        btn.disabled = false;
+      } else if (stats.request_outgoing) {
+        btn.textContent = "Forespørsel sendt";
+        btn.disabled = false;
+      } else {
+        btn.textContent = "Legg til venn";
+        btn.disabled = false;
+      }
+      const primary = !stats.is_friend && !stats.request_outgoing && !stats.is_blocked;
+      btn.classList.toggle("btn-primary", primary);
+      btn.classList.toggle("btn-outline", !primary);
+
+      declineBtn.hidden = !stats.request_incoming;
+      msg.hidden = !!stats.is_blocked;
+      blockBtn.textContent = stats.is_blocked ? "Opphev blokkering" : "Blokker";
+      counts.textContent = `${fmt(stats.friends)} ${stats.friends === 1 ? "venn" : "venner"}`;
+    }
+    paint();
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        if (stats.is_friend) {
+          if (window.confirm(`Fjerne ${player.username} som venn?`)) {
+            await Social.removeFriend(player.id);
+            stats.is_friend = false;
+            stats.friends = Math.max(0, stats.friends - 1);
+          }
+        } else if (stats.request_incoming) {
+          await Social.respondFriendRequest(player.id, true);
+          stats.is_friend = true;
+          stats.request_incoming = false;
+          stats.friends += 1;
+        } else if (stats.request_outgoing) {
+          await Social.cancelFriendRequest(player.id);
+          stats.request_outgoing = false;
+        } else {
+          const outcome = await Social.addFriend(player.id);
+          if (outcome === "friends") {
+            stats.is_friend = true;
+            stats.friends += 1;
+          } else {
+            stats.request_outgoing = true;
+          }
+        }
+      } catch (e) {
+        window.alert(e.message || "Klarte ikke oppdatere vennskapet.");
+      }
+      paint();
+    });
+
+    declineBtn.addEventListener("click", async () => {
+      declineBtn.disabled = true;
+      try {
+        await Social.respondFriendRequest(player.id, false);
+        stats.request_incoming = false;
+      } catch (e) {
+        window.alert(e.message || "Klarte ikke avslå forespørselen.");
+      }
+      declineBtn.disabled = false;
+      paint();
+    });
+
+    blockBtn.addEventListener("click", async () => {
+      if (!stats.is_blocked && !window.confirm(
+        `Blokkere ${player.username}? Dere kan ikke sende meldinger til hverandre eller være venner etterpå.`
+      )) return;
+      blockBtn.disabled = true;
+      try {
+        if (stats.is_blocked) {
+          await Social.unblock(player.id);
+          stats.is_blocked = false;
+        } else {
+          await Social.block(player.id);
+          stats.is_blocked = true;
+          stats.is_friend = false;
+          stats.request_incoming = false;
+          stats.request_outgoing = false;
+        }
+      } catch (e) {
+        window.alert(e.message || "Klarte ikke oppdatere blokkeringen.");
+      }
+      blockBtn.disabled = false;
+      paint();
+    });
+  }
+
+  /**
+   * Aktivitetsfeeden for denne spilleren. player_activity i databasen svarer
+   * kun for venner (og deg selv), så en fremmed får ingen rader – da skjules
+   * hele seksjonen i stedet for å vise en tom liste.
+   */
+  async function renderActivity(player, viewer) {
+    const section = document.querySelector("[data-activity-section]");
+    const list = document.querySelector("[data-activity-list]");
+    const sub = document.querySelector("[data-activity-sub]");
+    if (!viewer) return;
+
+    let rows = [];
+    try {
+      rows = await Social.playerActivity(player.id, 15);
+    } catch (e) {
+      return;
+    }
+    if (!rows.length) return;
+
+    section.hidden = false;
+    sub.textContent = viewer.id === player.id ? "Dine siste runder" : "Siste runder";
+    list.innerHTML = rows
+      .map((r) => `
+        <a class="feed-row" href="player.html?id=${encodeURIComponent(r.game_id)}">
+          ${window.gameIconHTML(games.find((g) => g.id === r.game_id), 30)}
+          <span class="feed-text">
+            ${r.is_personal_best ? "Ny rekord i" : "Spilte"}
+            <strong>${Social.escapeHTML(gameNameFor(r.game_id))}</strong>
+            <span class="feed-score">${fmt(r.score)}</span>
+          </span>
+          <span class="feed-time">${Social.timeAgo(r.created_at)}</span>
+        </a>`)
+      .join("");
+  }
+
+  function gameNameFor(id) {
+    const g = games.find((x) => x.id === id);
+    return g ? g.name : id;
   }
 
   async function init() {
@@ -135,8 +326,12 @@
     document.querySelector("[data-stat-points]").textContent = fmt(player.xp);
     document.querySelector("[data-stat-level]").textContent = player.level;
     document.querySelector("[data-stat-codes]").textContent = fmt(codes);
+    document.querySelector("[data-stat-streak]").textContent = fmt(player.streak_current);
 
     document.querySelector("[data-profile-main]").hidden = false;
+
+    renderSocialRow(player, viewer);
+    renderActivity(player, viewer);
 
     const playedGames = games.filter((g) => (boards.perGame[g.id] || []).some((p) => p.id === player.id));
     document.querySelector("[data-scores-sub]").textContent = `${playedGames.length} av ${games.length} spill spilt`;
