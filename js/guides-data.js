@@ -318,8 +318,15 @@ window.StudillaGuides = {
 
   async deleteGuide(id) {
     const sb = window.supabaseClient;
-    const { error } = await sb.from("guides").delete().eq("id", id);
+    const { data, error } = await sb.from("guides").delete().eq("id", id).select("id");
     if (error) return { error };
+    // RLS filtrerer stille bort raden fra en DELETE man ikke har rettighet
+    // til (ingen feil, bare 0 rader truffet) – uten .select() her ville vi
+    // trodd slettingen lyktes og fjernet guiden lokalt, mens den fortsatt
+    // ligger i databasen og dukker opp igjen ved neste innlasting.
+    if (!data || !data.length) {
+      return { error: { message: "Fikk ikke slettet guiden – du har trolig ikke admin-rettigheter akkurat nå." } };
+    }
     window.STUDILLA_GUIDES = window.STUDILLA_GUIDES.filter((x) => x.id !== id);
     delete window.STUDILLA_GUIDE_MODULES[id];
     return { data: true };
