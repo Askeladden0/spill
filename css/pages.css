@@ -236,6 +236,9 @@
 .guide-card-excerpt { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--muted); flex: 1; }
 .guide-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .guide-card-value { font-size: 13px; font-weight: 800; color: var(--accent); }
+.guide-card-stats { display: inline-flex; align-items: center; gap: 10px; }
+.guide-card-stat { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--muted-2); }
+.guide-card-stat .guide-ico { flex: none; }
 
 /* ---------- Guide-info-skjema (nytt / rediger) ---------- */
 /* Skjemaene er delt i tydelige seksjoner med egen topplinje og bunnlinje, i
@@ -379,6 +382,55 @@
 .guide-meta-credit { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--muted-2); transition: color .15s ease; }
 .guide-meta-credit:hover { color: var(--text); }
 .guide-meta-credit .header-credit-avatar { width: 20px; height: 20px; }
+
+/* ---------- Like og visningstall (guide.html) ---------- */
+.guide-stats-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+.guide-like-btn {
+  position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px;
+  border-radius: 99px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--muted-2);
+  font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+.guide-like-btn:hover { border-color: rgba(245, 113, 92, .45); color: var(--text); }
+.guide-like-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.guide-like-btn:disabled { cursor: default; opacity: .8; }
+.guide-like-icon { display: inline-flex; color: inherit; transition: color .15s ease, transform .15s ease; }
+.guide-like-btn.is-liked { border-color: rgba(245, 113, 92, .5); background: rgba(245, 113, 92, .12); color: #ff6b57; }
+.guide-like-btn.is-liked .guide-like-icon { color: #ff6b57; }
+.guide-like-btn.is-liked .guide-like-icon svg { fill: currentColor; }
+
+/* Kort, subtil "pop" på hjertet når man liker – ikke på selve knappen, så
+   tallet ved siden av ikke hopper rundt. */
+@keyframes guide-like-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.5) rotate(-6deg); }
+  60% { transform: scale(.92) rotate(3deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.guide-like-btn.is-popping .guide-like-icon { animation: guide-like-pop .5s cubic-bezier(.34, 1.56, .64, 1); }
+
+.guide-view-stat { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted-2); }
+
+/* Boble med venners avatarer, vist når man holder musepekeren over like-tallet. */
+.guide-friend-tip {
+  position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translate(-50%, 4px);
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px;
+  border: 1px solid var(--border-strong); background: var(--surface); box-shadow: 0 10px 28px rgba(0, 0, 0, .35);
+  white-space: nowrap; opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease; z-index: 5;
+}
+.guide-friend-tip::after {
+  content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: var(--border-strong);
+}
+.guide-like-btn:hover .guide-friend-tip, .guide-like-btn:focus-visible .guide-friend-tip {
+  opacity: 1; visibility: visible; transform: translate(-50%, 0);
+}
+.guide-friend-tip-avatars { display: flex; }
+.guide-friend-tip-avatars .avatar-badge { margin-left: -8px; border-width: 2px; }
+.guide-friend-tip-avatars .avatar-badge:first-child { margin-left: 0; }
+.guide-friend-tip-text { font-size: 12px; font-weight: 700; color: var(--text); text-transform: none; letter-spacing: 0; }
 
 .guide-cover {
   position: relative; aspect-ratio: 16 / 7; border-radius: var(--radius-lg); overflow: hidden;
