@@ -58,7 +58,7 @@
     table: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10M15 10v10"></path>',
     coins: '<circle cx="12" cy="12" r="9"></circle><path d="M14.5 9h-3.2a1.8 1.8 0 0 0 0 3.6h1.4a1.8 1.8 0 0 1 0 3.6H9.5"></path><path d="M12 7.5v9"></path>',
     poll: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path>',
-    heart: '<path d="M12 21s-7.5-4.6-10-9.1C.6 8.7 2 5 5.5 5c2 0 3.3 1.1 4 2.2.7-1.1 2-2.2 4-2.2C17 5 18.4 8.7 22 11.9 19.5 16.4 12 21 12 21Z"></path>',
+    heart: '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35Z"></path>',
     game: '<path d="M6 12h4M8 10v4"></path><circle cx="16" cy="11" r="1"></circle><circle cx="18.5" cy="13.5" r="1"></circle><rect x="2" y="6" width="20" height="12" rx="5"></rect>',
     drag: '<circle cx="9" cy="6" r="1.4"></circle><circle cx="15" cy="6" r="1.4"></circle><circle cx="9" cy="12" r="1.4"></circle><circle cx="15" cy="12" r="1.4"></circle><circle cx="9" cy="18" r="1.4"></circle><circle cx="15" cy="18" r="1.4"></circle>',
     settings: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"></path>'
@@ -1190,11 +1190,11 @@
     const friends = (state.guideLike && state.guideLike.friends) || [];
     el.innerHTML = `
       <button type="button" class="guide-like-btn${liked ? " is-liked" : ""}" data-guide-like aria-pressed="${liked ? "true" : "false"}" aria-label="Lik guiden" ${state.likeBusy ? "disabled" : ""}>
-        <span class="guide-like-icon">${icon("heart", 17)}</span>
+        <span class="guide-like-icon">${icon("heart", 26)}</span>
         <span class="guide-like-count">${numFmt(g.likeCount || 0)}</span>
         ${guideFriendTipHTML(friends)}
       </button>
-      <span class="guide-view-stat">${icon("eye", 15)}<span>${numFmt(g.viewCount || 0)} har lest</span></span>
+      <span class="guide-view-stat">${icon("eye", 22)}<span>${numFmt(g.viewCount || 0)} har lest</span></span>
     `;
   }
 
@@ -1238,7 +1238,7 @@
     const btn = document.querySelector("[data-guide-like]");
     if (btn && !wasLiked) {
       btn.classList.add("is-popping");
-      setTimeout(() => btn.classList.remove("is-popping"), 500);
+      setTimeout(() => btn.classList.remove("is-popping"), 700);
     }
 
     const { data, error } = await Guides.toggleLike(currentGuideId);
