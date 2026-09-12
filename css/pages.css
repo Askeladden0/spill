@@ -384,12 +384,12 @@
 .guide-meta-credit .header-credit-avatar { width: 20px; height: 20px; }
 
 /* ---------- Like og visningstall (guide.html) ---------- */
-.guide-stats-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.guide-stats-row { display: flex; align-items: center; justify-content: flex-end; gap: 20px; flex-wrap: wrap; }
 
 .guide-like-btn {
-  position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px;
+  position: relative; display: inline-flex; align-items: center; gap: 11px; padding: 11px 20px;
   border-radius: 99px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--muted-2);
-  font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer;
+  font-family: inherit; font-size: 18px; font-weight: 800; cursor: pointer;
   transition: border-color .15s ease, background .15s ease, color .15s ease;
 }
 .guide-like-btn:hover { border-color: rgba(245, 113, 92, .45); color: var(--text); }
@@ -400,17 +400,25 @@
 .guide-like-btn.is-liked .guide-like-icon { color: #ff6b57; }
 .guide-like-btn.is-liked .guide-like-icon svg { fill: currentColor; }
 
-/* Kort, subtil "pop" på hjertet når man liker – ikke på selve knappen, så
-   tallet ved siden av ikke hopper rundt. */
+/* Tydelig, litt lekent "pop" på hjertet (og en kort fargeflash på selve
+   knappen) når man liker – skal merkes, ikke bare antydes. */
 @keyframes guide-like-pop {
-  0% { transform: scale(1); }
-  35% { transform: scale(1.5) rotate(-6deg); }
-  60% { transform: scale(.92) rotate(3deg); }
+  0% { transform: scale(1) rotate(0); }
+  25% { transform: scale(1.9) rotate(-14deg); }
+  45% { transform: scale(1.35) rotate(10deg); }
+  65% { transform: scale(1.55) rotate(-6deg); }
+  85% { transform: scale(1.05) rotate(2deg); }
   100% { transform: scale(1) rotate(0); }
 }
-.guide-like-btn.is-popping .guide-like-icon { animation: guide-like-pop .5s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes guide-like-flash {
+  0% { box-shadow: 0 0 0 0 rgba(245, 113, 92, .55); }
+  60% { box-shadow: 0 0 0 14px rgba(245, 113, 92, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 113, 92, 0); }
+}
+.guide-like-btn.is-popping .guide-like-icon { animation: guide-like-pop .7s cubic-bezier(.34, 1.56, .64, 1); }
+.guide-like-btn.is-popping { animation: guide-like-flash .7s ease-out; }
 
-.guide-view-stat { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted-2); }
+.guide-view-stat { display: inline-flex; align-items: center; gap: 9px; font-size: 18px; font-weight: 700; color: var(--muted-2); }
 
 /* Boble med venners avatarer, vist når man holder musepekeren over like-tallet. */
 .guide-friend-tip {
