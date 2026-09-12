@@ -27,7 +27,9 @@ window.STUDILLA_GUIDES = [
     valueLabel: "Opptil 12 000 kr",
     coverUrl: null,
     featured: true,
-    updatedAt: null
+    updatedAt: null,
+    viewCount: 0,
+    likeCount: 0
   }
 ];
 
@@ -136,7 +138,9 @@ function mapGuideRow(g) {
     featured: !!g.is_featured,
     hidden: !!g.is_hidden,
     sortOrder: g.sort_order || 0,
-    updatedAt: g.updated_at || null
+    updatedAt: g.updated_at || null,
+    viewCount: Number(g.view_count) || 0,
+    likeCount: Number(g.like_count) || 0
   };
 }
 
@@ -411,5 +415,47 @@ window.StudillaGuides = {
     const mod = (window.STUDILLA_GUIDE_MODULES[guideId] || []).find((m) => m.id === moduleId);
     if (mod) mod.data = data;
     return { data };
+  },
+
+  // Telles hver gang guide.html åpnes for en guide – ikke deduplisert, i
+  // motsetning til den daglige besøksmålingen i js/visit-tracking.js.
+  async addView(guideId) {
+    const sb = window.supabaseClient;
+    const { data, error } = await sb.rpc("guide_add_view", { p_guide_id: guideId });
+    if (error) return { error };
+    const g = window.STUDILLA_GUIDES.find((x) => x.id === guideId);
+    if (g) g.viewCount = Number(data) || 0;
+    return { data };
+  },
+
+  /** Av/på-liking for innlogget bruker. Feiler stille (kaster) hvis ikke logget inn. */
+  async toggleLike(guideId) {
+    const sb = window.supabaseClient;
+    const { data, error } = await sb.rpc("guide_toggle_like", { p_guide_id: guideId });
+    if (error) return { error };
+    const g = window.STUDILLA_GUIDES.find((x) => x.id === guideId);
+    if (g) g.likeCount = Number(data.count) || 0;
+    return { data };
+  },
+
+  /** Bruker-id-ene til alle som har likt guiden – brukt til å finne venner som har likt. */
+  async likersFor(guideId) {
+    const sb = window.supabaseClient;
+    const { data, error } = await sb.from("guide_likes").select("user_id").eq("guide_id", guideId);
+    if (error) return [];
+    return (data || []).map((r) => r.user_id);
+  },
+
+  /** Har den innloggede brukeren likt denne guiden? */
+  async myLike(guideId) {
+    const sb = window.supabaseClient;
+    const { data: session } = await sb.auth.getSession();
+    const me = session && session.session && session.session.user;
+    if (!me) return false;
+    const { data, error } = await sb
+      .from("guide_likes").select("guide_id")
+      .eq("guide_id", guideId).eq("user_id", me.id).maybeSingle();
+    if (error) return false;
+    return !!data;
   }
 };
