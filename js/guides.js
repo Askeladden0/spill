@@ -1190,11 +1190,11 @@
     const friends = (state.guideLike && state.guideLike.friends) || [];
     el.innerHTML = `
       <button type="button" class="guide-like-btn${liked ? " is-liked" : ""}" data-guide-like aria-pressed="${liked ? "true" : "false"}" aria-label="Lik guiden" ${state.likeBusy ? "disabled" : ""}>
-        <span class="guide-like-icon">${icon("heart", 26)}</span>
+        <span class="guide-like-icon">${icon("heart", 17)}</span>
         <span class="guide-like-count">${numFmt(g.likeCount || 0)}</span>
         ${guideFriendTipHTML(friends)}
       </button>
-      <span class="guide-view-stat">${icon("eye", 22)}<span>${numFmt(g.viewCount || 0)} har lest</span></span>
+      <span class="guide-view-stat">${icon("eye", 15)}<span>${numFmt(g.viewCount || 0)} har lest</span></span>
     `;
   }
 
@@ -1238,7 +1238,7 @@
     const btn = document.querySelector("[data-guide-like]");
     if (btn && !wasLiked) {
       btn.classList.add("is-popping");
-      setTimeout(() => btn.classList.remove("is-popping"), 700);
+      setTimeout(() => btn.classList.remove("is-popping"), 500);
     }
 
     const { data, error } = await Guides.toggleLike(currentGuideId);
