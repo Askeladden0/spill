@@ -2928,6 +2928,1007 @@ grant execute on function public.period_leaderboard(text, text) to anon, authent
 -- runder i game_records.
 create index if not exists game_records_created_idx on public.game_records (created_at);
 
+-- ---------------------------------------------------------------------------
+-- 58. Venner i stedet for ensidig følging.
+--
+--     Følging (seksjon 51) var ensidig som på TikTok: hvem som helst kunne
+--     legge seg på lista di uten at du fikk vite det eller kunne si nei. For
+--     en side med skoleelever er det feil modell – her skal man LEGGE TIL
+--     VENN, og den andre skal kunne godta eller avslå.
+--
+--     follows-tabellen beholdes som lagringssted for selve vennskapet: et
+--     godtatt vennskap er to rader (én hver vei). Da fungerer alt som
+--     allerede leser follows (vennerangeringen, aktivitetsfeeden,
+--     «kun meldinger fra dem jeg følger») uendret, og det som er nytt er
+--     bare den ventende forespørselen.
+-- ---------------------------------------------------------------------------
+create table if not exists public.friend_requests (
+  requester_id uuid not null references auth.users (id) on delete cascade,
+  addressee_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (requester_id, addressee_id),
+  constraint friend_requests_not_self check (requester_id <> addressee_id)
+);
+
+create index if not exists friend_requests_addressee_idx
+  on public.friend_requests (addressee_id, created_at desc);
+
+alter table public.friend_requests enable row level security;
+
+-- Man ser kun forespørsler man selv er part i. All skriving går gjennom
+-- RPC-ene under, som håndhever blokkering og at man ikke svarer på andres
+-- forespørsler.
+drop policy if exists "friend_requests_select_own" on public.friend_requests;
+create policy "friend_requests_select_own" on public.friend_requests
+  for select using (auth.uid() = requester_id or auth.uid() = addressee_id);
+
+/** Er to brukere venner? (to rader i follows, én hver vei) */
+create or replace function public.are_friends(a uuid, b uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (select 1 from public.follows where follower_id = a and following_id = b)
+     and exists (select 1 from public.follows where follower_id = b and following_id = a);
+$$;
+
+grant execute on function public.are_friends(uuid, uuid) to authenticated;
+
+/**
+ * Send en venneforespørsel. Har den andre allerede sendt deg en, blir dere
+ * venner med en gang – ellers måtte begge sitte og vente på hverandre.
+ *
+ * Returnerer 'friends' eller 'pending' slik at klienten vet hva knappen
+ * skal si etterpå.
+ */
+create or replace function public.send_friend_request(p_user uuid)
+returns text
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+begin
+  if uid is null then
+    raise exception 'Du må være logget inn for å legge til venner';
+  end if;
+  if p_user is null or p_user = uid then
+    raise exception 'Ugyldig bruker';
+  end if;
+  if not exists (select 1 from public.profiles where id = p_user) then
+    raise exception 'Fant ikke brukeren';
+  end if;
+  if public.is_blocked_between(uid, p_user) then
+    raise exception 'Du kan ikke legge til denne spilleren.';
+  end if;
+
+  if public.are_friends(uid, p_user) then
+    return 'friends';
+  end if;
+
+  -- Den andre har allerede bedt om deg: godta med en gang.
+  if exists (select 1 from public.friend_requests
+              where requester_id = p_user and addressee_id = uid) then
+    delete from public.friend_requests
+     where (requester_id = p_user and addressee_id = uid)
+        or (requester_id = uid and addressee_id = p_user);
+    insert into public.follows (follower_id, following_id)
+    values (uid, p_user), (p_user, uid)
+    on conflict do nothing;
+    return 'friends';
+  end if;
+
+  insert into public.friend_requests (requester_id, addressee_id)
+  values (uid, p_user)
+  on conflict do nothing;
+  return 'pending';
+end;
+$$;
+
+revoke all on function public.send_friend_request(uuid) from public;
+grant execute on function public.send_friend_request(uuid) to authenticated;
+
+/** Godta (p_accept = true) eller avslå en venneforespørsel du har fått. */
+create or replace function public.respond_friend_request(p_requester uuid, p_accept boolean)
+returns text
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+begin
+  if uid is null then
+    raise exception 'Du må være logget inn';
+  end if;
+  if not exists (select 1 from public.friend_requests
+                  where requester_id = p_requester and addressee_id = uid) then
+    raise exception 'Fant ikke forespørselen';
+  end if;
+
+  delete from public.friend_requests
+   where requester_id = p_requester and addressee_id = uid;
+
+  if not coalesce(p_accept, false) then
+    return 'declined';
+  end if;
+
+  if public.is_blocked_between(uid, p_requester) then
+    raise exception 'Du kan ikke bli venn med denne spilleren.';
+  end if;
+
+  insert into public.follows (follower_id, following_id)
+  values (uid, p_requester), (p_requester, uid)
+  on conflict do nothing;
+  return 'friends';
+end;
+$$;
+
+revoke all on function public.respond_friend_request(uuid, boolean) from public;
+grant execute on function public.respond_friend_request(uuid, boolean) to authenticated;
+
+/** Trekk tilbake en forespørsel du selv har sendt. */
+create or replace function public.cancel_friend_request(p_user uuid)
+returns boolean
+language sql
+security definer
+set search_path = public, pg_temp
+as $$
+  delete from public.friend_requests
+   where requester_id = auth.uid() and addressee_id = p_user
+  returning true;
+$$;
+
+revoke all on function public.cancel_friend_request(uuid) from public;
+grant execute on function public.cancel_friend_request(uuid) to authenticated;
+
+/** Fjern et vennskap – begge veier, ellers blir den ene stående igjen. */
+create or replace function public.remove_friend(p_user uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+begin
+  if uid is null then
+    raise exception 'Du må være logget inn';
+  end if;
+  delete from public.follows
+   where (follower_id = uid and following_id = p_user)
+      or (follower_id = p_user and following_id = uid);
+  delete from public.friend_requests
+   where (requester_id = uid and addressee_id = p_user)
+      or (requester_id = p_user and addressee_id = uid);
+  return true;
+end;
+$$;
+
+revoke all on function public.remove_friend(uuid) from public;
+grant execute on function public.remove_friend(uuid) to authenticated;
+
+/**
+ * Alt en side trenger for å tegne «Legg til venn»-knappen: antall venner,
+ * om dere er venner, om det ligger en ubesvart forespørsel hver vei, og om
+ * du har blokkert spilleren. Erstatter follow_stats på spillerprofilen.
+ */
+create or replace function public.friend_stats(p_user_id uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select jsonb_build_object(
+    'friends', (
+      select count(*)
+        from public.follows a
+        join public.follows b
+          on b.follower_id = a.following_id and b.following_id = a.follower_id
+       where a.follower_id = p_user_id
+    ),
+    'is_friend', public.are_friends(auth.uid(), p_user_id),
+    'request_outgoing', exists (select 1 from public.friend_requests
+                                 where requester_id = auth.uid() and addressee_id = p_user_id),
+    'request_incoming', exists (select 1 from public.friend_requests
+                                 where requester_id = p_user_id and addressee_id = auth.uid()),
+    'is_blocked', exists (select 1 from public.user_blocks
+                           where blocker_id = auth.uid() and blocked_id = p_user_id)
+  );
+$$;
+
+revoke all on function public.friend_stats(uuid) from public;
+grant execute on function public.friend_stats(uuid) to anon, authenticated;
+
+/** Venneforespørsler du har fått, med profilen til den som spør. */
+create or replace function public.friend_requests_incoming()
+returns table (
+  user_id uuid, username text, avatar_color text, avatar_icon text,
+  level int, xp int, created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select p.id, p.username, p.avatar_color, p.avatar_icon, p.level, p.xp, r.created_at
+    from public.friend_requests r
+    join public.profiles p on p.id = r.requester_id
+   where r.addressee_id = auth.uid()
+   order by r.created_at desc;
+$$;
+
+revoke all on function public.friend_requests_incoming() from public;
+grant execute on function public.friend_requests_incoming() to authenticated;
+
+/** Venneforespørsler du selv har sendt og venter på svar på. */
+create or replace function public.friend_requests_outgoing()
+returns table (
+  user_id uuid, username text, avatar_color text, avatar_icon text,
+  created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select p.id, p.username, p.avatar_color, p.avatar_icon, r.created_at
+    from public.friend_requests r
+    join public.profiles p on p.id = r.addressee_id
+   where r.requester_id = auth.uid()
+   order by r.created_at desc;
+$$;
+
+revoke all on function public.friend_requests_outgoing() from public;
+grant execute on function public.friend_requests_outgoing() to authenticated;
+
+/** Vennelista di. */
+create or replace function public.friends_list()
+returns table (
+  user_id uuid, username text, avatar_color text, avatar_icon text,
+  level int, xp int, streak_current int, since timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select p.id, p.username, p.avatar_color, p.avatar_icon,
+         p.level, p.xp, p.streak_current, a.created_at
+    from public.follows a
+    join public.follows b
+      on b.follower_id = a.following_id and b.following_id = a.follower_id
+    join public.profiles p on p.id = a.following_id
+   where a.follower_id = auth.uid()
+   order by p.username;
+$$;
+
+revoke all on function public.friends_list() from public;
+grant execute on function public.friends_list() to authenticated;
+
+/**
+ * Aktiviteten til ÉN spiller. Aktivitetsfeeden lå tidligere samlet på
+ * venner-siden; den hører hjemme på profilen til den det gjelder.
+ * Synlig for venner (og for deg selv), ikke for hvem som helst.
+ */
+create or replace function public.player_activity(p_user_id uuid, p_limit int default 15)
+returns table (
+  game_id text,
+  score numeric,
+  created_at timestamptz,
+  is_personal_best boolean
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  with allowed as (
+    select p_user_id = auth.uid()
+        or (public.are_friends(auth.uid(), p_user_id)
+            and not exists (select 1 from public.profiles
+                             where id = p_user_id and is_hidden)) as ok
+  )
+  select r.game_id, r.score, r.created_at,
+         r.score >= coalesce((select max(x.score) from public.game_records x
+                               where x.user_id = r.user_id and x.game_id = r.game_id), 0)
+    from public.game_records r, allowed a
+   where a.ok
+     and r.user_id = p_user_id
+   order by r.created_at desc
+   limit least(coalesce(p_limit, 15), 50);
+$$;
+
+revoke all on function public.player_activity(uuid, int) from public;
+grant execute on function public.player_activity(uuid, int) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 59. Blokkerte brukere: lista over dem DU har blokkert.
+--
+--     user_blocks har bare id-er, og profiles er stengt for andres rader
+--     (seksjon 24). Uten denne hadde «Blokkerte brukere» på profilsiden vist
+--     en liste med rå uuid-er.
+-- ---------------------------------------------------------------------------
+create or replace function public.my_blocked_users()
+returns table (
+  user_id uuid, username text, avatar_color text, avatar_icon text, created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select p.id, p.username, p.avatar_color, p.avatar_icon, b.created_at
+    from public.user_blocks b
+    join public.profiles p on p.id = b.blocked_id
+   where b.blocker_id = auth.uid()
+   order by b.created_at desc;
+$$;
+
+revoke all on function public.my_blocked_users() from public;
+grant execute on function public.my_blocked_users() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 60. Gruppechatter.
+--
+--     direct_messages (seksjon 52) er bevisst to-parts og har ingen plass til
+--     en tredje. Gruppene får derfor egne tabeller ved siden av, med samme
+--     regler: all skriving gjennom RPC-er som sjekker medlemskap, blokkering
+--     og fartsgrense.
+-- ---------------------------------------------------------------------------
+create table if not exists public.chat_groups (
+  id bigint generated always as identity primary key,
+  name text not null,
+  created_by uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  constraint chat_groups_name_length check (char_length(btrim(name)) between 1 and 60)
+);
+
+create table if not exists public.chat_group_members (
+  group_id bigint not null references public.chat_groups (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  joined_at timestamptz not null default now(),
+  last_read_at timestamptz not null default now(),
+  primary key (group_id, user_id)
+);
+
+create index if not exists chat_group_members_user_idx on public.chat_group_members (user_id);
+
+create table if not exists public.group_messages (
+  id bigint generated always as identity primary key,
+  group_id bigint not null references public.chat_groups (id) on delete cascade,
+  sender_id uuid not null references auth.users (id) on delete cascade,
+  body text not null,
+  created_at timestamptz not null default now(),
+  constraint group_messages_body_length check (char_length(body) between 1 and 1000)
+);
+
+create index if not exists group_messages_group_idx
+  on public.group_messages (group_id, created_at desc);
+
+alter table public.chat_groups enable row level security;
+alter table public.chat_group_members enable row level security;
+alter table public.group_messages enable row level security;
+
+/**
+ * Er jeg medlem av gruppa? Egen SECURITY DEFINER-funksjon fordi en policy på
+ * chat_group_members som spør chat_group_members om det samme går i evig
+ * rekursjon ("infinite recursion detected in policy").
+ */
+create or replace function public.is_group_member(p_group bigint, p_user uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1 from public.chat_group_members
+     where group_id = p_group and user_id = p_user
+  );
+$$;
+
+grant execute on function public.is_group_member(bigint, uuid) to authenticated;
+
+drop policy if exists "chat_groups_select_member" on public.chat_groups;
+create policy "chat_groups_select_member" on public.chat_groups
+  for select using (public.is_group_member(id, auth.uid()));
+
+drop policy if exists "chat_group_members_select_member" on public.chat_group_members;
+create policy "chat_group_members_select_member" on public.chat_group_members
+  for select using (public.is_group_member(group_id, auth.uid()));
+
+drop policy if exists "group_messages_select_member" on public.group_messages;
+create policy "group_messages_select_member" on public.group_messages
+  for select using (public.is_group_member(group_id, auth.uid()));
+
+drop policy if exists "group_messages_delete_sender" on public.group_messages;
+create policy "group_messages_delete_sender" on public.group_messages
+  for delete using (auth.uid() = sender_id);
+
+/**
+ * Oppretter en gruppechat med deg selv + de du velger. Man kan bare legge
+ * til venner – ellers ville en gruppe vært en bakvei rundt både blokkering
+ * og «kun meldinger fra dem jeg følger».
+ */
+create or replace function public.create_group_chat(p_name text, p_members uuid[])
+returns bigint
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  gid bigint;
+  m uuid;
+  added int := 0;
+  clean text;
+begin
+  if uid is null then
+    raise exception 'Du må være logget inn';
+  end if;
+  clean := btrim(coalesce(p_name, ''));
+  if clean = '' then
+    raise exception 'Gruppa må ha et navn';
+  end if;
+  if p_members is null or array_length(p_members, 1) is null then
+    raise exception 'Velg minst én venn å ha med i gruppa';
+  end if;
+
+  insert into public.chat_groups (name, created_by) values (left(clean, 60), uid)
+  returning id into gid;
+
+  insert into public.chat_group_members (group_id, user_id) values (gid, uid);
+
+  foreach m in array p_members loop
+    if m <> uid and public.are_friends(uid, m) then
+      insert into public.chat_group_members (group_id, user_id)
+      values (gid, m)
+      on conflict do nothing;
+      added := added + 1;
+    end if;
+  end loop;
+
+  -- Ingen av de valgte var venner (f.eks. fordi vennskapet ble avsluttet mens
+  -- dialogen sto åpen). Da ville man endt med en «gruppe» med seg selv i.
+  if added = 0 then
+    raise exception 'Du kan bare lage gruppe med vennene dine.';
+  end if;
+
+  return gid;
+end;
+$$;
+
+revoke all on function public.create_group_chat(text, uuid[]) from public;
+grant execute on function public.create_group_chat(text, uuid[]) to authenticated;
+
+/** Legg flere venner inn i en gruppe du selv er medlem av. */
+create or replace function public.add_group_members(p_group bigint, p_members uuid[])
+returns int
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  m uuid;
+  n int := 0;
+begin
+  if uid is null or not public.is_group_member(p_group, uid) then
+    raise exception 'Du er ikke medlem av denne gruppa';
+  end if;
+  if p_members is null then return 0; end if;
+
+  foreach m in array p_members loop
+    if m <> uid and public.are_friends(uid, m)
+       and not public.is_group_member(p_group, m) then
+      insert into public.chat_group_members (group_id, user_id) values (p_group, m);
+      n := n + 1;
+    end if;
+  end loop;
+  return n;
+end;
+$$;
+
+revoke all on function public.add_group_members(bigint, uuid[]) from public;
+grant execute on function public.add_group_members(bigint, uuid[]) to authenticated;
+
+/** Forlat en gruppe. Siste medlem ut slukker lyset – gruppa slettes. */
+create or replace function public.leave_group_chat(p_group bigint)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  n int;
+begin
+  delete from public.chat_group_members where group_id = p_group and user_id = uid;
+  select count(*) into n from public.chat_group_members where group_id = p_group;
+  if n = 0 then
+    delete from public.chat_groups where id = p_group;
+  end if;
+  return true;
+end;
+$$;
+
+revoke all on function public.leave_group_chat(bigint) from public;
+grant execute on function public.leave_group_chat(bigint) to authenticated;
+
+/** Send en melding i en gruppe. Samme fartsgrense som vanlige meldinger. */
+create or replace function public.send_group_message(p_group bigint, p_body text)
+returns public.group_messages
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  msg public.group_messages;
+  per_hour int;
+  enabled boolean;
+  used int;
+  clean text;
+begin
+  if uid is null or not public.is_group_member(p_group, uid) then
+    raise exception 'Du er ikke medlem av denne gruppa';
+  end if;
+
+  select coalesce(dm_enabled, true), coalesce(dm_max_per_hour, 60)
+    into enabled, per_hour from public.app_settings where id = 1;
+  if enabled is false then
+    raise exception 'Meldinger er midlertidig slått av.';
+  end if;
+  per_hour := coalesce(per_hour, 60);
+
+  clean := btrim(coalesce(p_body, ''));
+  if clean = '' then
+    raise exception 'Meldingen er tom';
+  end if;
+
+  if per_hour > 0 then
+    select (select count(*) from public.direct_messages
+             where sender_id = uid and created_at > now() - interval '1 hour')
+         + (select count(*) from public.group_messages
+             where sender_id = uid and created_at > now() - interval '1 hour')
+      into used;
+    if used >= per_hour then
+      raise exception 'Du har sendt mange meldinger på kort tid. Prøv igjen om litt.';
+    end if;
+  end if;
+
+  insert into public.group_messages (group_id, sender_id, body)
+  values (p_group, uid, left(clean, 1000))
+  returning * into msg;
+
+  update public.chat_group_members
+     set last_read_at = now()
+   where group_id = p_group and user_id = uid;
+
+  return msg;
+end;
+$$;
+
+revoke all on function public.send_group_message(bigint, text) from public;
+grant execute on function public.send_group_message(bigint, text) to authenticated;
+
+/** Gruppene dine, med siste melding og antall uleste – som dm_threads(). */
+create or replace function public.group_threads()
+returns table (
+  group_id bigint,
+  name text,
+  member_count int,
+  last_body text,
+  last_at timestamptz,
+  last_sender text,
+  last_from_me boolean,
+  unread int
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  with mine as (
+    select g.id, g.name, g.created_at, m.last_read_at
+      from public.chat_groups g
+      join public.chat_group_members m on m.group_id = g.id
+     where m.user_id = auth.uid()
+  ),
+  latest as (
+    select distinct on (gm.group_id) gm.group_id, gm.body, gm.created_at, gm.sender_id
+      from public.group_messages gm
+     where gm.group_id in (select id from mine)
+     order by gm.group_id, gm.created_at desc
+  )
+  select mi.id,
+         mi.name,
+         (select count(*)::int from public.chat_group_members c where c.group_id = mi.id),
+         l.body,
+         coalesce(l.created_at, mi.created_at),
+         p.username,
+         l.sender_id = auth.uid(),
+         (select count(*)::int from public.group_messages x
+           where x.group_id = mi.id
+             and x.sender_id <> auth.uid()
+             and x.created_at > mi.last_read_at)
+    from mine mi
+    left join latest l on l.group_id = mi.id
+    left join public.profiles p on p.id = l.sender_id
+   order by coalesce(l.created_at, mi.created_at) desc;
+$$;
+
+revoke all on function public.group_threads() from public;
+grant execute on function public.group_threads() to authenticated;
+
+/** Meldingene i én gruppe, eldste først. */
+create or replace function public.group_conversation(p_group bigint, p_limit int default 100)
+returns table (
+  id bigint, sender_id uuid, sender_username text,
+  sender_avatar_color text, sender_avatar_icon text,
+  body text, created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select * from (
+    select gm.id, gm.sender_id, p.username, p.avatar_color, p.avatar_icon,
+           gm.body, gm.created_at
+      from public.group_messages gm
+      join public.profiles p on p.id = gm.sender_id
+     where gm.group_id = p_group
+       and public.is_group_member(p_group, auth.uid())
+     order by gm.created_at desc
+     limit least(coalesce(p_limit, 100), 200)
+  ) t
+  order by created_at;
+$$;
+
+revoke all on function public.group_conversation(bigint, int) from public;
+grant execute on function public.group_conversation(bigint, int) to authenticated;
+
+/** Medlemmene i en gruppe. */
+create or replace function public.group_member_list(p_group bigint)
+returns table (user_id uuid, username text, avatar_color text, avatar_icon text)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select p.id, p.username, p.avatar_color, p.avatar_icon
+    from public.chat_group_members m
+    join public.profiles p on p.id = m.user_id
+   where m.group_id = p_group
+     and public.is_group_member(p_group, auth.uid())
+   order by p.username;
+$$;
+
+revoke all on function public.group_member_list(bigint) from public;
+grant execute on function public.group_member_list(bigint) to authenticated;
+
+/** Marker gruppa som lest. */
+create or replace function public.group_mark_read(p_group bigint)
+returns boolean
+language sql
+security definer
+set search_path = public, pg_temp
+as $$
+  update public.chat_group_members
+     set last_read_at = now()
+   where group_id = p_group and user_id = auth.uid()
+  returning true;
+$$;
+
+revoke all on function public.group_mark_read(bigint) from public;
+grant execute on function public.group_mark_read(bigint) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 61. Meldingsvarsler: prikken i menyen og sprettoppvarselet må telle både
+--     vanlige meldinger og gruppemeldinger, ellers ser man ikke at det ligger
+--     noe nytt i en gruppe.
+-- ---------------------------------------------------------------------------
+create or replace function public.chat_unread_count()
+returns int
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select (select count(*)::int from public.direct_messages
+           where recipient_id = auth.uid() and read_at is null)
+       + coalesce((select sum(x.n)::int from (
+           select (select count(*) from public.group_messages gm
+                    where gm.group_id = m.group_id
+                      and gm.sender_id <> auth.uid()
+                      and gm.created_at > m.last_read_at) as n
+             from public.chat_group_members m
+            where m.user_id = auth.uid()
+         ) x), 0);
+$$;
+
+revoke all on function public.chat_unread_count() from public;
+grant execute on function public.chat_unread_count() to authenticated;
+
+/**
+ * De nyeste uleste meldingene, til sprettoppvarselet som kan dukke opp
+ * uansett hvor på siden man er. Tar med gruppemeldinger, og gir med
+ * brukernavn/gruppenavn slik at varselet kan lenke rett til samtalen.
+ */
+create or replace function public.recent_unread_messages(p_limit int default 5)
+returns table (
+  kind text,
+  ref text,
+  title text,
+  avatar_color text,
+  avatar_icon text,
+  sender_username text,
+  body text,
+  created_at timestamptz,
+  message_id bigint
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select * from (
+    select 'dm'::text as kind,
+           p.username::text as ref,
+           p.username::text as title,
+           p.avatar_color as avatar_color,
+           p.avatar_icon as avatar_icon,
+           p.username::text as sender_username,
+           d.body as body,
+           d.created_at as created_at,
+           d.id as message_id
+      from public.direct_messages d
+      join public.profiles p on p.id = d.sender_id
+     where d.recipient_id = auth.uid() and d.read_at is null
+    union all
+    select 'group'::text, g.id::text, g.name::text,
+           p.avatar_color, p.avatar_icon, p.username::text,
+           gm.body, gm.created_at, gm.id
+      from public.chat_group_members m
+      join public.chat_groups g on g.id = m.group_id
+      join public.group_messages gm on gm.group_id = m.group_id
+      join public.profiles p on p.id = gm.sender_id
+     where m.user_id = auth.uid()
+       and gm.sender_id <> auth.uid()
+       and gm.created_at > m.last_read_at
+  ) t
+  order by created_at desc
+  limit least(coalesce(p_limit, 5), 20);
+$$;
+
+revoke all on function public.recent_unread_messages(int) from public;
+grant execute on function public.recent_unread_messages(int) to authenticated;
+
+-- Sprettoppvarselet skal kunne skrus av. Standard er på, men valget er
+-- brukerens – derfor en kolonne på profilen og ikke bare noe i nettleseren,
+-- slik at innstillingen følger deg mellom enheter.
+alter table public.profiles add column if not exists dm_popups_enabled boolean not null default true;
+
+-- ---------------------------------------------------------------------------
+-- 62. Varsler til admin.
+--
+--     Den som drifter siden skal se at det kommer nye brukere, og særlig at
+--     noen blokkerer noen – blokkering er ofte første tegn på at noe har
+--     skjedd i en samtale.
+-- ---------------------------------------------------------------------------
+create table if not exists public.admin_notifications (
+  id bigint generated always as identity primary key,
+  kind text not null,
+  actor_id uuid references auth.users (id) on delete set null,
+  target_id uuid references auth.users (id) on delete set null,
+  body text not null,
+  created_at timestamptz not null default now(),
+  read_at timestamptz,
+  constraint admin_notifications_kind check (kind in ('signup', 'block'))
+);
+
+create index if not exists admin_notifications_unread_idx
+  on public.admin_notifications (created_at desc) where read_at is null;
+
+alter table public.admin_notifications enable row level security;
+
+-- Kun admin ser varslene. Radene skrives av triggerne under (SECURITY
+-- DEFINER), ikke av klienten, så det finnes ingen insert-policy.
+drop policy if exists "admin_notifications_admin_read" on public.admin_notifications;
+create policy "admin_notifications_admin_read" on public.admin_notifications
+  for select using (public.is_admin());
+
+drop policy if exists "admin_notifications_admin_update" on public.admin_notifications;
+create policy "admin_notifications_admin_update" on public.admin_notifications
+  for update using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "admin_notifications_admin_delete" on public.admin_notifications;
+create policy "admin_notifications_admin_delete" on public.admin_notifications
+  for delete using (public.is_admin());
+
+create or replace function public.notify_admin_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  insert into public.admin_notifications (kind, actor_id, body)
+  values ('signup', new.id, new.username || ' registrerte seg');
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_notify_admin on public.profiles;
+create trigger profiles_notify_admin
+  after insert on public.profiles
+  for each row execute function public.notify_admin_new_user();
+
+create or replace function public.notify_admin_block()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  blocker_name text;
+  blocked_name text;
+begin
+  select username into blocker_name from public.profiles where id = new.blocker_id;
+  select username into blocked_name from public.profiles where id = new.blocked_id;
+  insert into public.admin_notifications (kind, actor_id, target_id, body)
+  values ('block',
+          new.blocker_id,
+          new.blocked_id,
+          coalesce(blocker_name, 'En bruker') || ' blokkerte ' || coalesce(blocked_name, 'en bruker'));
+  return new;
+end;
+$$;
+
+drop trigger if exists user_blocks_notify_admin on public.user_blocks;
+create trigger user_blocks_notify_admin
+  after insert on public.user_blocks
+  for each row execute function public.notify_admin_block();
+
+/** Varslene, nyeste først, med brukernavnene slått opp. */
+create or replace function public.admin_notifications_list(p_limit int default 50)
+returns table (
+  id bigint, kind text, body text, created_at timestamptz, read_at timestamptz,
+  actor_id uuid, actor_username text,
+  target_id uuid, target_username text
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select n.id, n.kind, n.body, n.created_at, n.read_at,
+         n.actor_id, a.username, n.target_id, t.username
+    from public.admin_notifications n
+    left join public.profiles a on a.id = n.actor_id
+    left join public.profiles t on t.id = n.target_id
+   where public.is_admin()
+   order by n.created_at desc
+   limit least(coalesce(p_limit, 50), 200);
+$$;
+
+revoke all on function public.admin_notifications_list(int) from public;
+grant execute on function public.admin_notifications_list(int) to authenticated;
+
+create or replace function public.admin_notifications_mark_read()
+returns int
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  n int;
+begin
+  if not public.is_admin() then
+    raise exception 'Kun for administratorer';
+  end if;
+  update public.admin_notifications set read_at = now() where read_at is null;
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+
+revoke all on function public.admin_notifications_mark_read() from public;
+grant execute on function public.admin_notifications_mark_read() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 63. Blokkeringer i adminpanelet.
+--
+--     Admin må kunne se hvem som har blokkert hvem, og lese samtalen mellom
+--     partene – ellers er det umulig å vurdere om det ligger noe alvorlig bak
+--     en blokkering. Dette er bevisst et innsyn kun administratorer har, og
+--     det er beskrevet i vilkårene.
+-- ---------------------------------------------------------------------------
+create or replace function public.admin_blocks_overview()
+returns table (
+  blocker_id uuid, blocker_username text,
+  blocked_id uuid, blocked_username text,
+  created_at timestamptz,
+  message_count int
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select b.blocker_id, p1.username, b.blocked_id, p2.username, b.created_at,
+         (select count(*)::int from public.direct_messages d
+           where d.thread_key = public.dm_thread_key(b.blocker_id, b.blocked_id))
+    from public.user_blocks b
+    join public.profiles p1 on p1.id = b.blocker_id
+    join public.profiles p2 on p2.id = b.blocked_id
+   where public.is_admin()
+   order by b.created_at desc;
+$$;
+
+revoke all on function public.admin_blocks_overview() from public;
+grant execute on function public.admin_blocks_overview() to authenticated;
+
+/** Samtalen mellom to brukere, for admin. Eldste melding først. */
+create or replace function public.admin_conversation(p_a uuid, p_b uuid)
+returns table (
+  id bigint, sender_id uuid, sender_username text,
+  body text, created_at timestamptz, read_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select d.id, d.sender_id, p.username, d.body, d.created_at, d.read_at
+    from public.direct_messages d
+    join public.profiles p on p.id = d.sender_id
+   where public.is_admin()
+     and d.thread_key = public.dm_thread_key(p_a, p_b)
+   order by d.created_at;
+$$;
+
+revoke all on function public.admin_conversation(uuid, uuid) from public;
+grant execute on function public.admin_conversation(uuid, uuid) to authenticated;
+
+/** Lar admin fjerne en blokkering (f.eks. etter at saken er ryddet opp i). */
+create or replace function public.admin_remove_block(p_blocker uuid, p_blocked uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Kun for administratorer';
+  end if;
+  delete from public.user_blocks
+   where blocker_id = p_blocker and blocked_id = p_blocked;
+  return true;
+end;
+$$;
+
+revoke all on function public.admin_remove_block(uuid, uuid) from public;
+grant execute on function public.admin_remove_block(uuid, uuid) to authenticated;
+
+
+-- ---------------------------------------------------------------------------
+-- 64. Ikon på guidene.
+--
+--     Guidekortene skilte seg bare på tittel og et eventuelt toppbilde. Et
+--     lite symbol gjør det mulig å se hva en guide handler om på et blunk,
+--     også der det ikke finnes noe bilde. Verdien er en nøkkel fra settet i
+--     js/guides.js (GUIDE_ICONS), ikke fri tekst eller en emoji, slik at
+--     symbolet tegnes likt i alle nettlesere.
+-- ---------------------------------------------------------------------------
+alter table public.guides add column if not exists icon text not null default '';
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

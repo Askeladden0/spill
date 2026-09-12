@@ -29,6 +29,7 @@
       <div class="settings-layout">
         <nav class="settings-nav" data-settings-nav>
           <a href="#profil-seksjon" class="settings-nav-link is-active" data-nav-target="profil-seksjon">Profil</a>
+          <a href="#varsler-seksjon" class="settings-nav-link" data-nav-target="varsler-seksjon">Varsler</a>
           <a href="#personvern-seksjon" class="settings-nav-link" data-nav-target="personvern-seksjon">Personvern</a>
           <a href="#konto-seksjon" class="settings-nav-link" data-nav-target="konto-seksjon">Konto</a>
         </nav>
@@ -72,6 +73,23 @@
                 <span data-login-display>Brukernavn og passord</span>
               </div>
               <span class="badge-locked">UTEN E-POST</span>
+            </div>
+          </div>
+
+          <div class="settings-card" id="varsler-seksjon">
+            <div class="settings-section">
+              <h2>Varsler</h2>
+              <span class="settings-section-sub">Hva som skal dukke opp mens du er andre steder på siden.</span>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Vis nye meldinger som sprettopp</span>
+                <span>Et lite kort nede i hjørnet når noen skriver til deg, uansett hvilken side du står på. Prikken i menyen vises uansett.</span>
+              </div>
+              <button type="button" class="toggle-switch" data-toggle-popups aria-label="Vis nye meldinger som sprettopp">
+                <span class="toggle-switch-knob"></span>
+              </button>
             </div>
           </div>
 
@@ -163,6 +181,8 @@
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/social.js"></script>
+<script src="js/dm-popup.js"></script>
 <script src="js/visit-tracking.js"></script>
 <script src="js/games-data.js"></script>
 <script>
@@ -200,6 +220,25 @@
     const toggle = document.querySelector("[data-toggle-hidden]");
     toggle.classList.toggle("is-on", !!profile.is_hidden);
   }
+
+  // Sprettoppvarselet (js/dm-popup.js) er på som standard. Kolonnen mangler
+  // på databaser der migrasjonen ikke er kjørt – da regnes den som på, som
+  // er standardverdien.
+  function renderNotifications() {
+    const toggle = document.querySelector("[data-toggle-popups]");
+    toggle.classList.toggle("is-on", profile.dm_popups_enabled !== false);
+  }
+
+  document.querySelector("[data-toggle-popups]").addEventListener("click", async () => {
+    const nextValue = profile.dm_popups_enabled === false;
+    const { error } = await sb.from("profiles").update({ dm_popups_enabled: nextValue }).eq("id", profile.id);
+    if (error) {
+      console.error(error);
+      return;
+    }
+    profile.dm_popups_enabled = nextValue;
+    renderNotifications();
+  });
 
   // ---------- Brukernavn ----------
   const usernameToggleBtn = document.querySelector("[data-toggle-username-form]");
@@ -274,7 +313,7 @@
     figurePicker.innerHTML = (avatarOptions.icons || [])
       .map(
         (key) => `
-        <button type="button" class="figure-swatch ${key === profile.avatar_icon ? "is-selected" : ""}" data-figure="${key}" title="${Avatars.figureLabel(key)}">${Avatars.figureSVG(key)}</button>
+        <button type="button" class="figure-swatch${Avatars.isImageIcon(key) ? " avatar-image-swatch" : ""} ${key === profile.avatar_icon ? "is-selected" : ""}" data-figure="${key}" title="${Avatars.figureLabel(key)}">${Avatars.figureSVG(key)}</button>
       `
       )
       .join("");
@@ -357,6 +396,7 @@
     document.querySelector("[data-settings-main]").hidden = false;
     renderIdentity();
     renderPrivacy();
+    renderNotifications();
     await loadAvatarOptions();
   })();
 })();

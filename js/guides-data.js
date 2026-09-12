@@ -24,6 +24,7 @@ window.STUDILLA_GUIDES = [
     title: "Hvordan tjene penger på å sitte i elevrådet",
     category: "Elevrådet",
     excerpt: "Honorar, møtegodtgjørelse, reisedekning og fondene elevrådet kan søke på.",
+    icon: "penger",
     valueLabel: "Opptil 12 000 kr",
     coverUrl: null,
     featured: true,
@@ -130,6 +131,7 @@ function mapGuideRow(g) {
     title: g.title || "",
     category: g.category || "",
     excerpt: g.excerpt || "",
+    icon: g.icon || "",
     valueLabel: g.value_label || "",
     readTime: g.read_time || "",
     coverUrl: g.cover_url || null,
@@ -265,6 +267,7 @@ window.StudillaGuides = {
       title: fields.title || "Ny guide",
       category: fields.category || "",
       excerpt: fields.excerpt || "",
+      icon: fields.icon || "",
       value_label: fields.valueLabel || "",
       read_time: fields.readTime || "",
       cover_url: fields.coverUrl || null,
@@ -294,6 +297,7 @@ window.StudillaGuides = {
     if (fields.title !== undefined) patch.title = fields.title;
     if (fields.category !== undefined) patch.category = fields.category;
     if (fields.excerpt !== undefined) patch.excerpt = fields.excerpt;
+    if (fields.icon !== undefined) patch.icon = fields.icon;
     if (fields.valueLabel !== undefined) patch.value_label = fields.valueLabel;
     if (fields.readTime !== undefined) patch.read_time = fields.readTime;
     if (fields.coverUrl !== undefined) patch.cover_url = fields.coverUrl;

@@ -571,3 +571,56 @@ a.guide-trick-card:hover { border-color: rgba(46, 232, 127, .35); }
 .guide-toc-link:hover { color: var(--accent); }
 
 @media (max-width: 900px) { .guide-aside { position: static; } }
+
+/* --------------------------------------------------------------------------
+   Symbol på guidene
+
+   Guidekortene skilte seg bare på tittel og et eventuelt toppbilde. Symbolet
+   ligger som et lite merke øverst til venstre på kortet, og gjentas foran
+   kategorien inne i guiden.
+   -------------------------------------------------------------------------- */
+.guide-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+
+.guide-card-icon {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: rgba(13, 17, 23, .72);
+  border: 1px solid var(--accent-soft-strong);
+  color: var(--accent);
+  backdrop-filter: blur(4px);
+}
+
+/* Merkene er allerede piller med tekst – ikonet legger seg foran teksten. */
+.guide-feature-badge,
+.guide-category-pill { display: inline-flex; align-items: center; gap: 7px; }
+
+/* Velgeren i guide-skjemaet. */
+.guide-icon-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.guide-icon-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .12s ease, border-color .12s ease, background .12s ease;
+}
+.guide-icon-choice:hover { color: var(--text); border-color: rgba(46, 232, 127, .4); }
+.guide-icon-choice.is-active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.guide-icon-choice.is-clear { color: var(--muted-3); }

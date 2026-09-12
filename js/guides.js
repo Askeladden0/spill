@@ -69,6 +69,38 @@
     return `<svg class="guide-ico" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   }
 
+  /**
+   * Symbolene en guide kan merkes med. Guidekortene skilte seg tidligere bare
+   * på tittel og et eventuelt toppbilde; et ikon gjør at man ser hva guiden
+   * handler om på et blunk, også der det ikke ligger noe bilde. Settet er
+   * bevisst lite og fast – nøkkelen lagres i guides.icon (schema.sql seksjon
+   * 64), slik at symbolet tegnes likt i alle nettlesere.
+   */
+  const GUIDE_ICONS = [
+    ["penger", "Penger", '<circle cx="12" cy="12" r="9"></circle><path d="M14.5 9h-3.2a1.8 1.8 0 0 0 0 3.6h1.4a1.8 1.8 0 0 1 0 3.6H9.5"></path><path d="M12 7.5v9"></path>'],
+    ["sparing", "Sparing", '<path d="M4 11a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v4a3 3 0 0 1-3 3h-1v2h-3v-2H8v2H5v-2.4A7 7 0 0 1 4 15Z"></path><circle cx="15.5" cy="11" r="1"></circle><path d="M8 8h3"></path>'],
+    ["skole", "Skole", '<path d="M3 8.5 12 4l9 4.5-9 4.5Z"></path><path d="M7 11v5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-5"></path><path d="M21 8.5V15"></path>'],
+    ["dokument", "Dokument", '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"></path><path d="M14 3v5h5"></path><path d="M9 13h6M9 17h4"></path>'],
+    ["kalender", "Kalender", '<rect x="3" y="5" width="18" height="16" rx="2.5"></rect><path d="M3 10h18M8 3v4M16 3v4"></path>'],
+    ["tips", "Tips", '<path d="M9.5 18h5"></path><path d="M10 21h4"></path><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6h5.4c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z"></path>'],
+    ["megafon", "Si ifra", '<path d="M4 10v4a2 2 0 0 0 2 2h2l7 4V4L8 8H6a2 2 0 0 0-2 2Z"></path><path d="M18.5 9a4 4 0 0 1 0 6"></path>'],
+    ["graf", "Tall og statistikk", '<path d="M3 17l5-6 4 4 4-7 5 5"></path><path d="M3 21h18"></path>'],
+    ["gruppe", "Samarbeid", '<circle cx="9" cy="8" r="3.4"></circle><path d="M2.5 20c0-3.6 2.9-5.6 6.5-5.6s6.5 2 6.5 5.6"></path><path d="M16 5.2a3.4 3.4 0 0 1 0 6.6"></path><path d="M18 14.8c2.2.6 3.5 2.3 3.5 5.2"></path>'],
+    ["klokke", "Tidsbruk", '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5.2l3.4 2"></path>'],
+    ["verktoy", "Praktisk", '<path d="M14.7 6.3a4 4 0 0 0 5 5L14 17l-3 3-3-3 3-3Z"></path><path d="m6.5 6.5 3 3"></path>'],
+    ["stjerne", "Anbefalt", '<path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 17l-5.3 2.7 1.1-5.9L3.5 9.7l5.9-.8Z"></path>'],
+  ];
+
+  const GUIDE_ICON_PATHS = Object.fromEntries(GUIDE_ICONS.map(([key, , d]) => [key, d]));
+
+  /** Tegner et guide-ikon, eller ingenting hvis guiden ikke har valgt noe. */
+  function guideIcon(key, size) {
+    const d = GUIDE_ICON_PATHS[key];
+    if (!d) return "";
+    const s = size || 18;
+    return `<span class="guide-icon"><svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg></span>`;
+  }
+
   let toastTimer = null;
   function flash(msg) {
     const el = document.querySelector("[data-toast]");
@@ -214,10 +246,10 @@
   }
 
   function emptyGuideDraft() {
-    return markPristine({ id: null, tempId: "new-" + Date.now(), title: "", category: "", excerpt: "", valueLabel: "", coverUrl: null, featured: false, uploadBusy: false });
+    return markPristine({ id: null, tempId: "new-" + Date.now(), title: "", category: "", excerpt: "", icon: "", valueLabel: "", coverUrl: null, featured: false, uploadBusy: false });
   }
   function guideDraftFrom(g) {
-    return markPristine({ id: g.id, tempId: g.id, title: g.title, category: g.category, excerpt: g.excerpt, valueLabel: g.valueLabel, coverUrl: g.coverUrl, featured: g.featured, hidden: g.hidden, uploadBusy: false });
+    return markPristine({ id: g.id, tempId: g.id, title: g.title, category: g.category, excerpt: g.excerpt, icon: g.icon || "", valueLabel: g.valueLabel, coverUrl: g.coverUrl, featured: g.featured, hidden: g.hidden, uploadBusy: false });
   }
   function getCurrentGuide() { return Guides.list().find((g) => g.id === currentGuideId) || null; }
   // Skjulte guider (g.hidden) er bare synlige for admin – brukes på guider.html
@@ -267,6 +299,7 @@
           <span class="guide-card-thumb">
             ${draft.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(draft.coverUrl)}" alt="">` : `<span class="guide-card-thumb-slot">${icon("image", 20)}</span>`}
             <span class="guide-card-gradient"></span>
+            ${draft.icon ? `<span class="guide-card-icon">${guideIcon(draft.icon, 18)}</span>` : ""}
             <h3 class="guide-card-title">${escapeHTML(draft.title) || '<span class="is-placeholder">Overskriften din havner her</span>'}</h3>
           </span>
           ${draft.hidden ? `<span class="guide-status-badge is-hidden">${icon("eyeOff", 13)}Skjult</span>` : ""}
@@ -315,6 +348,17 @@
                 removeAttr: draft.coverUrl ? "data-gf-remove-cover" : null, ratio: "16 / 9",
                 hint: "PNG, JPG eller WEBP · maks 5 MB · best i 16:9",
               })}
+            </section>
+
+            <section class="guide-form-section">
+              <span class="guide-form-legend">Symbol</span>
+              <div class="guide-icon-row">
+                ${GUIDE_ICONS.map(([key, label]) => `
+                  <button type="button" class="guide-icon-choice${draft.icon === key ? " is-active" : ""}" data-gf-choice="icon" data-value="${key}" title="${escapeHTML(label)}" aria-label="${escapeHTML(label)}">${guideIcon(key, 20)}</button>
+                `).join("")}
+                ${draft.icon ? `<button type="button" class="guide-icon-choice is-clear" data-gf-choice="icon" data-value="" title="Uten symbol" aria-label="Uten symbol">${icon("x", 16)}</button>` : ""}
+              </div>
+              <span class="guide-field-hint">Vises på kortet og øverst i guiden. Valgfritt.</span>
             </section>
 
             <section class="guide-form-section">
@@ -398,7 +442,7 @@
 
     const fields = {
       title, category: d.category.trim(), excerpt: d.excerpt.trim(),
-      valueLabel: d.valueLabel.trim(), coverUrl: d.coverUrl,
+      icon: d.icon || "", valueLabel: d.valueLabel.trim(), coverUrl: d.coverUrl,
     };
     if (d.id !== null) { fields.featured = !!d.featured; fields.hidden = !!d.hidden; }
 
@@ -538,7 +582,7 @@
     el.innerHTML = `
       <div class="guide-feature">
         <div class="guide-feature-text">
-          <span class="guide-feature-badge">Anbefalt guide</span>
+          <span class="guide-feature-badge">${featured.icon ? guideIcon(featured.icon, 15) : ""}Anbefalt guide</span>
           <h2>${escapeHTML(featured.title)}</h2>
           <p>${escapeHTML(featured.excerpt)}</p>
           <div class="guide-feature-actions">
@@ -572,6 +616,7 @@
         <a href="guide.html?id=${encodeURIComponent(g.id)}" class="guide-card-thumb">
           ${g.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(g.coverUrl)}" alt="">` : `<span class="guide-card-thumb-slot">${icon("image", 20)}</span>`}
           <div class="guide-card-gradient"></div>
+          ${g.icon ? `<span class="guide-card-icon">${guideIcon(g.icon, 18)}</span>` : ""}
           <h3 class="guide-card-title">${escapeHTML(g.title)}</h3>
         </a>
         ${isHidden && admin ? `<span class="guide-status-badge is-hidden">${icon("eyeOff", 13)}Skjult</span>` : ""}
@@ -1178,7 +1223,9 @@
     const metaDesc = document.querySelector("[data-guide-meta-description]");
     if (metaDesc) metaDesc.setAttribute("content", g.excerpt || "");
 
-    document.querySelector("[data-guide-category]").textContent = g.category || "Guide";
+    // Symbolet står foran kategorien øverst i guiden, samme ikon som på kortet.
+    document.querySelector("[data-guide-category]").innerHTML =
+      (g.icon ? guideIcon(g.icon, 15) : "") + escapeHTML(g.category || "Guide");
     document.querySelector("[data-guide-title]").textContent = g.title;
     document.querySelector("[data-guide-excerpt]").textContent = g.excerpt;
     document.querySelector("[data-guide-updated]").textContent = g.updatedAt ? `Oppdatert ${formatDate(g.updatedAt)}` : "";

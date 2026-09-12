@@ -1,10 +1,16 @@
 /**
- * Studilla – det sosiale laget: følging, meldinger og aktivitetsfeed.
+ * Studilla – det sosiale laget: venner, meldinger, gruppechatter og
+ * blokkering.
  *
  * Alt som skriver noe går gjennom RPC-er i supabase/schema.sql (seksjon
- * 50–54), ikke gjennom rå tabellskriving, slik at blokkering, fartsgrenser og
+ * 50–63), ikke gjennom rå tabellskriving, slik at blokkering, fartsgrenser og
  * «kun fra dem jeg følger» håndheves samme sted uansett hvilken side som
  * kaller det.
+ *
+ * Vennskap er gjensidig: man sender en forespørsel med «Legg til venn», og
+ * den andre godtar eller avslår. Selve vennskapet lagres fortsatt som to
+ * rader i follows (én hver vei), slik at vennerangeringen og resten som
+ * allerede leste den tabellen fungerer uendret.
  *
  * Krever js/supabase-config.js og js/auth.js lastet først.
  */
@@ -35,7 +41,8 @@
     warned = true;
     console.warn(
       "[Studilla] Det sosiale laget mangler i databasen. Kjør supabase/schema.sql " +
-      "på nytt (seksjon 50–54) for å slå på følging, meldinger og vennerangering."
+      "på nytt (seksjon 50–63) for å slå på venner, meldinger, gruppechatter og " +
+      "vennerangeringen."
     );
   }
 
@@ -50,102 +57,126 @@
     return data;
   }
 
+  /** Den innloggede brukerens id, eller null. */
+  async function myId() {
+    const session = await sb.auth.getSession();
+    const user = session.data.session && session.data.session.user;
+    return user ? user.id : null;
+  }
+
   /* ---------------------------------------------------------------- *
-   * Følging
+   * Venner
    * ---------------------------------------------------------------- */
 
-  /** { followers, following, is_following, follows_you } for én spiller. */
-  async function followStats(userId) {
-    const data = await rpc("follow_stats", { p_user_id: userId });
-    return data || { followers: 0, following: 0, is_following: false, follows_you: false };
+  /**
+   * { friends, is_friend, request_outgoing, request_incoming, is_blocked }
+   * for én spiller. Ett kall, siden dette vises på hver eneste spillerprofil.
+   */
+  async function friendStats(userId) {
+    const data = await rpc("friend_stats", { p_user_id: userId });
+    return data || {
+      friends: 0, is_friend: false,
+      request_outgoing: false, request_incoming: false, is_blocked: false,
+    };
   }
 
-  async function follow(userId) {
-    const session = await sb.auth.getSession();
-    const me = session.data.session && session.data.session.user;
-    if (!me) throw new Error("Du må være logget inn for å følge noen.");
-    const { error } = await sb.from("follows").insert({ follower_id: me.id, following_id: userId });
-    // 23505 = raden finnes allerede; det er ikke en feil for brukeren.
-    if (error && error.code !== "23505") {
-      if (isMissing(error)) { noteMissing(); return false; }
-      throw error;
-    }
-    return true;
-  }
-
-  async function unfollow(userId) {
-    const session = await sb.auth.getSession();
-    const me = session.data.session && session.data.session.user;
-    if (!me) return false;
-    const { error } = await sb
-      .from("follows")
-      .delete()
-      .eq("follower_id", me.id)
-      .eq("following_id", userId);
+  /** Sender en venneforespørsel. Gir "friends" hvis dere ble venner direkte. */
+  async function addFriend(userId) {
+    const { data, error } = await sb.rpc("send_friend_request", { p_user: userId });
     if (error) {
-      if (isMissing(error)) { noteMissing(); return false; }
-      throw error;
+      if (isMissing(error)) { noteMissing(); throw new Error("Venner er ikke satt opp ennå."); }
+      throw new Error(error.message || "Klarte ikke sende venneforespørselen.");
     }
-    return true;
+    return data;
   }
 
-  /** Id-ene til alle den innloggede følger – brukes av vennerangeringen. */
-  async function followingIds() {
-    const session = await sb.auth.getSession();
-    const me = session.data.session && session.data.session.user;
-    if (!me) return [];
-    const { data, error } = await sb.from("follows").select("following_id").eq("follower_id", me.id);
-    if (error) {
-      if (isMissing(error)) noteMissing();
-      return [];
-    }
-    return (data || []).map((r) => r.following_id);
+  async function respondFriendRequest(userId, accept) {
+    const { data, error } = await sb.rpc("respond_friend_request", {
+      p_requester: userId,
+      p_accept: !!accept,
+    });
+    if (error) throw new Error(error.message || "Klarte ikke svare på forespørselen.");
+    return data;
   }
+
+  async function cancelFriendRequest(userId) {
+    return await rpc("cancel_friend_request", { p_user: userId });
+  }
+
+  async function removeFriend(userId) {
+    return await rpc("remove_friend", { p_user: userId });
+  }
+
+  async function incomingRequests() {
+    return (await rpc("friend_requests_incoming")) || [];
+  }
+
+  async function outgoingRequests() {
+    return (await rpc("friend_requests_outgoing")) || [];
+  }
+
+  async function friendsList() {
+    return (await rpc("friends_list")) || [];
+  }
+
+  /** Bare id-ene til vennene dine – brukes av vennerangeringen. */
+  async function friendIds() {
+    return (await friendsList()).map((r) => r.user_id);
+  }
+
+  /** Aktiviteten til én spiller – vises på spillerprofilen. */
+  async function playerActivity(userId, limit) {
+    return (await rpc("player_activity", { p_user_id: userId, p_limit: limit || 15 })) || [];
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Blokkering
+   * ---------------------------------------------------------------- */
 
   async function block(userId) {
-    const session = await sb.auth.getSession();
-    const me = session.data.session && session.data.session.user;
+    const me = await myId();
     if (!me) throw new Error("Du må være logget inn.");
-    const { error } = await sb.from("user_blocks").insert({ blocker_id: me.id, blocked_id: userId });
+    const { error } = await sb.from("user_blocks").insert({ blocker_id: me, blocked_id: userId });
     if (error && error.code !== "23505") {
       if (isMissing(error)) { noteMissing(); return false; }
       throw error;
     }
+    // Blokkering avslutter også et eventuelt vennskap og en ubesvart
+    // forespørsel – ellers blir man stående i hverandres lister.
+    try { await removeFriend(userId); } catch (e) { /* blokkeringen er det viktige */ }
     return true;
   }
 
   async function unblock(userId) {
-    const session = await sb.auth.getSession();
-    const me = session.data.session && session.data.session.user;
+    const me = await myId();
     if (!me) return false;
     const { error } = await sb
-      .from("user_blocks").delete().eq("blocker_id", me.id).eq("blocked_id", userId);
+      .from("user_blocks").delete().eq("blocker_id", me).eq("blocked_id", userId);
     if (error && !isMissing(error)) throw error;
     return true;
   }
 
   async function isBlocked(userId) {
-    const session = await sb.auth.getSession();
-    const me = session.data.session && session.data.session.user;
+    const me = await myId();
     if (!me) return false;
     const { data, error } = await sb
       .from("user_blocks").select("blocked_id")
-      .eq("blocker_id", me.id).eq("blocked_id", userId).maybeSingle();
+      .eq("blocker_id", me).eq("blocked_id", userId).maybeSingle();
     if (error) return false;
     return !!data;
   }
 
+  /** De du har blokkert, med brukernavn og profilbilde. */
+  async function blockedUsers() {
+    return (await rpc("my_blocked_users")) || [];
+  }
+
   /* ---------------------------------------------------------------- *
-   * Meldinger
+   * Meldinger – to parter
    * ---------------------------------------------------------------- */
 
   async function threads() {
     return (await rpc("dm_threads")) || [];
-  }
-
-  async function unreadCount() {
-    const n = await rpc("dm_unread_count");
-    return Number(n) || 0;
   }
 
   async function markRead(otherId) {
@@ -167,10 +198,9 @@
 
   /** Meldingene i én samtale, eldste først. */
   async function conversation(otherId, limit) {
-    const session = await sb.auth.getSession();
-    const me = session.data.session && session.data.session.user;
+    const me = await myId();
     if (!me) return [];
-    const key = [me.id, otherId].sort().join(":");
+    const key = [me, otherId].sort().join(":");
     const { data, error } = await sb
       .from("direct_messages")
       .select("id, sender_id, recipient_id, body, created_at, read_at")
@@ -184,6 +214,54 @@
     return (data || []).reverse();
   }
 
+  /* ---------------------------------------------------------------- *
+   * Gruppechatter
+   * ---------------------------------------------------------------- */
+
+  async function createGroup(name, memberIds) {
+    const { data, error } = await sb.rpc("create_group_chat", {
+      p_name: name,
+      p_members: memberIds,
+    });
+    if (error) {
+      if (isMissing(error)) { noteMissing(); throw new Error("Gruppechatter er ikke satt opp ennå."); }
+      throw new Error(error.message || "Klarte ikke opprette gruppa.");
+    }
+    return data;
+  }
+
+  async function groupThreads() {
+    return (await rpc("group_threads")) || [];
+  }
+
+  async function groupConversation(groupId, limit) {
+    return (await rpc("group_conversation", { p_group: groupId, p_limit: limit || 100 })) || [];
+  }
+
+  async function sendGroupMessage(groupId, body) {
+    const { data, error } = await sb.rpc("send_group_message", { p_group: groupId, p_body: body });
+    if (error) {
+      if (isMissing(error)) { noteMissing(); throw new Error("Gruppechatter er ikke satt opp ennå."); }
+      throw new Error(error.message || "Klarte ikke sende meldingen.");
+    }
+    return data;
+  }
+
+  async function groupMarkRead(groupId) {
+    return await rpc("group_mark_read", { p_group: groupId });
+  }
+
+  async function groupMembers(groupId) {
+    return (await rpc("group_member_list", { p_group: groupId })) || [];
+  }
+
+  async function addGroupMembers(groupId, memberIds) {
+    return await rpc("add_group_members", { p_group: groupId, p_members: memberIds });
+  }
+
+  async function leaveGroup(groupId) {
+    return await rpc("leave_group_chat", { p_group: groupId });
+  }
 
   /* ---------------------------------------------------------------- *
    * Vedlegg i meldinger
@@ -219,12 +297,8 @@
   }
 
   /* ---------------------------------------------------------------- *
-   * Aktivitet og søk
+   * Søk
    * ---------------------------------------------------------------- */
-
-  async function feed(limit) {
-    return (await rpc("following_feed", { p_limit: limit || 30 })) || [];
-  }
 
   async function findPlayers(query, limit) {
     return (await rpc("find_players", { p_query: query || "", p_limit: limit || 10 })) || [];
@@ -241,11 +315,29 @@
   }
 
   /* ---------------------------------------------------------------- *
-   * Uleste-prikk i toppmenyen
+   * Uleste – prikk i toppmenyen og sprettoppvarsel
    * ---------------------------------------------------------------- */
 
   /**
-   * Setter en liten prikk på «Meldinger» i toppmenyen når det ligger uleste.
+   * Antall uleste, både vanlige meldinger og gruppemeldinger. Faller
+   * tilbake til dm_unread_count på databaser der gruppechattene ikke er
+   * migrert inn ennå.
+   */
+  async function unreadCount() {
+    const { data, error } = await sb.rpc("chat_unread_count");
+    if (!error) { available = true; return Number(data) || 0; }
+    if (!isMissing(error)) throw error;
+    const n = await rpc("dm_unread_count");
+    return Number(n) || 0;
+  }
+
+  /** De nyeste uleste meldingene – brukes av sprettoppvarselet. */
+  async function recentUnread(limit) {
+    return (await rpc("recent_unread_messages", { p_limit: limit || 5 })) || [];
+  }
+
+  /**
+   * Setter en liten prikk på «Venner» i toppmenyen når det ligger uleste.
    * Kalles av js/auth.js hver gang headeren tegnes, slik at tallet er ferskt
    * uansett hvilken side man står på.
    */
@@ -294,11 +386,15 @@
   }
 
   window.StudillaSocial = {
-    followStats, follow, unfollow, followingIds,
-    block, unblock, isBlocked,
-    threads, unreadCount, markRead, send, conversation,
+    myId,
+    friendStats, addFriend, respondFriendRequest, cancelFriendRequest, removeFriend,
+    incomingRequests, outgoingRequests, friendsList, friendIds, playerActivity,
+    block, unblock, isBlocked, blockedUsers,
+    threads, unreadCount, recentUnread, markRead, send, conversation,
+    createGroup, groupThreads, groupConversation, sendGroupMessage,
+    groupMarkRead, groupMembers, addGroupMembers, leaveGroup,
     parseBody, buildBody,
-    feed, findPlayers, profileByUsername,
+    findPlayers, profileByUsername,
     refreshUnreadBadge, timeAgo, escapeHTML,
     isAvailable: () => available !== false,
   };

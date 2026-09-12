@@ -23,8 +23,11 @@
         <div class="game-body">
           <!-- Knappen lå tidligere inni <a>, som både er ugyldig HTML
                (klikkbart element inni et klikkbart element) og ga to
-               tabulator-stopp for samme mål. Nå er hele kortet én lenke. -->
+               tabulator-stopp for samme mål. Nå er hele kortet én lenke.
+               «Se rangering» ved siden av gir veien til topplista for nettopp
+               dette trikset, uten å måtte finne det i en nedtrekksmeny. -->
           <a class="btn-start" href="player.html?id=${encodeURIComponent(g.id)}">Start</a>
+          <a class="btn-ghost btn-card-secondary" href="rangering.html?spill=${encodeURIComponent(g.id)}">Se rangering</a>
         </div>
       </article>
     `;
@@ -159,54 +162,48 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * Guider og maler på forsiden
+   * Den fremhevede guiden på forsiden
    * ------------------------------------------------------------------ */
 
   /**
-   * Dokumentene i documents/ (hjelpehefte, matteskjema, nynorskordliste) lå
-   * i repoet uten å være lenket noe sted i UIen. Her får de en fast plass på
-   * forsiden, ved siden av guidene.
+   * Forsiden viste tidligere en rad med små kort til guider og nedlastbare
+   * maler. Nå står den fremhevede guiden – den samme som ligger øverst på
+   * guider.html – i full bredde, med én knapp videre til resten. Maler og
+   * filer bor på guider.html, som er stedet man er når man leter etter dem.
    */
-  const RESOURCES = [
-    {
-      href: "guider.html",
-      eyebrow: "GUIDER",
-      title: "Steg for steg",
-      text: "Hvordan tjene og spare mer som elev – med maler og regnestykker.",
-    },
-    {
-      href: "documents/Snorres_hjelpehefte.pdf",
-      eyebrow: "PDF",
-      title: "Snorres hjelpehefte",
-      text: "Samlet hjelp til de fagene folk spør mest om.",
-      download: true,
-    },
-    {
-      href: "documents/Snorres_Matteskjema.xlsx",
-      eyebrow: "REGNEARK",
-      title: "Matteskjema",
-      text: "Ferdig oppsett du kan fylle inn selv.",
-      download: true,
-    },
-    {
-      href: "documents/Nynorskordliste.xlsx",
-      eyebrow: "REGNEARK",
-      title: "Nynorskordliste",
-      text: "De ordene folk pleier å bomme på, i én liste.",
-      download: true,
-    },
-  ];
+  async function renderFrontGuide() {
+    const section = document.querySelector("[data-front-guide-section]");
+    const el = document.querySelector("[data-front-guide]");
+    if (!section || !el) return;
 
-  function renderResources() {
-    const el = document.querySelector("[data-resource-row]");
-    if (!el) return;
-    el.innerHTML = RESOURCES.map((r) => `
-      <a class="resource-card" href="${r.href}"${r.download ? ' download target="_blank" rel="noopener"' : ""}>
-        <span class="resource-eyebrow">${r.eyebrow}</span>
-        <span class="resource-title">${r.title}</span>
-        <span class="resource-text">${r.text}</span>
-      </a>
-    `).join("");
+    if (window.STUDILLA_GUIDES_READY) await window.STUDILLA_GUIDES_READY;
+    const guides = (window.STUDILLA_GUIDES || []).filter((g) => !g.hidden);
+    const guide = guides.find((g) => g.featured) || guides[0];
+    if (!guide) return;
+
+    const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
+
+    el.innerHTML = `
+      <div class="guide-feature">
+        <div class="guide-feature-text">
+          <span class="guide-feature-badge">Anbefalt guide</span>
+          <h2>${esc(guide.title)}</h2>
+          <p>${esc(guide.excerpt)}</p>
+          <div class="guide-feature-actions">
+            <a href="guide.html?id=${encodeURIComponent(guide.id)}" class="btn-primary btn-link">Les guiden</a>
+            <a href="guider.html" class="btn-ghost">Se flere guider</a>
+          </div>
+        </div>
+        <div class="guide-feature-media">
+          ${guide.coverUrl
+            ? `<img src="${esc(guide.coverUrl)}" alt="">`
+            : `<span class="hero-placeholder-label">${esc(guide.title)}</span>`}
+        </div>
+      </div>
+    `;
+    section.hidden = false;
   }
 
   /* ------------------------------------------------------------------ *
@@ -275,7 +272,7 @@
   document.addEventListener("DOMContentLoaded", async function () {
     // Aktivt menypunkt markeres av js/layout.js (kjører på alle sider).
     initHeroStart();
-    renderResources();
+    renderFrontGuide();
     initSignupStrip();
     if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
     if (window.STUDILLA_GAME_SCRIPT_READY) await window.STUDILLA_GAME_SCRIPT_READY;

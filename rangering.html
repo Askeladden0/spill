@@ -83,6 +83,7 @@
 <script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/social.js"></script>
+<script src="js/dm-popup.js"></script>
 <script src="js/visit-tracking.js"></script>
 <script src="js/games-data.js"></script>
 <script src="js/leaderboard-data.js"></script>
@@ -269,10 +270,10 @@
   // ---------- Tabellen ----------
   function emptyMessage() {
     if (crowd === "venner" && !profile) {
-      return `<div class="leaderboard-empty">Logg inn for å se rangeringen blant dem du følger.</div>`;
+      return `<div class="leaderboard-empty">Logg inn for å se rangeringen blant vennene dine.</div>`;
     }
     if (crowd === "venner") {
-      return `<div class="leaderboard-empty">Du følger ingen ennå. Søk opp en spiller her eller på <a href="meldinger.html">Venner</a> for å få en liste du faktisk kan vinne.</div>`;
+      return `<div class="leaderboard-empty">Du har ingen venner her ennå. Søk opp en spiller her eller på <a href="meldinger.html">Venner</a> for å få en liste du faktisk kan vinne.</div>`;
     }
     if (period !== "all") {
       return `<div class="leaderboard-empty">Ingen har spilt «${esc(gameLabel())}» i denne perioden ennå. Bli den første!</div>`;
@@ -479,7 +480,7 @@
     const [loadedProfiles, records, following] = await Promise.all([
       LB.loadProfiles(),
       LB.loadRecords(),
-      profile ? window.StudillaSocial.followingIds() : Promise.resolve([]),
+      profile ? window.StudillaSocial.friendIds() : Promise.resolve([]),
     ]);
     profiles = loadedProfiles;
     friendIds = following;
@@ -497,7 +498,7 @@
 
   window.supabaseClient.auth.onAuthStateChange(async () => {
     profile = await Auth.getCurrentProfile();
-    friendIds = profile ? await window.StudillaSocial.followingIds() : [];
+    friendIds = profile ? await window.StudillaSocial.friendIds() : [];
     renderAll();
   });
 })();

@@ -147,28 +147,15 @@ select:focus-visible,
 }
 .btn-ghost:hover { border-color: rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .04); }
 
-.hero-usps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  margin: 6px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.hero-usps li {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13px;
-  color: #7c8aa0;
-}
-.hero-usps li::before {
-  content: "";
-  width: 14px; height: 14px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: rgba(46, 232, 127, .16);
-  box-shadow: inset 0 0 0 1.5px rgba(46, 232, 127, .55);
+/* Sekundærknappen på et trikskort («Se rangering») står under den grønne
+   start-knappen og må ha samme bredde og en mindre høyde enn den store
+   .btn-ghost-en i heltefeltet. */
+.btn-card-secondary {
+  width: 100%;
+  justify-content: center;
+  padding: 10px;
+  border-radius: var(--radius-sm, 10px);
+  font-size: 13.5px;
 }
 
 .hero-desc {
@@ -607,7 +594,9 @@ select:focus-visible,
   cursor: pointer;
 }
 .dm-thread-name {
-  flex: 1;
+  /* Navnet tar bare plassen det trenger – .dm-thread-sub (medlemslista i en
+     gruppe) får resten, og skyver knappene helt ut til høyre. */
+  flex: 0 1 auto;
   font-size: 15px;
   font-weight: 700;
   color: #fff;
@@ -1040,3 +1029,209 @@ select:focus-visible,
   justify-content: center;
   text-decoration: none;
 }
+
+/* --------------------------------------------------------------------------
+   Venner: forespørsler, vennelista og gruppechatter
+   -------------------------------------------------------------------------- */
+
+/* Radene i vennelista og forespørselslista er ikke lenker i seg selv lenger –
+   selve navnet lenker til profilen, mens knappene til høyre gjør noe annet.
+   Derfor er .feed-identity den klikkbare delen, ikke hele raden. */
+.feed-row.is-request,
+.feed-row.is-friend { cursor: default; }
+.feed-row.is-request:hover,
+.feed-row.is-friend:hover { background: transparent; }
+
+.feed-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 2px;
+  transition: background .12s ease;
+}
+.feed-identity:hover { background: rgba(255, 255, 255, .04); }
+
+.feed-sub { display: block; font-size: 11.5px; color: #5f6b7d; }
+
+.feed-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, .09));
+  background: transparent;
+  color: #96a3b8;
+  cursor: pointer;
+  transition: color .12s ease, border-color .12s ease;
+}
+.icon-btn:hover { color: var(--accent, #2ee87f); border-color: rgba(46, 232, 127, .5); }
+.icon-btn.is-danger:hover { color: #ff9385; border-color: rgba(255, 147, 133, .5); }
+
+.btn-outline.is-danger-outline:hover { border-color: rgba(255, 147, 133, .5); color: #ff9385; }
+
+/* Gruppechatter har ikke profilbilde – de får forbokstaven i en farget boks
+   med samme form som avatarene, så lista ser lik ut uansett samtaletype. */
+.group-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: rgba(46, 232, 127, .16);
+  border: 1px solid rgba(46, 232, 127, .3);
+  color: var(--accent, #2ee87f);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.group-member-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(255, 255, 255, .06));
+}
+.group-member-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: var(--text, #e8edf5);
+  cursor: pointer;
+}
+.group-member-option:hover { background: rgba(255, 255, 255, .03); }
+.group-member-option input { accent-color: var(--accent, #2ee87f); }
+
+/* Hvem som skrev hva. Bare i grupper – i en tomannssamtale er det åpenbart. */
+.dm-bubble-sender {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent, #2ee87f);
+}
+
+/* Medlemslista i toppen av en gruppesamtale. Kuttes med ellipse i stedet for
+   å dytte knappene ut av panelet når gruppa blir stor. */
+.dm-thread-sub {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: #5f6b7d;
+}
+
+/* --------------------------------------------------------------------------
+   Sprettoppvarsel for nye meldinger (js/dm-popup.js)
+
+   Ligger fast nede til høyre på alle sider, slik at man ser at noen har
+   skrevet uten å stå på Venner-siden. Kan skrus av under Innstillinger.
+   -------------------------------------------------------------------------- */
+.dm-popup-stack {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(340px, calc(100vw - 36px));
+  pointer-events: none;
+}
+
+.dm-popup {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 13px;
+  border-radius: 14px;
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, .09));
+  background: var(--surface, #131a25);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .45);
+  text-decoration: none;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .22s ease, transform .22s ease, border-color .12s ease;
+}
+.dm-popup.is-in { opacity: 1; transform: translateY(0); }
+.dm-popup:hover { border-color: rgba(46, 232, 127, .45); }
+
+.dm-popup-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dm-popup-name { font-size: 13.5px; font-weight: 700; color: var(--text-strong, #fff); }
+.dm-popup-body {
+  font-size: 12.5px;
+  color: #96a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* «Gå til chatten» er skjult til man holder musa over kortet – ellers tar
+   den plassen fra selve meldingen. */
+.dm-popup-go {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent, #2ee87f);
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height .18s ease, opacity .18s ease;
+}
+.dm-popup:hover .dm-popup-go,
+.dm-popup:focus-visible .dm-popup-go { max-height: 20px; opacity: 1; }
+
+.dm-popup-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #5f6b7d;
+  cursor: pointer;
+}
+.dm-popup-close:hover { color: var(--text, #e8edf5); background: rgba(255, 255, 255, .06); }
+
+@media (max-width: 520px) {
+  .dm-popup-stack { left: 18px; right: 18px; max-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dm-popup { transition: opacity .01s linear; transform: none; }
+}
+
+/* Nøytrale knapper i samtaletoppen («Legg til venn», «Forlat» i en gruppe).
+   Samme form som .dm-thread-block, men uten den røde blokker-fargen. */
+.dm-thread-action {
+  flex: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, .09));
+  background: transparent;
+  color: #96a3b8;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color .12s ease, border-color .12s ease;
+}
+.dm-thread-action:hover { color: var(--accent, #2ee87f); border-color: rgba(46, 232, 127, .5); }

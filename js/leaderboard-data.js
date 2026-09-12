@@ -274,8 +274,8 @@
    * innenfor gruppen – å se «#412 av 3 000» er demotiverende, «#2 av 6» er
    * en konkurranse du faktisk kan vinne.
    */
-  function buildFriendsBoard(board, followingIds, myId) {
-    const allowed = new Set(followingIds);
+  function buildFriendsBoard(board, friendIds, myId) {
+    const allowed = new Set(friendIds);
     if (myId) allowed.add(myId);
     return rank(board.filter((p) => allowed.has(p.id)).map((p) => ({ ...p })));
   }
