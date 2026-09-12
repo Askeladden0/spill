@@ -1924,6 +1924,96 @@ select * from (values
 where not exists (select 1 from public.guide_modules where guide_id in ('mal-norsk-nynorsk', 'p-matte-snarveier', 'nynorsk-oversetter'));
 
 -- ---------------------------------------------------------------------------
+-- 47b. Likes og visninger på guider (guide.html, se js/guides.js).
+--
+--     `view_count` og `like_count` på `guides` er tellere klienten leser
+--     direkte (offentlig, ingen innlogging kreves for å se tallene). Hver
+--     faktiske visning/like går likevel gjennom en RPC (security definer) i
+--     stedet for at klienten skriver rett på `guides` – ellers måtte alle
+--     kunnet skrive til raden, og det ville krasjet med at kun admin skal
+--     kunne endre selve guide-innholdet (guides_admin_write over).
+--
+--     `guide_likes` er én rad per (guide, bruker) – lar klienten vise om
+--     venn(er) (se `follows`, seksjon 50) har likt guiden når man holder
+--     musepekeren over like-tallet.
+alter table public.guides add column if not exists view_count bigint not null default 0;
+alter table public.guides add column if not exists like_count bigint not null default 0;
+
+create table if not exists public.guide_likes (
+  guide_id text not null references public.guides (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (guide_id, user_id)
+);
+
+alter table public.guide_likes enable row level security;
+
+drop policy if exists "guide_likes_select_all" on public.guide_likes;
+create policy "guide_likes_select_all" on public.guide_likes
+  for select using (true);
+
+-- Ingen insert/update/delete-policy: alt går via guide_toggle_like under
+-- (security definer), akkurat som guide_vote_poll over.
+
+-- Teller hver visning individuelt (ikke deduplisert per dag, i motsetning til
+-- site_visits) – kalles én gang hver gang noen åpner guide.html for en guide.
+create or replace function public.guide_add_view(p_guide_id text)
+returns bigint
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_count bigint;
+begin
+  update public.guides set view_count = view_count + 1
+  where id = p_guide_id
+  returning view_count into v_count;
+  return v_count;
+end;
+$$;
+
+grant execute on function public.guide_add_view(text) to anon, authenticated;
+
+-- Av/på-toggling av "liker" for innlogget bruker. Returnerer om man nå liker
+-- guiden og det ferske totaltallet, slik at klienten kan oppdatere UI-et uten
+-- en ekstra spørring.
+create or replace function public.guide_toggle_like(p_guide_id text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_liked boolean;
+  v_count bigint;
+begin
+  if v_uid is null then
+    raise exception 'Du må være logget inn for å like en guide.';
+  end if;
+
+  if exists (select 1 from public.guide_likes where guide_id = p_guide_id and user_id = v_uid) then
+    delete from public.guide_likes where guide_id = p_guide_id and user_id = v_uid;
+    v_liked := false;
+  else
+    insert into public.guide_likes (guide_id, user_id) values (p_guide_id, v_uid)
+    on conflict (guide_id, user_id) do nothing;
+    v_liked := true;
+  end if;
+
+  update public.guides set like_count = (
+    select count(*) from public.guide_likes where guide_id = p_guide_id
+  ) where id = p_guide_id
+  returning like_count into v_count;
+
+  return jsonb_build_object('liked', v_liked, 'count', coalesce(v_count, 0));
+end;
+$$;
+
+grant execute on function public.guide_toggle_like(text) to authenticated;
+
+-- ---------------------------------------------------------------------------
 -- 48. Rekorder skrives ikke lenger rett fra nettleseren.
 --
 --     Slik det var: klienten gjorde `insert into game_records (...)` og kalte

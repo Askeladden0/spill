@@ -58,6 +58,7 @@
     table: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10M15 10v10"></path>',
     coins: '<circle cx="12" cy="12" r="9"></circle><path d="M14.5 9h-3.2a1.8 1.8 0 0 0 0 3.6h1.4a1.8 1.8 0 0 1 0 3.6H9.5"></path><path d="M12 7.5v9"></path>',
     poll: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path>',
+    heart: '<path d="M12 21s-7.5-4.6-10-9.1C.6 8.7 2 5 5.5 5c2 0 3.3 1.1 4 2.2.7-1.1 2-2.2 4-2.2C17 5 18.4 8.7 22 11.9 19.5 16.4 12 21 12 21Z"></path>',
     game: '<path d="M6 12h4M8 10v4"></path><circle cx="16" cy="11" r="1"></circle><circle cx="18.5" cy="13.5" r="1"></circle><rect x="2" y="6" width="20" height="12" rx="5"></rect>',
     drag: '<circle cx="9" cy="6" r="1.4"></circle><circle cx="15" cy="6" r="1.4"></circle><circle cx="9" cy="12" r="1.4"></circle><circle cx="15" cy="12" r="1.4"></circle><circle cx="9" cy="18" r="1.4"></circle><circle cx="15" cy="18" r="1.4"></circle>',
     settings: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"></path>'
@@ -183,8 +184,11 @@
     addPickerIndex: null,  // hvor i lista den nye modulen skal settes inn (null = til slutt)
     previewMode: false,    // admin ser siden akkurat slik en besøkende gjør
     saving: false,         // hindrer dobbelttrykk på lagre-knappene
+    likeBusy: false,       // hindrer dobbelttrykk på like-knappen
+    guideLike: null,       // { liked, friends: [{username, avatar_color, avatar_icon}] } for gjeldende guide
   };
   let currentGuideId = null;
+  let statsLoadedFor = null; // hvilken guide-id vi sist telte en visning/hentet like-status for
 
   // Admin-kontrollene skjules i forhåndsvisningsmodus, men admin beholder
   // fortsatt tilgang til skjulte guider (visibleGuides under).
@@ -580,6 +584,10 @@
           <p class="guide-card-excerpt">${escapeHTML(g.excerpt)}</p>
           <div class="guide-card-foot">
             <span class="guide-card-value">${escapeHTML(g.valueLabel)}</span>
+            <span class="guide-card-stats">
+              <span class="guide-card-stat">${icon("eye", 13)}${numFmt(g.viewCount || 0)}</span>
+              <span class="guide-card-stat">${icon("heart", 13)}${numFmt(g.likeCount || 0)}</span>
+            </span>
           </div>
           ${admin ? `
           <div class="guide-card-admin-bar">
@@ -1158,6 +1166,96 @@
     `;
   }
 
+  // Liten avatar+navn-boble som dukker opp over like-tallet når man holder
+  // musepekeren over det, hvis en eller flere man følger har likt guiden.
+  function guideFriendTipHTML(friends) {
+    if (!friends || !friends.length) return "";
+    const shown = friends.slice(0, 5);
+    const names = shown.map((p) => escapeHTML(p.username || "Noen")).join(", ");
+    const extra = friends.length > shown.length ? ` og ${friends.length - shown.length} til` : "";
+    return `
+      <span class="guide-friend-tip" role="tooltip">
+        <span class="guide-friend-tip-avatars">
+          ${shown.map((p) => (window.StudillaAvatars ? window.StudillaAvatars.avatarBadgeHTML(p.avatar_color, p.avatar_icon, 22) : "")).join("")}
+        </span>
+        <span class="guide-friend-tip-text">${names}${extra} likte denne</span>
+      </span>
+    `;
+  }
+
+  function renderGuideStats(g) {
+    const el = document.querySelector("[data-guide-stats]");
+    if (!el || !g) return;
+    const liked = !!(state.guideLike && state.guideLike.liked);
+    const friends = (state.guideLike && state.guideLike.friends) || [];
+    el.innerHTML = `
+      <button type="button" class="guide-like-btn${liked ? " is-liked" : ""}" data-guide-like aria-pressed="${liked ? "true" : "false"}" aria-label="Lik guiden" ${state.likeBusy ? "disabled" : ""}>
+        <span class="guide-like-icon">${icon("heart", 17)}</span>
+        <span class="guide-like-count">${numFmt(g.likeCount || 0)}</span>
+        ${guideFriendTipHTML(friends)}
+      </button>
+      <span class="guide-view-stat">${icon("eye", 15)}<span>${numFmt(g.viewCount || 0)} har lest</span></span>
+    `;
+  }
+
+  // Henter «liker jeg denne»-status og, hvis man er innlogget, hvilke av dem
+  // man følger som også har likt guiden – til hover-boblen over. Kjøres kun
+  // én gang per guide (styrt av statsLoadedFor i renderGuidePage).
+  async function loadGuideStats(guideId) {
+    const liked = await Guides.myLike(guideId);
+    if (currentGuideId !== guideId) return;
+    state.guideLike = { liked, friends: [] };
+    renderGuideStats(getCurrentGuide());
+
+    const Social = window.StudillaSocial;
+    if (!Social) return;
+    const [likerIds, followingIds] = await Promise.all([Guides.likersFor(guideId), Social.followingIds()]);
+    if (currentGuideId !== guideId) return;
+    const followSet = new Set(followingIds);
+    const friendIds = likerIds.filter((id) => followSet.has(id));
+    if (!friendIds.length) return;
+
+    const sb = window.supabaseClient;
+    const { data } = await sb.from("profiles_public").select("username, avatar_color, avatar_icon").in("id", friendIds.slice(0, 8));
+    if (currentGuideId !== guideId || !data) return;
+    state.guideLike.friends = data;
+    renderGuideStats(getCurrentGuide());
+  }
+
+  async function toggleGuideLike() {
+    if (state.likeBusy || !currentGuideId) return;
+    const { data: session } = await window.supabaseClient.auth.getSession();
+    if (!session.session) { flash("Logg inn for å like guider."); return; }
+
+    // Optimistisk oppdatering + en kort «pop»-animasjon på selve hjertet, i
+    // stedet for å vente på svar fra serveren før noe skjer på skjermen.
+    const wasLiked = !!(state.guideLike && state.guideLike.liked);
+    const g = getCurrentGuide();
+    state.likeBusy = true;
+    if (g) g.likeCount = Math.max(0, (g.likeCount || 0) + (wasLiked ? -1 : 1));
+    state.guideLike = Object.assign({ friends: [] }, state.guideLike, { liked: !wasLiked });
+    renderGuideStats(g);
+    const btn = document.querySelector("[data-guide-like]");
+    if (btn && !wasLiked) {
+      btn.classList.add("is-popping");
+      setTimeout(() => btn.classList.remove("is-popping"), 500);
+    }
+
+    const { data, error } = await Guides.toggleLike(currentGuideId);
+    state.likeBusy = false;
+    if (error) {
+      // Rull tilbake den optimistiske endringen.
+      if (g) g.likeCount = Math.max(0, (g.likeCount || 0) + (wasLiked ? 1 : -1));
+      state.guideLike.liked = wasLiked;
+      flash(friendlyError(error));
+      renderGuideStats(getCurrentGuide());
+      return;
+    }
+    state.guideLike.liked = data.liked;
+    if (g) g.likeCount = Number(data.count) || 0;
+    renderGuideStats(getCurrentGuide());
+  }
+
   function renderGuidePage() {
     if (!isGuidePage) return;
     const params = new URLSearchParams(window.location.search);
@@ -1215,6 +1313,14 @@
     renderModules(g);
     renderTOC(g);
     renderGevinstSidebar(g);
+    renderGuideStats(g);
+
+    if (statsLoadedFor !== g.id) {
+      statsLoadedFor = g.id;
+      state.guideLike = null;
+      Guides.addView(g.id).then(() => renderGuideStats(getCurrentGuide()));
+      loadGuideStats(g.id);
+    }
 
     const addModuleEl = document.querySelector("[data-guide-add-module]");
     if (addModuleEl) {
@@ -1566,6 +1672,8 @@
 
     const pollVote = e.target.closest("[data-poll-vote]");
     if (pollVote) { votePoll(currentGuideId, coerceModuleId(pollVote.dataset.module), Number(pollVote.dataset.option)); return; }
+
+    if (e.target.closest("[data-guide-like]")) { toggleGuideLike(); return; }
   });
 
   document.addEventListener("change", (e) => {
