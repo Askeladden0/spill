@@ -1,9 +1,11 @@
 /**
  * Studilla – cookie-banner (UI).
  *
- * Bygger på designet i Cookie-banner.dc.html. Varselet dukker først opp når
- * en besøkende kommer til hovedsiden eller går inn på et triks (spillsiden)
- * og ikke har tatt et valg ennå – ikke på hver eneste side. Etter at valget
+ * Bygger på designet i Cookie-banner.dc.html. Varselet dukker opp på
+ * enhver side helt til den besøkende har tatt et valg – tidligere kun på
+ * forsiden/spillsiden, men det gjorde at direkte-lenker til andre sider
+ * (søk, TikTok, bokmerker) aldri fikk sjansen til å samtykke, og dermed
+ * aldri ble talt med i adminpanelets besøksstatistikk. Etter at valget
  * er tatt ligger det ingen
  * flytende knapp igjen i hjørnet; innstillingene åpnes fra
  * innstillinger.html eller via window.StudillaCookieBanner.open().
@@ -169,12 +171,12 @@
     statsInput.addEventListener("change", syncToggleUI);
     marketingInput.addEventListener("change", syncToggleUI);
 
-    // Varselet vises på hovedsiden (index.html) og spillsiden (player.html),
-    // og bare til brukeren har tatt et valg. Andre sider laster fortsatt
-    // banneret, slik at det kan åpnes manuelt fra innstillingene.
-    const isGamePage = !!document.querySelector("[data-player-stage]");
-    const isHomePage = document.body.getAttribute("data-page") === "spill";
-    if ((isGamePage || isHomePage) && !window.StudillaConsent.hasChoice()) {
+    // Varselet vises på alle sider til brukeren har tatt et valg – tidligere
+    // dukket det bare opp på forsiden og spillsiden, så besøkende som landet
+    // direkte på f.eks. premier.html eller rangering.html (fra søk, TikTok
+    // eller bokmerke) fikk aldri sjansen til å samtykke, og ble dermed aldri
+    // talt med i adminpanelets besøksstatistikk (js/visit-tracking.js).
+    if (!window.StudillaConsent.hasChoice()) {
       openBanner("initial");
     } else {
       closeBanner();
