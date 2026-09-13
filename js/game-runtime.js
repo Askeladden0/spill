@@ -15,6 +15,7 @@
 
   const sb = window.supabaseClient;
   const Auth = window.StudillaAuth;
+  const Social = window.StudillaSocial;
 
   // Nivåsystemet er skrudd av for den live siden (se js/feature-flags.js):
   // nivå-baren og "nivå opp"-teksten på game over-kortet skal da ikke vises.
@@ -222,14 +223,6 @@
     }
   }
 
-  /** Neste triks i rekkefølgen på forsiden – brukes av «prøv et annet». */
-  function nextGameAfter(gameId) {
-    const games = window.STUDILLA_GAMES || [];
-    if (games.length < 2) return null;
-    const i = games.findIndex((g) => g.id === gameId);
-    return games[(Math.max(0, i) + 1) % games.length] || null;
-  }
-
   /**
    * Liten konfetti-byge på ny rekord. Rene DOM-elementer med CSS-animasjon,
    * ingen canvas eller bibliotek – og hoppes helt over for de som har bedt om
@@ -250,36 +243,6 @@
       host.appendChild(bit);
     }
     window.setTimeout(() => { host.innerHTML = ""; }, 2200);
-  }
-
-  /**
-   * «Utfordre en venn»: deler en lenke rett til trikset med skåren i teksten.
-   * Bruker nettleserens egen delefunksjon der den finnes (mobil), og faller
-   * ellers tilbake til å kopiere lenken.
-   */
-  function setupShare(btn, gameId, score) {
-    if (!btn) return;
-    const games = window.STUDILLA_GAMES || [];
-    const game = games.find((g) => g.id === gameId);
-    const name = game ? game.name : "Studilla";
-    const url = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(gameId)}`;
-    const text = `Jeg fikk ${score.toLocaleString("no-NO")} i ${name} på Studilla. Klarer du å slå meg?`;
-
-    btn.hidden = false;
-    btn.textContent = "Utfordre en venn";
-    btn.onclick = async () => {
-      try {
-        if (navigator.share) {
-          await navigator.share({ title: "Studilla", text, url });
-          return;
-        }
-        await navigator.clipboard.writeText(`${text} ${url}`);
-        btn.textContent = "Lenke kopiert ✓";
-        window.setTimeout(() => { btn.textContent = "Utfordre en venn"; }, 2000);
-      } catch (e) {
-        // Avbrutt deling eller blokkert utklippstavle – ikke noe å melde om.
-      }
-    };
   }
 
   function hudHTML() {
@@ -357,14 +320,38 @@
             <p class="game-over-levelup" data-game-over-levelup>Nivå opp!</p>
           </div>
 
-          <!-- «Én runde til» skal være det enkleste å gjøre: primærknappen,
+          <!-- «Spill på nytt» skal være det enkleste å gjøre: primærknappen,
                forhåndsvalgt for tastatur, og Enter/mellomrom virker uten å
                treffe den med musa. -->
           <div class="game-over-actions">
-            <button type="button" class="btn-primary game-over-again" data-game-over-restart>Én runde til</button>
-            <a class="btn-outline game-over-next" data-game-over-next href="#">Prøv et annet triks</a>
+            <button type="button" class="btn-primary game-over-again" data-game-over-restart>Spill på nytt</button>
+            <a class="btn-outline game-over-next" data-game-over-next href="#">Se rangering</a>
           </div>
           <button type="button" class="game-over-share" data-game-over-share hidden>Utfordre en venn</button>
+        </div>
+      </div>
+
+      <!-- Menyen som åpnes fra «Utfordre en venn»: enten en delbar lenke, eller
+           en direktemelding til en venn eller gruppe (gjenbruker samme
+           vedleggsformat som «send et triks» i meldinger.html). -->
+      <div class="modal-overlay share-overlay" data-share-overlay hidden role="dialog" aria-modal="true" aria-labelledby="share-overlay-title">
+        <div class="modal-backdrop" data-share-backdrop></div>
+        <div class="modal-card share-modal-card">
+          <button type="button" class="modal-close" data-share-close aria-label="Lukk">×</button>
+          <h3 id="share-overlay-title" class="modal-title">Utfordre en venn</h3>
+
+          <div class="share-menu" data-share-menu>
+            <button type="button" class="btn-outline share-menu-btn" data-share-copy>Del lenke til spillet</button>
+            <button type="button" class="btn-outline share-menu-btn" data-share-dm hidden>Send til en venn</button>
+            <button type="button" class="btn-outline share-menu-btn" data-share-group hidden>Send til en gruppe</button>
+          </div>
+
+          <div class="share-picker" data-share-picker hidden>
+            <button type="button" class="share-picker-back" data-share-back>← Tilbake</button>
+            <div class="share-picker-list" data-share-list></div>
+          </div>
+
+          <p class="share-status" data-share-status hidden></p>
         </div>
       </div>
     `;
@@ -494,10 +481,132 @@
       overlayLevelXp: container.querySelector("[data-game-over-level-xp]"),
       overlayLevelFill: container.querySelector("[data-game-over-level-fill]"),
       overlayLevelUp: container.querySelector("[data-game-over-levelup]"),
+      shareOverlay: container.querySelector("[data-share-overlay]"),
+      shareBackdrop: container.querySelector("[data-share-backdrop]"),
+      shareClose: container.querySelector("[data-share-close]"),
+      shareMenu: container.querySelector("[data-share-menu]"),
+      shareCopyBtn: container.querySelector("[data-share-copy]"),
+      shareDmBtn: container.querySelector("[data-share-dm]"),
+      shareGroupBtn: container.querySelector("[data-share-group]"),
+      sharePicker: container.querySelector("[data-share-picker]"),
+      shareBack: container.querySelector("[data-share-back]"),
+      shareList: container.querySelector("[data-share-list]"),
+      shareStatus: container.querySelector("[data-share-status]"),
     };
 
     let best = await loadBest(gameId, await Auth.getCurrentProfile());
     els.best.textContent = best.toLocaleString("no-NO");
+
+    function closeShareOverlay() {
+      els.shareOverlay.hidden = true;
+    }
+    els.shareClose.addEventListener("click", closeShareOverlay);
+    els.shareBackdrop.addEventListener("click", closeShareOverlay);
+    els.shareBack.addEventListener("click", () => {
+      els.sharePicker.hidden = true;
+      els.shareMenu.hidden = false;
+    });
+
+    /**
+     * Viser vennene/gruppene dine (samme data som Venner-siden) slik at man
+     * kan sende utfordringen som en direktemelding i stedet for å bare dele
+     * en lenke. Bruker det samme vedleggsformatet som «send et triks» i
+     * meldinger.html, slik at kortet ser likt ut i innboksen uansett hvor
+     * det ble sendt fra.
+     */
+    async function openSharePicker(kind, attachmentBody) {
+      els.shareMenu.hidden = true;
+      els.sharePicker.hidden = false;
+      els.shareStatus.hidden = true;
+      els.shareList.innerHTML = '<p class="share-status">Laster …</p>';
+
+      let rows = [];
+      try {
+        rows = kind === "dm" ? await Social.friendsList() : await Social.groupThreads();
+      } catch (e) {
+        rows = [];
+      }
+
+      if (!rows.length) {
+        els.shareList.innerHTML = `<p class="share-status">${
+          kind === "dm" ? "Du har ingen venner ennå." : "Du er ikke med i noen grupper ennå."
+        }</p>`;
+        return;
+      }
+
+      els.shareList.innerHTML = rows.map((r, i) => {
+        const label = kind === "dm" ? r.username : r.name;
+        const avatar = kind === "dm"
+          ? Auth.avatarHTML({ avatar_color: r.avatar_color, avatar_icon: r.avatar_icon }, 32)
+          : `<span class="group-avatar" style="width:32px;height:32px;font-size:13px">${Social.escapeHTML((label || "?").trim()[0] || "?").toUpperCase()}</span>`;
+        return `<button type="button" class="share-picker-item" data-share-pick="${i}">${avatar}<span class="share-picker-name">${Social.escapeHTML(label)}</span></button>`;
+      }).join("");
+
+      els.shareList.querySelectorAll("[data-share-pick]").forEach((pickBtn) => {
+        pickBtn.addEventListener("click", async () => {
+          const row = rows[Number(pickBtn.dataset.sharePick)];
+          pickBtn.disabled = true;
+          try {
+            if (kind === "dm") {
+              await Social.send(row.user_id, attachmentBody);
+            } else {
+              await Social.sendGroupMessage(row.group_id, attachmentBody);
+            }
+            const label = kind === "dm" ? row.username : row.name;
+            els.shareList.innerHTML = `<p class="share-status">Sendt til ${Social.escapeHTML(label)} ✓</p>`;
+            window.setTimeout(closeShareOverlay, 900);
+          } catch (e) {
+            pickBtn.disabled = false;
+            els.shareStatus.hidden = false;
+            els.shareStatus.textContent = (e && e.message) || "Klarte ikke sende meldingen.";
+          }
+        });
+      });
+    }
+
+    /**
+     * «Utfordre en venn» åpner en liten meny i stedet for å dele med det
+     * samme: enten en delbar lenke (nettleserens egen delefunksjon der den
+     * finnes, ellers kopiert til utklippstavla), eller en direktemelding til
+     * en venn eller gruppe.
+     */
+    function setupShare(currentGameId, score, profile) {
+      const games = window.STUDILLA_GAMES || [];
+      const game = games.find((g) => g.id === currentGameId);
+      const name = game ? game.name : "Studilla";
+      const url = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(currentGameId)}`;
+      const text = `Jeg fikk ${score.toLocaleString("no-NO")} i ${name} på Studilla. Klarer du å slå meg?`;
+      const attachmentBody = Social ? Social.buildBody({ kind: "spill", ref: currentGameId }, text) : text;
+      const canSend = !!profile && Social && Social.isAvailable();
+
+      els.overlayShare.hidden = false;
+      els.overlayShare.onclick = () => {
+        els.shareMenu.hidden = false;
+        els.sharePicker.hidden = true;
+        els.shareStatus.hidden = true;
+        els.shareCopyBtn.textContent = "Del lenke til spillet";
+        els.shareDmBtn.hidden = !canSend;
+        els.shareGroupBtn.hidden = !canSend;
+        els.shareOverlay.hidden = false;
+      };
+
+      els.shareCopyBtn.onclick = async () => {
+        try {
+          if (navigator.share) {
+            await navigator.share({ title: "Studilla", text, url });
+            return;
+          }
+          await navigator.clipboard.writeText(`${text} ${url}`);
+          els.shareCopyBtn.textContent = "Lenke kopiert ✓";
+          window.setTimeout(() => { els.shareCopyBtn.textContent = "Del lenke til spillet"; }, 2000);
+        } catch (e) {
+          // Avbrutt deling eller blokkert utklippstavle – ikke noe å melde om.
+        }
+      };
+
+      els.shareDmBtn.onclick = () => openSharePicker("dm", attachmentBody);
+      els.shareGroupBtn.onclick = () => openSharePicker("group", attachmentBody);
+    }
 
     let restartHandler = null;
     let pendingHeaderAnimation = null;
@@ -673,11 +782,11 @@
         els.overlayScoreLabel.textContent = awardedPoints === roundedScore ? "POENG" : "SKÅR";
         els.overlayBestNum.textContent = best.toLocaleString("no-NO");
 
-        const showStreak = !!(streak && streak.streak > 0);
+        const showStreak = !!(prevProfile && streak && streak.streak > 0);
         els.overlayStreakFact.hidden = !showStreak;
         if (showStreak) els.overlayStreakNum.textContent = String(streak.streak);
 
-        const showEarned = awardedPoints !== roundedScore || (streak && streak.bonus > 0);
+        const showEarned = !!prevProfile && awardedPoints > 0;
         els.overlayEarnedFact.hidden = !showEarned;
         if (showEarned) {
           els.overlayEarned.textContent = `+${(awardedPoints + ((streak && streak.bonus) || 0)).toLocaleString("no-NO")}`;
@@ -701,18 +810,14 @@
 
         if (isNewBest) fireConfetti(els.overlayConfetti);
 
-        // «Prøv et annet triks» peker på neste triks i listen, ikke tilbake
-        // til menyen: ett klikk videre i stedet for to.
-        const nextGame = nextGameAfter(gameId);
-        if (nextGame) {
-          els.overlayNext.hidden = false;
-          els.overlayNext.href = `player.html?id=${encodeURIComponent(nextGame.id)}`;
-          els.overlayNext.textContent = `Prøv ${nextGame.name}`;
-        } else {
-          els.overlayNext.hidden = true;
-        }
+        // «Se rangering» peker på rangeringssiden for akkurat dette trikset,
+        // åpen direkte på fanen for det – se ?spill=-håndteringen i
+        // rangering.html.
+        els.overlayNext.hidden = false;
+        els.overlayNext.href = `rangering.html?spill=${encodeURIComponent(gameId)}`;
+        els.overlayNext.textContent = "Se rangering";
 
-        setupShare(els.overlayShare, gameId, roundedScore);
+        setupShare(gameId, roundedScore, prevProfile);
 
         if (LEVELS_ENABLED) {
           animateOverlayLevel(prevProfile, newProfile);
@@ -720,7 +825,7 @@
           els.overlayLevel.hidden = true;
         }
         els.overlay.hidden = false;
-        // Fokus på «Én runde til» slik at Enter starter en ny runde med det
+        // Fokus på «Spill på nytt» slik at Enter starter en ny runde med det
         // samme – både for tastaturbrukere og for den som bare vil videre.
         try { els.overlayRestart.focus({ preventScroll: true }); } catch (e) {}
 
