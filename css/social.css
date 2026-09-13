@@ -376,6 +376,61 @@ select:focus-visible,
 }
 .game-over-share:hover { color: var(--accent, #2ee87f); }
 
+/* Menyen som åpnes fra «Utfordre en venn»: del lenke, eller send til en venn
+   / gruppe direkte fra kortet. */
+.share-modal-card {
+  max-width: 380px;
+  align-items: stretch;
+  gap: 14px;
+  text-align: left;
+}
+
+.share-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.share-menu-btn { width: 100%; }
+
+.share-picker { display: flex; flex-direction: column; gap: 10px; }
+.share-picker-back {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: #7c8aa0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.share-picker-back:hover { color: var(--accent, #2ee87f); }
+
+.share-picker-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 280px;
+  overflow-y: auto;
+  gap: 2px;
+}
+.share-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 9px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.share-picker-item:hover { background: rgba(255, 255, 255, .05); }
+.share-picker-item:disabled { opacity: .6; cursor: default; }
+.share-picker-name { font-size: 13.5px; font-weight: 700; color: #e8edf5; }
+
+.share-status { margin: 0; font-size: 13px; color: #7c8aa0; text-align: center; }
+
 .game-over-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .game-over-confetti-bit {
   position: absolute;
