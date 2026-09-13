@@ -78,6 +78,15 @@ window.STUDILLA_GAMES = [
     icon: "assets/img/icons/bubble-shooter.svg",
     description: "Sikt og skyt kuler for å matche tre eller flere med samme farge. Tøm hele brettet for maks poeng før kulene når bunnen.",
     isDailyGame: false
+  },
+  {
+    id: "slope",
+    name: "Slope",
+    time: "~5 min",
+    thumbnail: "assets/img/games/slope.svg",
+    icon: "assets/img/icons/slope.svg",
+    description: "Styr kulen nedover den evige bakken, unngå de røde blokkene og se hvor langt du kommer før farten tar deg.",
+    isDailyGame: false
   }
 ];
 

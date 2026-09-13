@@ -1522,6 +1522,20 @@ html.is-player-view main { max-width: none; }
   cursor: crosshair;
 }
 
+/* ---------- Spill: Slope ---------- */
+
+.board-slope {
+  display: block;
+  /* Se forklaringen i .board-bubble ovenfor – samme mønster. */
+  width: 480px;
+  height: auto;
+  border-radius: 16px;
+  background: #0a0f1a;
+  border: 1px solid var(--border-strong);
+  touch-action: none;
+  cursor: pointer;
+}
+
 @media (max-width: 720px) {
   .game-hud { gap: 12px; padding: 5px 14px; }
   .game-hud-value { font-size: 17px; }
