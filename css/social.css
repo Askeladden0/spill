@@ -147,11 +147,11 @@ select:focus-visible,
 }
 .btn-ghost:hover { border-color: rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .04); }
 
-/* Sekundærknappen på et trikskort («Se rangering») står under den grønne
-   start-knappen og må ha samme bredde og en mindre høyde enn den store
+/* Sekundærknappen på et trikskort («Se rangering») står på samme linje som
+   den grønne start-knappen og må ha en mindre høyde enn den store
    .btn-ghost-en i heltefeltet. */
 .btn-card-secondary {
-  width: 100%;
+  flex: 1;
   justify-content: center;
   padding: 10px;
   border-radius: var(--radius-sm, 10px);

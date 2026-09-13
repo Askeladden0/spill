@@ -547,12 +547,12 @@ main {
 .game-body {
   padding: 16px 18px 18px;
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  flex-direction: row;
+  gap: 10px;
 }
 
 .btn-start {
-  width: 100%;
+  flex: 1;
   padding: 12px;
   border: none;
   border-radius: var(--radius-sm);
