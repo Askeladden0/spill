@@ -483,6 +483,12 @@ insert into public.games (id, name, genre, rating, points, time_estimate, descri
   ('bubble-shooter', 'Bubble Shooter', 'Puslespill', '4,7', 'Din skår = dine poeng', '~10 min', 'Sikt og skyt kuler for å matche tre eller flere med samme farge. Tøm hele brettet for maks poeng før kulene når bunnen.', 'assets/img/games/bubble-shooter.svg', 'assets/img/icons/bubble-shooter.svg', false, 6)
 on conflict (id) do nothing;
 
+-- 'slope' legges til uten genre/rating (tomme, samme som kolonnenes default) –
+-- disse feltene skal ikke fylles ut for nye triks.
+insert into public.games (id, name, points, time_estimate, description, thumbnail_url, icon_url, is_daily_game, sort_order) values
+  ('slope', 'Slope', 'Din skår = dine poeng', '~5 min', 'Styr kulen nedover den evige bakken, unngå de røde blokkene og se hvor langt du kommer før farten tar deg.', 'assets/img/games/slope.svg', 'assets/img/icons/slope.svg', false, 7)
+on conflict (id) do nothing;
+
 alter table public.games enable row level security;
 
 drop policy if exists "games_select_all" on public.games;
