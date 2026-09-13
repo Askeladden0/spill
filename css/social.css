@@ -477,17 +477,23 @@ select:focus-visible,
    dialog som legger seg over resten av siden.
    -------------------------------------------------------------------------- */
 
-.social-main {
-  display: grid;
-  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
-  gap: 28px;
-  align-items: start;
-}
-@media (max-width: 900px) {
-  .social-main { grid-template-columns: 1fr; }
-}
+.social-main { display: block; }
 
-.venner-feed-col { margin: 0; }
+/* Toppraden: overskrift til venstre, søk-etter-spiller + ny gruppechat til
+   høyre, på samme rad som før men uten den faste to-kolonne-rammen som lå i
+   .social-main. */
+.venner-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.btn-new-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
 
 .feed-list {
   display: flex;
@@ -499,10 +505,14 @@ select:focus-visible,
   overflow: hidden;
 }
 
+/* Ett samlet Messenger-stil kort: sidepanelet (søk + faner + tråd-/venne-
+   /forespørselslister) til venstre, den åpne samtalen til høyre. Faner
+   erstatter det som før var to seksjoner ved siden av hverandre, slik at
+   forespørsler og vennelista ikke lenger trenger sin egen kolonne. */
 .venner-panel {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  height: 620px;
+  grid-template-columns: 330px minmax(0, 1fr);
+  height: 660px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, .07);
   background: var(--surface, #131a25);
@@ -515,13 +525,84 @@ select:focus-visible,
   min-width: 0;
   border-right: 1px solid rgba(255, 255, 255, .06);
 }
-.venner-sidebar .section-heading { padding: 14px 16px 8px; }
-.venner-sidebar .section-heading h2 { font-size: 15px; }
 
-.dm-list {
+.venner-sidebar-head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+.venner-thread-search {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  background: var(--bg, #0d1117);
+  color: var(--text, #e8edf5);
+  font-family: inherit;
+  font-size: 13.5px;
+  outline: none;
+}
+.venner-thread-search:focus { border-color: var(--accent, #2ee87f); }
+
+.venner-tabs { display: flex; gap: 6px; }
+.venner-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 8px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .04);
+  color: var(--muted, #96a3b8);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+  white-space: nowrap;
+}
+.venner-tab:hover { background: rgba(255, 255, 255, .07); }
+.venner-tab.is-active {
+  background: var(--accent-soft, rgba(46, 232, 127, .12));
+  color: var(--accent, #2ee87f);
+}
+.venner-tab-badge {
+  min-width: 17px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: #ff5a7a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+.venner-tab-badge.is-info { background: #38bdf8; }
+.venner-tab-badge[hidden] { display: none; }
+
+.venner-tab-panel {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+}
+.venner-tab-panel[hidden] { display: none; }
+.venner-tab-panel-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted-3, #6b7b93);
+}
+.venner-tab-panel-heading .section-sub { font-size: 11.5px; text-transform: none; letter-spacing: 0; }
+
+.dm-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -650,8 +731,14 @@ select:focus-visible,
 }
 .dm-thread-name {
   /* Navnet tar bare plassen det trenger – .dm-thread-sub (medlemslista i en
-     gruppe) får resten, og skyver knappene helt ut til høyre. */
+     gruppe) får resten, og skyver knappene helt ut til høyre. min-width: 0
+     og ellipsis gjør at et langt gruppenavn krymper i stedet for å dytte
+     handlingsknappene ut av kortet på smale skjermer. */
   flex: 0 1 auto;
+  min-width: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 15px;
   font-weight: 700;
   color: #fff;
@@ -883,6 +970,7 @@ select:focus-visible,
 }
 .dm-thread-form input {
   flex: 1;
+  min-width: 0;
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, .09);

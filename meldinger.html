@@ -21,14 +21,20 @@
       <div class="section-heading spread" style="align-items:flex-end;flex-wrap:wrap;gap:20px">
         <div>
           <h1>Venner</h1>
-          <span class="section-sub" data-social-sub>Laster …</span>
         </div>
-        <div class="rank-search-wrap">
-          <label class="visually-hidden" for="friend-search">Søk etter en spiller</label>
-          <input type="search" id="friend-search" class="rank-search-input" placeholder="Finn en spiller å legge til …" data-friend-search autocomplete="off">
-          <div class="rank-search-results" data-friend-results hidden></div>
+        <div class="venner-header-actions">
+          <div class="rank-search-wrap">
+            <label class="visually-hidden" for="friend-search">Søk etter en spiller</label>
+            <input type="search" id="friend-search" class="rank-search-input" placeholder="Finn en spiller å legge til …" data-friend-search autocomplete="off">
+            <div class="rank-search-results" data-friend-results hidden></div>
+          </div>
+          <button type="button" class="btn-primary btn-new-group" data-new-group>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Ny gruppechat
+          </button>
         </div>
       </div>
+      <span class="section-sub" data-social-sub>Laster …</span>
     </section>
 
     <section data-signed-out hidden>
@@ -45,47 +51,59 @@
     </section>
 
     <div class="social-main" data-social-main hidden>
-      <!-- Venstre spalte: forespørsler og selve vennelista. Aktivitetsfeeden
-           lå her før; den hører hjemme på profilen til den det gjelder og
-           ligger nå på spillerprofil.html. -->
-      <section class="venner-feed-col">
-        <div class="friend-requests" data-requests-card hidden>
-          <div class="section-heading spread">
-            <h2>Venneforespørsler</h2>
-            <span class="section-sub" data-requests-count></span>
-          </div>
-          <div class="feed-list" data-requests-list></div>
-        </div>
-
-        <div class="section-heading spread" style="margin-top:22px">
-          <h2>Vennene dine</h2>
-          <span class="section-sub" data-friends-count></span>
-        </div>
-        <div class="feed-list" data-friends-list>
-          <div class="leaderboard-empty">Laster …</div>
-        </div>
-
-        <div data-outgoing-wrap hidden style="margin-top:22px">
-          <div class="section-heading spread">
-            <h2>Sendt av deg</h2>
-            <span class="section-sub">Venter på svar</span>
-          </div>
-          <div class="feed-list" data-outgoing-list></div>
-        </div>
-      </section>
-
-      <!-- Meldinger. Ett samlet panel med tråd-lista til venstre og den
-           åpne samtalen til høyre, i stedet for at samtalen henger som en
-           dialog over resten av siden. Lista inneholder både vanlige
-           samtaler og gruppechatter. -->
+      <!-- Ett samlet Messenger-stil panel: sidepanelet til venstre bytter
+           mellom samtaler, «la deg til»-forespørsler og selve vennelista via
+           faner, mens den åpne samtalen ligger til høyre i samme kort i
+           stedet for at noe av dette henger som egne seksjoner eller en
+           dialog over resten av siden. -->
       <section class="venner-panel" data-venner-panel>
         <div class="venner-sidebar">
-          <div class="section-heading spread" style="padding:0 2px">
-            <h2>Meldinger</h2>
-            <button type="button" class="btn-outline btn-small" data-new-group>+ Ny gruppe</button>
+          <div class="venner-sidebar-head">
+            <label class="visually-hidden" for="thread-search">Søk i personer og grupper</label>
+            <input type="search" id="thread-search" class="venner-thread-search" placeholder="Søk i personer og grupper …" data-thread-search autocomplete="off">
+            <div class="venner-tabs" role="tablist">
+              <button type="button" class="venner-tab is-active" data-tab-btn="dm" role="tab" aria-selected="true">
+                Meldinger <span class="venner-tab-badge" data-dm-badge-count hidden></span>
+              </button>
+              <button type="button" class="venner-tab" data-tab-btn="req" role="tab" aria-selected="false">
+                La deg til <span class="venner-tab-badge is-info" data-req-badge-count hidden></span>
+              </button>
+              <button type="button" class="venner-tab" data-tab-btn="friends" role="tab" aria-selected="false">Venner</button>
+            </div>
           </div>
-          <div class="dm-list" data-thread-list>
-            <div class="leaderboard-empty">Laster …</div>
+
+          <div class="venner-tab-panel" data-tab-panel="dm">
+            <div class="dm-list" data-thread-list>
+              <div class="leaderboard-empty">Laster …</div>
+            </div>
+          </div>
+
+          <div class="venner-tab-panel" data-tab-panel="req" hidden>
+            <div class="friend-requests" data-requests-card hidden>
+              <div class="venner-tab-panel-heading">
+                <span>Venneforespørsler</span>
+                <span class="section-sub" data-requests-count></span>
+              </div>
+              <div data-requests-list></div>
+            </div>
+
+            <div data-outgoing-wrap hidden>
+              <div class="venner-tab-panel-heading">
+                <span>Sendt av deg</span>
+                <span class="section-sub">Venter på svar</span>
+              </div>
+              <div data-outgoing-list></div>
+            </div>
+          </div>
+
+          <div class="venner-tab-panel" data-tab-panel="friends" hidden>
+            <div class="venner-tab-panel-heading">
+              <span>Vennene dine</span>
+              <span class="section-sub" data-friends-count></span>
+            </div>
+            <div data-friends-list>
+              <div class="leaderboard-empty">Laster …</div>
+            </div>
           </div>
         </div>
 
@@ -187,6 +205,10 @@
   let openChat = null;
   let pollTimer = null;
   let friends = [];
+  // Hvilken fane som er åpen i sidepanelet: "dm" (meldinger), "req" (la deg
+  // til) eller "friends" (vennene dine).
+  let activeTab = "dm";
+  let threadQuery = "";
 
   const els = {
     sub: document.querySelector("[data-social-sub]"),
@@ -201,6 +223,11 @@
     outgoingWrap: document.querySelector("[data-outgoing-wrap]"),
     outgoingList: document.querySelector("[data-outgoing-list]"),
     threads: document.querySelector("[data-thread-list]"),
+    threadSearch: document.querySelector("[data-thread-search]"),
+    tabBtns: document.querySelectorAll("[data-tab-btn]"),
+    tabPanels: document.querySelectorAll("[data-tab-panel]"),
+    dmBadgeCount: document.querySelector("[data-dm-badge-count]"),
+    reqBadgeCount: document.querySelector("[data-req-badge-count]"),
     panel: document.querySelector("[data-venner-panel]"),
     chatEmpty: document.querySelector("[data-dm-empty]"),
     chatActive: document.querySelector("[data-dm-active]"),
@@ -226,6 +253,30 @@
     groupSave: document.querySelector("[data-group-save]"),
   };
 
+  /* ---------------- Faner i sidepanelet ---------------- */
+
+  function setTab(tab) {
+    activeTab = tab;
+    els.tabBtns.forEach((btn) => {
+      const on = btn.dataset.tabBtn === tab;
+      btn.classList.toggle("is-active", on);
+      btn.setAttribute("aria-selected", String(on));
+    });
+    els.tabPanels.forEach((panel) => {
+      panel.hidden = panel.dataset.tabPanel !== tab;
+    });
+  }
+
+  els.tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => setTab(btn.dataset.tabBtn));
+  });
+
+  function badgePill(el, n) {
+    if (!el) return;
+    el.hidden = !n;
+    el.textContent = n > 9 ? "9+" : String(n);
+  }
+
   function gameName(id) {
     const g = (window.STUDILLA_GAMES || []).find((x) => x.id === id);
     return g ? g.name : id;
@@ -242,6 +293,7 @@
     els.requestsCard.hidden = !incoming.length;
     els.requestsCount.textContent = incoming.length
       ? `${incoming.length} venter på svar` : "";
+    badgePill(els.reqBadgeCount, incoming.length);
     els.requestsList.innerHTML = incoming
       .map((r) => `
         <div class="feed-row is-request">
@@ -350,19 +402,23 @@
     })));
 
     rows.sort((a, b) => new Date(b.at) - new Date(a.at));
+    badgePill(els.dmBadgeCount, rows.reduce((n, r) => n + (r.unread || 0), 0));
 
-    if (!rows.length) {
+    const q = threadQuery.trim().toLowerCase();
+    const visible = q ? rows.filter((r) => r.name.toLowerCase().indexOf(q) > -1) : rows;
+
+    if (!visible.length) {
       els.threads.innerHTML = `
         <div class="leaderboard-empty">
-          Ingen meldinger ennå. Trykk meldingsikonet ved en venn, eller lag en gruppe.
+          ${rows.length
+            ? `Fant ingen samtaler som matcher «${esc(threadQuery.trim())}».`
+            : "Ingen meldinger ennå. Trykk meldingsikonet ved en venn, eller lag en gruppe."}
         </div>`;
       return;
     }
 
     const isOpen = (r) => openChat && openChat.kind === r.kind && String(openChat.id) === String(r.id);
-
-    els.threads.innerHTML = rows
-      .map((r) => `
+    const rowHTML = (r) => `
         <button type="button" class="dm-row ${r.unread ? "is-unread" : ""} ${isOpen(r) ? "is-open" : ""}" data-open-chat="${r.kind}" data-chat-id="${esc(String(r.id))}" data-chat-name="${esc(r.name)}">
           ${r.avatar}
           <span class="dm-row-text">
@@ -373,13 +429,25 @@
             <span class="dm-row-time">${Social.timeAgo(r.at)}</span>
             ${r.unread ? `<span class="dm-row-badge">${r.unread}</span>` : ""}
           </span>
-        </button>`)
-      .join("");
+        </button>`;
+
+    // Nye meldinger øverst: uleste samtaler først (nyeste øverst innad i hver
+    // gruppe), så resten – i stedet for én lang liste sortert på tid alene.
+    const unread = visible.filter((r) => r.unread);
+    const read = visible.filter((r) => !r.unread);
+    els.threads.innerHTML = unread.map(rowHTML).join("") + read.map(rowHTML).join("");
 
     els.threads.querySelectorAll("[data-open-chat]").forEach((btn) => {
       btn.addEventListener("click", () => openThread(btn.dataset.openChat, btn.dataset.chatId, btn.dataset.chatName));
     });
   }
+
+  let threadSearchTimer = null;
+  els.threadSearch.addEventListener("input", () => {
+    threadQuery = els.threadSearch.value;
+    window.clearTimeout(threadSearchTimer);
+    threadSearchTimer = window.setTimeout(renderThreads, 120);
+  });
 
   /* ---------------- Vedlegg: triks, guider og rekorder ---------------- */
   /*
