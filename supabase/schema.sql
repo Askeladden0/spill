@@ -1803,75 +1803,12 @@ drop policy if exists "guide_files_admin_delete" on storage.objects;
 create policy "guide_files_admin_delete" on storage.objects
   for delete to authenticated using (bucket_id = 'guide-files' and public.is_admin());
 
--- Eksempelguiden fra designet ("Hvordan tjene penger på å sitte i
--- elevrådet") settes inn som utgangspunkt, med én modul av hver type – rediger
--- eller slett den fritt fra guider.html/guide.html, den er ikke spesialbehandlet.
---
--- is_featured settes kun hvis INGEN guide er fremhevet fra før.
---
--- «on conflict (id) do nothing» fanger bare konflikter på primærnøkkelen.
--- Har man slettet denne eksempelguiden fra adminpanelet og fremhevet en
--- annen i stedet, finnes det ingen id-konflikt – raden settes inn med
--- is_featured = true, og bryter da den ANDRE unike indeksen
--- (guides_single_featured_idx, «kun én fremhevet guide»). Resultatet var at
--- hele schema.sql stoppet med
---   duplicate key value violates unique constraint "guides_single_featured_idx"
--- for alle som hadde byttet fremhevet guide, og alt lenger nede i filen ble
--- aldri kjørt.
-insert into public.guides (id, title, category, excerpt, value_label, read_time, is_featured, sort_order) values
-  ('elevrad-penger', 'Hvordan tjene penger på å sitte i elevrådet', 'Elevrådet', 'Honorar, møtegodtgjørelse, reisedekning og fondene elevrådet kan søke på.', 'Opptil 12 000 kr', '8 min',
-   not exists (select 1 from public.guides where is_featured), 1)
-on conflict (id) do nothing;
-
-insert into public.guide_modules (guide_id, type, sort_order, data)
-select * from (values
-  ('elevrad-penger', 'tekst', 1, '{
-    "heading": "Slik kommer du i gang",
-    "headingLevel": 2,
-    "body": "De fleste elevråd har rett på mer penger enn de bruker. Pengene ligger tre steder: i skolens eget elevrådsbudsjett, i fylkets tilskuddsordninger, og i eksterne fond som deler ut midler til elevdemokrati. Start med å finne ut hvilket av de tre skolen din allerede bruker.\n\nBe rektor om budsjettlinja for elevrådet. Den skal finnes skriftlig, og du har rett til å se den. Er summen under 100 kroner per elev, ligger skolen lavt sammenlignet med snittet.",
-    "bullets": ["Spør etter budsjettlinja skriftlig, i god tid før neste møte.", "Sammenlign med naboskolene – tall gir tyngde i forhandlingen.", "Skriv et kort krav med sum, formål og frist."],
-    "tip": "Møtegodtgjørelse må vedtas før arbeidet er gjort. Ta det opp på det første møtet i skoleåret."
-  }'::jsonb),
-  ('elevrad-penger', 'fil', 2, '{"name": "Budsjettmal for elevrådet", "ext": "XLSX", "meta": "Regneark · 42 kB · ferdig utfylt eksempel inkludert", "url": null}'::jsonb),
-  ('elevrad-penger', 'tabell', 3, '{
-    "title": "Satser per verv, skoleåret 2026/27",
-    "columns": ["Verv", "Godtgjørelse", "Per år"],
-    "source": "Kilde: innsamlede satser fra 34 videregående skoler, august 2026.",
-    "rows": [
-      {"a": "Elevrådsleder", "b": "Honorar + møtegodtgjørelse", "c": "10 200 kr"},
-      {"a": "Nestleder", "b": "Halvt honorar + møtegodtgjørelse", "c": "7 200 kr"},
-      {"a": "Økonomiansvarlig", "b": "Møtegodtgjørelse", "c": "4 200 kr"},
-      {"a": "Klassetillitsvalgt", "b": "Ingen fast sats", "c": "0 kr"}
-    ]
-  }'::jsonb),
-  ('elevrad-penger', 'gevinst', 4, '{
-    "heading": "Dette kan du tjene",
-    "note": "per skoleår, som leder med full dekning",
-    "gains": [
-      {"label": "Møtegodtgjørelse, 14 møter", "amountKr": 4200},
-      {"label": "Honorar som elevrådsleder", "amountKr": 6000},
-      {"label": "Dekket reise til fylkessamlinger", "amountKr": 1800},
-      {"label": "Tilskudd fra elevdemokratifondet", "amountKr": 0, "displayText": "søkes særskilt"}
-    ]
-  }'::jsonb),
-  ('elevrad-penger', 'poll', 5, '{
-    "question": "Får elevrådet ditt honorar i dag?",
-    "options": [
-      {"label": "Ja, vedtatt honorar", "votes": 148},
-      {"label": "Bare dekning av reise", "votes": 96},
-      {"label": "Nei, ingenting", "votes": 312}
-    ]
-  }'::jsonb),
-  ('elevrad-penger', 'triks', 6, '{"gameId": null, "title": "Budsjett-byggeren", "intro": "Sett opp elevrådets årsbudsjett på tid og se hvor pengene forsvinner. Gir poeng til rangeringen.", "href": null}'::jsonb),
-  ('elevrad-penger', 'tekst', 7, '{
-    "heading": "Neste steg",
-    "headingLevel": 2,
-    "body": "Har du fått vedtaket i boks, er neste jobb å søke eksterne midler. Se etter flere guider om arrangementer og søknader i listen over alle guider.",
-    "bullets": [],
-    "tip": null
-  }'::jsonb)
-) as v(guide_id, type, sort_order, data)
-where not exists (select 1 from public.guide_modules where guide_id = 'elevrad-penger');
+-- Guiden "Hvordan tjene penger på å sitte i elevrådet" (id 'elevrad-penger')
+-- ble tidligere satt inn her som eksempelguide. Den er slettet for godt –
+-- ikke legg den inn igjen, da dukker den opp på nytt hver gang denne filen
+-- kjøres. Nye guider opprettes fra guider.html/guide.html som admin.
+delete from public.guide_modules where guide_id = 'elevrad-penger';
+delete from public.guides where id = 'elevrad-penger';
 
 -- Tre ressursguider flyttet inn fra skolesaus.no (mal-siden, P-matte-siden og
 -- nynorsk-oversetteren) – samme redirect+popup-mønster som spillene bruker

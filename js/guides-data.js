@@ -1,9 +1,8 @@
 /**
  * Guide-database for Studilla ("Guider og ressurser" – guider.html/guide.html).
  *
- * Samme mønster som js/games-data.js: window.STUDILLA_GUIDES starter som en
- * statisk fallback-liste (eksempelguiden fra designet, med én modul av hver
- * type), og fylles om med ekte data fra Supabase-tabellene `guides` og
+ * Samme mønster som js/games-data.js: window.STUDILLA_GUIDES starter tom og
+ * fylles med ekte data fra Supabase-tabellene `guides` og
  * `guide_modules` når de er tilgjengelige. Modulene til hver guide ligger i
  * window.STUDILLA_GUIDE_MODULES, nøklet på guide-id.
  *
@@ -18,111 +17,13 @@
  * klienten prøver på.
  */
 
-window.STUDILLA_GUIDES = [
-  {
-    id: "elevrad-penger",
-    title: "Hvordan tjene penger på å sitte i elevrådet",
-    category: "Elevrådet",
-    excerpt: "Honorar, møtegodtgjørelse, reisedekning og fondene elevrådet kan søke på.",
-    icon: "penger",
-    valueLabel: "Opptil 12 000 kr",
-    coverUrl: null,
-    featured: true,
-    updatedAt: null,
-    viewCount: 0,
-    likeCount: 0
-  }
-];
+// Tom fallback-liste. Tidligere lå eksempelguiden "Hvordan tjene penger på å
+// sitte i elevrådet" her, og den dukket opp igjen på sidene hver gang Supabase
+// svarte med feil eller tidsavbrudd – også lenge etter at den var slettet fra
+// basen. Hold denne tom: ekte guider kommer fra Supabase.
+window.STUDILLA_GUIDES = [];
 
-window.STUDILLA_GUIDE_MODULES = {
-  "elevrad-penger": [
-    {
-      id: "fallback-1",
-      type: "tekst",
-      sortOrder: 1,
-      data: {
-        heading: "Slik kommer du i gang",
-        headingLevel: 2,
-        body:
-          "De fleste elevråd har rett på mer penger enn de bruker. Pengene ligger tre steder: i skolens eget elevrådsbudsjett, i fylkets tilskuddsordninger, og i eksterne fond som deler ut midler til elevdemokrati. Start med å finne ut hvilket av de tre skolen din allerede bruker.\n\nBe rektor om budsjettlinja for elevrådet. Den skal finnes skriftlig, og du har rett til å se den. Er summen under 100 kroner per elev, ligger skolen lavt sammenlignet med snittet.",
-        bullets: [
-          "Spør etter budsjettlinja skriftlig, i god tid før neste møte.",
-          "Sammenlign med naboskolene – tall gir tyngde i forhandlingen.",
-          "Skriv et kort krav med sum, formål og frist."
-        ],
-        tip: "Møtegodtgjørelse må vedtas før arbeidet er gjort. Ta det opp på det første møtet i skoleåret."
-      }
-    },
-    {
-      id: "fallback-2",
-      type: "fil",
-      sortOrder: 2,
-      data: { name: "Budsjettmal for elevrådet", ext: "XLSX", meta: "Regneark · 42 kB · ferdig utfylt eksempel inkludert", url: null }
-    },
-    {
-      id: "fallback-3",
-      type: "tabell",
-      sortOrder: 3,
-      data: {
-        title: "Satser per verv, skoleåret 2026/27",
-        columns: ["Verv", "Godtgjørelse", "Per år"],
-        source: "Kilde: innsamlede satser fra 34 videregående skoler, august 2026.",
-        rows: [
-          { a: "Elevrådsleder", b: "Honorar + møtegodtgjørelse", c: "10 200 kr" },
-          { a: "Nestleder", b: "Halvt honorar + møtegodtgjørelse", c: "7 200 kr" },
-          { a: "Økonomiansvarlig", b: "Møtegodtgjørelse", c: "4 200 kr" },
-          { a: "Klassetillitsvalgt", b: "Ingen fast sats", c: "0 kr" }
-        ]
-      }
-    },
-    {
-      id: "fallback-4",
-      type: "gevinst",
-      sortOrder: 4,
-      data: {
-        heading: "Dette kan du tjene",
-        note: "per skoleår, som leder med full dekning",
-        gains: [
-          { label: "Møtegodtgjørelse, 14 møter", amountKr: 4200 },
-          { label: "Honorar som elevrådsleder", amountKr: 6000 },
-          { label: "Dekket reise til fylkessamlinger", amountKr: 1800 },
-          { label: "Tilskudd fra elevdemokratifondet", amountKr: 0, displayText: "søkes særskilt" }
-        ]
-      }
-    },
-    {
-      id: "fallback-5",
-      type: "poll",
-      sortOrder: 5,
-      data: {
-        question: "Får elevrådet ditt honorar i dag?",
-        options: [
-          { label: "Ja, vedtatt honorar", votes: 148 },
-          { label: "Bare dekning av reise", votes: 96 },
-          { label: "Nei, ingenting", votes: 312 }
-        ]
-      }
-    },
-    {
-      id: "fallback-6",
-      type: "triks",
-      sortOrder: 6,
-      data: { gameId: null, title: "Budsjett-byggeren", intro: "Sett opp elevrådets årsbudsjett på tid og se hvor pengene forsvinner. Gir poeng til rangeringen.", href: null }
-    },
-    {
-      id: "fallback-7",
-      type: "tekst",
-      sortOrder: 7,
-      data: {
-        heading: "Neste steg",
-        headingLevel: 2,
-        body: "Har du fått vedtaket i boks, er neste jobb å søke eksterne midler. Se etter flere guider om arrangementer og søknader i listen over alle guider.",
-        bullets: [],
-        tip: null
-      }
-    }
-  ]
-};
+window.STUDILLA_GUIDE_MODULES = {};
 
 const GUIDE_IMAGE_BUCKET = "guide-images";
 const GUIDE_FILE_BUCKET = "guide-files";
