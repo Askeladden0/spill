@@ -85,7 +85,6 @@
       <span class="footer-copy">© 2026 Studilla</span>
     </div>
     <nav class="footer-nav">
-      <a href="kontakt.html">Kontakt</a>
       <a href="vilkar.html#personvern">Personvern</a>
       <a href="vilkar.html">Vilkår</a>
       <a href="https://www.tiktok.com/@snorre.saus" target="_blank" rel="noopener noreferrer">TikTok</a>
