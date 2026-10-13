@@ -75,43 +75,57 @@ select:focus-visible,
    -------------------------------------------------------------------------- */
 
 .hero-section {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 28px;
+  position: relative;
   margin-bottom: 40px;
 }
 
+/* Dagens triks dekker hele skjermen under toppmenyen. */
+.hero-section .hero-media,
+.hero-section .hero-stage {
+  min-height: calc(100svh - var(--header-h) - 40px);
+}
+.hero-section .hero-stage-inner { min-height: 0; }
+
+/* Liten hilsen nede i høyre hjørne, over bildet. Skjules når trikset spilles. */
 .hero-greeting {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 4;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 24px 28px;
-  border-radius: 20px;
-  background: var(--surface, #131a25);
+  gap: 8px;
+  width: min(300px, calc(100% - 40px));
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(19, 26, 37, .88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, .07);
 }
+.hero-section:has(.hero-card.is-playing) .hero-greeting { display: none; }
 
 .hero-greeting h1 {
   margin: 0;
-  font-size: clamp(26px, 4vw, 36px);
-  line-height: 1.1;
-  letter-spacing: -.03em;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: -.02em;
   color: #fff;
   text-wrap: pretty;
 }
 
-.hero-greeting .hero-lead { max-width: 56ch; font-size: 15.5px; }
+.hero-greeting .hero-lead { font-size: 12.5px; line-height: 1.5; }
 
 .hero-byline {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13.5px;
+  gap: 8px;
+  font-size: 12px;
   color: #7c8aa0;
 }
 .hero-byline img {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   object-fit: cover;
   border: 1.5px solid rgba(255, 255, 255, .12);
@@ -233,9 +247,10 @@ select:focus-visible,
 }
 
 @media (max-width: 900px) {
-  .hero-section { gap: 24px; }
-  .hero-greeting { padding: 20px; }
-  .hero-stage, .hero-stage-inner { min-height: 340px; }
+  /* På smale skjermer ligger hilsenen under bildet i stedet for oppå. */
+  .hero-greeting { position: static; width: auto; margin-top: 12px; }
+  .hero-section .hero-media,
+  .hero-section .hero-stage { min-height: calc(100svh - var(--header-h) - 160px); }
 }
 
 /* --------------------------------------------------------------------------
@@ -1115,7 +1130,6 @@ select:focus-visible,
    beskrivelsen som kom til gjorde teksten enda vanskeligere å lese.
    -------------------------------------------------------------------------- */
 
-.hero-section .hero-media { min-height: 420px; }
 
 .hero-section .hero-content { padding: 32px; gap: 14px; }
 
