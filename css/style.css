@@ -26,17 +26,10 @@
   --max-width: 1240px;
 }
 
-/* Aksentfarge per side. Premier, Rangering, Guider og Venner har hver sin
-   farge; Triks (og resten) beholder den grønne fra :root. --accent-soft må
+/* Aksentfarge per side. Rangering, Guider og Meldinger har hver sin
+   farge; Premier, Triks (og resten) beholder den grønne fra :root. --accent-soft må
    settes på nytt her fordi den er regnet ut på :root og ikke følger med når
    --accent-rgb overstyres lenger ned i treet. */
-body[data-page="premier"] {
-  --accent: #eb34e1;
-  --accent-light: #f06fe8;
-  --accent-rgb: 235, 52, 225;
-  --accent-soft: rgba(235, 52, 225, .12);
-  --accent-soft-strong: rgba(235, 52, 225, .2);
-}
 body[data-page="rangering"] {
   --accent: #f4f74a;
   --accent-light: #f8fa84;
