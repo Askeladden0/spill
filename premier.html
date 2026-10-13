@@ -257,9 +257,9 @@
 
   function displayLevel() {
     if (!levels.length) return profile ? profile.level : 1;
-    const computed = computedLevelFromPoints(currentPoints());
-    if (profile) return Math.max(profile.level, computed);
-    return computed;
+    // Nivået regnes alltid fra poengene. profiles.level går aldri ned, så etter
+    // at nivåstigen er endret kan det stå igjen et for høyt nivå her.
+    return computedLevelFromPoints(currentPoints());
   }
 
   function nextLevelInfo() {
