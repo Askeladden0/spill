@@ -729,3 +729,91 @@ a.guide-trick-card:hover { border-color: rgba(var(--accent-rgb), .35); }
 }
 .snorre-tag-info:hover::after,
 .snorre-tag-info:focus::after { opacity: 1; visibility: visible; }
+
+/* Vinnerkortet i båndet når trekningen har landet */
+.case-reel-tile.is-winner {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .55), 0 0 28px rgba(var(--accent-rgb), .45);
+  transition: box-shadow .3s ease, border-color .3s ease;
+}
+
+/* Avslørt rabatt i pop-upen: ett sentrert kort med logo, tittel, kode og knapp */
+.case-reveal {
+  --reveal-color: var(--accent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 26px 22px 20px;
+  text-align: center;
+  border-radius: 18px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--reveal-color) 10%, transparent), transparent 55%), var(--bg);
+  border: 1px solid color-mix(in srgb, var(--reveal-color) 50%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--reveal-color) 10%, transparent);
+  animation: case-reveal-in .45s cubic-bezier(.2, .8, .2, 1);
+}
+.case-reveal[hidden] { display: none; }
+@keyframes case-reveal-in {
+  from { opacity: 0; transform: translateY(14px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}
+.case-reveal-logo {
+  width: 84px;
+  height: 84px;
+  border-radius: 18px;
+  background: #1b2434;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+}
+.case-reveal-logo img { width: 100%; height: 100%; object-fit: cover; }
+.case-reveal-logo span { font-family: ui-monospace, Menlo, monospace; font-size: 9px; color: var(--muted-3); }
+.case-reveal-rarity {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  color: var(--reveal-color);
+}
+.case-reveal-info {
+  display: flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; padding: 0;
+  border: none; background: transparent; color: var(--muted); cursor: help;
+}
+.case-reveal-value {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -.025em;
+  line-height: 1.12;
+  color: #fff;
+  text-wrap: balance;
+}
+.case-reveal-code {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px dashed rgba(var(--accent-rgb), .5);
+  background: rgba(var(--accent-rgb), .06);
+}
+.case-reveal-code-label { font-size: 10.5px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.case-reveal-code-value {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: #fff;
+  word-break: break-all;
+  user-select: all;
+}
+.case-reveal-copy { width: 100%; }
+.case-reveal .case-reveal-link { align-self: center; margin-top: 0; }
+.case-reveal-note { margin: 0; font-size: 12px; color: var(--muted); }
