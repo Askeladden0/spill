@@ -2773,6 +2773,7 @@ html.is-player-view main { max-width: none; }
   width: 100%;
   max-width: 480px;
   max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
   overflow-y: auto;
   background: var(--surface);
   border: 1px solid rgba(var(--accent-rgb), .35);
@@ -2786,6 +2787,9 @@ html.is-player-view main { max-width: none; }
   box-shadow: 0 24px 64px rgba(0, 0, 0, .55);
   animation: lvlCardIn .5s cubic-bezier(.22, 1, .36, 1) both;
 }
+
+/* Hindrer at flex-barna krymper (og toppen kuttes) når skjermen er lav – kortet scroller i stedet */
+.levelup-card > * { flex-shrink: 0; }
 
 .levelup-close {
   position: absolute;

@@ -1469,7 +1469,7 @@
                 <button type="button" class="admin-switch${r.supports_snorre ? " is-on" : ""}" data-reward-snorre-toggle="${r.id}" aria-label="Vis «Støtter Snorre»-taggen på rabatten"${state.rewardsNeedMigration ? " disabled" : ""}>
                   <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
                 </button>
-                <span class="admin-card-sub" style="margin:0">Velkomstrabatten trekkes aldri blant disse.</span>
+                <span class="admin-card-sub" style="margin:0">Velkomstbonusen trekkes aldri blant disse.</span>
               </div>
             </div>
             <label class="admin-field">KODETYPE

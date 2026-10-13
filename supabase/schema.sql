@@ -3966,11 +3966,11 @@ alter table public.guides add column if not exists icon text not null default ''
 --        Snorre». Selve taggen (aksentfarge + infosymbol) tegnes av
 --        premier.html og profil.html.
 --     b) user_welcome_cases + open_welcome_case(): hver bruker får én
---        velkomstkasse, uavhengig av nivå. Velkomstrabatten er ALDRI en
+--        velkomstkasse, uavhengig av nivå. Velkomstbonusen er ALDRI en
 --        «Støtter Snorre»-rabatt, og det sikres tre steder: trekningen
 --        hopper over dem, en trigger avviser rader som peker på en slik
 --        rabatt, og en trigger på rewards stopper at en allerede utdelt
---        velkomstrabatt senere merkes som «Støtter Snorre».
+--        velkomstbonus senere merkes som «Støtter Snorre».
 --     c) Nivåstigen blir 10× vanskeligere for alle triks (poengene
 --        regnes ut likt for alle spill, så det er stigen som skaleres).
 --        Kjøres kun én gang (app_settings.level_scale_x10_done). Spillere
@@ -3997,7 +3997,7 @@ language plpgsql
 as $$
 begin
   if exists (select 1 from public.rewards where id = new.reward_id and supports_snorre) then
-    raise exception 'Velkomstrabatten kan ikke være en «Støtter Snorre»-rabatt';
+    raise exception 'Velkomstbonusen kan ikke være en «Støtter Snorre»-rabatt';
   end if;
   return new;
 end;
@@ -4015,7 +4015,7 @@ as $$
 begin
   if new.supports_snorre and not old.supports_snorre
      and exists (select 1 from public.user_welcome_cases where reward_id = new.id) then
-    raise exception 'Denne rabatten er delt ut som velkomstrabatt og kan ikke merkes «Støtter Snorre»';
+    raise exception 'Denne rabatten er delt ut som velkomstbonus og kan ikke merkes «Støtter Snorre»';
   end if;
   return new;
 end;
