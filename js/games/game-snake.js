@@ -11,6 +11,16 @@
   const SIZE = 10;
   const GAME_ID = "snake";
   const TICK_MS = 130;
+  const SPRITE_PATH = "assets/img/games/snake/";
+  const HEAD_IDLE = ["normal", "tongue", "normal", "tongue", "normal", "normal", "blink", "normal", "open", "open", "normal", "tongue"];
+  const SPRITE_NAMES = [
+    "apple", "body-h", "body-v", "corner-0", "corner-90", "corner-180", "corner-270",
+    "grass-0", "grass-1", "grass-2", "flower", "frame",
+  ];
+  ["right", "down", "left", "up"].forEach((d) => {
+    SPRITE_NAMES.push("tail-" + d);
+    ["normal", "tongue", "blink", "open"].forEach((f) => SPRITE_NAMES.push("head-" + f + "-" + d));
+  });
 
   function start(container) {
     let snake = [];
@@ -22,7 +32,9 @@
     let timer = null;
     let session = null;
     let cellEls = null;
-    let headFaceCell = null;
+    let sprEls = null;
+    let moves = 0;
+    let idleStep = 0;
     // Satt til true frem til spilleren trykker høyre-tast (eller sveiper
     // høyre): slangen står stille helt til da, både ved ny runde og ved en
     // gjenopptatt lagret runde, slik at man ikke krasjer med en gang.
@@ -30,6 +42,9 @@
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
+      // Forhåndslast alle sprites så ruter ikke blinker tomme ved bytte.
+      SPRITE_NAMES.forEach((n) => { new Image().src = SPRITE_PATH + n + ".svg"; });
+      setInterval(() => { idleStep++; if (waitingToStart) updateHead(); }, 380);
       session.playArea.innerHTML = `
         <div class="board-snake" data-board-snake tabindex="0"></div>
       `;
@@ -83,6 +98,7 @@
       nextDirection = "right";
       score = 0;
       over = false;
+      moves = 0;
       placeFood();
       render();
       session.setScore(0);
@@ -129,6 +145,7 @@
       }
 
       snake.unshift({ r, c });
+      moves++;
 
       let ateAt = null;
       if (food && r === food.r && c === food.c) {
@@ -147,8 +164,7 @@
     function endGame() {
       over = true;
       if (timer) clearInterval(timer);
-      const face = headFaceCell && headFaceCell.querySelector(".snake-face");
-      if (face) face.classList.add("is-dead");
+      updateHead();
       const boardEl = session.playArea.querySelector("[data-board-snake]");
       if (boardEl) {
         boardEl.classList.add("is-shaking");
@@ -158,11 +174,10 @@
     }
 
     // Rutene bygges kun én gang og gjenbrukes videre (i stedet for å bygges
-    // helt på nytt hvert eneste tikk). Slik kan CSS-overganger og
-    // pop-animasjonen på nytt hode faktisk spille av i stedet for å bli
-    // avbrutt av at elementene stadig erstattes med helt nye. Sjakkmønster-
-    // klassen (is-tile-b) settes kun her, siden brettmønsteret aldri endrer
-    // seg – render() rører den ikke.
+    // helt på nytt hvert eneste tikk). Hver rute har et bakke-bilde
+    // (gress/blomst) som bakgrunn, og et eget sprite-element oppå som viser
+    // slangen eller eplet. Bakken bestemmes av rutens posisjon og endrer seg
+    // aldri, så render() rører den ikke.
     function buildBoard() {
       const boardEl = session.playArea.querySelector("[data-board-snake]");
       if (!boardEl) return null;
@@ -170,19 +185,46 @@
       boardEl.style.setProperty("--snake-size", SIZE);
       boardEl.classList.remove("is-shaking");
       cellEls = [];
-      headFaceCell = null;
-      faceEl = null;
+      sprEls = [];
       for (let r = 0; r < SIZE; r++) {
         const rowEls = [];
+        const sprRow = [];
         for (let c = 0; c < SIZE; c++) {
           const cell = document.createElement("div");
-          cell.className = "cell-snake" + ((r + c) % 2 ? " is-tile-b" : "");
+          cell.className = "cell-snake " + groundClass(r, c);
+          const spr = document.createElement("span");
+          spr.className = "snake-spr";
+          cell.appendChild(spr);
           boardEl.appendChild(cell);
           rowEls.push(cell);
+          sprRow.push(spr);
         }
         cellEls.push(rowEls);
+        sprEls.push(sprRow);
       }
       return boardEl;
+    }
+
+    // Fast, "tilfeldig" fordeling av gresstyper ut fra rutens posisjon.
+    function groundClass(r, c) {
+      const h = ((r * 73856093) ^ (c * 19349663)) >>> 0;
+      return h % 100 < 8 ? "ground-flower" : "ground-" + (h % 3);
+    }
+
+    function setSprite(spr, name) {
+      if (spr.dataset.sprite === name) return;
+      if (name) {
+        spr.dataset.sprite = name;
+        spr.style.backgroundImage = 'url("' + SPRITE_PATH + name + '.svg")';
+      } else {
+        delete spr.dataset.sprite;
+        spr.style.backgroundImage = "";
+      }
+    }
+
+    const DIR_OF_DELTA = { "0,1": "right", "1,0": "down", "0,-1": "left", "-1,0": "up" };
+    function dirFrom(from, to) {
+      return DIR_OF_DELTA[(to.r - from.r) + "," + (to.c - from.c)] || direction;
     }
 
     const DIR_DELTA = {
@@ -192,88 +234,56 @@
       right: { dr: 0, dc: 1 },
     };
 
-    // Finner hvilke retninger et slangesegment henger sammen med naboene
-    // sine i (mot hodet og/eller mot halen), slik at kroppen kan tegnes som
-    // ett sammenhengende rør i stedet for adskilte klosser.
-    function segmentConnections(i) {
+    // Hodet veksler mellom rammene vanlig/tunge/blunk/åpen munn. Før start
+    // går de i en rolig løkke; under spill følger de tikkene, og munnen
+    // åpner seg når eplet er rett foran. Etter krasj blunker hodet.
+    function headFrame() {
+      if (over) return "blink";
+      const h = snake[0];
+      const d = DIR_DELTA[direction];
+      if (food && h.r + d.dr === food.r && h.c + d.dc === food.c) return "open";
+      if (waitingToStart) return HEAD_IDLE[idleStep % HEAD_IDLE.length];
+      if (moves % 9 === 4) return "blink";
+      return moves % 6 < 2 ? "tongue" : "normal";
+    }
+
+    function updateHead() {
+      if (!sprEls || !snake.length) return;
+      const h = snake[0];
+      const faceDir = snake.length > 1 ? dirFrom(snake[1], h) : direction;
+      setSprite(sprEls[h.r][h.c], "head-" + headFrame() + "-" + faceDir);
+    }
+
+    function segmentSprite(i) {
       const cur = snake[i];
-      const dirs = [];
-      const neighbors = [snake[i - 1], snake[i + 1]];
-      for (const n of neighbors) {
-        if (!n) continue;
-        const dr = n.r - cur.r;
-        const dc = n.c - cur.c;
-        for (const dir in DIR_DELTA) {
-          if (DIR_DELTA[dir].dr === dr && DIR_DELTA[dir].dc === dc) dirs.push(dir);
-        }
-      }
-      return dirs;
-    }
-
-    const ROUND = 46;
-    const FLAT = 0;
-
-    function applyTubeShape(cell, dirs) {
-      const has = (d) => dirs.includes(d);
-      const tl = has("up") || has("left") ? FLAT : ROUND;
-      const tr = has("up") || has("right") ? FLAT : ROUND;
-      const br = has("down") || has("right") ? FLAT : ROUND;
-      const bl = has("down") || has("left") ? FLAT : ROUND;
-      cell.style.borderRadius = `${tl}% ${tr}% ${br}% ${bl}%`;
-    }
-
-    // Ansiktet (øyne/munn/tunge) er ett og samme DOM-element som bare
-    // *flyttes* til den nye hode-cellen hvert tikk (appendChild flytter
-    // uten å ødelegge elementet). Blunk- og tunge-flikk-animasjonene er
-    // CSS-animasjoner på dette elementet – lages det på nytt hvert tikk
-    // (slangen flytter seg jo hvert tikk) starter animasjonen på 0 igjen
-    // hver gang, og rekker aldri frem til blunket/flikket.
-    let faceEl = null;
-    function ensureFace(cell) {
-      if (!faceEl) {
-        faceEl = document.createElement("div");
-        faceEl.className = "snake-face";
-        faceEl.innerHTML =
-          '<span class="snake-eye snake-eye-l"><span class="snake-eye-ball"></span></span>' +
-          '<span class="snake-eye snake-eye-r"><span class="snake-eye-ball"></span></span>' +
-          '<span class="snake-mouth"></span>' +
-          '<span class="snake-tongue"></span>' +
-          '<span class="snake-hit"></span>';
-      }
-      if (faceEl.parentNode !== cell) cell.appendChild(faceEl);
-      return faceEl;
+      if (i === snake.length - 1) return "tail-" + dirFrom(snake[i - 1], cur);
+      const side = (q) => (q.c < cur.c ? "L" : q.c > cur.c ? "R" : q.r < cur.r ? "T" : "B");
+      const set = [side(snake[i - 1]), side(snake[i + 1])].sort().join("");
+      if (set === "LR") return "body-h";
+      if (set === "BT") return "body-v";
+      return "corner-" + { BL: 0, LT: 90, RT: 180, BR: 270 }[set];
     }
 
     function render(ateAt) {
       if (!session.playArea.querySelector("[data-board-snake]")) return;
       if (!cellEls) buildBoard();
+      const body = new Map();
+      for (let i = 1; i < snake.length; i++) body.set(snake[i].r * SIZE + snake[i].c, segmentSprite(i));
+      const head = snake[0];
       for (let r = 0; r < SIZE; r++) {
         for (let c = 0; c < SIZE; c++) {
-          const cell = cellEls[r][c];
-          cell.classList.remove("is-food", "is-head", "is-body", "is-eating");
-          cell.style.borderRadius = "";
-          delete cell.dataset.dir;
-
-          if (food && food.r === r && food.c === c) {
-            cell.classList.add("is-food");
-          }
-          const segIndex = snake.findIndex((seg) => seg.r === r && seg.c === c);
-          if (segIndex === 0) {
-            cell.classList.add("is-head");
-            cell.dataset.dir = direction;
-            applyTubeShape(cell, segmentConnections(segIndex));
-            if (ateAt && ateAt.r === r && ateAt.c === c) cell.classList.add("is-eating");
-          } else if (segIndex > 0) {
-            cell.classList.add("is-body");
-            applyTubeShape(cell, segmentConnections(segIndex));
-          }
+          const spr = sprEls[r][c];
+          const key = r * SIZE + c;
+          const isFood = !!(food && food.r === r && food.c === c);
+          spr.classList.toggle("is-food", isFood);
+          spr.classList.remove("is-eating");
+          if (head.r === r && head.c === c) {
+            if (ateAt) spr.classList.add("is-eating");
+          } else if (isFood) setSprite(spr, "apple");
+          else setSprite(spr, body.get(key) || null);
         }
       }
-
-      const headSeg = snake[0];
-      const headCell = cellEls[headSeg.r][headSeg.c];
-      ensureFace(headCell);
-      headFaceCell = headCell;
+      updateHead();
     }
 
     const KEY_DIRECTIONS = {
