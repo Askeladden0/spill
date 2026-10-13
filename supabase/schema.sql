@@ -4218,6 +4218,89 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------------
+-- 66. Rangeringspoeng (profiles.score) skilt fra nivåpoeng (profiles.xp).
+--
+--     Rangeringen får tilbake poengene spillerne har tjent, mens alle starter
+--     på nivå 1 med nullstilt nivåstolpe igjen.
+--
+--     profiles.score = poeng tjent totalt, brukes KUN til rangeringen og
+--     «poeng totalt» på profiler. Går aldri ned.
+--     profiles.xp    = poeng mot neste nivå. Nullstilles her, og nivået settes
+--                      til 1.
+--
+--     Alt som gir xp (runder, streak-bonus, adminjusteringer opp) teller
+--     automatisk også på score via en trigger, så ingen av de eksisterende
+--     funksjonene må skrives om.
+--
+--     Engangsjobben under regner ut score fra game_records (alle runder som
+--     er spilt × triksets point_rate) og tar det høyeste av det og dagens xp,
+--     slik at streak-bonuser og lignende ikke går tapt. Kjøres kun én gang
+--     (app_settings.score_split_done). Utdelte kasser/rabattkoder beholdes.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists score bigint not null default 0;
+alter table public.profiles drop constraint if exists profiles_score_positive;
+alter table public.profiles add constraint profiles_score_positive check (score >= 0);
+
+alter table public.app_settings add column if not exists score_split_done boolean not null default false;
+
+create or replace function public.track_profile_score()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  -- Engangsjobben og eventuelle senere rettinger setter dette flagget selv.
+  if coalesce(current_setting('studilla.score_write', true), '') = 'on' then
+    return new;
+  end if;
+  -- score kan aldri skrives direkte; den følger bare med når xp øker.
+  new.score := old.score + greatest(0, coalesce(new.xp, 0) - coalesce(old.xp, 0));
+  return new;
+end;
+$$;
+
+-- Navnet sorterer etter guard_profile_privileges, så triggeren ser xp-verdien
+-- ETTER at den har stoppet uautoriserte skrivinger.
+drop trigger if exists profiles_score_track on public.profiles;
+create trigger profiles_score_track
+  before update on public.profiles
+  for each row execute function public.track_profile_score();
+
+do $$
+begin
+  if not coalesce((select score_split_done from public.app_settings where id = 1), false) then
+    perform set_config('studilla.trusted_profile_write', 'on', true);
+    perform set_config('studilla.score_write', 'on', true);
+
+    update public.profiles p
+       set score = greatest(
+             p.xp,
+             coalesce((
+               select sum(round(gr.score * coalesce(g.point_rate, 1)))
+                 from public.game_records gr
+                 join public.games g on g.id = gr.game_id
+                where gr.user_id = p.id
+             ), 0)::bigint
+           );
+
+    update public.profiles set xp = 0, level = 1;
+
+    update public.app_settings set score_split_done = true, updated_at = now() where id = 1;
+  end if;
+end;
+$$;
+
+-- Viewet får score. Slippes først av samme grunn som i seksjon 49.
+drop view if exists public.profiles_public;
+create view public.profiles_public as
+  select id, username, avatar_color, avatar_icon, level, xp, score, is_hidden, created_at,
+         streak_current, streak_best
+    from public.profiles;
+
+grant select on public.profiles_public to anon, authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

@@ -33,7 +33,7 @@
 
   // Poeng en utlogget besøkende har "tjent" (f.eks. ved å spinne hjulet uten
   // å være innlogget). Lagres lokalt i nettleseren og vises i headeren i
-  // stedet for nivå-widgeten, sammen med en "Logg inn"-knapp, slik at
+  // stedet for nivå-widgeten, sammen med en "Registrer deg"-knapp, slik at
   // besøkende ser hva de går glipp av å ikke lagre permanent.
   function getGuestPoints() {
     const raw = window.localStorage.getItem(GUEST_POINTS_KEY);
@@ -244,7 +244,7 @@
             <span class="login-avatar">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#96a3b8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
             </span>
-            Logg inn
+            Registrer deg
           </button>
         </a>
       `;

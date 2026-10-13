@@ -1,6 +1,6 @@
 /* ==========================================================================
    Studilla – enkeltsider
-   Kassebåndet på premier.html, guider og ressurser.
+   Rabattbåndet på premier.html, guider og ressurser.
 
    Delt ut fra den tidligere ene css/style.css på 4 400+ linjer. Rekkefølgen
    filene lastes i (se build/partials/head.html) er den samme som seksjonene
@@ -8,7 +8,7 @@
    ========================================================================== */
 
 /* ==========================================================================
-   Kassebåndet på premier.html
+   Rabattbåndet på premier.html
    Båndet ruller kontinuerlig med én CSS-animasjon i stedet for en ny
    transition annethvert sekund (som ga hakking hver gang den startet på
    nytt). Tegningen er duplisert to ganger, og animasjonen flytter båndet
@@ -129,14 +129,14 @@
   padding: 9px 16px; border-radius: 99px; border: 1px solid var(--border-strong);
   background: var(--surface); color: var(--muted); font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit;
 }
-.guide-filter-pill.is-active { background: var(--accent-soft); color: var(--accent); border-color: rgba(46, 232, 127, .35); }
-.guide-filter-pill:hover { border-color: rgba(46, 232, 127, .5); }
+.guide-filter-pill.is-active { background: var(--accent-soft); color: var(--accent); border-color: rgba(var(--accent-rgb), .35); }
+.guide-filter-pill:hover { border-color: rgba(var(--accent-rgb), .5); }
 
 /* ---------- Fremhevet guide ---------- */
 .guide-feature {
   position: relative; border-radius: var(--radius-lg); overflow: hidden;
-  border: 1px solid rgba(46, 232, 127, .28); background: var(--surface);
-  box-shadow: 0 0 0 4px rgba(46, 232, 127, .06);
+  border: 1px solid rgba(var(--accent-rgb), .28); background: var(--surface);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), .06);
   display: grid; grid-template-columns: 1.15fr .85fr; min-height: 300px;
 }
 @media (max-width: 860px) { .guide-feature { grid-template-columns: 1fr; } }
@@ -164,7 +164,7 @@
   position: relative; display: flex; flex-direction: column; background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; transition: border-color .15s ease;
 }
-.guide-card:hover { border-color: rgba(46, 232, 127, .35); }
+.guide-card:hover { border-color: rgba(var(--accent-rgb), .35); }
 .guide-card.is-editing { grid-column: 1 / -1; }
 .guide-card.is-editing .guide-form { border: none; }
 
@@ -198,7 +198,7 @@
   text-transform: uppercase; backdrop-filter: blur(6px);
 }
 .guide-status-badge.is-hidden { background: rgba(35, 24, 8, .9); border: 1px solid var(--guide-warn-line); color: var(--guide-warn); }
-.guide-status-badge.is-featured { background: rgba(13, 17, 23, .86); border: 1px solid rgba(46, 232, 127, .38); color: var(--accent); }
+.guide-status-badge.is-featured { background: rgba(13, 17, 23, .86); border: 1px solid rgba(var(--accent-rgb), .38); color: var(--accent); }
 .guide-card.is-hidden-guide .guide-status-badge.is-featured { left: auto; right: 10px; }
 
 /* ---------- Admin-knapper (ikon + tekst) ---------- */
@@ -209,9 +209,9 @@
   font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; line-height: 1;
   transition: border-color .15s ease, background .15s ease, color .15s ease;
 }
-.guide-action-btn:hover { border-color: rgba(46, 232, 127, .55); background: var(--accent-soft); color: var(--accent); }
+.guide-action-btn:hover { border-color: rgba(var(--accent-rgb), .55); background: var(--accent-soft); color: var(--accent); }
 .guide-action-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.guide-action-btn.is-active { border-color: rgba(46, 232, 127, .55); background: var(--accent-soft); color: var(--accent); }
+.guide-action-btn.is-active { border-color: rgba(var(--accent-rgb), .55); background: var(--accent-soft); color: var(--accent); }
 .guide-action-btn.is-warn { border-color: var(--guide-warn-line); color: var(--guide-warn); background: var(--guide-warn-soft); }
 .guide-action-btn.is-warn:hover { border-color: var(--guide-warn); background: rgba(255, 179, 71, .2); color: var(--guide-warn); }
 .guide-action-btn.is-danger { border-color: rgba(245, 113, 92, .34); color: #ff9385; }
@@ -226,7 +226,7 @@
   background: var(--surface); color: var(--text); cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center; padding: 0; line-height: 1;
 }
-.guide-icon-btn:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); background: var(--accent-soft); }
+.guide-icon-btn:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--accent); background: var(--accent-soft); }
 .guide-icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .guide-icon-btn.is-danger:hover { border-color: rgba(245, 113, 92, .5); color: #ff9385; background: rgba(245, 113, 92, .14); }
 .guide-icon-btn:disabled { opacity: .3; cursor: not-allowed; }
@@ -276,7 +276,7 @@
   border: 1px dashed var(--border-strong); background: var(--bg);
   transition: border-color .15s ease, background .15s ease;
 }
-.guide-dropzone-target:hover { border-color: rgba(46, 232, 127, .55); background: var(--accent-soft); }
+.guide-dropzone-target:hover { border-color: rgba(var(--accent-rgb), .55); background: var(--accent-soft); }
 .guide-dropzone.has-image .guide-dropzone-target { border-style: solid; border-color: var(--border-strong); background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px); }
 .guide-dropzone.is-dragover .guide-dropzone-target { border-color: var(--accent); background: var(--accent-soft); }
 .guide-dropzone-target img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -300,11 +300,11 @@
   border: 1px solid var(--border-strong); background: var(--bg); color: var(--muted);
   font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
 }
-.guide-choice:hover { border-color: rgba(46, 232, 127, .5); color: var(--text); }
-.guide-choice.is-active { background: var(--accent-soft); border-color: rgba(46, 232, 127, .5); color: var(--accent); }
+.guide-choice:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--text); }
+.guide-choice.is-active { background: var(--accent-soft); border-color: rgba(var(--accent-rgb), .5); color: var(--accent); }
 .guide-choice.is-clear { color: var(--muted-3); }
 .admin-field .is-title-input { font-size: 16px; font-weight: 700; padding: 12px 14px; }
-.guide-picked-game { display: flex; align-items: center; gap: 11px; margin-top: 6px; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(46, 232, 127, .3); background: var(--accent-soft); }
+.guide-picked-game { display: flex; align-items: center; gap: 11px; margin-top: 6px; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(var(--accent-rgb), .3); background: var(--accent-soft); }
 .guide-picked-game img { width: 44px; height: 30px; object-fit: cover; border-radius: 6px; flex: none; }
 .guide-picked-game-slot { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 30px; border-radius: 6px; background: rgba(13, 17, 23, .5); color: var(--accent); flex: none; }
 .guide-picked-game-name { font-size: 13.5px; font-weight: 700; color: var(--text-strong); letter-spacing: 0; text-transform: none; }
@@ -329,14 +329,14 @@
   display: flex; align-items: flex-start; gap: 12px; padding: 13px 15px; border-radius: 11px;
   border: 1px solid var(--border); background: var(--bg); transition: border-color .15s ease, background .15s ease;
 }
-.guide-toggle-row.is-on { border-color: rgba(46, 232, 127, .35); background: var(--accent-soft); }
+.guide-toggle-row.is-on { border-color: rgba(var(--accent-rgb), .35); background: var(--accent-soft); }
 .guide-toggle-row.is-warn.is-on { border-color: var(--guide-warn-line); background: var(--guide-warn-soft); }
 .guide-toggle-row .admin-switch { margin-top: 1px; }
 .admin-switch.is-warn.is-on .admin-switch-track { background: var(--guide-warn); }
 .guide-toggle-text { display: flex; flex-direction: column; gap: 3px; }
 .guide-toggle-text strong { font-size: 13.5px; font-weight: 700; color: var(--text-strong); }
 .guide-toggle-text small { font-size: 12px; font-weight: 500; color: var(--muted-2); line-height: 1.45; }
-.admin-btn-ghost.is-accent { background: var(--accent-soft); color: var(--accent); border-color: rgba(46, 232, 127, .4); }
+.admin-btn-ghost.is-accent { background: var(--accent-soft); color: var(--accent); border-color: rgba(var(--accent-rgb), .4); }
 .admin-btn-ghost.is-accent:hover { background: var(--accent-soft-strong); }
 
 /* ---------- guide.html ---------- */
@@ -445,7 +445,7 @@
    hvor én modul slutter og den neste begynner når man flytter dem rundt. */
 .guide-module.is-editable { padding: 6px 16px 18px; margin: 0 -16px; border-radius: 14px; border: 1px solid transparent; transition: border-color .15s ease, background .15s ease; }
 .guide-module.is-editable:hover { border-color: var(--border); background: rgba(255, 255, 255, .012); }
-.guide-module.is-editing { border-color: rgba(46, 232, 127, .35); background: rgba(46, 232, 127, .04); }
+.guide-module.is-editing { border-color: rgba(var(--accent-rgb), .35); background: rgba(var(--accent-rgb), .04); }
 
 .guide-module-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .guide-module-eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); white-space: nowrap; }
@@ -466,7 +466,7 @@
   color: var(--muted); font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
   transition: border-color .15s ease, color .15s ease, background .15s ease;
 }
-.guide-add-btn:hover { border-color: rgba(46, 232, 127, .55); color: var(--accent); background: var(--accent-soft); }
+.guide-add-btn:hover { border-color: rgba(var(--accent-rgb), .55); color: var(--accent); background: var(--accent-soft); }
 
 /* Innsettingspunkt mellom to moduler: nesten usynlig til man peker på det. */
 .guide-insert-slot { margin: -8px 0; }
@@ -478,7 +478,7 @@
   opacity: 0; transition: opacity .15s ease, color .15s ease;
 }
 .guide-insert-slot:hover .guide-insert-btn, .guide-insert-btn:focus-visible { opacity: 1; color: var(--accent); }
-.guide-insert-btn::before, .guide-insert-btn::after { content: ""; height: 1px; flex: 1; background: rgba(46, 232, 127, .3); }
+.guide-insert-btn::before, .guide-insert-btn::after { content: ""; height: 1px; flex: 1; background: rgba(var(--accent-rgb), .3); }
 
 .guide-add-picker { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border-strong); }
 .guide-add-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -489,7 +489,7 @@
   border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; cursor: pointer;
   transition: border-color .15s ease, background .15s ease;
 }
-.guide-type-card:hover { border-color: rgba(46, 232, 127, .5); background: var(--accent-soft); }
+.guide-type-card:hover { border-color: rgba(var(--accent-rgb), .5); background: var(--accent-soft); }
 .guide-type-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .guide-type-icon {
   display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex: none;
@@ -553,7 +553,7 @@
 .guide-table-source { font-size: 12.5px; color: var(--muted-3); }
 
 /* ---------- Modul: gevinst ---------- */
-.guide-gevinst { border-radius: var(--radius-lg); border: 1px solid rgba(46, 232, 127, .28); background: var(--surface); box-shadow: 0 0 0 4px rgba(46, 232, 127, .06); overflow: hidden; display: flex; flex-wrap: wrap; }
+.guide-gevinst { border-radius: var(--radius-lg); border: 1px solid rgba(var(--accent-rgb), .28); background: var(--surface); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), .06); overflow: hidden; display: flex; flex-wrap: wrap; }
 .guide-gevinst-total { padding: 30px; display: flex; flex-direction: column; gap: 10px; justify-content: center; border-right: 1px solid var(--border); flex: 1 1 260px; min-width: 0; }
 .guide-gevinst-label { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); }
 .guide-gevinst-amount { font-size: 42px; line-height: 1; font-weight: 800; letter-spacing: -.03em; color: var(--accent); font-variant-numeric: tabular-nums; }
@@ -566,7 +566,7 @@
 .guide-gevinst-row.is-sum { border-bottom: none; padding-top: 13px; }
 .guide-gevinst-row.is-sum span:last-child { color: var(--accent); }
 
-.guide-gevinst-card { padding: 22px; background: var(--surface); border: 1px solid rgba(46, 232, 127, .28); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: 8px; }
+.guide-gevinst-card { padding: 22px; background: var(--surface); border: 1px solid rgba(var(--accent-rgb), .28); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: 8px; }
 .guide-gevinst-side-label { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); }
 .guide-gevinst-side-amount { font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: var(--accent); line-height: 1.1; }
 .guide-gevinst-side-note { font-size: 13px; font-weight: 500; color: var(--muted); line-height: 1.5; }
@@ -592,10 +592,10 @@
   border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); font-family: inherit;
   font-size: 14.5px; font-weight: 600; cursor: pointer; width: 100%;
 }
-.guide-poll-option:hover:not(:disabled) { border-color: rgba(46, 232, 127, .5); }
+.guide-poll-option:hover:not(:disabled) { border-color: rgba(var(--accent-rgb), .5); }
 .guide-poll-option:disabled { cursor: default; }
-.guide-poll-option.is-mine { border-color: rgba(46, 232, 127, .5); }
-.guide-poll-option-fill { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(46, 232, 127, .14); transition: width .5s cubic-bezier(.22, 1, .36, 1); }
+.guide-poll-option.is-mine { border-color: rgba(var(--accent-rgb), .5); }
+.guide-poll-option-fill { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(var(--accent-rgb), .14); transition: width .5s cubic-bezier(.22, 1, .36, 1); }
 .guide-poll-option-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .guide-poll-option-dot { width: 18px; height: 18px; border-radius: 99px; border: 2px solid var(--border-strong); flex-shrink: 0; }
 .guide-poll-option.is-mine .guide-poll-option-dot { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 0 5px, transparent 5px); }
@@ -605,7 +605,7 @@
 
 /* ---------- Modul: triks-lenke ---------- */
 .guide-trick-card { display: flex; align-items: stretch; gap: 0; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; color: var(--text); }
-a.guide-trick-card:hover { border-color: rgba(46, 232, 127, .35); }
+a.guide-trick-card:hover { border-color: rgba(var(--accent-rgb), .35); }
 .guide-trick-card.is-static { cursor: default; }
 .guide-trick-thumb { position: relative; width: 210px; flex-shrink: 0; background: repeating-linear-gradient(135deg, #1b2434 0 12px, #202b3d 12px 24px); display: flex; align-items: center; justify-content: center; }
 .guide-trick-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -669,7 +669,7 @@ a.guide-trick-card:hover { border-color: rgba(46, 232, 127, .35); }
   cursor: pointer;
   transition: color .12s ease, border-color .12s ease, background .12s ease;
 }
-.guide-icon-choice:hover { color: var(--text); border-color: rgba(46, 232, 127, .4); }
+.guide-icon-choice:hover { color: var(--text); border-color: rgba(var(--accent-rgb), .4); }
 .guide-icon-choice.is-active {
   color: var(--accent);
   border-color: var(--accent);
@@ -684,8 +684,8 @@ a.guide-trick-card:hover { border-color: rgba(46, 232, 127, .35); }
   gap: 5px;
   padding: 2px 4px 2px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(46, 232, 127, .45);
-  background: rgba(46, 232, 127, .1);
+  border: 1px solid rgba(var(--accent-rgb), .45);
+  background: rgba(var(--accent-rgb), .1);
   color: var(--accent);
   font-size: 10.5px;
   font-weight: 700;

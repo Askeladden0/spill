@@ -299,7 +299,7 @@
   }
 
   // En rabatt med utløpsdato i fortiden regnes som deaktivert: den trekkes
-  // ikke i kasser (schema.sql, seksjon 38) og merkes "UTGÅTT" i listene her.
+  // ikke i rabatter (schema.sql, seksjon 38) og merkes "UTGÅTT" i listene her.
   function isExpired(r) {
     return !!r.expires_at && new Date(r.expires_at).getTime() <= Date.now();
   }
@@ -1154,7 +1154,7 @@
             <span class="admin-row-title">Nivå ${lv.level_number}</span>
             <span class="admin-row-sub" style="font-family:inherit">${NOK(lv.points_required)} poeng kreves</span>
           </span>
-          <span class="admin-row-side-label">Gir én kasse</span>
+          <span class="admin-row-side-label">Gir én rabatt</span>
         </div>
       </div>
     `).join("");
@@ -1542,7 +1542,7 @@
       <div class="admin-card">
         <div>
           <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Sannsynlighet per sjeldenhet</h2>
-          <span class="admin-card-sub">Vekter relativt til hverandre – de trenger ikke summere til 100. Gjelder alle kasser.</span>
+          <span class="admin-card-sub">Vekter relativt til hverandre – de trenger ikke summere til 100. Gjelder alle rabatter.</span>
         </div>
         <div class="admin-stat-grid" style="grid-template-columns:repeat(4,1fr)">
           ${RARITY_ORDER.map((k) => {
@@ -1567,10 +1567,10 @@
       <div class="admin-card">
         <div>
           <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Test-spinn (kun admin)</h2>
-          <span class="admin-card-sub">Spinn kassen så mange ganger du vil for å se hva den kan gi. Dette er kun en forhåndsvisning – ingen kode blir reservert eller trukket fra puljen, og det påvirker ikke hva du selv eller andre brukere kan få når dere åpner en ekte kasse.</span>
+          <span class="admin-card-sub">Spinn rabatten så mange ganger du vil for å se hva den kan gi. Dette er kun en forhåndsvisning – ingen kode blir reservert eller trukket fra puljen, og det påvirker ikke hva du selv eller andre brukere kan få når dere åpner en ekte rabatt.</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
-          <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-admin-preview-spin ${p.spinning ? "disabled" : ""}>${p.spinning ? "Spinner …" : "Spinn testkasse"}</button>
+          <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-admin-preview-spin ${p.spinning ? "disabled" : ""}>${p.spinning ? "Spinner …" : "Spinn testrabatt"}</button>
         </div>
         ${p.error ? `<p class="admin-card-sub" style="color:#ff6b6b;margin-top:10px">${escapeHTML(p.error)}</p>` : ""}
         ${result ? `

@@ -1270,7 +1270,7 @@
   async function toggleGuideLike() {
     if (state.likeBusy || !currentGuideId) return;
     const { data: session } = await window.supabaseClient.auth.getSession();
-    if (!session.session) { flash("Logg inn for å like guider."); return; }
+    if (!session.session) { flash("Registrer deg for å like guider."); return; }
 
     // Optimistisk oppdatering + en kort «pop»-animasjon på selve hjertet, i
     // stedet for å vente på svar fra serveren før noe skjer på skjermen.

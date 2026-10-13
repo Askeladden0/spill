@@ -319,7 +319,7 @@
     document.querySelector("[data-profile-scope-label]").textContent = `${fmt(meInTotal ? meInTotal.matches : 0)} kamper spilt totalt`;
 
     document.querySelector("[data-stat-rank]").textContent = meInTotal ? "#" + meInTotal.rank : "–";
-    document.querySelector("[data-stat-points]").textContent = fmt(player.xp);
+    document.querySelector("[data-stat-points]").textContent = fmt(player.score != null ? player.score : player.xp);
     document.querySelector("[data-stat-level]").textContent = player.level;
     document.querySelector("[data-stat-codes]").textContent = fmt(codes);
 

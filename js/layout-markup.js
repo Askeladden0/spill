@@ -20,14 +20,14 @@
 
 
   // Nivå-/premiesystemet er skrudd av for den live siden (se
-  // js/feature-flags.js) – «Premier» skal derfor ikke vises i toppmenyen så
+  // js/feature-flags.js) – «Få en rabatt» skal derfor ikke vises i toppmenyen så
   // lenge bryteren står på false, uten at lenken/siden fjernes fra koden.
   const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
 
   const PREMIER_NAV_LINK = `
         <a href="premier.html" class="nav-link" data-page="premier">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
-          Premier
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h16a1 1 0 0 1 1 1v2.6a2 2 0 0 0 0 3.8v2.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2.6a2 2 0 0 0 0-3.8V7.5a1 1 0 0 1 1-1z"></path><line x1="9.5" y1="14.5" x2="14.5" y2="9.5"></line><circle cx="9.7" cy="10" r=".9"></circle><circle cx="14.3" cy="14" r=".9"></circle></svg>
+          Få en rabatt
         </a>`;
 
   // Meldinger er kun relevant når man er logget inn, så lenken ligger skjult

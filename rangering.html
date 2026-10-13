@@ -270,7 +270,7 @@
   // ---------- Tabellen ----------
   function emptyMessage() {
     if (crowd === "venner" && !profile) {
-      return `<div class="leaderboard-empty">Logg inn for å se rangeringen blant vennene dine.</div>`;
+      return `<div class="leaderboard-empty">Registrer deg for å se rangeringen blant vennene dine.</div>`;
     }
     if (crowd === "venner") {
       return `<div class="leaderboard-empty">Du har ingen venner her ennå. Søk opp en spiller her eller på <a href="meldinger.html">Venner</a> for å få en liste du faktisk kan vinne.</div>`;
@@ -363,8 +363,8 @@
     if (!profile) {
       slot.innerHTML = `
         <div class="rank-me-guest">
-          <span class="section-sub">Logg inn for å se din plassering og få poeng registrert på rangeringen.</span>
-          <a href="login.html" class="btn-primary btn-link">Logg inn</a>
+          <span class="section-sub">Registrer deg for å se din plassering og få poeng registrert på rangeringen.</span>
+          <a href="login.html" class="btn-primary btn-link">Registrer deg</a>
         </div>
       `;
       return;

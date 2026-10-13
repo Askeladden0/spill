@@ -1,11 +1,11 @@
 /**
- * Studilla – teaserboks for velkomstkassen på forsiden.
+ * Studilla – teaserboks for velkomstrabatten på forsiden.
  *
- * Boksen er en kopi av kassepanelet på premier.html (samme markup, samme
+ * Boksen er en kopi av rabattpanelet på premier.html (samme markup, samme
  * rullende bånd med partnerlogoer), slik at forsiden promoterer akkurat det
- * man får på premiesiden. Utloggede som trykker på knappen får beskjed om at
- * de må logge inn; innloggede som ikke har åpnet kassen sendes til
- * premier.html. Er kassen allerede åpnet vises ingenting.
+ * man får på premiesiden. Utloggede som trykker på knappen sendes til
+ * registrering; innloggede som ikke har åpnet rabatten sendes til
+ * premier.html. Er rabatten allerede åpnet vises ingenting.
  */
 (function () {
   "use strict";
@@ -64,32 +64,32 @@
     const set = items.slice(0, REEL_SET_SIZE).map(tileHTML).join("");
     const setWidth = REEL_SET_SIZE * REEL_TILE_WIDTH;
 
-    // Markupen under følger kassepanelet i premier.html ([data-case-panel]).
+    // Markupen under følger rabattpanelet i premier.html ([data-case-panel]).
     root.innerHTML = `
       <div style="border-radius:20px;border:1px solid var(--border-strong);background:linear-gradient(160deg,#18222f,#131a25);overflow:hidden;margin-bottom:40px">
         <div style="padding:22px 24px 16px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border)">
-          <span style="width:44px;height:44px;flex:none;border-radius:12px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.35);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--accent)">🎁</span>
-          <h3 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#fff">Velkomstkassen</h3>
+          <span style="width:44px;height:44px;flex:none;border-radius:12px;background:rgba(var(--accent-rgb), .12);border:1px dashed rgba(var(--accent-rgb), .45);display:flex;align-items:center;justify-content:center;color:var(--accent)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16a1 1 0 0 1 1 1v2.6a2 2 0 0 0 0 3.8v2.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2.6a2 2 0 0 0 0-3.8V7.5a1 1 0 0 1 1-1z"></path><line x1="9.5" y1="14.5" x2="14.5" y2="9.5"></line><circle cx="9.7" cy="10" r=".9"></circle><circle cx="14.3" cy="14" r=".9"></circle></svg></span>
+          <h3 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#fff">Velkomstrabatten</h3>
         </div>
-        <div style="position:relative;padding:22px 0;background:radial-gradient(120% 100% at 50% 0%,rgba(46,232,127,.07),transparent 70%);overflow:hidden">
+        <div style="position:relative;padding:22px 0;background:radial-gradient(120% 100% at 50% 0%,rgba(var(--accent-rgb), .07),transparent 70%);overflow:hidden">
           <div style="position:relative;overflow:hidden;height:130px">
             <div class="case-reel is-rolling" style="animation-duration:${(setWidth / REEL_SPEED_PX_S).toFixed(2)}s">${set + set}</div>
           </div>
         </div>
         <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
-          <p class="section-sub" style="margin:0" data-teaser-sub>Åpne kassen for å trekke en tilfeldig rabatt fra en av partnerne våre.</p>
-          <button type="button" class="btn-primary" style="width:100%" data-teaser-open>Åpne velkomstkassen</button>
+          <p class="section-sub" style="margin:0" data-teaser-sub>Åpne rabatten for å trekke en tilfeldig rabatt fra en av partnerne våre.</p>
+          <button type="button" class="btn-primary" style="width:100%" data-teaser-open>Registrer deg</button>
         </div>
       </div>`;
     root.hidden = false;
 
+    // Utloggede sendes rett til registrering (login.html åpner på «Registrer
+    // deg» og fører nyregistrerte videre til rabatten på premier.html);
+    // innloggede går rett til rabatten.
     const btn = root.querySelector("[data-teaser-open]");
-    const sub = root.querySelector("[data-teaser-sub]");
+    if (profile) btn.textContent = "Åpne velkomstrabatten";
     btn.addEventListener("click", () => {
-      if (profile) { window.location.href = "premier.html"; return; }
-      sub.innerHTML = `Du må logge inn for å åpne velkomstkassen. <a href="login.html" style="color:var(--accent);font-weight:700">Logg inn</a>`;
-      btn.textContent = "Logg inn for å åpne kassen";
-      btn.onclick = () => { window.location.href = "login.html"; };
+      window.location.href = profile ? "premier.html#fa-rabatt" : "login.html";
     });
   }
 
