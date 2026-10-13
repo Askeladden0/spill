@@ -1389,3 +1389,14 @@ select:focus-visible,
   transition: color .12s ease, border-color .12s ease;
 }
 .dm-thread-action:hover { color: var(--accent, #2ee87f); border-color: rgba(var(--accent-rgb), .5); }
+
+/* Kortet ble kuttet av i bunnen på lave skjermer: overlegget sentrerte et
+   kort som var høyere enn seg selv. margin:auto sentrerer når det er plass og
+   lar overlegget scrolle når det ikke er det. */
+.game-over-overlay {
+  overflow-y: auto;
+  align-items: flex-start;
+  padding: 12px 0;
+  box-sizing: border-box;
+}
+.game-over-overlay .game-over-card { margin: auto; max-width: min(360px, 92%); }
