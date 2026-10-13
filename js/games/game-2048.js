@@ -130,69 +130,84 @@
       return { id: tile.id, row: r, col: c };
     }
 
-    // Kjører én linje (rad eller kolonne) gjennom slåsammen-logikken, og
-    // skriver resultatet tilbake via getRC(k) som gir (r, c) for slot k i
-    // "target-først"-rekkefølge. Slik unngås separate transponerings-/
-    // snu-implementasjoner per retning. Sammenslåtte par rapporteres som
-    // {survivorId, removedId} slik at brikken som forsvinner kan animeres
-    // inn i den som overlever, i stedet for å bare hoppe vekk.
-    function processLine(getRC, newBoard, mergeEvents) {
-      const tiles = [];
-      for (let k = 0; k < SIZE; k++) {
-        const [r, c] = getRC(k);
-        if (board[r][c]) tiles.push(board[r][c]);
-      }
+    // Flytte-logikken er portert fra det åpne 2048-spillet til Gabriele
+    // Cirulli (https://github.com/gabrielecirulli/2048, MIT-lisens,
+    // Copyright (c) 2014 Gabriele Cirulli): brikkene gås gjennom fra den
+    // fjerneste kanten i bevegelsesretningen, hver brikke glir til
+    // fjerneste ledige rute, og slås sammen med naboen bak seg hvis de er
+    // like og naboen ikke allerede er et resultat av en sammenslåing denne
+    // runden (maks én sammenslåing per brikke). Sammenslåtte par
+    // rapporteres som {survivorId, removedId} slik at brikken som
+    // forsvinner kan animeres inn i den som overlever.
+    const VECTORS = {
+      up: { x: 0, y: -1 },
+      right: { x: 1, y: 0 },
+      down: { x: 0, y: 1 },
+      left: { x: -1, y: 0 },
+    };
 
-      const result = [];
-      let gained = 0;
-      let i = 0;
-      while (i < tiles.length) {
-        const cur = tiles[i];
-        const next = tiles[i + 1];
-        if (next && cur.value === next.value) {
-          const value = cur.value * 2;
-          gained += Math.round(Math.log2(value)) * POINTS_PER_MERGE_LEVEL;
-          result.push({ id: cur.id, value });
-          mergeEvents.push({ survivorId: cur.id, removedId: next.id });
-          i += 2;
-        } else {
-          result.push({ id: cur.id, value: cur.value });
-          i += 1;
-        }
-      }
+    function withinBounds(x, y) {
+      return x >= 0 && x < SIZE && y >= 0 && y < SIZE;
+    }
 
-      for (let k = 0; k < SIZE; k++) {
-        const [r, c] = getRC(k);
-        newBoard[r][c] = result[k] || null;
+    function buildTraversals(vector) {
+      const xs = [];
+      const ys = [];
+      for (let pos = 0; pos < SIZE; pos++) {
+        xs.push(pos);
+        ys.push(pos);
       }
-      return gained;
+      if (vector.x === 1) xs.reverse();
+      if (vector.y === 1) ys.reverse();
+      return { xs, ys };
+    }
+
+    // x = kolonne, y = rad (som i originalen); board[rad][kolonne] her.
+    function findFarthestPosition(grid, x, y, vector) {
+      let prev;
+      do {
+        prev = { x, y };
+        x = prev.x + vector.x;
+        y = prev.y + vector.y;
+      } while (withinBounds(x, y) && !grid[y][x]);
+      return { farthest: prev, next: { x, y } };
     }
 
     function moveBoard(direction) {
-      const newBoard = emptyBoard();
+      const vector = VECTORS[direction];
+      const traversals = buildTraversals(vector);
+      // Arbeidskopi av brettet; brikkene er egne objekter slik at
+      // sammenslåtte brikker kan markeres uten å røre det ekte brettet.
+      const grid = board.map((row) => row.map((cell) => (cell ? { id: cell.id, value: cell.value } : null)));
+      const merged = new Set();
       const mergeEvents = [];
       let gained = 0;
-
-      if (direction === "left") {
-        for (let r = 0; r < SIZE; r++) gained += processLine((k) => [r, k], newBoard, mergeEvents);
-      } else if (direction === "right") {
-        for (let r = 0; r < SIZE; r++) gained += processLine((k) => [r, SIZE - 1 - k], newBoard, mergeEvents);
-      } else if (direction === "up") {
-        for (let c = 0; c < SIZE; c++) gained += processLine((k) => [k, c], newBoard, mergeEvents);
-      } else if (direction === "down") {
-        for (let c = 0; c < SIZE; c++) gained += processLine((k) => [SIZE - 1 - k, c], newBoard, mergeEvents);
-      }
-
       let moved = false;
-      for (let r = 0; r < SIZE; r++) {
-        for (let c = 0; c < SIZE; c++) {
-          const a = board[r][c];
-          const b = newBoard[r][c];
-          if ((a ? a.id : null) !== (b ? b.id : null) || (a && b && a.value !== b.value)) moved = true;
-        }
-      }
 
-      return { newBoard, moved, gained, mergeEvents };
+      traversals.xs.forEach((x) => {
+        traversals.ys.forEach((y) => {
+          const tile = grid[y][x];
+          if (!tile) return;
+          const { farthest, next } = findFarthestPosition(grid, x, y, vector);
+          const other = withinBounds(next.x, next.y) ? grid[next.y][next.x] : null;
+
+          grid[y][x] = null;
+          if (other && other.value === tile.value && !merged.has(other.id)) {
+            const value = tile.value * 2;
+            // Brikken som ble stående overlever; den som beveget seg glir inn i den.
+            other.value = value;
+            merged.add(other.id);
+            mergeEvents.push({ survivorId: other.id, removedId: tile.id });
+            gained += Math.round(Math.log2(value)) * POINTS_PER_MERGE_LEVEL;
+            moved = true;
+          } else {
+            grid[farthest.y][farthest.x] = tile;
+            if (farthest.x !== x || farthest.y !== y) moved = true;
+          }
+        });
+      });
+
+      return { newBoard: grid, moved, gained, mergeEvents };
     }
 
     function hasMoves() {
