@@ -1,6 +1,6 @@
 /* ==========================================================================
    Studilla – nytt i moderniseringen
-   Heltefelt med verdiløfte og direktestart, streak, det sosiale laget
+   Heltefelt med verdiløfte og direktestart, det sosiale laget
    (følging, meldinger, aktivitet), ukes-/vennerangering, game over-kortet,
    cookie-linja og tilgjengelighetshjelpere.
 
@@ -76,21 +76,49 @@ select:focus-visible,
 
 .hero-section {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.35fr);
-  gap: 32px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
   margin-bottom: 40px;
 }
 
-.hero-intro { display: flex; flex-direction: column; gap: 14px; }
+.hero-greeting {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 28px;
+  border-radius: 20px;
+  background: var(--surface, #131a25);
+  border: 1px solid rgba(255, 255, 255, .07);
+}
 
-.hero-intro h1 {
+.hero-greeting h1 {
   margin: 0;
-  font-size: clamp(32px, 5vw, 52px);
-  line-height: 1.05;
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.1;
   letter-spacing: -.03em;
   color: #fff;
+  text-wrap: pretty;
 }
+
+.hero-greeting .hero-lead { max-width: 56ch; font-size: 15.5px; }
+
+.hero-byline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #7c8aa0;
+}
+.hero-byline img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, .12);
+  flex-shrink: 0;
+}
+.hero-byline-sep { opacity: .5; }
+.hero-byline a { font-weight: 600; }
 
 .hero-kicker {
   display: inline-flex;
@@ -205,7 +233,8 @@ select:focus-visible,
 }
 
 @media (max-width: 900px) {
-  .hero-section { grid-template-columns: 1fr; gap: 24px; }
+  .hero-section { gap: 24px; }
+  .hero-greeting { padding: 20px; }
   .hero-stage, .hero-stage-inner { min-height: 340px; }
 }
 
@@ -262,24 +291,6 @@ select:focus-visible,
 }
 .resource-title { font-size: 15px; font-weight: 700; color: #fff; }
 .resource-text { font-size: 12.5px; line-height: 1.55; color: #7c8aa0; }
-
-/* --------------------------------------------------------------------------
-   Streak
-   -------------------------------------------------------------------------- */
-
-.streak-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 11px;
-  border-radius: 99px;
-  border: 1px solid rgba(245, 166, 35, .3);
-  background: rgba(245, 166, 35, .12);
-  color: #f5b942;
-  font-size: 13px;
-  font-weight: 800;
-  white-space: nowrap;
-}
 
 /* --------------------------------------------------------------------------
    Game over-kortet

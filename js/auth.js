@@ -202,25 +202,9 @@
     return { pct, xp: xp - currentThreshold, threshold: span };
   }
 
-  /**
-   * Flammen med antall dager på rad. Vises kun når man faktisk har en rekke
-   * gående – en «0 dager»-teller er bare et nederlag å se på hver gang du
-   * åpner siden.
-   */
-  function streakPillHTML(profile) {
-    const days = Number(profile && profile.streak_current) || 0;
-    if (days <= 0) return "";
-    return `
-      <span class="streak-pill" title="${days} dager på rad. Spill en runde i dag for å holde rekken.">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1.5 4 5 5.5 5 9.5A5 5 0 0 1 12 22a5 5 0 0 1-5-5.5c0-1.6.6-2.7 1.4-3.8.4 1 1 1.6 1.8 1.9-.3-2.6.6-5.3 2.8-6.6-.6 1.7-.2 3 .9 4 .3-3.4-.8-6.6-1.9-10z"></path></svg>
-        ${days}
-      </span>`;
-  }
-
   function xpWidgetHTML(profile) {
     if (!LEVELS_ENABLED) {
       return `
-        ${streakPillHTML(profile)}
         <a href="profil.html" class="login-btn" style="padding:6px 14px 6px 6px" aria-label="Min profil">
           ${avatarHTML(profile, 30)}
           <span>${profile.username}</span>
@@ -229,7 +213,6 @@
     }
     const { pct, xp, threshold } = xpProgress(profile);
     return `
-      ${streakPillHTML(profile)}
       <div class="xp-widget" data-xp-widget>
         <div class="xp-level" data-xp-level>${profile.level}</div>
         <div class="xp-meta">

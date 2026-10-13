@@ -208,22 +208,6 @@
   }
 
   /**
-   * Melder fra til databasen om at spilleren har fullført en runde i dag, og
-   * får tilbake streaken + eventuell dagsbonus (se supabase/schema.sql,
-   * seksjon 49). Feiler stille: en manglende streak skal aldri stoppe
-   * game over-kortet fra å vises.
-   */
-  async function touchStreak() {
-    try {
-      const { data, error } = await sb.rpc("touch_daily_streak");
-      if (error || !data) return null;
-      return data;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /**
    * Liten konfetti-byge på ny rekord. Rene DOM-elementer med CSS-animasjon,
    * ingen canvas eller bibliotek – og hoppes helt over for de som har bedt om
    * mindre bevegelse i systeminnstillingene.
@@ -290,22 +274,12 @@
             <span class="game-over-figure-label" data-game-over-score-label>POENG</span>
           </div>
 
-          <!-- Tre nøkkeltall i stedet for én linje tekst: rekorden din, hvor
-               mange dager på rad du har spilt, og hva runden ga i poeng.
-               Poenget er at kortet skal svare på «gikk det bra?» uten at
-               spilleren må lese en setning. -->
+          <!-- Rekorden din som tall i stedet for en setning, slik at kortet
+               svarer på «gikk det bra?» uten at spilleren må lese. -->
           <div class="game-over-facts">
             <div class="game-over-fact">
               <span class="game-over-fact-num" data-game-over-best-num>–</span>
               <span class="game-over-fact-label">DIN REKORD</span>
-            </div>
-            <div class="game-over-fact" data-game-over-streak-fact hidden>
-              <span class="game-over-fact-num" data-game-over-streak-num>–</span>
-              <span class="game-over-fact-label">DAGER PÅ RAD</span>
-            </div>
-            <div class="game-over-fact" data-game-over-earned-fact hidden>
-              <span class="game-over-fact-num is-accent" data-game-over-earned>–</span>
-              <span class="game-over-fact-label">POENG TJENT</span>
             </div>
           </div>
 
@@ -467,10 +441,6 @@
       overlayScore: container.querySelector("[data-game-over-score]"),
       overlayScoreLabel: container.querySelector("[data-game-over-score-label]"),
       overlayBestNum: container.querySelector("[data-game-over-best-num]"),
-      overlayStreakFact: container.querySelector("[data-game-over-streak-fact]"),
-      overlayStreakNum: container.querySelector("[data-game-over-streak-num]"),
-      overlayEarnedFact: container.querySelector("[data-game-over-earned-fact]"),
-      overlayEarned: container.querySelector("[data-game-over-earned]"),
       overlayNote: container.querySelector("[data-game-over-note]"),
       overlayConfetti: container.querySelector("[data-game-over-confetti]"),
       overlayNext: container.querySelector("[data-game-over-next]"),
@@ -772,39 +742,14 @@
         const leveledUp = !!(newProfile && prevProfile && newProfile.level > prevProfile.level);
         const awardedPoints = pointsFor(gameId, roundedScore);
 
-        // Streaken oppdateres når runden er ferdig, ikke når siden lastes:
-        // det er en fullført runde som teller som «du spilte i dag».
-        const streak = prevProfile ? await touchStreak() : null;
-
         els.overlayTitle.textContent = opts.title || (isNewBest ? "Ny rekord!" : "Runden er over");
         els.overlayEyebrow.hidden = !isNewBest;
         els.overlayScore.textContent = roundedScore.toLocaleString("no-NO");
         els.overlayScoreLabel.textContent = awardedPoints === roundedScore ? "POENG" : "SKÅR";
         els.overlayBestNum.textContent = best.toLocaleString("no-NO");
 
-        const showStreak = !!(prevProfile && streak && streak.streak > 0);
-        els.overlayStreakFact.hidden = !showStreak;
-        if (showStreak) els.overlayStreakNum.textContent = String(streak.streak);
-
-        const showEarned = !!prevProfile && awardedPoints > 0;
-        els.overlayEarnedFact.hidden = !showEarned;
-        if (showEarned) {
-          els.overlayEarned.textContent = `+${(awardedPoints + ((streak && streak.bonus) || 0)).toLocaleString("no-NO")}`;
-        }
-
-        // Én linje som forteller hva som skjedde ut over tallene – enten
-        // dagsbonusen, en mistet rekke, eller (for utloggede) hva de går
-        // glipp av ved å ikke ha konto.
-        let note = "";
-        if (!prevProfile) {
-          note = "Du er ikke logget inn – rekorden ligger kun i denne nettleseren.";
-        } else if (streak && streak.bonus > 0 && streak.streak > 1) {
-          note = `${streak.streak} dager på rad! +${streak.bonus} bonuspoeng.`;
-        } else if (streak && streak.bonus > 0) {
-          note = streak.broke_from > 0
-            ? `Rekken din på ${streak.broke_from} dager røk – du er i gang igjen. +${streak.bonus} poeng.`
-            : `Første runde i dag – +${streak.bonus} bonuspoeng.`;
-        }
+        // For utloggede: en linje om at rekorden kun ligger i nettleseren.
+        const note = prevProfile ? "" : "Du er ikke logget inn – rekorden ligger kun i denne nettleseren.";
         els.overlayNote.hidden = !note;
         els.overlayNote.textContent = note;
 
@@ -833,7 +778,7 @@
           window.StudillaLevelUp.show(prevProfile, newProfile);
         }
 
-        return { isNewBest, best, leveledUp, streak };
+        return { isNewBest, best, leveledUp };
       },
     };
   }

@@ -51,10 +51,6 @@
             <span class="public-profile-stat-num" data-stat-level>–</span>
             <span class="public-profile-stat-label">NIVÅ</span>
           </div>
-          <div class="public-profile-stat">
-            <span class="public-profile-stat-num" data-stat-streak>–</span>
-            <span class="public-profile-stat-label">DAGER PÅ RAD</span>
-          </div>
           <div class="public-profile-stat" data-levels-only>
             <span class="public-profile-stat-num" data-stat-codes>–</span>
             <span class="public-profile-stat-label">RABATTKODER HENTET</span>
@@ -326,7 +322,6 @@
     document.querySelector("[data-stat-points]").textContent = fmt(player.xp);
     document.querySelector("[data-stat-level]").textContent = player.level;
     document.querySelector("[data-stat-codes]").textContent = fmt(codes);
-    document.querySelector("[data-stat-streak]").textContent = fmt(player.streak_current);
 
     document.querySelector("[data-profile-main]").hidden = false;
 
