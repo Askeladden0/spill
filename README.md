@@ -105,7 +105,7 @@ prosjekt, kjøre `supabase/schema.sql`, skru av e-postbekreftelse, koble
 
 Kort oppsummert:
 - **Registrering**: brukernavn + passord (brukernavn 5–20 tegn, passord min. 8
-  tegn med bokstav+tall). Verken e-post eller Google-innlogging er i bruk, og
+  tegn med bokstav+tall). Google-innlogging er et valgfritt alternativ, og
   2FA er ikke satt opp. Supabase krever en e-postadresse per konto, så
   `js/auth.js` lager en intern adresse ut fra brukernavnet
   (`brukernavn@brukere.studilla.no`) – den brukes aldri til å sende noe.
