@@ -1318,6 +1318,32 @@ $$;
 --     poengkrav skrives om. Brukernes åpnede kasser (user_level_cases) og
 --     hentede koder (user_codes) blir liggende uansett, se seksjon 37.
 -- ---------------------------------------------------------------------------
+-- levels.step_override: valgfritt avvik for hvor mange poeng som kreves for å
+-- gå fra DETTE nivået til neste. NULL = bruk standarden (app_settings.level_step).
+-- Poengkravet til nivå N er summen av stegene for nivå 1..N-1, så å endre ett
+-- steg flytter alle nivåene over uten at deres egne steg endres.
+alter table public.levels add column if not exists step_override int check (step_override is null or step_override > 0);
+
+create or replace function public.recompute_level_thresholds()
+returns void
+language sql
+security definer
+set search_path = public, pg_temp
+as $$
+  update public.levels lv
+     set points_required = c.total
+    from (
+      select level_number,
+             coalesce(sum(coalesce(step_override, (select level_step from public.app_settings where id = 1)))
+                        over (order by level_number rows between unbounded preceding and 1 preceding), 0)::int as total
+        from public.levels
+    ) c
+   where c.level_number = lv.level_number
+     and lv.points_required <> c.total;
+$$;
+
+revoke all on function public.recompute_level_thresholds() from public;
+
 create or replace function public.admin_set_level_config(p_step int, p_count int)
 returns void
 language plpgsql
@@ -1342,20 +1368,41 @@ begin
   delete from public.levels where level_number > p_count;
 
   insert into public.levels (level_number, points_required)
-  select n, (n - 1) * p_step from generate_series(1, p_count) as n
-  on conflict (level_number) do update set points_required = excluded.points_required;
+  select n, 0 from generate_series(1, p_count) as n
+  on conflict (level_number) do nothing;
+
+  perform public.recompute_level_thresholds();
 end;
 $$;
 
 revoke all on function public.admin_set_level_config(int, int) from public;
 grant execute on function public.admin_set_level_config(int, int) to authenticated;
 
--- Førstegangs-oppretting: gjør den eksisterende (ujevne) nivåstigen lineær
--- med standard 1 000 poeng per nivå, slik at nivåene stemmer med den nye
--- "poeng per nivå"-boksen i adminpanelet fra første stund.
-update public.levels lv
-   set points_required = (lv.level_number - 1) * (select level_step from public.app_settings where id = 1)
- where lv.points_required <> (lv.level_number - 1) * (select level_step from public.app_settings where id = 1);
+-- Setter (eller fjerner, med null) steget for ett enkelt nivå og regner om
+-- resten av stigen.
+create or replace function public.admin_set_level_step(p_level int, p_step int)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Kun admin kan endre nivåstigen';
+  end if;
+  if p_step is not null and p_step <= 0 then
+    raise exception 'Poeng til neste nivå må være større enn 0';
+  end if;
+  update public.levels set step_override = p_step where level_number = p_level;
+  perform public.recompute_level_thresholds();
+end;
+$$;
+
+revoke all on function public.admin_set_level_step(int, int) from public;
+grant execute on function public.admin_set_level_step(int, int) to authenticated;
+
+-- Regn ut stigen på nytt (respekterer egendefinerte steg).
+select public.recompute_level_thresholds();
 
 -- ---------------------------------------------------------------------------
 -- 40. Fiks: open_level_case kunne trekke en rabatt brukeren allerede hadde

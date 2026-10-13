@@ -245,10 +245,19 @@
     return data || [];
   }
 
+  // step_override finnes først etter siste schema.sql-kjøring; uten den kolonnen
+  // faller vi tilbake til ren lineær stige.
+  async function loadLevels() {
+    const full = await sb.from("levels").select("level_number, points_required, step_override").order("level_number", { ascending: true });
+    if (!full.error) { state.levelsNeedMigration = false; return full; }
+    state.levelsNeedMigration = true;
+    return sb.from("levels").select("level_number, points_required").order("level_number", { ascending: true });
+  }
+
   async function loadAll() {
     const [profilesRes, levelsRes, rewards, rarityRes, rewardCodes, claimsRes, recordsRes, guestRecords, siteVisits, avatarRes, games, settings, notifications, blocks] = await Promise.all([
       sb.from("profiles").select("id, username, xp, level, is_admin, created_at, avatar_icon, avatar_color").order("created_at", { ascending: false }),
-      sb.from("levels").select("level_number, points_required").order("level_number", { ascending: true }),
+      loadLevels(),
       loadRewards(),
       sb.from("rarity_weights").select("rarity, weight"),
       loadRewardCodes(),
@@ -1127,13 +1136,29 @@
     const { error } = await sb.rpc("admin_set_level_config", { p_step: Math.round(step), p_count: Math.round(count) });
     if (error) return flash(Auth.friendlyAuthError(error));
 
-    const { data } = await sb.from("levels").select("level_number, points_required").order("level_number", { ascending: true });
+    const { data } = await loadLevels();
     state.levels = data || [];
     state.settings.level_step = Math.round(step);
     state.levelStepDraft = null;
     state.levelCountDraft = null;
     renderMain();
     flash("Nivåstigen er lagret");
+  }
+
+  // Egendefinert steg for ett nivå (poeng fra dette nivået til neste). Tom
+  // verdi fjerner avviket, og nivået følger standarden igjen. Alle nivåene
+  // over flytter seg, men beholder sine egne steg.
+  async function saveLevelStep(levelNumber, raw) {
+    if (state.levelsNeedMigration) return flash("Kjør supabase/schema.sql på nytt for å tilpasse enkeltnivåer.");
+    const trimmed = String(raw).trim();
+    const value = trimmed === "" ? null : Math.round(Number(trimmed));
+    if (value !== null && (!Number.isFinite(value) || value <= 0)) return flash("Poeng til neste nivå må være et tall større enn 0.");
+    const { error } = await sb.rpc("admin_set_level_step", { p_level: levelNumber, p_step: value });
+    if (error) return flash(Auth.friendlyAuthError(error));
+    const { data } = await loadLevels();
+    state.levels = data || [];
+    renderMain();
+    flash(value === null ? "Nivået følger standarden igjen" : "Nivået er lagret");
   }
 
   // "+ Nytt nivå" (hurtighandling/kommandopalett) legger nå ett nivå til på
@@ -1146,29 +1171,40 @@
   function renderNivaaer() {
     const step = levelStep();
     const count = levelCount();
-    const rows = state.levels.map((lv) => `
+    const lastLevel = state.levels.length ? state.levels[state.levels.length - 1].level_number : 0;
+    const rows = state.levels.map((lv) => {
+      const custom = lv.step_override != null;
+      const hasNext = lv.level_number < lastLevel;
+      const stepCell = hasNext
+        ? `<label class="admin-stat-box" style="min-width:150px">TIL NESTE NIVÅ
+            <input type="number" min="1" step="1" value="${custom ? lv.step_override : ""}" placeholder="${step}" data-level-own-step="${lv.level_number}" ${state.levelsNeedMigration ? "disabled" : ""}>
+          </label>`
+        : `<span class="admin-row-side-label">Toppnivå</span>`;
+      return `
       <div class="admin-row-card">
         <div class="admin-row-head" style="cursor:default">
           <span class="admin-level-badge">${lv.level_number}</span>
           <span class="admin-row-titles">
-            <span class="admin-row-title">Nivå ${lv.level_number}</span>
+            <span class="admin-row-title">Nivå ${lv.level_number}${custom ? ` <span class="admin-pill-expired" style="background:var(--accent, #7c5cff);color:#fff">EGENDEFINERT</span>` : ""}</span>
             <span class="admin-row-sub" style="font-family:inherit">${NOK(lv.points_required)} poeng kreves</span>
           </span>
-          <span class="admin-row-side-label">Gir én rabatt</span>
+          ${stepCell}
         </div>
-      </div>
-    `).join("");
+      </div>`;
+    }).join("");
 
     const migrationNote = state.settingsNeedMigration
       ? `<p class="admin-card-sub" style="margin:0">⚠ Kjør <code>supabase/schema.sql</code> på nytt i Supabase for å ta i bruk «poeng per nivå».</p>`
-      : "";
+      : state.levelsNeedMigration
+        ? `<p class="admin-card-sub" style="margin:0">⚠ Kjør <code>supabase/schema.sql</code> på nytt i Supabase for å tilpasse enkeltnivåer.</p>`
+        : "";
 
     return `
       <div class="admin-section">
         <div class="admin-card">
           <div>
             <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Poeng per nivå</h2>
-            <span class="admin-card-sub">Differansen er den samme fra nivå til nivå: nivå 1 krever 0 poeng, nivå 2 krever ett steg, nivå 3 to steg og så videre. Endrer du tallet, regnes hele stigen om.</span>
+            <span class="admin-card-sub">Standard antall poeng for å gå opp ett nivå. Du kan overstyre enkeltnivåer i listen under – de andre nivåene beholder sitt eget steg og flytter seg bare med.</span>
           </div>
           ${migrationNote}
           <div class="admin-stat-grid" style="grid-template-columns:repeat(2,minmax(0,220px))">
@@ -1181,14 +1217,14 @@
           </div>
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px">
             <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-save-levels ${state.settingsNeedMigration ? "disabled" : ""}>Lagre nivåstigen</button>
-            <span class="admin-card-sub">Toppnivået (nivå ${Math.max(1, Math.round(count))}) havner på ${NOK(Math.max(0, (Math.round(count) - 1) * Math.round(step)))} poeng.</span>
+            <span class="admin-card-sub">Toppnivået er nivå ${Math.max(1, Math.round(count))}.</span>
           </div>
         </div>
 
         <div class="admin-toolbar">
           <span class="admin-toolbar-count">${state.levels.length} nivåer</span>
           <span class="admin-card-spacer"></span>
-          <span class="admin-toolbar-hint">Poengkravene regnes ut automatisk – rediger dem i boksen over</span>
+          <span class="admin-toolbar-hint">La «til neste nivå» stå tom for å bruke standarden</span>
         </div>
         <div class="admin-row-list">${rows || `<p class="admin-card-sub">Ingen nivåer ennå.</p>`}</div>
       </div>
@@ -2553,6 +2589,7 @@
       return;
     }
     if (t.matches("[data-wheel-spins]")) { state.wheelSpinsDraft = Number(t.value); return; }
+    if (t.matches("[data-level-own-step]")) { saveLevelStep(Number(t.dataset.levelOwnStep), t.value); return; }
     if (t.matches("[data-level-step]")) { state.levelStepDraft = Number(t.value); return; }
     if (t.matches("[data-level-count]")) { state.levelCountDraft = Number(t.value); return; }
     const rewardField = t.closest("[data-reward-field]");
