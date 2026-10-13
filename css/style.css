@@ -26,32 +26,6 @@
   --max-width: 1240px;
 }
 
-/* Aksentfarge per side. Rangering, Guider og Meldinger har hver sin
-   farge; Premier, Triks (og resten) beholder den grønne fra :root. --accent-soft må
-   settes på nytt her fordi den er regnet ut på :root og ikke følger med når
-   --accent-rgb overstyres lenger ned i treet. */
-body[data-page="rangering"] {
-  --accent: #f4f74a;
-  --accent-light: #f8fa84;
-  --accent-rgb: 244, 247, 74;
-  --accent-soft: rgba(244, 247, 74, .12);
-  --accent-soft-strong: rgba(244, 247, 74, .2);
-}
-body[data-page="guider"] {
-  --accent: #4abef7;
-  --accent-light: #86d3fa;
-  --accent-rgb: 74, 190, 247;
-  --accent-soft: rgba(74, 190, 247, .12);
-  --accent-soft-strong: rgba(74, 190, 247, .2);
-}
-body[data-page="meldinger"] {
-  --accent: #f78f4a;
-  --accent-light: #fab183;
-  --accent-rgb: 247, 143, 74;
-  --accent-soft: rgba(247, 143, 74, .12);
-  --accent-soft-strong: rgba(247, 143, 74, .2);
-}
-
 * { box-sizing: border-box; }
 
 /* Nettleserens egen regel for hidden-attributtet (`[hidden] { display: none }`)
