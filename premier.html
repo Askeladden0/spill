@@ -171,7 +171,7 @@
 <div class="modal-overlay" data-case-modal hidden>
   <div class="modal-backdrop" data-case-backdrop></div>
   <div class="modal-card" style="max-width:520px;align-items:stretch;gap:20px">
-    <button type="button" class="modal-close" data-close-case aria-label="Lukk">×</button>
+    <button type="button" class="modal-close" data-close-case aria-label="Lukk"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="5" x2="19" y2="19"></line><line x1="19" y1="5" x2="5" y2="19"></line></svg></button>
     <h2 class="modal-title" style="text-align:center" data-case-modal-title>Åpne rabatten</h2>
 
     <div style="position:relative;padding:22px 0;border-radius:16px;background:radial-gradient(120% 100% at 50% 0%,rgba(var(--accent-rgb), .09),transparent 70%);border:1px solid var(--border);overflow:hidden">
@@ -187,7 +187,7 @@
       <span class="case-reveal-logo" data-case-reveal-thumb></span>
       <div class="case-reveal-rarity">
         <span data-case-reveal-rarity></span>
-        <button type="button" class="case-reveal-info" aria-label="Mer info om rabatten" title="" data-case-reveal-info>
+        <button type="button" class="case-reveal-info" aria-label="Mer info om rabatten" data-tip="" data-case-reveal-info>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
         </button>
       </div>
@@ -370,30 +370,64 @@
     const reel = document.querySelector("[data-case-reel]");
     // Ikke bygg båndet på nytt hvis det allerede ruller: en ny innerHTML
     // starter animasjonen forfra og gir nettopp hakket vi vil unngå.
-    if (!force && reel.classList.contains("is-rolling")) {
-      reel.classList.remove("is-fast");
-      return;
-    }
+    if (!force && reel.classList.contains("is-rolling")) return;
+    stopReelRaf();
     if (reelAnim) { reelAnim.cancel(); reelAnim = null; }
     const set = randomReelItems(reelPool()).map(reelTileHTML).join("");
     reel.innerHTML = set + set; // to identiske sett = sømløs løkke på -50 %
     reel.style.transform = "";
     const setWidth = REEL_SET_SIZE * REEL_TILE_WIDTH;
     reel.style.animationDuration = `${(setWidth / REEL_SPEED_PX_S).toFixed(2)}s`;
-    reel.style.setProperty("--case-reel-fast", `${(setWidth / (REEL_SPEED_PX_S * 40)).toFixed(2)}s`);
-    reel.classList.remove("is-fast");
     reel.classList.add("is-rolling");
   }
 
-  // Skru opp farten mens rabatten hentes fra databasen.
+  // Skru opp farten jevnt mens rabatten hentes fra databasen. CSS-animasjonen
+  // byttes ut med en rAF-løkke som flytter båndet selv: å endre
+  // animation-duration underveis flytter nemlig fasen og gir et hopp, og farten
+  // vokser dessuten bare stegvis. Her glir farten mykt fra rolig til full.
+  const REEL_TOP_SPEED = 2400;   // px/s når båndet suser som raskest
+  const REEL_RAMP_MS = 900;      // tid fra rolig til full fart
+  let reelRaf = 0;
+  let reelSpeed = 0;             // gjeldende fart (px/s) når rAF-løkka går
+  let reelPos = 0;               // gjeldende x-posisjon (negativ)
+
   function rushReelShuffle() {
-    document.querySelector("[data-case-reel]").classList.add("is-fast");
+    const reel = document.querySelector("[data-case-reel]");
+    const setWidth = REEL_SET_SIZE * REEL_TILE_WIDTH;
+    const current = window.getComputedStyle(reel).transform;
+    reelPos = current === "none" ? 0 : new DOMMatrixReadOnly(current).m41;
+    reel.classList.remove("is-rolling", "is-fast");
+    reel.style.animationDuration = "";
+    reel.style.transform = `translate3d(${reelPos}px,0,0)`;
+    reelSpeed = REEL_SPEED_PX_S;
+    const startSpeed = reelSpeed;
+    const t0 = performance.now();
+    let last = t0;
+    cancelAnimationFrame(reelRaf);
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const k = Math.min(1, (now - t0) / REEL_RAMP_MS);
+      const eased = k * k * (3 - 2 * k); // smoothstep: myk start og myk slutt
+      reelSpeed = startSpeed + (REEL_TOP_SPEED - startSpeed) * eased;
+      reelPos -= reelSpeed * dt;
+      while (reelPos <= -setWidth) reelPos += setWidth; // to like sett = usynlig løkke
+      reel.style.transform = `translate3d(${reelPos}px,0,0)`;
+      reelRaf = requestAnimationFrame(tick);
+    };
+    reelRaf = requestAnimationFrame(tick);
+  }
+
+  function stopReelRaf() {
+    cancelAnimationFrame(reelRaf);
+    reelRaf = 0;
   }
 
   // Frys båndet der det faktisk står: fjerner vi animasjonen uten å låse
   // posisjonen først, spretter båndet tilbake til start med et rykk.
   function stopReelShuffle() {
     const reel = document.querySelector("[data-case-reel]");
+    stopReelRaf();
     const current = window.getComputedStyle(reel).transform;
     reel.classList.remove("is-rolling", "is-fast");
     reel.style.animationDuration = "";
@@ -404,14 +438,18 @@
   // gradvis helt til det lander på vinnerkortet under markøren. Vinnerkortet
   // legges til bak kortene som allerede er på skjermen, slik at båndet ikke
   // hopper når det går fra løkken til bremsingen.
-  const REEL_EXTRA_BEFORE_WINNER = 22;
+  const REEL_EXTRA_BEFORE_WINNER = 4;
   const REEL_EXTRA_AFTER_WINNER = 8;
-  const REEL_SPIN_MS = 5800;
+  // Bremsekurven cubic-bezier(.12,.6,.1,1) starter med stigningstall 5, dvs. 5×
+  // snittfarten. Varigheten regnes derfor ut slik at starten av bremsingen har
+  // nøyaktig samme fart som båndet allerede har (ellers hopper farten).
+  const REEL_EASE_SLOPE = 5;
   let reelAnim = null;
 
   async function spinReelTo(winner) {
     const reel = document.querySelector("[data-case-reel]");
     const viewport = document.querySelector("[data-case-reel-viewport]");
+    const entrySpeedPx = reelRaf ? reelSpeed : REEL_SPEED_PX_S;
     stopReelShuffle();
     const startX = new DOMMatrixReadOnly(window.getComputedStyle(reel).transform).m41;
     const existing = reel.children.length;
@@ -429,9 +467,11 @@
     const endX = -(winnerIndex * REEL_TILE_WIDTH + REEL_TILE_WIDTH / 2 - 6 + jitter - viewport.clientWidth / 2);
 
     const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const entrySpeed = Math.max(REEL_SPEED_PX_S, entrySpeedPx);
+    const spinMs = Math.min(8000, Math.max(3500, (REEL_EASE_SLOPE * Math.abs(endX - startX) / entrySpeed) * 1000));
     reelAnim = reel.animate(
       [{ transform: `translate3d(${startX}px,0,0)` }, { transform: `translate3d(${endX}px,0,0)` }],
-      { duration: reduced ? 1 : REEL_SPIN_MS, easing: "cubic-bezier(0.12, 0.6, 0.1, 1)", fill: "forwards" }
+      { duration: reduced ? 1 : spinMs, easing: "cubic-bezier(0.12, 0.6, 0.1, 1)", fill: "forwards" }
     );
     try { await reelAnim.finished; } catch (e) { return; }
     reel.style.transform = `translate3d(${endX}px,0,0)`;
@@ -546,7 +586,7 @@
       : sb.rpc("open_level_case", { p_level_number: opening })
     ).single();
     const elapsed = Date.now() - shuffleStart;
-    if (elapsed < 700) await new Promise((r) => setTimeout(r, 700 - elapsed));
+    if (elapsed < REEL_RAMP_MS) await new Promise((r) => setTimeout(r, REEL_RAMP_MS - elapsed));
 
     if (error) {
       caseOpening = false;
@@ -575,7 +615,9 @@
     thumb.innerHTML = data.image_url ? `<img src="${data.image_url}" alt="">` : `<span>[ logo ]</span>`;
     const rarityEl = document.querySelector("[data-case-reveal-rarity]");
     rarityEl.textContent = `${rar.label} RABATT`;
-    document.querySelector("[data-case-reveal-info]").title = data.sub || "";
+    const infoBtn = document.querySelector("[data-case-reveal-info]");
+    infoBtn.dataset.tip = data.sub || "";
+    infoBtn.hidden = !data.sub;
     const tagSlot = document.querySelector("[data-case-reveal-snorre]");
     tagSlot.innerHTML = data.supports_snorre && window.StudillaSnorreTag ? window.StudillaSnorreTag.html() : "";
     document.querySelector("[data-case-reveal-value]").textContent = `${data.title} hos ${data.brand}`;
