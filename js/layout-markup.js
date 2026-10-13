@@ -81,7 +81,7 @@
   const FOOTER_HTML = `
   <footer class="site-footer">
     <div class="footer-brand">
-      <span class="footer-logo-mark"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"/><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"/></svg></span>
+      <span class="footer-logo-mark"><img src="assets/img/snorre-saus-avatar.jpeg" alt="" width="24" height="24"></span>
       <span class="footer-copy">© 2026 Studilla</span>
     </div>
     <nav class="footer-nav">
