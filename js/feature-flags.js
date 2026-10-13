@@ -9,5 +9,5 @@
  * Sett levelsEnabled til true for å skru nivåer/premier på igjen.
  */
 window.STUDILLA_FEATURES = {
-  levelsEnabled: false,
+  levelsEnabled: true,
 };
