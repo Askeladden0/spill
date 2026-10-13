@@ -279,7 +279,7 @@
         ${c.supports_snorre && window.StudillaSnorreTag ? `<span>${window.StudillaSnorreTag.html()}</span>` : ""}
         ${c.link_url ? `<a class="case-reveal-link" href="${c.link_url}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
         <div class="code-card-foot">
-          <span class="code-card-foot-label">${c.code}</span>
+          <span class="code-card-foot-label code-neon" style="background:${window.StudillaSnorreTag ? window.StudillaSnorreTag.neonFor(c.code) : "var(--accent)"}">${c.code}</span>
           <button type="button" class="btn-copy-code" data-copy-code="${c.code}">Kopier</button>
         </div>
       </div>

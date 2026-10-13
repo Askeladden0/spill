@@ -45,7 +45,7 @@
   <header class="site-header">
     <div class="header-left">
       <a href="index.html" class="logo">
-        <span class="logo-mark"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"/><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"/></svg></span>
+        <span class="logo-mark"><img src="assets/img/snorre-saus-avatar.jpeg" alt="" width="30" height="30"></span>
         <span class="logo-text">Studi<span>ll</span>a</span>
       </a>
       <nav class="main-nav" id="main-nav">

@@ -622,6 +622,9 @@
     tagSlot.innerHTML = data.supports_snorre && window.StudillaSnorreTag ? window.StudillaSnorreTag.html() : "";
     document.querySelector("[data-case-reveal-value]").textContent = `${data.title} hos ${data.brand}`;
     document.querySelector("[data-case-reveal-code]").textContent = data.code;
+    const codeBox = document.querySelector(".case-reveal-code");
+    codeBox.style.background = window.StudillaSnorreTag ? window.StudillaSnorreTag.neonFor(data.code) : "";
+    codeBox.classList.add("code-neon");
     const linkEl = document.querySelector("[data-case-reveal-link]");
     // Lenken er valgfri per rabatt (rewards.link_url) – skjul den helt når
     // partneren ikke har oppgitt noen.
