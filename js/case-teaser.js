@@ -1,5 +1,5 @@
 /**
- * Studilla – teaserboks for velkomstrabatten på forsiden.
+ * Studilla – teaserboks for velkomstbonusen på forsiden.
  *
  * Boksen er en kopi av rabattpanelet på premier.html (samme markup, samme
  * rullende bånd med partnerlogoer), slik at forsiden promoterer akkurat det
@@ -53,7 +53,7 @@
     if (res.error) {
       res = await sb.from("rewards").select("id, brand, title, rarity, image_url").eq("active", true).order("sort_order");
     }
-    // Velkomstrabatten er aldri «Støtter Snorre», så de vises heller ikke i teaseren.
+    // Velkomstbonusen er aldri «Støtter Snorre», så de vises heller ikke i teaseren.
     return (res.data || []).filter((r) => !r.supports_snorre);
   }
 
@@ -69,7 +69,7 @@
       <div style="border-radius:20px;border:1px solid var(--border-strong);background:linear-gradient(160deg,#18222f,#131a25);overflow:hidden;margin-bottom:40px">
         <div style="padding:22px 24px 16px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border)">
           <span style="width:44px;height:44px;flex:none;border-radius:12px;background:rgba(var(--accent-rgb), .12);border:1px dashed rgba(var(--accent-rgb), .45);display:flex;align-items:center;justify-content:center;color:var(--accent)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16a1 1 0 0 1 1 1v2.6a2 2 0 0 0 0 3.8v2.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2.6a2 2 0 0 0 0-3.8V7.5a1 1 0 0 1 1-1z"></path><line x1="9.5" y1="14.5" x2="14.5" y2="9.5"></line><circle cx="9.7" cy="10" r=".9"></circle><circle cx="14.3" cy="14" r=".9"></circle></svg></span>
-          <h3 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#fff">Velkomstrabatten</h3>
+          <h3 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#fff">Velkomstbonusen</h3>
         </div>
         <div style="position:relative;padding:22px 0;background:radial-gradient(120% 100% at 50% 0%,rgba(var(--accent-rgb), .07),transparent 70%);overflow:hidden">
           <div style="position:relative;overflow:hidden;height:130px">
@@ -87,7 +87,7 @@
     // deg» og fører nyregistrerte videre til rabatten på premier.html);
     // innloggede går rett til rabatten.
     const btn = root.querySelector("[data-teaser-open]");
-    if (profile) btn.textContent = "Åpne velkomstrabatten";
+    if (profile) btn.textContent = "Åpne velkomstbonusen";
     btn.addEventListener("click", () => {
       window.location.href = profile ? "premier.html#fa-rabatt" : "login.html";
     });

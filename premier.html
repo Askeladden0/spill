@@ -33,7 +33,7 @@
     <section class="signup-strip" data-signup-strip hidden>
       <div class="signup-strip-text">
         <strong>Registrer deg for å få rabatter.</strong>
-        <span>Du får en velkomstrabatt med en gang du har registrert deg, og en ny rabatt for hvert nivå du når. Det tar ti sekunder å lage konto – kun brukernavn og passord.</span>
+        <span>Du får en velkomstbonus med en gang du har registrert deg, og en ny rabatt for hvert nivå du når. Det tar ti sekunder å lage konto – kun brukernavn og passord.</span>
       </div>
       <a class="btn-primary" href="login.html">Registrer deg</a>
     </section>
@@ -132,12 +132,12 @@
           <p class="faq-answer">Hver gang du når et nytt nivå får du én rabatt å åpne. Åpner du den, trekkes én tilfeldig rabatt fra partnerne våre – og den koden er din. Hver rabatt kan bare åpnes én gang, men de forsvinner ikke: har du flere uåpnede rabatter, ligger de under «Andre rabatter» til du åpner dem.</p>
         </details>
         <details class="faq-item">
-          <summary>Hva er velkomstrabatten?</summary>
-          <p class="faq-answer">Alle som registrerer seg får én velkomstrabatt, uavhengig av nivå. Den åpner du akkurat som de andre rabattene, og koden havner i «Mine koder».</p>
+          <summary>Hva er velkomstbonusen?</summary>
+          <p class="faq-answer">Alle som registrerer seg får én velkomstbonus, uavhengig av nivå. Den åpner du akkurat som de andre rabattene, og koden havner i «Mine koder».</p>
         </details>
         <details class="faq-item">
           <summary>Hva betyr «Støtter Snorre»?</summary>
-          <p class="faq-answer">Noen rabatter har taggen «Støtter Snorre». Bruker du en slik rabatt, støtter du meg:) Velkomstrabatten er aldri en av dem.</p>
+          <p class="faq-answer">Noen rabatter har taggen «Støtter Snorre». Bruker du en slik rabatt, støtter du meg:) Velkomstbonusen er aldri en av dem.</p>
         </details>
         <details class="faq-item">
           <summary>Hvorfor får noen bedre rabatter enn andre?</summary>
@@ -232,7 +232,7 @@
   let levels = [];
   let rewards = [];
   let openedCases = new Map(); // level_number -> { brand, title, sub, rarity, image_url, code }
-  const WELCOME = "welcome"; // nøkkelen til velkomstrabatten i openedCases / valg
+  const WELCOME = "welcome"; // nøkkelen til velkomstbonusen i openedCases / valg
   let selectedCaseLevel = null;
   let caseOpening = false;
   let caseModalOpen = false;
@@ -303,14 +303,14 @@
     return levels.filter((lv) => lv.level_number <= dl).map((lv) => lv.level_number);
   }
 
-  // Velkomstrabatten ligger alltid først i køen til den er åpnet. For en
+  // Velkomstbonusen ligger alltid først i køen til den er åpnet. For en
   // utlogget besøkende vises den også, slik at siden viser hva man får.
   function unopenedLevels() {
     const list = unlockedLevels().filter((n) => !openedCases.has(n));
     return openedCases.has(WELCOME) ? list : [WELCOME, ...list];
   }
 
-  // Velkomstrabatten skal aldri være en «Støtter Snorre»-rabatt – heller ikke
+  // Velkomstbonusen skal aldri være en «Støtter Snorre»-rabatt – heller ikke
   // i båndet (databasen sikrer det samme i open_welcome_case).
   function reelPool() {
     return selectedCaseLevel === WELCOME ? rewards.filter((r) => !r.supports_snorre) : rewards;
@@ -413,7 +413,7 @@
   }
 
   function caseName(key) {
-    return key === WELCOME ? "Velkomstrabatten" : `Nivå ${key}-rabatten`;
+    return key === WELCOME ? "Velkomstbonusen" : `Nivå ${key}-rabatten`;
   }
 
   // Uåpnede rabatter tegnes som rabattkortet fra «Mine koder» (stiplet kant)
