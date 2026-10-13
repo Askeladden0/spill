@@ -89,7 +89,7 @@
     const btn = root.querySelector("[data-teaser-open]");
     if (profile) btn.textContent = "Åpne velkomstbonusen";
     btn.addEventListener("click", () => {
-      window.location.href = profile ? "premier.html#fa-rabatt" : "login.html";
+      window.location.href = profile ? "premier.html#velkomst" : "login.html";
     });
   }
 

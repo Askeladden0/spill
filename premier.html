@@ -183,21 +183,23 @@
 
     <button type="button" class="btn-primary" style="width:100%" data-case-open>Åpne rabatten</button>
 
-    <div data-case-reveal hidden style="display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:16px;background:var(--bg);border:1px solid var(--border-strong)">
-      <span style="width:70px;height:70px;flex:none;border-radius:12px;background:#1b2434;display:flex;align-items:center;justify-content:center;overflow:hidden" data-case-reveal-thumb></span>
-      <div style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1">
-        <div style="display:flex;align-items:center;gap:7px">
-          <span style="font-size:11px;font-weight:700;letter-spacing:.12em" data-case-reveal-rarity></span>
-          <button type="button" aria-label="Mer info om rabatten" title="" style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;border:none;background:transparent;color:var(--muted);cursor:help" data-case-reveal-info>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-          </button>
-        </div>
-        <span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.1" data-case-reveal-value></span>
-        <span data-case-reveal-snorre></span>
-        <span style="font-size:12px;font-weight:500;color:var(--muted)" data-case-reveal-code></span>
-        <a class="case-reveal-link" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Gå til tilbudet ↗</a>
+    <div class="case-reveal" data-case-reveal hidden>
+      <span class="case-reveal-logo" data-case-reveal-thumb></span>
+      <div class="case-reveal-rarity">
+        <span data-case-reveal-rarity></span>
+        <button type="button" class="case-reveal-info" aria-label="Mer info om rabatten" title="" data-case-reveal-info>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        </button>
       </div>
-      <button type="button" class="btn-primary" style="padding:13px 18px;font-size:13.5px" data-case-reveal-copy>Kopier koden</button>
+      <h3 class="case-reveal-value" data-case-reveal-value></h3>
+      <span data-case-reveal-snorre></span>
+      <div class="case-reveal-code">
+        <span class="case-reveal-code-label">Din kode</span>
+        <span class="case-reveal-code-value" data-case-reveal-code></span>
+      </div>
+      <button type="button" class="btn-primary case-reveal-copy" data-case-reveal-copy>Kopier koden</button>
+      <a class="case-reveal-link" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Gå til tilbudet ↗</a>
+      <p class="case-reveal-note">Koden er lagret i «Mine koder» på profilen din.</p>
     </div>
   </div>
 </div>
@@ -372,30 +374,70 @@
       reel.classList.remove("is-fast");
       return;
     }
+    if (reelAnim) { reelAnim.cancel(); reelAnim = null; }
     const set = randomReelItems(reelPool()).map(reelTileHTML).join("");
     reel.innerHTML = set + set; // to identiske sett = sømløs løkke på -50 %
     reel.style.transform = "";
     const setWidth = REEL_SET_SIZE * REEL_TILE_WIDTH;
     reel.style.animationDuration = `${(setWidth / REEL_SPEED_PX_S).toFixed(2)}s`;
-    reel.style.setProperty("--case-reel-fast", `${(setWidth / (REEL_SPEED_PX_S * 9)).toFixed(2)}s`);
+    reel.style.setProperty("--case-reel-fast", `${(setWidth / (REEL_SPEED_PX_S * 40)).toFixed(2)}s`);
     reel.classList.remove("is-fast");
     reel.classList.add("is-rolling");
   }
 
-  // Skru opp farten mens rabatten faktisk åpnes, og stopp båndet når rabatten
-  // er avslørt.
+  // Skru opp farten mens rabatten hentes fra databasen.
   function rushReelShuffle() {
     document.querySelector("[data-case-reel]").classList.add("is-fast");
   }
 
+  // Frys båndet der det faktisk står: fjerner vi animasjonen uten å låse
+  // posisjonen først, spretter båndet tilbake til start med et rykk.
   function stopReelShuffle() {
     const reel = document.querySelector("[data-case-reel]");
-    // Frys båndet der det faktisk står: fjerner vi animasjonen uten å låse
-    // posisjonen først, spretter båndet tilbake til start med et rykk.
     const current = window.getComputedStyle(reel).transform;
     reel.classList.remove("is-rolling", "is-fast");
     reel.style.animationDuration = "";
     reel.style.transform = current === "none" ? "" : current;
+  }
+
+  // Trekningen: båndet står først og suser forbi i full fart, og bremser så
+  // gradvis helt til det lander på vinnerkortet under markøren. Vinnerkortet
+  // legges til bak kortene som allerede er på skjermen, slik at båndet ikke
+  // hopper når det går fra løkken til bremsingen.
+  const REEL_EXTRA_BEFORE_WINNER = 22;
+  const REEL_EXTRA_AFTER_WINNER = 8;
+  const REEL_SPIN_MS = 5800;
+  let reelAnim = null;
+
+  async function spinReelTo(winner) {
+    const reel = document.querySelector("[data-case-reel]");
+    const viewport = document.querySelector("[data-case-reel-viewport]");
+    stopReelShuffle();
+    const startX = new DOMMatrixReadOnly(window.getComputedStyle(reel).transform).m41;
+    const existing = reel.children.length;
+
+    const pool = reelPool();
+    const filler = (n) => randomReelItems(pool.length ? pool : rewards).concat(randomReelItems(pool.length ? pool : rewards)).slice(0, n);
+    const before = filler(REEL_EXTRA_BEFORE_WINNER);
+    const after = filler(REEL_EXTRA_AFTER_WINNER);
+    reel.insertAdjacentHTML("beforeend", before.map(reelTileHTML).join("") + reelTileHTML(winner) + after.map(reelTileHTML).join(""));
+
+    const winnerIndex = existing + before.length;
+    const winnerTile = reel.children[winnerIndex];
+    // Lander et sted innenfor vinnerkortet (ikke alltid midt på), som på ekte.
+    const jitter = (Math.random() - 0.5) * (REEL_TILE_WIDTH - 40);
+    const endX = -(winnerIndex * REEL_TILE_WIDTH + REEL_TILE_WIDTH / 2 - 6 + jitter - viewport.clientWidth / 2);
+
+    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    reelAnim = reel.animate(
+      [{ transform: `translate3d(${startX}px,0,0)` }, { transform: `translate3d(${endX}px,0,0)` }],
+      { duration: reduced ? 1 : REEL_SPIN_MS, easing: "cubic-bezier(0.12, 0.6, 0.1, 1)", fill: "forwards" }
+    );
+    try { await reelAnim.finished; } catch (e) { return; }
+    reel.style.transform = `translate3d(${endX}px,0,0)`;
+    reelAnim.cancel();
+    reelAnim = null;
+    winnerTile.classList.add("is-winner");
   }
 
   // Forhåndsvisning på selve siden: et rolig, evig bånd med logoene til
@@ -504,18 +546,19 @@
       : sb.rpc("open_level_case", { p_level_number: opening })
     ).single();
     const elapsed = Date.now() - shuffleStart;
-    if (elapsed < 1500) await new Promise((r) => setTimeout(r, 1500 - elapsed));
-    stopReelShuffle();
-    caseOpening = false;
+    if (elapsed < 700) await new Promise((r) => setTimeout(r, 700 - elapsed));
 
     if (error) {
-      document.querySelector("[data-case-open]").textContent = `Åpne ${caseName(opening).toLowerCase()}`;
-      document.querySelector("[data-case-open]").disabled = false;
+      caseOpening = false;
       startReelShuffle(true);
+      renderCasePanel();
       window.alert(error.message.includes("Ingen rabatter") ? "Ingen rabatter er tilgjengelige akkurat nå. Prøv igjen senere." : error.message);
       return;
     }
 
+    await spinReelTo(data);
+    await new Promise((r) => setTimeout(r, 650));
+    caseOpening = false;
     openedCases.set(opening, data);
     showCaseReveal(data);
     renderLevelCard();
@@ -524,22 +567,19 @@
 
   function showCaseReveal(data) {
     const rar = RARITY[data.rarity] || RARITY.vanlig;
-    document.querySelector("[data-case-open]").textContent = "Rabatten er åpnet";
-    document.querySelector("[data-case-open]").disabled = true;
+    document.querySelector("[data-case-open]").hidden = true;
     const reveal = document.querySelector("[data-case-reveal]");
     reveal.hidden = false;
-    reveal.style.border = `1px solid ${rar.color}80`;
-    reveal.style.boxShadow = `0 0 0 4px ${rar.color}1a`;
+    reveal.style.setProperty("--reveal-color", rar.color);
     const thumb = document.querySelector("[data-case-reveal-thumb]");
-    thumb.innerHTML = data.image_url ? `<img src="${data.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#6b7b93">[ logo ]</span>`;
+    thumb.innerHTML = data.image_url ? `<img src="${data.image_url}" alt="">` : `<span>[ logo ]</span>`;
     const rarityEl = document.querySelector("[data-case-reveal-rarity]");
     rarityEl.textContent = `${rar.label} RABATT`;
-    rarityEl.style.color = rar.color;
     document.querySelector("[data-case-reveal-info]").title = data.sub || "";
     const tagSlot = document.querySelector("[data-case-reveal-snorre]");
     tagSlot.innerHTML = data.supports_snorre && window.StudillaSnorreTag ? window.StudillaSnorreTag.html() : "";
     document.querySelector("[data-case-reveal-value]").textContent = `${data.title} hos ${data.brand}`;
-    document.querySelector("[data-case-reveal-code]").textContent = `Kode: ${data.code} · lagret i «Mine koder»`;
+    document.querySelector("[data-case-reveal-code]").textContent = data.code;
     const linkEl = document.querySelector("[data-case-reveal-link]");
     // Lenken er valgfri per rabatt (rewards.link_url) – skjul den helt når
     // partneren ikke har oppgitt noen.
@@ -569,6 +609,7 @@
     caseModalOpen = true;
     document.querySelector("[data-case-modal]").hidden = false;
     document.querySelector("[data-case-reveal]").hidden = true;
+    document.querySelector("[data-case-open]").hidden = false;
     startReelShuffle(true);
     renderCasePanel();
   }
@@ -730,9 +771,15 @@
     renderCasePanel();
     // Nyregistrerte lander på #fa-rabatt; innholdet over rekker å endre høyde
     // mens siden lastes, så vi hopper dit først nå.
-    if (window.location.hash === "#fa-rabatt") {
+    if (window.location.hash === "#fa-rabatt" || window.location.hash === "#velkomst") {
       const target = document.getElementById("fa-rabatt");
       if (target) target.scrollIntoView();
+    }
+    // Fra «Åpne velkomstrabatten» på forsiden og rett etter registrering går
+    // man rett til pop-upen der rabatten åpnes.
+    if (window.location.hash === "#velkomst" && profile && unopenedLevels().includes(WELCOME)) {
+      selectCase(WELCOME);
+      openCaseModal();
     }
   })();
 
