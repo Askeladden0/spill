@@ -100,6 +100,9 @@
     }
 
     function initGame() {
+      window.clearTimeout(pendingTimer);
+      pendingFinish = null;
+      pendingTimer = null;
       board = emptyBoard();
       score = 0;
       won = false;
@@ -308,8 +311,21 @@
       }
     }
 
+    let pendingFinish = null;
+    let pendingTimer = null;
+
+    function flushPending() {
+      window.clearTimeout(pendingTimer);
+      const fn = pendingFinish;
+      pendingFinish = null;
+      pendingTimer = null;
+      if (fn) fn();
+    }
+
     function performMove(direction) {
-      if (!session || over) return;
+      if (!session) return;
+      flushPending();
+      if (over) return;
       const beforePositions = getPositions(board);
       const { newBoard, moved, gained, mergeEvents } = moveBoard(direction);
       if (!moved) return;
@@ -345,34 +361,40 @@
       session.setScore(score);
       saveGame();
 
-      window.setTimeout(() => {
+      // Etterarbeidet (fjerne spiste brikker, oppdatere sammenslåtte, vise
+      // ny brikke) bruker data fanget NÅ, ikke brettet slik det ser ut senere.
+      // Trykkes en ny retning før animasjonen er ferdig, kjøres dette først
+      // (flushPending), ellers ville det truffet feil brikker og latt brikker
+      // forsvinne.
+      const spawnTile = spawn ? board[spawn.row][spawn.col] : null;
+      const survivors = mergeEvents.map(({ survivorId }) => {
+        const pos = afterPositions[survivorId];
+        return { id: survivorId, row: pos.row, col: pos.col, value: board[pos.row][pos.col].value };
+      });
+      const finish = () => {
         mergeEvents.forEach(({ removedId }) => {
           const el = tileEl(removedId);
           if (el) el.remove();
         });
-        mergeEvents.forEach(({ survivorId }) => {
-          const pos = findTileById(survivorId);
-          const el = tileEl(survivorId);
-          if (!pos || !el) return;
-          const tile = board[pos.row][pos.col];
-          el.textContent = tile.value;
-          el.dataset.value = tile.value > 2048 ? "2048plus" : String(tile.value);
+        survivors.forEach(({ id, row, col, value }) => {
+          const el = tileEl(id);
+          if (!el) return;
+          el.textContent = value;
+          el.dataset.value = value > 2048 ? "2048plus" : String(value);
           el.classList.remove("is-merged");
           // eslint-disable-next-line no-unused-expressions
           el.offsetWidth;
           el.classList.add("is-merged");
-          positionTileEl(el, pos.row, pos.col, false);
+          positionTileEl(el, row, col, false);
         });
-        if (spawn) {
-          const tile = board[spawn.row][spawn.col];
-          if (tile) createTileEl(tile, spawn.row, spawn.col, "is-new");
-        }
-
+        if (spawnTile && !tileEl(spawnTile.id)) createTileEl(spawnTile, spawn.row, spawn.col, "is-new");
         if (!hasMoves()) {
           over = true;
           session.finish(score);
         }
-      }, MOVE_DURATION);
+      };
+      pendingFinish = finish;
+      pendingTimer = window.setTimeout(flushPending, MOVE_DURATION);
     }
 
     const KEY_DIRECTIONS = {
