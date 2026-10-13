@@ -153,6 +153,7 @@
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
+<script src="js/snorre-tag.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/social.js"></script>
 <script src="js/dm-popup.js"></script>
@@ -290,6 +291,7 @@
         <span class="code-card-notch is-right"></span>
         <div class="code-card-head"><span class="code-card-brand">${c.brand.toUpperCase()}</span><span class="code-card-date">Hentet ${relTime(c.created_at)}</span></div>
         <span class="code-card-title">${c.title}</span>
+        ${c.supports_snorre && window.StudillaSnorreTag ? `<span>${window.StudillaSnorreTag.html()}</span>` : ""}
         ${c.link_url ? `<a class="case-reveal-link" href="${c.link_url}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
         <div class="code-card-foot">
           <span class="code-card-foot-label">${c.code}</span>
@@ -579,12 +581,16 @@
   async function fetchCodes() {
     const withLink = await sb
       .from("user_codes")
-      .select("brand, title, code, created_at, rewards(link_url)")
+      .select("brand, title, code, created_at, rewards(link_url, supports_snorre)")
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false });
     if (!withLink.error) {
       return {
-        data: (withLink.data || []).map((c) => ({ ...c, link_url: c.rewards ? c.rewards.link_url : null })),
+        data: (withLink.data || []).map((c) => ({
+          ...c,
+          link_url: c.rewards ? c.rewards.link_url : null,
+          supports_snorre: !!(c.rewards && c.rewards.supports_snorre),
+        })),
         error: null,
       };
     }

@@ -206,17 +206,6 @@
     section.hidden = false;
   }
 
-  /* ------------------------------------------------------------------ *
-   * Konto-stripen
-   * ------------------------------------------------------------------ */
-
-  async function initSignupStrip() {
-    const strip = document.querySelector("[data-signup-strip]");
-    if (!strip || !window.StudillaAuth) return;
-    const profile = await window.StudillaAuth.getCurrentProfile();
-    strip.hidden = !!profile;
-  }
-
   function initPlayerPage() {
     const stage = document.querySelector("[data-player-stage]");
     if (!stage) return;
@@ -273,7 +262,6 @@
     // Aktivt menypunkt markeres av js/layout.js (kjører på alle sider).
     initHeroStart();
     renderFrontGuide();
-    initSignupStrip();
     if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
     if (window.STUDILLA_GAME_SCRIPT_READY) await window.STUDILLA_GAME_SCRIPT_READY;
     renderHero("[data-hero]");

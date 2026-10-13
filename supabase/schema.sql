@@ -3959,6 +3959,265 @@ grant execute on function public.admin_remove_block(uuid, uuid) to authenticated
 -- ---------------------------------------------------------------------------
 alter table public.guides add column if not exists icon text not null default '';
 
+-- ---------------------------------------------------------------------------
+-- 65. Velkomstkasse, «Støtter Snorre»-rabatter og 10× vanskeligere nivåer.
+--
+--     a) rewards.supports_snorre: admin kan merke en rabatt med «Støtter
+--        Snorre». Selve taggen (aksentfarge + infosymbol) tegnes av
+--        premier.html og profil.html.
+--     b) user_welcome_cases + open_welcome_case(): hver bruker får én
+--        velkomstkasse, uavhengig av nivå. Velkomstrabatten er ALDRI en
+--        «Støtter Snorre»-rabatt, og det sikres tre steder: trekningen
+--        hopper over dem, en trigger avviser rader som peker på en slik
+--        rabatt, og en trigger på rewards stopper at en allerede utdelt
+--        velkomstrabatt senere merkes som «Støtter Snorre».
+--     c) Nivåstigen blir 10× vanskeligere for alle triks (poengene
+--        regnes ut likt for alle spill, så det er stigen som skaleres).
+--        Kjøres kun én gang (app_settings.level_scale_x10_done). Spillere
+--        beholder nivået de allerede har – nivå synker aldri.
+-- ---------------------------------------------------------------------------
+alter table public.rewards add column if not exists supports_snorre boolean not null default false;
+
+create table if not exists public.user_welcome_cases (
+  user_id uuid primary key references public.profiles (id) on delete cascade,
+  reward_id bigint references public.rewards (id) on delete set null,
+  code text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.user_welcome_cases enable row level security;
+
+drop policy if exists "user_welcome_cases_select_own" on public.user_welcome_cases;
+create policy "user_welcome_cases_select_own" on public.user_welcome_cases
+  for select using (auth.uid() = user_id);
+
+create or replace function public.guard_welcome_not_snorre()
+returns trigger
+language plpgsql
+as $$
+begin
+  if exists (select 1 from public.rewards where id = new.reward_id and supports_snorre) then
+    raise exception 'Velkomstrabatten kan ikke være en «Støtter Snorre»-rabatt';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists user_welcome_cases_not_snorre on public.user_welcome_cases;
+create trigger user_welcome_cases_not_snorre
+  before insert or update on public.user_welcome_cases
+  for each row execute function public.guard_welcome_not_snorre();
+
+create or replace function public.guard_reward_snorre_flag()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.supports_snorre and not old.supports_snorre
+     and exists (select 1 from public.user_welcome_cases where reward_id = new.id) then
+    raise exception 'Denne rabatten er delt ut som velkomstrabatt og kan ikke merkes «Støtter Snorre»';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists rewards_snorre_flag_guard on public.rewards;
+create trigger rewards_snorre_flag_guard
+  before update of supports_snorre on public.rewards
+  for each row execute function public.guard_reward_snorre_flag();
+
+-- Returtypen har fått en ny kolonne (supports_snorre).
+drop function if exists public.open_level_case(int);
+create or replace function public.open_level_case(p_level_number int)
+returns table (brand text, title text, sub text, rarity text, image_url text, link_url text, supports_snorre boolean, code text, already_opened boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  my_level int;
+  existing public.user_level_cases;
+  r public.rewards;
+  picked_code text;
+  remaining bigint;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å åpne en kasse';
+  end if;
+
+  select level into my_level from public.profiles where id = auth.uid();
+  if my_level is null or my_level < p_level_number then
+    raise exception 'Du har ikke låst opp dette nivået ennå';
+  end if;
+
+  select * into existing from public.user_level_cases
+   where user_id = auth.uid() and level_number = p_level_number;
+
+  if existing is not null then
+    select * into r from public.rewards where id = existing.reward_id;
+    if r is null then
+      return query select null::text, null::text, null::text, null::text, null::text, null::text, false, existing.code, true;
+      return;
+    end if;
+    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, existing.code, true;
+    return;
+  end if;
+
+  select rw.* into r
+    from public.rewards rw
+    join public.rarity_weights ww on ww.rarity = rw.rarity
+   where rw.active
+     and (rw.expires_at is null or rw.expires_at > now())
+     and ww.weight > 0
+     and not exists (
+       select 1 from public.user_codes uc
+        where uc.user_id = auth.uid() and uc.reward_id = rw.id
+     )
+   order by -ln(random()) / ww.weight
+   limit 1;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    picked_code := r.general_code;
+  else
+    update public.reward_codes
+       set claimed_by = auth.uid(), claimed_at = now()
+     where id = (
+       select id from public.reward_codes
+        where reward_id = r.id and claimed_by is null and not disabled
+        order by id
+        limit 1
+        for update skip locked
+     )
+     returning reward_codes.code into picked_code;
+
+    if picked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+
+    select count(*) into remaining from public.reward_codes
+     where reward_id = r.id and claimed_by is null and not disabled;
+    if remaining = 0 then
+      update public.rewards set active = false where id = r.id;
+    end if;
+  end if;
+
+  insert into public.user_level_cases (user_id, level_number, reward_id, code)
+  values (auth.uid(), p_level_number, r.id, picked_code);
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, r.id);
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, picked_code, false;
+end;
+$$;
+
+revoke all on function public.open_level_case(int) from public;
+grant execute on function public.open_level_case(int) to authenticated;
+
+drop function if exists public.open_welcome_case();
+create or replace function public.open_welcome_case()
+returns table (brand text, title text, sub text, rarity text, image_url text, link_url text, supports_snorre boolean, code text, already_opened boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  existing public.user_welcome_cases;
+  r public.rewards;
+  picked_code text;
+  remaining bigint;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å åpne en kasse';
+  end if;
+
+  select * into existing from public.user_welcome_cases
+   where user_id = auth.uid();
+
+  if existing is not null then
+    select * into r from public.rewards where id = existing.reward_id;
+    if r is null then
+      return query select null::text, null::text, null::text, null::text, null::text, null::text, false, existing.code, true;
+      return;
+    end if;
+    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, existing.code, true;
+    return;
+  end if;
+
+  select rw.* into r
+    from public.rewards rw
+    join public.rarity_weights ww on ww.rarity = rw.rarity
+   where rw.active
+     and not rw.supports_snorre
+     and (rw.expires_at is null or rw.expires_at > now())
+     and ww.weight > 0
+     and not exists (
+       select 1 from public.user_codes uc
+        where uc.user_id = auth.uid() and uc.reward_id = rw.id
+     )
+   order by -ln(random()) / ww.weight
+   limit 1;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    picked_code := r.general_code;
+  else
+    update public.reward_codes
+       set claimed_by = auth.uid(), claimed_at = now()
+     where id = (
+       select id from public.reward_codes
+        where reward_id = r.id and claimed_by is null and not disabled
+        order by id
+        limit 1
+        for update skip locked
+     )
+     returning reward_codes.code into picked_code;
+
+    if picked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+
+    select count(*) into remaining from public.reward_codes
+     where reward_id = r.id and claimed_by is null and not disabled;
+    if remaining = 0 then
+      update public.rewards set active = false where id = r.id;
+    end if;
+  end if;
+
+  insert into public.user_welcome_cases (user_id, reward_id, code)
+  values (auth.uid(), r.id, picked_code);
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, r.id);
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, picked_code, false;
+end;
+$$;
+
+revoke all on function public.open_welcome_case() from public;
+grant execute on function public.open_welcome_case() to authenticated;
+
+alter table public.app_settings add column if not exists level_scale_x10_done boolean not null default false;
+
+do $$
+begin
+  if not coalesce((select level_scale_x10_done from public.app_settings where id = 1), false) then
+    update public.app_settings
+       set level_step = level_step * 10, level_scale_x10_done = true, updated_at = now()
+     where id = 1;
+    update public.levels lv
+       set points_required = (lv.level_number - 1) * (select level_step from public.app_settings where id = 1);
+  end if;
+end;
+$$;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

@@ -29,6 +29,15 @@
   <div id="site-header"></div>
 
   <main id="hovedinnhold">
+    <!-- Vises kun for utloggede (flyttet hit fra forsiden). -->
+    <section class="signup-strip" data-signup-strip hidden>
+      <div class="signup-strip-text">
+        <strong>Logg inn for å få kasser.</strong>
+        <span>Du får en velkomstkasse med en gang du logger inn, og en ny kasse for hvert nivå du når. Det tar ti sekunder å lage konto – kun brukernavn og passord.</span>
+      </div>
+      <a class="btn-primary" href="login.html">Logg inn</a>
+    </section>
+
     <section class="premier-hero-grid">
       <div class="level-card">
         <div class="level-ring-wrap" data-level-ring-wrap>
@@ -123,6 +132,14 @@
           <p class="faq-answer">Hver gang du når et nytt nivå får du én kasse. Åpner du kassen, trekkes én tilfeldig rabatt fra partnerne våre – og den koden er din. Hver kasse kan bare åpnes én gang, men kassene forsvinner ikke: har du flere uåpnede kasser, ligger de under «Andre kasser» til du åpner dem.</p>
         </details>
         <details class="faq-item">
+          <summary>Hva er velkomstkassen?</summary>
+          <p class="faq-answer">Alle som logger inn får én velkomstkasse, uavhengig av nivå. Den åpner du akkurat som de andre kassene, og rabatten havner i «Mine koder».</p>
+        </details>
+        <details class="faq-item">
+          <summary>Hva betyr «Støtter Snorre»?</summary>
+          <p class="faq-answer">Noen rabatter har taggen «Støtter Snorre». Bruker du en slik rabatt, støtter du meg:) Velkomstrabatten er aldri en av dem.</p>
+        </details>
+        <details class="faq-item">
           <summary>Hvorfor får noen bedre rabatter enn andre?</summary>
           <p class="faq-answer">Rabattene har fire sjeldenhetsgrader: vanlig, sjelden, episk og legendarisk. Trekningen er tilfeldig og vektet, så de mest verdifulle rabattene dukker opp sjeldnere enn de vanlige. Alle har akkurat samme sjanse i hver kasse.</p>
         </details>
@@ -176,6 +193,7 @@
           </button>
         </div>
         <span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.1" data-case-reveal-value></span>
+        <span data-case-reveal-snorre></span>
         <span style="font-size:12px;font-weight:500;color:var(--muted)" data-case-reveal-code></span>
         <a class="case-reveal-link" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Gå til tilbudet ↗</a>
       </div>
@@ -192,6 +210,7 @@
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
+<script src="js/snorre-tag.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/social.js"></script>
 <script src="js/dm-popup.js"></script>
@@ -213,6 +232,7 @@
   let levels = [];
   let rewards = [];
   let openedCases = new Map(); // level_number -> { brand, title, sub, rarity, image_url, code }
+  const WELCOME = "welcome"; // nøkkelen til velkomstkassen i openedCases / valg
   let selectedCaseLevel = null;
   let caseOpening = false;
   let caseModalOpen = false;
@@ -283,8 +303,17 @@
     return levels.filter((lv) => lv.level_number <= dl).map((lv) => lv.level_number);
   }
 
+  // Velkomstkassen ligger alltid først i køen til den er åpnet. For en
+  // utlogget besøkende vises den også, slik at siden viser hva man får.
   function unopenedLevels() {
-    return unlockedLevels().filter((n) => !openedCases.has(n));
+    const list = unlockedLevels().filter((n) => !openedCases.has(n));
+    return openedCases.has(WELCOME) ? list : [WELCOME, ...list];
+  }
+
+  // Velkomstrabatten skal aldri være en «Støtter Snorre»-rabatt – heller ikke
+  // i båndet (databasen sikrer det samme i open_welcome_case).
+  function reelPool() {
+    return selectedCaseLevel === WELCOME ? rewards.filter((r) => !r.supports_snorre) : rewards;
   }
 
   // ---------- Kassebåndet ----------
@@ -309,8 +338,9 @@
   // Trekker et sett med kort i helt tilfeldig rekkefølge. Er det færre
   // rabatter enn plasser i settet, stokkes puljen om på nytt for hver runde,
   // slik at rekkefølgen varierer i stedet for å gjenta seg selv.
-  function randomReelItems() {
-    const pool = rewards.length ? rewards : [{ brand: "?", title: "?", rarity: "vanlig" }];
+  function randomReelItems(source) {
+    const list = source || rewards;
+    const pool = list.length ? list : [{ brand: "?", title: "?", rarity: "vanlig" }];
     const items = [];
     while (items.length < REEL_SET_SIZE) items.push(...shuffled(pool));
     return items.slice(0, REEL_SET_SIZE);
@@ -342,7 +372,7 @@
       reel.classList.remove("is-fast");
       return;
     }
-    const set = randomReelItems().map(reelTileHTML).join("");
+    const set = randomReelItems(reelPool()).map(reelTileHTML).join("");
     reel.innerHTML = set + set; // to identiske sett = sømløs løkke på -50 %
     reel.style.transform = "";
     const setWidth = REEL_SET_SIZE * REEL_TILE_WIDTH;
@@ -382,6 +412,14 @@
     reel.classList.add("is-rolling");
   }
 
+  function caseName(key) {
+    return key === WELCOME ? "Velkomstkassen" : `Nivå ${key}-kassen`;
+  }
+
+  function caseBadge(key) {
+    return key === WELCOME ? "🎁" : key;
+  }
+
   function selectCase(levelNumber) {
     selectedCaseLevel = levelNumber;
     renderCasePanel();
@@ -395,7 +433,7 @@
     const unopened = unopenedLevels();
 
     if (selectedCaseLevel === null || !unopened.includes(selectedCaseLevel)) {
-      selectedCaseLevel = unopened.length ? Math.min(...unopened) : null;
+      selectedCaseLevel = unopened.length ? unopened[0] : null;
     }
 
     panel.hidden = false;
@@ -419,14 +457,14 @@
       openBtn.disabled = true;
       document.querySelector("[data-case-modal-title]").textContent = "Ingen ledige kasser";
     } else {
-      document.querySelector("[data-case-badge]").textContent = selectedCaseLevel;
-      document.querySelector("[data-case-title]").textContent = `Nivå ${selectedCaseLevel}-kassen`;
-      panelBtn.textContent = `Åpne nivå ${selectedCaseLevel}-kassen`;
+      document.querySelector("[data-case-badge]").textContent = caseBadge(selectedCaseLevel);
+      document.querySelector("[data-case-title]").textContent = caseName(selectedCaseLevel);
+      panelBtn.textContent = `Åpne ${caseName(selectedCaseLevel).toLowerCase()}`;
       panelBtn.disabled = caseOpening;
       panelSub.textContent = "Åpne kassen for å trekke en tilfeldig rabatt fra en av partnerne våre.";
-      openBtn.textContent = caseOpening ? "Åpner kassen …" : `Åpne nivå ${selectedCaseLevel}-kassen`;
+      openBtn.textContent = caseOpening ? "Åpner kassen …" : `Åpne ${caseName(selectedCaseLevel).toLowerCase()}`;
       openBtn.disabled = caseOpening;
-      document.querySelector("[data-case-modal-title]").textContent = `Nivå ${selectedCaseLevel}-kassen`;
+      document.querySelector("[data-case-modal-title]").textContent = caseName(selectedCaseLevel);
     }
 
     // Båndet og rabatten lever i pop-upen; bygg/rull det kun når den er åpen.
@@ -447,8 +485,8 @@
       gridWrap.hidden = false;
       grid.innerHTML = others.map((n) => `
         <button type="button" data-case-pick="${n}" style="cursor:pointer;border-radius:14px;border:1px solid var(--border-strong);background:#131a25;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font-family:inherit">
-          <span style="width:34px;height:34px;border-radius:10px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.35);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent)">${n}</span>
-          <span style="font-size:11.5px;font-weight:600;color:var(--muted)">Nivå ${n}</span>
+          <span style="width:34px;height:34px;border-radius:10px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.35);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent)">${caseBadge(n)}</span>
+          <span style="font-size:11.5px;font-weight:600;color:var(--muted)">${n === WELCOME ? "Velkomst" : `Nivå ${n}`}</span>
         </button>
       `).join("");
     }
@@ -462,21 +500,25 @@
 
     const shuffleStart = Date.now();
     rushReelShuffle();
-    const { data, error } = await sb.rpc("open_level_case", { p_level_number: selectedCaseLevel }).single();
+    const opening = selectedCaseLevel;
+    const { data, error } = await (opening === WELCOME
+      ? sb.rpc("open_welcome_case")
+      : sb.rpc("open_level_case", { p_level_number: opening })
+    ).single();
     const elapsed = Date.now() - shuffleStart;
     if (elapsed < 1500) await new Promise((r) => setTimeout(r, 1500 - elapsed));
     stopReelShuffle();
     caseOpening = false;
 
     if (error) {
-      document.querySelector("[data-case-open]").textContent = `Åpne nivå ${selectedCaseLevel}-kassen`;
+      document.querySelector("[data-case-open]").textContent = `Åpne ${caseName(opening).toLowerCase()}`;
       document.querySelector("[data-case-open]").disabled = false;
       startReelShuffle(true);
       window.alert(error.message.includes("Ingen rabatter") ? "Ingen rabatter er tilgjengelige akkurat nå. Prøv igjen senere." : error.message);
       return;
     }
 
-    openedCases.set(selectedCaseLevel, data);
+    openedCases.set(opening, data);
     showCaseReveal(data);
     renderLevelCard();
     renderFeed();
@@ -496,6 +538,8 @@
     rarityEl.textContent = `${rar.label} RABATT`;
     rarityEl.style.color = rar.color;
     document.querySelector("[data-case-reveal-info]").title = data.sub || "";
+    const tagSlot = document.querySelector("[data-case-reveal-snorre]");
+    tagSlot.innerHTML = data.supports_snorre && window.StudillaSnorreTag ? window.StudillaSnorreTag.html() : "";
     document.querySelector("[data-case-reveal-value]").textContent = `${data.title} hos ${data.brand}`;
     document.querySelector("[data-case-reveal-code]").textContent = `Kode: ${data.code} · lagret i «Mine koder»`;
     const linkEl = document.querySelector("[data-case-reveal-link]");
@@ -548,7 +592,7 @@
   document.querySelector("[data-case-open]").addEventListener("click", openSelectedCase);
   document.querySelector("[data-case-grid]").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-case-pick]");
-    if (btn) selectCase(Number(btn.dataset.casePick));
+    if (btn) selectCase(btn.dataset.casePick === WELCOME ? WELCOME : Number(btn.dataset.casePick));
   });
 
   // ---------- Sidepanel ----------
@@ -602,13 +646,19 @@
   // de kolonnene; da henter vi rabattene uten dem i stedet for å stå igjen
   // med et tomt bånd.
   async function fetchRewards() {
-    const withExpiry = await sb
-      .from("rewards")
-      .select("id, brand, title, sub, rarity, image_url, link_url, expires_at")
-      .eq("active", true)
-      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
-      .order("sort_order");
-    if (!withExpiry.error) return withExpiry;
+    // supports_snorre (schema.sql, seksjon 65) kan mangle på eldre databaser.
+    for (const cols of [
+      "id, brand, title, sub, rarity, image_url, link_url, expires_at, supports_snorre",
+      "id, brand, title, sub, rarity, image_url, link_url, expires_at",
+    ]) {
+      const withExpiry = await sb
+        .from("rewards")
+        .select(cols)
+        .eq("active", true)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+        .order("sort_order");
+      if (!withExpiry.error) return withExpiry;
+    }
     return sb
       .from("rewards")
       .select("id, brand, title, sub, rarity, image_url")
@@ -625,36 +675,53 @@
     if (!rewardsRes.error && rewardsRes.data) rewards = rewardsRes.data;
   }
 
+  function openedFromRow(row) {
+    const rw = row.rewards;
+    return {
+      code: row.code,
+      brand: rw ? rw.brand : "",
+      title: rw ? rw.title : "",
+      sub: rw ? rw.sub : "",
+      rarity: rw ? rw.rarity : "vanlig",
+      image_url: rw ? rw.image_url : null,
+      link_url: rw ? rw.link_url : null,
+      supports_snorre: !!(rw && rw.supports_snorre),
+    };
+  }
+
+  // Prøver kolonnesettene i rekkefølge, så databaser uten rewards.link_url
+  // eller rewards.supports_snorre fortsatt får vist kassene sine.
+  async function selectCases(table, key) {
+    for (const cols of [
+      "brand, title, sub, rarity, image_url, link_url, supports_snorre",
+      "brand, title, sub, rarity, image_url, link_url",
+      "brand, title, sub, rarity, image_url",
+    ]) {
+      const res = await sb.from(table).select(`${key}code, rewards(${cols})`).eq("user_id", profile.id);
+      if (!res.error) return res.data || [];
+    }
+    return [];
+  }
+
   async function loadOpenedCases() {
     openedCases = new Map();
     if (!profile) return;
-    let { data, error } = await sb
-      .from("user_level_cases")
-      .select("level_number, code, rewards(brand, title, sub, rarity, image_url, link_url)")
-      .eq("user_id", profile.id);
-    if (error) {
-      // Samme fallback som over for databaser uten rewards.link_url.
-      ({ data, error } = await sb
-        .from("user_level_cases")
-        .select("level_number, code, rewards(brand, title, sub, rarity, image_url)")
-        .eq("user_id", profile.id));
-    }
-    if (error || !data) return;
-    data.forEach((row) => {
-      openedCases.set(row.level_number, {
-        code: row.code,
-        brand: row.rewards ? row.rewards.brand : "",
-        title: row.rewards ? row.rewards.title : "",
-        sub: row.rewards ? row.rewards.sub : "",
-        rarity: row.rewards ? row.rewards.rarity : "vanlig",
-        image_url: row.rewards ? row.rewards.image_url : null,
-        link_url: row.rewards ? row.rewards.link_url : null,
-      });
-    });
+    const [levelRows, welcomeRows] = await Promise.all([
+      selectCases("user_level_cases", "level_number, "),
+      selectCases("user_welcome_cases", ""),
+    ]);
+    levelRows.forEach((row) => openedCases.set(row.level_number, openedFromRow(row)));
+    welcomeRows.forEach((row) => openedCases.set(WELCOME, openedFromRow(row)));
+  }
+
+  function updateSignupStrip() {
+    const strip = document.querySelector("[data-signup-strip]");
+    if (strip) strip.hidden = !!profile;
   }
 
   (async function init() {
     profile = await Auth.getCurrentProfile();
+    updateSignupStrip();
     renderFeed();
 
     await Promise.all([loadLevels(), loadOpenedCases()]);
@@ -667,6 +734,7 @@
 
   sb.auth.onAuthStateChange(async () => {
     profile = await Auth.getCurrentProfile();
+    updateSignupStrip();
     selectedCaseLevel = null;
     await loadOpenedCases();
     renderLevelCard();

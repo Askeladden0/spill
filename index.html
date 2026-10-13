@@ -47,14 +47,9 @@
       </div>
     </section>
 
-    <!-- Vises kun for utloggede: hva de går glipp av, uten å stenge dem ute. -->
-    <section class="signup-strip" data-signup-strip hidden>
-      <div class="signup-strip-text">
-        <strong>Rekordene dine ligger bare i denne nettleseren.</strong>
-        <span>Lag en konto på ti sekunder – kun brukernavn og passord – så følger rekorden og rangeringen med deg.</span>
-      </div>
-      <a class="btn-primary" href="login.html">Lag konto</a>
-    </section>
+    <!-- Teaser for velkomstkassen (js/case-teaser.js). Samme boks som på
+         premiesiden; vises ikke når kassen allerede er åpnet. -->
+    <section class="case-teaser" data-case-teaser hidden></section>
 
     <section id="alle">
       <div class="game-grid" data-game-grid></div>
@@ -79,6 +74,7 @@
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
+<script src="js/snorre-tag.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/social.js"></script>
 <script src="js/dm-popup.js"></script>
@@ -87,6 +83,7 @@
 <script src="js/guides-data.js"></script>
 <script src="js/levelup-modal.js"></script>
 <script src="js/game-runtime.js"></script>
+<script src="js/case-teaser.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
