@@ -283,7 +283,7 @@
             </div>
             <div class="game-over-fact" data-game-over-earned-fact hidden>
               <span class="game-over-fact-num is-accent" data-game-over-earned>–</span>
-              <span class="game-over-fact-label">POENG TJENT</span>
+              <span class="game-over-fact-label">POENG SAMLET OPP</span>
             </div>
           </div>
 
@@ -546,6 +546,7 @@
      * finnes, ellers kopiert til utklippstavla), eller en direktemelding til
      * en venn eller gruppe.
      */
+    let copyResetTimer = null;
     function setupShare(currentGameId, score, profile) {
       const games = window.STUDILLA_GAMES || [];
       const game = games.find((g) => g.id === currentGameId);
@@ -561,27 +562,41 @@
         els.sharePicker.hidden = true;
         els.shareStatus.hidden = true;
         els.shareCopyBtn.textContent = "Del lenke til spillet";
-        els.shareDmBtn.hidden = !canSend;
-        els.shareGroupBtn.hidden = !canSend;
+        els.shareDmBtn.textContent = profile ? "Send til en venn" : "Send til en venn (logg inn)";
+        els.shareGroupBtn.textContent = profile ? "Send til en gruppe" : "Send til en gruppe (logg inn)";
+        els.shareDmBtn.hidden = profile ? !canSend : false;
+        els.shareGroupBtn.hidden = profile ? !canSend : false;
         els.shareOverlay.hidden = false;
       };
 
+      // Bare kopiering, ingen delingsdialog: knappeteksten bytter midlertidig.
       els.shareCopyBtn.onclick = async () => {
+        const full = `${text} ${url}`;
+        let ok = false;
         try {
-          if (navigator.share) {
-            await navigator.share({ title: "Studilla", text, url });
-            return;
-          }
-          await navigator.clipboard.writeText(`${text} ${url}`);
-          els.shareCopyBtn.textContent = "Lenke kopiert ✓";
-          window.setTimeout(() => { els.shareCopyBtn.textContent = "Del lenke til spillet"; }, 2000);
+          await navigator.clipboard.writeText(full);
+          ok = true;
         } catch (e) {
-          // Avbrutt deling eller blokkert utklippstavle – ikke noe å melde om.
+          try {
+            const ta = document.createElement("textarea");
+            ta.value = full;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            ok = document.execCommand("copy");
+            ta.remove();
+          } catch (e2) {}
         }
+        if (!ok) return;
+        els.shareCopyBtn.textContent = "Kopiert!";
+        window.clearTimeout(copyResetTimer);
+        copyResetTimer = window.setTimeout(() => { els.shareCopyBtn.textContent = "Del lenke til spillet"; }, 2000);
       };
 
-      els.shareDmBtn.onclick = () => openSharePicker("dm", attachmentBody);
-      els.shareGroupBtn.onclick = () => openSharePicker("group", attachmentBody);
+      const goLogin = () => { window.location.href = "login.html"; };
+      els.shareDmBtn.onclick = profile ? () => openSharePicker("dm", attachmentBody) : goLogin;
+      els.shareGroupBtn.onclick = profile ? () => openSharePicker("group", attachmentBody) : goLogin;
     }
 
     let restartHandler = null;
@@ -754,7 +769,7 @@
         els.overlayScoreLabel.textContent = awardedPoints === roundedScore ? "POENG" : "SKÅR";
         els.overlayBestNum.textContent = best.toLocaleString("no-NO");
 
-        const showEarned = LEVELS_ENABLED && !!prevProfile && awardedPoints > 0;
+        const showEarned = !!prevProfile && awardedPoints > 0;
         els.overlayEarnedFact.hidden = !showEarned;
         if (showEarned) els.overlayEarned.textContent = `+${awardedPoints.toLocaleString("no-NO")}`;
 
@@ -769,8 +784,10 @@
         // åpen direkte på fanen for det – se ?spill=-håndteringen i
         // rangering.html.
         els.overlayNext.hidden = false;
-        els.overlayNext.href = `rangering.html?spill=${encodeURIComponent(gameId)}`;
-        els.overlayNext.textContent = "Se rangering";
+        els.overlayNext.href = prevProfile
+          ? `rangering.html?spill=${encodeURIComponent(gameId)}`
+          : "login.html";
+        els.overlayNext.textContent = prevProfile ? "Se rangering" : "Registrer deg";
 
         setupShare(gameId, roundedScore, prevProfile);
 
