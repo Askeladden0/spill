@@ -56,7 +56,7 @@
           </div>
 
           <div class="levelup-reward" data-levelup-reward hidden>
-            <span class="levelup-reward-icon">🎁</span>
+            <span class="levelup-reward-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16a1 1 0 0 1 1 1v2.6a2 2 0 0 0 0 3.8v2.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2.6a2 2 0 0 0 0-3.8V7.5a1 1 0 0 1 1-1z"></path><line x1="9.5" y1="14.5" x2="14.5" y2="9.5"></line><circle cx="9.7" cy="10" r=".9"></circle><circle cx="14.3" cy="14" r=".9"></circle></svg></span>
             <div class="levelup-reward-body">
               <span class="levelup-reward-title" data-levelup-reward-title></span>
               <span class="levelup-reward-sub" data-levelup-reward-sub></span>
@@ -65,7 +65,7 @@
 
           <div class="levelup-actions">
             <button type="button" class="btn-primary" data-levelup-continue>Fortsett</button>
-            <a class="btn-outline levelup-reward-link" data-levelup-reward-link href="premier.html" hidden>Se premien</a>
+            <a class="btn-outline levelup-reward-link" data-levelup-reward-link href="premier.html" hidden>Åpne rabatten</a>
           </div>
         </div>
       </div>
@@ -198,8 +198,8 @@
     hasActiveRewards().then((hasRewards) => {
       if (id !== runId || !hasRewards) return;
       e.reward.hidden = false;
-      e.rewardTitle.textContent = "Ny kasse med en tilfeldig rabatt";
-      e.rewardSub.textContent = `Låst opp på nivå ${newProfile.level} · åpne kassen under Premier`;
+      e.rewardTitle.textContent = "Ny rabatt med en tilfeldig rabattkode";
+      e.rewardSub.textContent = `Låst opp på nivå ${newProfile.level} · åpne rabatten under Få en rabatt`;
       e.rewardLink.hidden = false;
     });
 

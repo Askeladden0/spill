@@ -483,11 +483,8 @@ insert into public.games (id, name, genre, rating, points, time_estimate, descri
   ('bubble-shooter', 'Bubble Shooter', 'Puslespill', '4,7', 'Din skår = dine poeng', '~10 min', 'Sikt og skyt kuler for å matche tre eller flere med samme farge. Tøm hele brettet for maks poeng før kulene når bunnen.', 'assets/img/games/bubble-shooter.svg', 'assets/img/icons/bubble-shooter.svg', false, 6)
 on conflict (id) do nothing;
 
--- 'slope' legges til uten genre/rating (tomme, samme som kolonnenes default) –
--- disse feltene skal ikke fylles ut for nye triks.
-insert into public.games (id, name, points, time_estimate, description, thumbnail_url, icon_url, is_daily_game, sort_order) values
-  ('slope', 'Slope', 'Din skår = dine poeng', '~5 min', 'Styr kulen nedover den evige bakken, unngå de røde blokkene og se hvor langt du kommer før farten tar deg.', 'assets/img/games/slope.svg', 'assets/img/icons/slope.svg', false, 7)
-on conflict (id) do nothing;
+-- 'slope' er fjernet fra siden; slett eventuell gammel rad slik at den ikke vises.
+delete from public.games where id = 'slope';
 
 alter table public.games enable row level security;
 
@@ -3961,6 +3958,348 @@ grant execute on function public.admin_remove_block(uuid, uuid) to authenticated
 --     symbolet tegnes likt i alle nettlesere.
 -- ---------------------------------------------------------------------------
 alter table public.guides add column if not exists icon text not null default '';
+
+-- ---------------------------------------------------------------------------
+-- 65. Velkomstkasse, «Støtter Snorre»-rabatter og 10× vanskeligere nivåer.
+--
+--     a) rewards.supports_snorre: admin kan merke en rabatt med «Støtter
+--        Snorre». Selve taggen (aksentfarge + infosymbol) tegnes av
+--        premier.html og profil.html.
+--     b) user_welcome_cases + open_welcome_case(): hver bruker får én
+--        velkomstkasse, uavhengig av nivå. Velkomstbonusen er ALDRI en
+--        «Støtter Snorre»-rabatt, og det sikres tre steder: trekningen
+--        hopper over dem, en trigger avviser rader som peker på en slik
+--        rabatt, og en trigger på rewards stopper at en allerede utdelt
+--        velkomstbonus senere merkes som «Støtter Snorre».
+--     c) Nivåstigen blir 10× vanskeligere for alle triks (poengene
+--        regnes ut likt for alle spill, så det er stigen som skaleres).
+--        Kjøres kun én gang (app_settings.level_scale_x10_done). Spillere
+--        beholder nivået de allerede har – nivå synker aldri.
+-- ---------------------------------------------------------------------------
+alter table public.rewards add column if not exists supports_snorre boolean not null default false;
+
+create table if not exists public.user_welcome_cases (
+  user_id uuid primary key references public.profiles (id) on delete cascade,
+  reward_id bigint references public.rewards (id) on delete set null,
+  code text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.user_welcome_cases enable row level security;
+
+drop policy if exists "user_welcome_cases_select_own" on public.user_welcome_cases;
+create policy "user_welcome_cases_select_own" on public.user_welcome_cases
+  for select using (auth.uid() = user_id);
+
+create or replace function public.guard_welcome_not_snorre()
+returns trigger
+language plpgsql
+as $$
+begin
+  if exists (select 1 from public.rewards where id = new.reward_id and supports_snorre) then
+    raise exception 'Velkomstbonusen kan ikke være en «Støtter Snorre»-rabatt';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists user_welcome_cases_not_snorre on public.user_welcome_cases;
+create trigger user_welcome_cases_not_snorre
+  before insert or update on public.user_welcome_cases
+  for each row execute function public.guard_welcome_not_snorre();
+
+create or replace function public.guard_reward_snorre_flag()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.supports_snorre and not old.supports_snorre
+     and exists (select 1 from public.user_welcome_cases where reward_id = new.id) then
+    raise exception 'Denne rabatten er delt ut som velkomstbonus og kan ikke merkes «Støtter Snorre»';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists rewards_snorre_flag_guard on public.rewards;
+create trigger rewards_snorre_flag_guard
+  before update of supports_snorre on public.rewards
+  for each row execute function public.guard_reward_snorre_flag();
+
+-- Returtypen har fått en ny kolonne (supports_snorre).
+drop function if exists public.open_level_case(int);
+create or replace function public.open_level_case(p_level_number int)
+returns table (brand text, title text, sub text, rarity text, image_url text, link_url text, supports_snorre boolean, code text, already_opened boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  my_level int;
+  existing public.user_level_cases;
+  r public.rewards;
+  picked_code text;
+  remaining bigint;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å åpne en kasse';
+  end if;
+
+  select level into my_level from public.profiles where id = auth.uid();
+  if my_level is null or my_level < p_level_number then
+    raise exception 'Du har ikke låst opp dette nivået ennå';
+  end if;
+
+  select * into existing from public.user_level_cases
+   where user_id = auth.uid() and level_number = p_level_number;
+
+  if existing is not null then
+    select * into r from public.rewards where id = existing.reward_id;
+    if r is null then
+      return query select null::text, null::text, null::text, null::text, null::text, null::text, false, existing.code, true;
+      return;
+    end if;
+    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, existing.code, true;
+    return;
+  end if;
+
+  select rw.* into r
+    from public.rewards rw
+    join public.rarity_weights ww on ww.rarity = rw.rarity
+   where rw.active
+     and (rw.expires_at is null or rw.expires_at > now())
+     and ww.weight > 0
+     and not exists (
+       select 1 from public.user_codes uc
+        where uc.user_id = auth.uid() and uc.reward_id = rw.id
+     )
+   order by -ln(random()) / ww.weight
+   limit 1;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    picked_code := r.general_code;
+  else
+    update public.reward_codes
+       set claimed_by = auth.uid(), claimed_at = now()
+     where id = (
+       select id from public.reward_codes
+        where reward_id = r.id and claimed_by is null and not disabled
+        order by id
+        limit 1
+        for update skip locked
+     )
+     returning reward_codes.code into picked_code;
+
+    if picked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+
+    select count(*) into remaining from public.reward_codes
+     where reward_id = r.id and claimed_by is null and not disabled;
+    if remaining = 0 then
+      update public.rewards set active = false where id = r.id;
+    end if;
+  end if;
+
+  insert into public.user_level_cases (user_id, level_number, reward_id, code)
+  values (auth.uid(), p_level_number, r.id, picked_code);
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, r.id);
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, picked_code, false;
+end;
+$$;
+
+revoke all on function public.open_level_case(int) from public;
+grant execute on function public.open_level_case(int) to authenticated;
+
+drop function if exists public.open_welcome_case();
+create or replace function public.open_welcome_case()
+returns table (brand text, title text, sub text, rarity text, image_url text, link_url text, supports_snorre boolean, code text, already_opened boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  existing public.user_welcome_cases;
+  r public.rewards;
+  picked_code text;
+  remaining bigint;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å åpne en kasse';
+  end if;
+
+  select * into existing from public.user_welcome_cases
+   where user_id = auth.uid();
+
+  if existing is not null then
+    select * into r from public.rewards where id = existing.reward_id;
+    if r is null then
+      return query select null::text, null::text, null::text, null::text, null::text, null::text, false, existing.code, true;
+      return;
+    end if;
+    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, existing.code, true;
+    return;
+  end if;
+
+  select rw.* into r
+    from public.rewards rw
+    join public.rarity_weights ww on ww.rarity = rw.rarity
+   where rw.active
+     and not rw.supports_snorre
+     and (rw.expires_at is null or rw.expires_at > now())
+     and ww.weight > 0
+     and not exists (
+       select 1 from public.user_codes uc
+        where uc.user_id = auth.uid() and uc.reward_id = rw.id
+     )
+   order by -ln(random()) / ww.weight
+   limit 1;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    picked_code := r.general_code;
+  else
+    update public.reward_codes
+       set claimed_by = auth.uid(), claimed_at = now()
+     where id = (
+       select id from public.reward_codes
+        where reward_id = r.id and claimed_by is null and not disabled
+        order by id
+        limit 1
+        for update skip locked
+     )
+     returning reward_codes.code into picked_code;
+
+    if picked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+
+    select count(*) into remaining from public.reward_codes
+     where reward_id = r.id and claimed_by is null and not disabled;
+    if remaining = 0 then
+      update public.rewards set active = false where id = r.id;
+    end if;
+  end if;
+
+  insert into public.user_welcome_cases (user_id, reward_id, code)
+  values (auth.uid(), r.id, picked_code);
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, r.id);
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, picked_code, false;
+end;
+$$;
+
+revoke all on function public.open_welcome_case() from public;
+grant execute on function public.open_welcome_case() to authenticated;
+
+alter table public.app_settings add column if not exists level_scale_x10_done boolean not null default false;
+
+do $$
+begin
+  if not coalesce((select level_scale_x10_done from public.app_settings where id = 1), false) then
+    update public.app_settings
+       set level_step = level_step * 10, level_scale_x10_done = true, updated_at = now()
+     where id = 1;
+    update public.levels lv
+       set points_required = (lv.level_number - 1) * (select level_step from public.app_settings where id = 1);
+  end if;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 66. Rangeringspoeng (profiles.score) skilt fra nivåpoeng (profiles.xp).
+--
+--     Rangeringen får tilbake poengene spillerne har tjent, mens alle starter
+--     på nivå 1 med nullstilt nivåstolpe igjen.
+--
+--     profiles.score = poeng tjent totalt, brukes KUN til rangeringen og
+--     «poeng totalt» på profiler. Går aldri ned.
+--     profiles.xp    = poeng mot neste nivå. Nullstilles her, og nivået settes
+--                      til 1.
+--
+--     Alt som gir xp (runder, streak-bonus, adminjusteringer opp) teller
+--     automatisk også på score via en trigger, så ingen av de eksisterende
+--     funksjonene må skrives om.
+--
+--     Engangsjobben under regner ut score fra game_records (alle runder som
+--     er spilt × triksets point_rate) og tar det høyeste av det og dagens xp,
+--     slik at streak-bonuser og lignende ikke går tapt. Kjøres kun én gang
+--     (app_settings.score_split_done). Utdelte kasser/rabattkoder beholdes.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists score bigint not null default 0;
+alter table public.profiles drop constraint if exists profiles_score_positive;
+alter table public.profiles add constraint profiles_score_positive check (score >= 0);
+
+alter table public.app_settings add column if not exists score_split_done boolean not null default false;
+
+create or replace function public.track_profile_score()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  -- Engangsjobben og eventuelle senere rettinger setter dette flagget selv.
+  if coalesce(current_setting('studilla.score_write', true), '') = 'on' then
+    return new;
+  end if;
+  -- score kan aldri skrives direkte; den følger bare med når xp øker.
+  new.score := old.score + greatest(0, coalesce(new.xp, 0) - coalesce(old.xp, 0));
+  return new;
+end;
+$$;
+
+-- Navnet sorterer etter guard_profile_privileges, så triggeren ser xp-verdien
+-- ETTER at den har stoppet uautoriserte skrivinger.
+drop trigger if exists profiles_score_track on public.profiles;
+create trigger profiles_score_track
+  before update on public.profiles
+  for each row execute function public.track_profile_score();
+
+do $$
+begin
+  if not coalesce((select score_split_done from public.app_settings where id = 1), false) then
+    perform set_config('studilla.trusted_profile_write', 'on', true);
+    perform set_config('studilla.score_write', 'on', true);
+
+    update public.profiles p
+       set score = greatest(
+             p.xp,
+             coalesce((
+               select sum(round(gr.score * coalesce(g.point_rate, 1)))
+                 from public.game_records gr
+                 join public.games g on g.id = gr.game_id
+                where gr.user_id = p.id
+             ), 0)::bigint
+           );
+
+    update public.profiles set xp = 0, level = 1;
+
+    update public.app_settings set score_split_done = true, updated_at = now() where id = 1;
+  end if;
+end;
+$$;
+
+-- Viewet får score. Slippes først av samme grunn som i seksjon 49.
+drop view if exists public.profiles_public;
+create view public.profiles_public as
+  select id, username, avatar_color, avatar_icon, level, xp, score, is_hidden, created_at,
+         streak_current, streak_best
+    from public.profiles;
+
+grant select on public.profiles_public to anon, authenticated;
 
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din

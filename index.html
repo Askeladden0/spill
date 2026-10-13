@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Studilla</title>
-<meta name="description" content="Nye triks hver dag. Slå din egen rekord, hold rekken i gang og se hvem av vennene dine som ligger foran.">
+<meta name="description" content="Nye triks hver dag. Slå din egen rekord og se hvem av vennene dine som ligger foran.">
 <meta property="og:title" content="Studilla · Nye triks hver dag">
-<meta property="og:description" content="Nye triks hver dag. Slå din egen rekord, hold rekken i gang og se hvem av vennene dine som ligger foran.">
+<meta property="og:description" content="Nye triks hver dag. Slå din egen rekord og se hvem av vennene dine som ligger foran.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Studilla">
 <meta name="twitter:card" content="summary">
@@ -19,7 +19,7 @@
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "Studilla",
-  "description": "Nye triks hver dag – slå din egen rekord, hold rekken i gang og se hvem av vennene dine som ligger foran."
+  "description": "Nye triks hver dag – slå din egen rekord og se hvem av vennene dine som ligger foran."
 }
 </script>
 </head>
@@ -29,34 +29,29 @@
   <div id="site-header"></div>
 
   <main id="hovedinnhold">
-    <!-- Kort personlig presentasjon øverst, i tillegg til at dagens triks
-         starter direkte i heltefeltet til høyre. -->
+    <!-- Hilsen fra Snorre i full bredde øverst. -->
     <section class="hero-section">
-      <div class="hero-intro">
-        <h1>Studilla</h1>
+      <div class="hero-greeting">
+        <h1>Hellu:) Hyggelig å se deg!</h1>
         <p class="hero-lead">
-          Hei!! Her er nettsiden jeg har jobbet med de siste ukene. Gjerne kom med
-          tilbakemeldinger på TikTok eller send meg en melding på nettsiden - Snorre Saus
+          Jeg har drevet og bygget denne nettsiden de siste ukene etter det ble satt inn
+          nettfiltre i Osloskolen. Gjerne send meg en melding her eller på TikTok med
+          tilbakemeldinger.
         </p>
+        <div class="hero-byline">
+          <img src="assets/img/snorre-saus-avatar.jpeg" alt="" width="28" height="28">
+          <span>Snorre Saus</span>
+          <span class="hero-byline-sep">·</span>
+          <a href="kontakt.html">Send en melding</a>
+        </div>
       </div>
-
-      <div class="hero-card" data-hero></div>
     </section>
 
-    <!-- Vises kun for utloggede: hva de går glipp av, uten å stenge dem ute. -->
-    <section class="signup-strip" data-signup-strip hidden>
-      <div class="signup-strip-text">
-        <strong>Rekordene dine ligger bare i denne nettleseren.</strong>
-        <span>Lag en konto på ti sekunder – kun brukernavn og passord – så følger rekorden, rekken og rangeringen med deg.</span>
-      </div>
-      <a class="btn-primary" href="login.html">Lag konto</a>
-    </section>
+    <!-- Teaser for velkomstbonusen (js/case-teaser.js). Samme boks som på
+         premiesiden; vises ikke når rabatten allerede er åpnet. -->
+    <section class="case-teaser" data-case-teaser hidden></section>
 
     <section id="alle">
-      <div class="section-heading spread">
-        <h2>Alle triks</h2>
-        <span class="section-sub" data-game-count></span>
-      </div>
       <div class="game-grid" data-game-grid></div>
     </section>
 
@@ -79,6 +74,7 @@
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
+<script src="js/snorre-tag.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/social.js"></script>
 <script src="js/dm-popup.js"></script>
@@ -87,6 +83,7 @@
 <script src="js/guides-data.js"></script>
 <script src="js/levelup-modal.js"></script>
 <script src="js/game-runtime.js"></script>
+<script src="js/case-teaser.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

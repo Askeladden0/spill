@@ -208,22 +208,6 @@
   }
 
   /**
-   * Melder fra til databasen om at spilleren har fullført en runde i dag, og
-   * får tilbake streaken + eventuell dagsbonus (se supabase/schema.sql,
-   * seksjon 49). Feiler stille: en manglende streak skal aldri stoppe
-   * game over-kortet fra å vises.
-   */
-  async function touchStreak() {
-    try {
-      const { data, error } = await sb.rpc("touch_daily_streak");
-      if (error || !data) return null;
-      return data;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /**
    * Liten konfetti-byge på ny rekord. Rene DOM-elementer med CSS-animasjon,
    * ingen canvas eller bibliotek – og hoppes helt over for de som har bedt om
    * mindre bevegelse i systeminnstillingene.
@@ -290,22 +274,16 @@
             <span class="game-over-figure-label" data-game-over-score-label>POENG</span>
           </div>
 
-          <!-- Tre nøkkeltall i stedet for én linje tekst: rekorden din, hvor
-               mange dager på rad du har spilt, og hva runden ga i poeng.
-               Poenget er at kortet skal svare på «gikk det bra?» uten at
-               spilleren må lese en setning. -->
+          <!-- Rekorden din som tall i stedet for en setning, slik at kortet
+               svarer på «gikk det bra?» uten at spilleren må lese. -->
           <div class="game-over-facts">
             <div class="game-over-fact">
               <span class="game-over-fact-num" data-game-over-best-num>–</span>
               <span class="game-over-fact-label">DIN REKORD</span>
             </div>
-            <div class="game-over-fact" data-game-over-streak-fact hidden>
-              <span class="game-over-fact-num" data-game-over-streak-num>–</span>
-              <span class="game-over-fact-label">DAGER PÅ RAD</span>
-            </div>
             <div class="game-over-fact" data-game-over-earned-fact hidden>
               <span class="game-over-fact-num is-accent" data-game-over-earned>–</span>
-              <span class="game-over-fact-label">POENG TJENT</span>
+              <span class="game-over-fact-label">POENG SAMLET OPP</span>
             </div>
           </div>
 
@@ -467,8 +445,6 @@
       overlayScore: container.querySelector("[data-game-over-score]"),
       overlayScoreLabel: container.querySelector("[data-game-over-score-label]"),
       overlayBestNum: container.querySelector("[data-game-over-best-num]"),
-      overlayStreakFact: container.querySelector("[data-game-over-streak-fact]"),
-      overlayStreakNum: container.querySelector("[data-game-over-streak-num]"),
       overlayEarnedFact: container.querySelector("[data-game-over-earned-fact]"),
       overlayEarned: container.querySelector("[data-game-over-earned]"),
       overlayNote: container.querySelector("[data-game-over-note]"),
@@ -570,6 +546,7 @@
      * finnes, ellers kopiert til utklippstavla), eller en direktemelding til
      * en venn eller gruppe.
      */
+    let copyResetTimer = null;
     function setupShare(currentGameId, score, profile) {
       const games = window.STUDILLA_GAMES || [];
       const game = games.find((g) => g.id === currentGameId);
@@ -585,27 +562,41 @@
         els.sharePicker.hidden = true;
         els.shareStatus.hidden = true;
         els.shareCopyBtn.textContent = "Del lenke til spillet";
-        els.shareDmBtn.hidden = !canSend;
-        els.shareGroupBtn.hidden = !canSend;
+        els.shareDmBtn.textContent = profile ? "Send til en venn" : "Send til en venn (logg inn)";
+        els.shareGroupBtn.textContent = profile ? "Send til en gruppe" : "Send til en gruppe (logg inn)";
+        els.shareDmBtn.hidden = profile ? !canSend : false;
+        els.shareGroupBtn.hidden = profile ? !canSend : false;
         els.shareOverlay.hidden = false;
       };
 
+      // Bare kopiering, ingen delingsdialog: knappeteksten bytter midlertidig.
       els.shareCopyBtn.onclick = async () => {
+        const full = `${text} ${url}`;
+        let ok = false;
         try {
-          if (navigator.share) {
-            await navigator.share({ title: "Studilla", text, url });
-            return;
-          }
-          await navigator.clipboard.writeText(`${text} ${url}`);
-          els.shareCopyBtn.textContent = "Lenke kopiert ✓";
-          window.setTimeout(() => { els.shareCopyBtn.textContent = "Del lenke til spillet"; }, 2000);
+          await navigator.clipboard.writeText(full);
+          ok = true;
         } catch (e) {
-          // Avbrutt deling eller blokkert utklippstavle – ikke noe å melde om.
+          try {
+            const ta = document.createElement("textarea");
+            ta.value = full;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            ok = document.execCommand("copy");
+            ta.remove();
+          } catch (e2) {}
         }
+        if (!ok) return;
+        els.shareCopyBtn.textContent = "Kopiert!";
+        window.clearTimeout(copyResetTimer);
+        copyResetTimer = window.setTimeout(() => { els.shareCopyBtn.textContent = "Del lenke til spillet"; }, 2000);
       };
 
-      els.shareDmBtn.onclick = () => openSharePicker("dm", attachmentBody);
-      els.shareGroupBtn.onclick = () => openSharePicker("group", attachmentBody);
+      const goLogin = () => { window.location.href = "login.html"; };
+      els.shareDmBtn.onclick = profile ? () => openSharePicker("dm", attachmentBody) : goLogin;
+      els.shareGroupBtn.onclick = profile ? () => openSharePicker("group", attachmentBody) : goLogin;
     }
 
     let restartHandler = null;
@@ -772,39 +763,18 @@
         const leveledUp = !!(newProfile && prevProfile && newProfile.level > prevProfile.level);
         const awardedPoints = pointsFor(gameId, roundedScore);
 
-        // Streaken oppdateres når runden er ferdig, ikke når siden lastes:
-        // det er en fullført runde som teller som «du spilte i dag».
-        const streak = prevProfile ? await touchStreak() : null;
-
         els.overlayTitle.textContent = opts.title || (isNewBest ? "Ny rekord!" : "Runden er over");
         els.overlayEyebrow.hidden = !isNewBest;
         els.overlayScore.textContent = roundedScore.toLocaleString("no-NO");
         els.overlayScoreLabel.textContent = awardedPoints === roundedScore ? "POENG" : "SKÅR";
         els.overlayBestNum.textContent = best.toLocaleString("no-NO");
 
-        const showStreak = !!(prevProfile && streak && streak.streak > 0);
-        els.overlayStreakFact.hidden = !showStreak;
-        if (showStreak) els.overlayStreakNum.textContent = String(streak.streak);
-
         const showEarned = !!prevProfile && awardedPoints > 0;
         els.overlayEarnedFact.hidden = !showEarned;
-        if (showEarned) {
-          els.overlayEarned.textContent = `+${(awardedPoints + ((streak && streak.bonus) || 0)).toLocaleString("no-NO")}`;
-        }
+        if (showEarned) els.overlayEarned.textContent = `+${awardedPoints.toLocaleString("no-NO")}`;
 
-        // Én linje som forteller hva som skjedde ut over tallene – enten
-        // dagsbonusen, en mistet rekke, eller (for utloggede) hva de går
-        // glipp av ved å ikke ha konto.
-        let note = "";
-        if (!prevProfile) {
-          note = "Du er ikke logget inn – rekorden ligger kun i denne nettleseren.";
-        } else if (streak && streak.bonus > 0 && streak.streak > 1) {
-          note = `${streak.streak} dager på rad! +${streak.bonus} bonuspoeng.`;
-        } else if (streak && streak.bonus > 0) {
-          note = streak.broke_from > 0
-            ? `Rekken din på ${streak.broke_from} dager røk – du er i gang igjen. +${streak.bonus} poeng.`
-            : `Første runde i dag – +${streak.bonus} bonuspoeng.`;
-        }
+        // For utloggede: en linje om at rekorden kun ligger i nettleseren.
+        const note = prevProfile ? "" : "Du er ikke logget inn – rekorden ligger kun i denne nettleseren.";
         els.overlayNote.hidden = !note;
         els.overlayNote.textContent = note;
 
@@ -814,8 +784,10 @@
         // åpen direkte på fanen for det – se ?spill=-håndteringen i
         // rangering.html.
         els.overlayNext.hidden = false;
-        els.overlayNext.href = `rangering.html?spill=${encodeURIComponent(gameId)}`;
-        els.overlayNext.textContent = "Se rangering";
+        els.overlayNext.href = prevProfile
+          ? `rangering.html?spill=${encodeURIComponent(gameId)}`
+          : "login.html";
+        els.overlayNext.textContent = prevProfile ? "Se rangering" : "Registrer deg";
 
         setupShare(gameId, roundedScore, prevProfile);
 
@@ -833,7 +805,7 @@
           window.StudillaLevelUp.show(prevProfile, newProfile);
         }
 
-        return { isNewBest, best, leveledUp, streak };
+        return { isNewBest, best, leveledUp };
       },
     };
   }

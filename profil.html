@@ -54,7 +54,6 @@
           <button type="button" class="profile-tab is-active" data-tab="oversikt">Oversikt</button>
           <button type="button" class="profile-tab" data-tab="rekorder">Mine rekorder</button>
           <button type="button" class="profile-tab" data-tab="koder" data-levels-only>Rabattkoder <span class="profile-tab-count" data-tab-codes-count></span></button>
-          <button type="button" class="profile-tab" data-tab="blokkerte">Blokkerte <span class="profile-tab-count" data-tab-blocked-count></span></button>
         </div>
         <a href="innstillinger.html" class="settings-link-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -89,20 +88,6 @@
         <div class="settings-card">
           <div data-records-list>
             <p class="section-sub">Laster rekorder …</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Blokkerte brukere. Lista er privat: den som er blokkert får ikke
-           vite det, og ingen andre enn deg ser den. -->
-      <div data-tab-panel="blokkerte" hidden>
-        <div class="settings-card">
-          <div class="settings-section">
-            <h2>Blokkerte brukere</h2>
-            <span class="settings-section-sub">Dere kan ikke sende meldinger til hverandre eller være venner. De får ikke beskjed om at du har blokkert dem.</span>
-          </div>
-          <div data-blocked-list>
-            <p class="section-sub">Laster …</p>
           </div>
         </div>
       </div>
@@ -153,6 +138,7 @@
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
+<script src="js/snorre-tag.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/social.js"></script>
 <script src="js/dm-popup.js"></script>
@@ -213,7 +199,7 @@
 
   function renderStats() {
     const me = boards.total.find((p) => p.id === profile.id);
-    document.querySelector("[data-stat-points]").textContent = fmt(profile.xp);
+    document.querySelector("[data-stat-points]").textContent = fmt(profile.score != null ? profile.score : profile.xp);
     document.querySelector("[data-stat-rank]").textContent = me ? "#" + me.rank : "–";
     document.querySelector("[data-stat-matches]").textContent = fmt(me ? me.matches : 0);
     document.querySelector("[data-stat-codes]").textContent = fmt(codes.length);
@@ -250,7 +236,7 @@
     sub.textContent = `${fmt(pointsLeft)} poeng igjen`;
     fill.style.width = `${pct}%`;
     fraction.textContent = `${fmt(xp - currentThreshold)} / ${fmt(span)} poeng i dette nivået`;
-    reward.textContent = rewards.length ? "Gir en ny kasse med en tilfeldig rabatt" : "";
+    reward.textContent = rewards.length ? "Gir en ny rabatt med en tilfeldig rabattkode" : "";
   }
 
   function renderTopRecords() {
@@ -290,6 +276,7 @@
         <span class="code-card-notch is-right"></span>
         <div class="code-card-head"><span class="code-card-brand">${c.brand.toUpperCase()}</span><span class="code-card-date">Hentet ${relTime(c.created_at)}</span></div>
         <span class="code-card-title">${c.title}</span>
+        ${c.supports_snorre && window.StudillaSnorreTag ? `<span>${window.StudillaSnorreTag.html()}</span>` : ""}
         ${c.link_url ? `<a class="case-reveal-link" href="${c.link_url}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
         <div class="code-card-foot">
           <span class="code-card-foot-label">${c.code}</span>
@@ -303,7 +290,7 @@
     const slot = document.querySelector("[data-latest-code-slot]");
     const moreLabel = document.querySelector("[data-more-codes-label]");
     if (!codes.length) {
-      slot.innerHTML = `<div class="empty-state-note">Ingen rabattkoder hentet ennå. Prøv lykkehjulet på premier-siden!</div>`;
+      slot.innerHTML = `<div class="empty-state-note">Ingen rabattkoder hentet ennå. Åpne en rabatt på premier-siden!</div>`;
       moreLabel.textContent = "";
       return;
     }
@@ -395,7 +382,7 @@
     const grid = document.querySelector("[data-codes-grid]");
     document.querySelector("[data-codes-cta-title]").textContent = `Du har ${fmt(profile.xp)} poeng å bruke`;
     if (!codes.length) {
-      grid.innerHTML = `<div class="empty-state-note">Ingen rabattkoder hentet ennå. Prøv lykkehjulet på premier-siden!</div>`;
+      grid.innerHTML = `<div class="empty-state-note">Ingen rabattkoder hentet ennå. Åpne en rabatt på premier-siden!</div>`;
       return;
     }
     grid.innerHTML = codes.map((c) => codeCardHTML(c)).join("");
@@ -409,56 +396,6 @@
         const original = btn.textContent;
         btn.textContent = "Kopiert!";
         setTimeout(() => { btn.textContent = original; }, 1500);
-      });
-    });
-  }
-
-  /**
-   * Blokkerte brukere. Går gjennom my_blocked_users (schema.sql seksjon 59)
-   * fordi user_blocks bare inneholder id-er, og andres profilrader er stengt
-   * for vanlige brukere – uten den hadde lista vist rå uuid-er.
-   */
-  async function renderBlocked() {
-    const el = document.querySelector("[data-blocked-list]");
-    const count = document.querySelector("[data-tab-blocked-count]");
-    if (!Social) {
-      el.innerHTML = `<p class="section-sub">Blokkering er ikke satt opp ennå.</p>`;
-      return;
-    }
-
-    let rows = [];
-    try {
-      rows = await Social.blockedUsers();
-    } catch (e) {
-      el.innerHTML = `<p class="section-sub">Klarte ikke hente lista.</p>`;
-      return;
-    }
-
-    count.textContent = rows.length ? rows.length : "";
-    if (!rows.length) {
-      el.innerHTML = `<p class="section-sub">Du har ikke blokkert noen.</p>`;
-      return;
-    }
-
-    el.innerHTML = rows
-      .map((b) => `
-        <div class="settings-row">
-          <div style="display:flex;align-items:center;gap:12px">
-            ${Avatars.avatarBadgeHTML(b.avatar_color, b.avatar_icon, 34)}
-            <div class="settings-row-label">
-              <span>${Social.escapeHTML(b.username)}</span>
-              <span>Blokkert ${relTime(b.created_at)}</span>
-            </div>
-          </div>
-          <button type="button" class="btn-outline-sm" data-unblock="${b.user_id}">Opphev</button>
-        </div>`)
-      .join("");
-
-    el.querySelectorAll("[data-unblock]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        btn.disabled = true;
-        await Social.unblock(btn.dataset.unblock);
-        renderBlocked();
       });
     });
   }
@@ -488,7 +425,6 @@
     renderActivity();
     renderRecords();
     renderCodesTab();
-    renderBlocked();
     bindCopyButtons();
     renderTabs();
   }
@@ -579,12 +515,16 @@
   async function fetchCodes() {
     const withLink = await sb
       .from("user_codes")
-      .select("brand, title, code, created_at, rewards(link_url)")
+      .select("brand, title, code, created_at, rewards(link_url, supports_snorre)")
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false });
     if (!withLink.error) {
       return {
-        data: (withLink.data || []).map((c) => ({ ...c, link_url: c.rewards ? c.rewards.link_url : null })),
+        data: (withLink.data || []).map((c) => ({
+          ...c,
+          link_url: c.rewards ? c.rewards.link_url : null,
+          supports_snorre: !!(c.rewards && c.rewards.supports_snorre),
+        })),
         error: null,
       };
     }

@@ -1,6 +1,6 @@
 /* ==========================================================================
    Studilla – nytt i moderniseringen
-   Heltefelt med verdiløfte og direktestart, streak, det sosiale laget
+   Heltefelt med verdiløfte og direktestart, det sosiale laget
    (følging, meldinger, aktivitet), ukes-/vennerangering, game over-kortet,
    cookie-linja og tilgjengelighetshjelpere.
 
@@ -76,21 +76,49 @@ select:focus-visible,
 
 .hero-section {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.35fr);
-  gap: 32px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
   margin-bottom: 40px;
 }
 
-.hero-intro { display: flex; flex-direction: column; gap: 14px; }
+.hero-greeting {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 28px;
+  border-radius: 20px;
+  background: var(--surface, #131a25);
+  border: 1px solid rgba(255, 255, 255, .07);
+}
 
-.hero-intro h1 {
+.hero-greeting h1 {
   margin: 0;
-  font-size: clamp(32px, 5vw, 52px);
-  line-height: 1.05;
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.1;
   letter-spacing: -.03em;
   color: #fff;
+  text-wrap: pretty;
 }
+
+.hero-greeting .hero-lead { max-width: 56ch; font-size: 15.5px; }
+
+.hero-byline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #7c8aa0;
+}
+.hero-byline img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, .12);
+  flex-shrink: 0;
+}
+.hero-byline-sep { opacity: .5; }
+.hero-byline a { font-weight: 600; }
 
 .hero-kicker {
   display: inline-flex;
@@ -205,7 +233,8 @@ select:focus-visible,
 }
 
 @media (max-width: 900px) {
-  .hero-section { grid-template-columns: 1fr; gap: 24px; }
+  .hero-section { gap: 24px; }
+  .hero-greeting { padding: 20px; }
   .hero-stage, .hero-stage-inner { min-height: 340px; }
 }
 
@@ -222,8 +251,8 @@ select:focus-visible,
   margin-bottom: 40px;
   padding: 20px 24px;
   border-radius: 16px;
-  border: 1px solid rgba(46, 232, 127, .22);
-  background: linear-gradient(120deg, rgba(46, 232, 127, .08), rgba(46, 232, 127, .02));
+  border: 1px solid rgba(var(--accent-rgb), .22);
+  background: linear-gradient(120deg, rgba(var(--accent-rgb), .08), rgba(var(--accent-rgb), .02));
 }
 .signup-strip-text { display: flex; flex-direction: column; gap: 4px; }
 .signup-strip-text strong { font-size: 15px; color: #fff; }
@@ -253,7 +282,7 @@ select:focus-visible,
   text-decoration: none;
   transition: transform .15s ease, border-color .15s ease;
 }
-.resource-card:hover { transform: translateY(-2px); border-color: rgba(46, 232, 127, .35); }
+.resource-card:hover { transform: translateY(-2px); border-color: rgba(var(--accent-rgb), .35); }
 .resource-eyebrow {
   font-size: 10.5px;
   font-weight: 800;
@@ -262,24 +291,6 @@ select:focus-visible,
 }
 .resource-title { font-size: 15px; font-weight: 700; color: #fff; }
 .resource-text { font-size: 12.5px; line-height: 1.55; color: #7c8aa0; }
-
-/* --------------------------------------------------------------------------
-   Streak
-   -------------------------------------------------------------------------- */
-
-.streak-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 11px;
-  border-radius: 99px;
-  border: 1px solid rgba(245, 166, 35, .3);
-  background: rgba(245, 166, 35, .12);
-  color: #f5b942;
-  font-size: 13px;
-  font-weight: 800;
-  white-space: nowrap;
-}
 
 /* --------------------------------------------------------------------------
    Game over-kortet
@@ -292,7 +303,7 @@ select:focus-visible,
   margin-bottom: 6px;
   padding: 4px 12px;
   border-radius: 99px;
-  background: rgba(46, 232, 127, .16);
+  background: rgba(var(--accent-rgb), .16);
   color: var(--accent, #2ee87f);
   font-size: 11px;
   font-weight: 800;
@@ -567,7 +578,7 @@ select:focus-visible,
 }
 .venner-tab:hover { background: rgba(255, 255, 255, .07); }
 .venner-tab.is-active {
-  background: var(--accent-soft, rgba(46, 232, 127, .12));
+  background: var(--accent-soft, rgba(var(--accent-rgb), .12));
   color: var(--accent, #2ee87f);
 }
 .venner-tab-badge {
@@ -687,7 +698,7 @@ select:focus-visible,
 .dm-row:hover { background: rgba(255, 255, 255, .03); }
 .dm-row.is-unread .dm-row-name { color: #fff; }
 .dm-row.is-unread .dm-row-last { color: #c3ccda; font-weight: 600; }
-.dm-row.is-open { background: rgba(46, 232, 127, .1); box-shadow: inset 3px 0 0 var(--accent, #2ee87f); }
+.dm-row.is-open { background: rgba(var(--accent-rgb), .1); box-shadow: inset 3px 0 0 var(--accent, #2ee87f); }
 
 .dm-row-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .dm-row-name { font-size: 14px; font-weight: 700; color: #e8edf5; }
@@ -780,7 +791,7 @@ select:focus-visible,
 .dm-bubble.is-mine {
   align-self: flex-end;
   border-radius: 14px 14px 4px 14px;
-  background: rgba(46, 232, 127, .15);
+  background: rgba(var(--accent-rgb), .15);
 }
 .dm-bubble-body { font-size: 14px; line-height: 1.5; color: #e8edf5; word-break: break-word; }
 .dm-bubble-time { font-size: 10.5px; color: #7c8aa0; }
@@ -818,7 +829,7 @@ select:focus-visible,
 }
 .dm-attach-btn:hover { background: rgba(255, 255, 255, .06); color: #e8edf5; }
 .dm-attach-btn.is-active {
-  background: rgba(46, 232, 127, .14);
+  background: rgba(var(--accent-rgb), .14);
   color: var(--accent, #2ee87f);
 }
 
@@ -879,7 +890,7 @@ select:focus-visible,
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  background: rgba(46, 232, 127, .12);
+  background: rgba(var(--accent-rgb), .12);
   color: var(--accent, #2ee87f);
 }
 
@@ -891,8 +902,8 @@ select:focus-visible,
   margin: 12px 14px 0;
   padding: 8px 10px;
   border-radius: 12px;
-  border: 1px solid rgba(46, 232, 127, .3);
-  background: rgba(46, 232, 127, .08);
+  border: 1px solid rgba(var(--accent-rgb), .3);
+  background: rgba(var(--accent-rgb), .08);
 }
 .dm-attach-chip[hidden] { display: none; }
 .dm-attach-chip-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
@@ -939,7 +950,7 @@ select:focus-visible,
   background: rgba(0, 0, 0, .25);
   text-decoration: none;
 }
-.dm-attach-card:hover { border-color: rgba(46, 232, 127, .4); }
+.dm-attach-card:hover { border-color: rgba(var(--accent-rgb), .4); }
 .dm-attach-card-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
 .dm-attach-card-eyebrow {
   font-size: 10.5px;
@@ -1215,7 +1226,7 @@ select:focus-visible,
   cursor: pointer;
   transition: color .12s ease, border-color .12s ease;
 }
-.icon-btn:hover { color: var(--accent, #2ee87f); border-color: rgba(46, 232, 127, .5); }
+.icon-btn:hover { color: var(--accent, #2ee87f); border-color: rgba(var(--accent-rgb), .5); }
 .icon-btn.is-danger:hover { color: #ff9385; border-color: rgba(255, 147, 133, .5); }
 
 .btn-outline.is-danger-outline:hover { border-color: rgba(255, 147, 133, .5); color: #ff9385; }
@@ -1228,8 +1239,8 @@ select:focus-visible,
   justify-content: center;
   flex-shrink: 0;
   border-radius: 9px;
-  background: rgba(46, 232, 127, .16);
-  border: 1px solid rgba(46, 232, 127, .3);
+  background: rgba(var(--accent-rgb), .16);
+  border: 1px solid rgba(var(--accent-rgb), .3);
   color: var(--accent, #2ee87f);
   font-weight: 800;
   line-height: 1;
@@ -1312,7 +1323,7 @@ select:focus-visible,
   transition: opacity .22s ease, transform .22s ease, border-color .12s ease;
 }
 .dm-popup.is-in { opacity: 1; transform: translateY(0); }
-.dm-popup:hover { border-color: rgba(46, 232, 127, .45); }
+.dm-popup:hover { border-color: rgba(var(--accent-rgb), .45); }
 
 .dm-popup-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .dm-popup-name { font-size: 13.5px; font-weight: 700; color: var(--text-strong, #fff); }
@@ -1377,4 +1388,15 @@ select:focus-visible,
   cursor: pointer;
   transition: color .12s ease, border-color .12s ease;
 }
-.dm-thread-action:hover { color: var(--accent, #2ee87f); border-color: rgba(46, 232, 127, .5); }
+.dm-thread-action:hover { color: var(--accent, #2ee87f); border-color: rgba(var(--accent-rgb), .5); }
+
+/* Kortet ble kuttet av i bunnen på lave skjermer: overlegget sentrerte et
+   kort som var høyere enn seg selv. margin:auto sentrerer når det er plass og
+   lar overlegget scrolle når det ikke er det. */
+.game-over-overlay {
+  overflow-y: auto;
+  align-items: flex-start;
+  padding: 12px 0;
+  box-sizing: border-box;
+}
+.game-over-overlay .game-over-card { margin: auto; max-width: min(360px, 92%); }

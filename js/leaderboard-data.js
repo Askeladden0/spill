@@ -1,8 +1,7 @@
 /**
  * Studilla – delt rangeringslogikk.
  *
- * Bygger total-rangering (basert på xp/poeng, samme tall som premier.html
- * bruker til nivå) og per-spill-rangering (basert på beste enkeltrunde i
+ * Bygger total-rangering (basert på profiles.score, poeng tjent totalt) og per-spill-rangering (basert på beste enkeltrunde i
  * game_records) fra ekte data i Supabase. Brukes av rangering.html og
  * spillerprofil.html slik at forsiden, profilsiden, premier-siden og
  * rangeringssiden alltid viser de samme spillene og de samme tallene.
@@ -18,9 +17,16 @@
     // rå-select på profiles til egen rad + admin, siden profiles.is_admin
     // ikke skal være lesbart for alle. Viewet eksponerer fortsatt de samme
     // offentlige feltene for ALLE brukere (se supabase/schema.sql, seksjon 24).
-    const { data, error } = await sb
+    // score (schema.sql, seksjon 66) er poengene som teller på rangeringen;
+    // xp er nå bare nivåfremdriften. Mangler kolonnen faller vi tilbake på xp.
+    let { data, error } = await sb
       .from("profiles_public")
-      .select("id, username, avatar_color, avatar_icon, level, xp, is_hidden");
+      .select("id, username, avatar_color, avatar_icon, level, xp, score, is_hidden");
+    if (error) {
+      ({ data, error } = await sb
+        .from("profiles_public")
+        .select("id, username, avatar_color, avatar_icon, level, xp, is_hidden"));
+    }
     if (error) {
       console.error("[Studilla] Klarte ikke hente spillere:", error.message);
       return [];
@@ -193,7 +199,7 @@
 
   /**
    * Returnerer { total, perGame } der total er alle spillere rangert etter
-   * xp, og perGame er { [gameId]: [...] } rangert etter beste skår i det
+   * score, og perGame er { [gameId]: [...] } rangert etter beste skår i det
    * spillet (kun spillere som faktisk har spilt det spillet er med).
    */
   function buildBoards(profiles, records) {
@@ -221,7 +227,7 @@
     const total = rank(
       profiles.map((p) => ({
         ...p,
-        score: p.xp,
+        score: p.score != null ? p.score : p.xp,
         matches: totalMatches.get(p.id) || 0,
       }))
     );

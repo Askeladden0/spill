@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Studilla · Logg inn</title>
-<meta name="description" content="Logg inn eller registrer deg hos Studilla og start med å samle poeng på rangeringen.">
-<meta property="og:title" content="Studilla · Logg inn">
-<meta property="og:description" content="Logg inn eller registrer deg hos Studilla og start med å samle poeng på rangeringen.">
+<title>Studilla · Registrer deg</title>
+<meta name="description" content="Registrer deg eller logg inn hos Studilla og start med å samle poeng på rangeringen.">
+<meta property="og:title" content="Studilla · Registrer deg">
+<meta property="og:description" content="Registrer deg eller logg inn hos Studilla og start med å samle poeng på rangeringen.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Studilla">
 <link rel="stylesheet" href="css/style.css" data-studilla-head>
@@ -23,14 +23,14 @@
     <section style="display:flex;justify-content:center">
       <div class="auth-card">
         <div class="auth-tabs">
-          <button type="button" class="auth-tab is-active" data-tab="login">Logg inn</button>
-          <button type="button" class="auth-tab" data-tab="register">Registrer deg</button>
+          <button type="button" class="auth-tab is-active" data-tab="register">Registrer deg</button>
+          <button type="button" class="auth-tab" data-tab="login">Logg inn</button>
         </div>
 
         <p class="auth-error" data-auth-error hidden></p>
         <p class="auth-success" data-auth-success hidden></p>
 
-        <form data-login-form>
+        <form data-login-form hidden>
           <label class="auth-field">
             <span>Brukernavn</span>
             <input type="text" name="username" required autocomplete="username">
@@ -39,14 +39,10 @@
             <span>Passord</span>
             <input type="password" name="password" required autocomplete="current-password">
           </label>
-          <label class="auth-terms">
-            <input type="checkbox" name="accept-terms" required>
-            <span>Jeg godtar <a href="vilkar.html" target="_blank" rel="noopener">vilkårene</a> for bruk av Studilla.</span>
-          </label>
           <button type="submit" class="btn-primary" style="width:100%">Logg inn</button>
         </form>
 
-        <form data-register-form hidden>
+        <form data-register-form>
           <label class="auth-field">
             <span>Brukernavn</span>
             <input type="text" name="username" required minlength="5" maxlength="20" autocomplete="username" placeholder="Minst 5 tegn, bokstaver/tall/_">
@@ -62,12 +58,6 @@
           <button type="submit" class="btn-primary" style="width:100%">Opprett konto</button>
         </form>
 
-        <p class="auth-fineprint">
-          Du logger inn med brukernavn og passord – vi ber aldri om e-postadressen din.
-          Ved å fortsette godtar du at vi lagrer brukernavnet ditt, en tilfeldig
-          tildelt profilfarge/ikon, samt nivå og spillrekorder knyttet til kontoen din.
-          Husk passordet godt: uten e-post kan det ikke tilbakestilles automatisk.
-        </p>
       </div>
     </section>
   </main>
@@ -146,6 +136,12 @@
     window.location.href = "index.html";
   });
 
+  // Nyregistrerte sendes rett til rabatten de får på premiesiden (så sant
+  // premiesiden er skrudd på, ellers til forsiden).
+  const AFTER_REGISTER = (window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled)
+    ? "premier.html#fa-rabatt"
+    : "index.html";
+
   registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearMessages();
@@ -176,7 +172,7 @@
     if (error) return showError(Auth.friendlyAuthError(error));
 
     if (data.session) {
-      window.location.href = "index.html";
+      window.location.href = AFTER_REGISTER;
     } else {
       showSuccess("Konto opprettet! Du kan nå logge inn med brukernavnet og passordet ditt.");
       registerForm.reset();

@@ -26,7 +26,7 @@
 
   const PREMIER_NAV_LINK = `
         <a href="premier.html" class="nav-link" data-page="premier">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h16a1 1 0 0 1 1 1v2.6a2 2 0 0 0 0 3.8v2.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2.6a2 2 0 0 0 0-3.8V7.5a1 1 0 0 1 1-1z"></path><line x1="9.5" y1="14.5" x2="14.5" y2="9.5"></line><circle cx="9.7" cy="10" r=".9"></circle><circle cx="14.3" cy="14" r=".9"></circle></svg>
           Premier
         </a>`;
 
@@ -69,12 +69,6 @@
     </div>
 
     <div class="header-right-group">
-      <a class="header-credit" href="https://www.tiktok.com/@snorre.saus" target="_blank" rel="noopener noreferrer" aria-label="Lagd av Snorre Saus på TikTok">
-        <img class="header-credit-avatar" src="assets/img/snorre-saus-avatar.jpeg" alt="" width="24" height="24">
-        <span class="header-credit-text">Lagd av Snorre Saus</span>
-        <svg class="header-credit-tiktok" width="16" height="16" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M448 209.9a210.1 210.1 0 0 1-122.8-39.3V349.4A162.6 162.6 0 1 1 185 188.3v89.9a74.6 74.6 0 1 0 52.2 71.2V0h88a121.2 121.2 0 0 0 1.9 22.2A122.2 122.2 0 0 0 381 102.4a121.4 121.4 0 0 0 67 20.1z"></path></svg>
-      </a>
-
       <div class="header-right" data-auth-slot></div>
 
       <button type="button" class="mobile-menu-toggle" aria-label="Åpne meny" aria-expanded="false" aria-controls="main-nav">
@@ -91,7 +85,6 @@
       <span class="footer-copy">© 2026 Studilla</span>
     </div>
     <nav class="footer-nav">
-      <a href="kontakt.html">Kontakt</a>
       <a href="vilkar.html#personvern">Personvern</a>
       <a href="vilkar.html">Vilkår</a>
       <a href="https://www.tiktok.com/@snorre.saus" target="_blank" rel="noopener noreferrer">TikTok</a>

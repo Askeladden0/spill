@@ -85,7 +85,7 @@
   transition: border-color .15s ease, color .15s ease;
 }
 
-.admin-search-trigger:hover { border-color: rgba(46, 232, 127, .5); color: var(--muted); }
+.admin-search-trigger:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--muted); }
 .admin-search-trigger span:first-child { font-size: 13px; }
 .admin-search-trigger .admin-search-label { flex: 1; }
 
@@ -241,7 +241,7 @@
 .admin-split-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; align-items: start; }
 @media (max-width: 960px) { .admin-split-grid { grid-template-columns: 1fr; } }
 
-.admin-daily-card { border-color: rgba(46, 232, 127, .22); }
+.admin-daily-card { border-color: rgba(var(--accent-rgb), .22); }
 .admin-daily-body { display: flex; align-items: center; gap: 16px; }
 .admin-daily-cover {
   width: 132px; height: 82px; border-radius: 12px; flex: none;
@@ -274,7 +274,7 @@
   border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
   font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
 }
-.admin-quick-btn:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); }
+.admin-quick-btn:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--accent); }
 
 /* ---------- Verktøylinje (Spill/Nivåer/Brukere) ---------- */
 .admin-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -289,7 +289,7 @@
 /* ---------- Ekspanderbare rader (spill/nivåer) ---------- */
 .admin-row-list { display: flex; flex-direction: column; gap: 8px; }
 .admin-row-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-.admin-row-card.is-daily { border-color: rgba(46, 232, 127, .28); }
+.admin-row-card.is-daily { border-color: rgba(var(--accent-rgb), .28); }
 .admin-row-card.is-hidden { opacity: .6; }
 
 .admin-row-head { display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; }
@@ -372,13 +372,13 @@
 .admin-reward-row select:focus { outline: none; border-color: var(--accent); }
 .admin-reward-row input[type="date"] { flex: none; width: 150px; min-width: 0; }
 .admin-reward-info { width: 24px; height: 24px; flex: none; border-radius: 50%; border: 1px solid var(--border-strong); color: var(--muted-2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; cursor: help; }
-.admin-reward-info:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); }
+.admin-reward-info:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--accent); }
 
 /* ---------- Brukere ---------- */
-.admin-bulkbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 11px 16px; border-radius: 12px; background: var(--accent-soft); border: 1px solid rgba(46, 232, 127, .3); }
+.admin-bulkbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 11px 16px; border-radius: 12px; background: var(--accent-soft); border: 1px solid rgba(var(--accent-rgb), .3); }
 .admin-bulkbar-label { font-size: 12.5px; font-weight: 700; color: var(--accent); }
 .admin-btn-ghost { padding: 8px 13px; border-radius: 9px; border: 1px solid var(--border-strong); background: transparent; color: var(--text); font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
-.admin-btn-ghost:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); }
+.admin-btn-ghost:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--accent); }
 .admin-btn-ghost.is-danger { border-color: rgba(245, 113, 92, .4); background: rgba(245, 113, 92, .12); color: #ff9385; }
 .admin-btn-ghost.is-danger:hover { background: rgba(245, 113, 92, .22); }
 .admin-btn-text { padding: 8px 11px; border: none; border-radius: 9px; background: transparent; color: var(--muted-2); font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
@@ -409,7 +409,7 @@
 .admin-user-rename-input:focus { outline: none; border-color: var(--accent); }
 .admin-user-detail-spacer { flex: 1; }
 .admin-profile-link { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border-strong); color: var(--text); font-size: 11.5px; font-weight: 700; }
-.admin-profile-link:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); }
+.admin-profile-link:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--accent); }
 .admin-delete-btn { padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(245, 113, 92, .3); background: transparent; color: #ff9385; font-size: 11.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
 .admin-delete-btn:hover { background: rgba(245, 113, 92, .16); }
 
@@ -464,7 +464,7 @@
 .admin-palette-empty { padding: 28px; text-align: center; font-size: 13px; color: var(--muted-2); }
 
 /* ---------- Toast ---------- */
-.admin-toast { position: fixed; bottom: 24px; right: 26px; z-index: 120; display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 12px; background: var(--accent-soft); border: 1px solid rgba(46, 232, 127, .3); color: var(--accent); font-size: 13px; font-weight: 700; box-shadow: 0 12px 32px rgba(0, 0, 0, .4); }
+.admin-toast { position: fixed; bottom: 24px; right: 26px; z-index: 120; display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 12px; background: var(--accent-soft); border: 1px solid rgba(var(--accent-rgb), .3); color: var(--accent); font-size: 13px; font-weight: 700; box-shadow: 0 12px 32px rgba(0, 0, 0, .4); }
 
 /* `display: flex` on the rules above beats the browser's default
    `[hidden] { display: none }` (author styles always win over the
@@ -657,7 +657,7 @@
   padding: 18px 20px;
   border-radius: 14px;
   background: var(--surface-2);
-  border: 1px dashed rgba(46, 232, 127, .45);
+  border: 1px dashed rgba(var(--accent-rgb), .45);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -671,7 +671,7 @@
   width: 7px;
   height: 14px;
   background: var(--surface);
-  border: 1px dashed rgba(46, 232, 127, .45);
+  border: 1px dashed rgba(var(--accent-rgb), .45);
   transform: translateY(-50%);
 }
 
@@ -699,7 +699,7 @@
   cursor: pointer;
 }
 
-.btn-copy-code:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); }
+.btn-copy-code:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--accent); }
 
 .codes-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 
@@ -881,7 +881,7 @@
   transition: border-color .15s ease, background .15s ease;
 }
 
-.admin-dropzone:hover { border-color: rgba(46, 232, 127, .5); }
+.admin-dropzone:hover { border-color: rgba(var(--accent-rgb), .5); }
 .admin-dropzone.is-dragover { border-color: var(--accent); background: var(--accent-soft); }
 .admin-dropzone.is-busy { opacity: .6; cursor: default; }
 .admin-dropzone input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
@@ -916,7 +916,7 @@
   flex: none; border: 1px solid var(--border-strong); background: transparent; color: var(--muted);
   font-family: inherit; font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 8px; cursor: pointer;
 }
-.admin-code-btn:hover { border-color: rgba(46, 232, 127, .5); color: var(--accent); }
+.admin-code-btn:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--accent); }
 
 /* ---------- Vilkår / juridisk innhold ---------- */
 .legal-card {
@@ -1008,7 +1008,7 @@
   background: var(--surface);
 }
 /* Uleste får den grønne kanten, så man ser hva som er nytt siden sist. */
-.admin-notification.is-unread { border-color: rgba(46, 232, 127, .32); }
+.admin-notification.is-unread { border-color: rgba(var(--accent-rgb), .32); }
 
 .admin-notification-kind {
   flex: none;

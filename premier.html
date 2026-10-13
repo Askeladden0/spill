@@ -29,13 +29,22 @@
   <div id="site-header"></div>
 
   <main id="hovedinnhold">
+    <!-- Vises kun for utloggede (flyttet hit fra forsiden). -->
+    <section class="signup-strip" data-signup-strip hidden>
+      <div class="signup-strip-text">
+        <strong>Registrer deg for å få rabatter.</strong>
+        <span>Du får en velkomstbonus med en gang du har registrert deg, og en ny rabatt for hvert nivå du når. Det tar ti sekunder å lage konto – kun brukernavn og passord.</span>
+      </div>
+      <a class="btn-primary" href="login.html">Registrer deg</a>
+    </section>
+
     <section class="premier-hero-grid">
       <div class="level-card">
         <div class="level-ring-wrap" data-level-ring-wrap>
           <div class="level-ring-tooltip" data-level-tooltip>– poeng totalt</div>
           <svg width="132" height="132" viewBox="0 0 132 132">
             <circle cx="66" cy="66" r="58" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="11"></circle>
-            <circle cx="66" cy="66" r="58" fill="none" stroke="#2ee87f" stroke-width="11" stroke-linecap="round"
+            <circle cx="66" cy="66" r="58" fill="none" style="stroke:var(--accent)" stroke-width="11" stroke-linecap="round"
               stroke-dasharray="364.4" stroke-dashoffset="364.4" data-level-ring-progress
               style="transition:stroke-dashoffset .6s ease"></circle>
           </svg>
@@ -60,47 +69,38 @@
         </div>
       </div>
 
-      <div class="spin-card">
-        <div class="spin-wheel-wrap">
-          <div class="spin-wheel" data-mini-wheel></div>
-          <svg width="18" height="14" viewBox="0 0 18 14" class="spin-wheel-pointer">
-            <path d="M9 14 L0 0 L18 0 Z" fill="#2ee87f"></path>
-          </svg>
-        </div>
-        <div>
-          <h2 class="spin-card-title">Lykkehjulet</h2>
-          <p class="spin-card-sub">Spinn hjulet én gang om dagen og vinn mellom 10 og 1000 poeng.</p>
-        </div>
-        <button class="btn-primary" type="button" style="width:100%" data-open-spin>Spinn hjulet</button>
-        <span class="spin-card-note">Ett spinn per dag</span>
-      </div>
     </section>
 
     <section style="display:grid;grid-template-columns:1fr 340px;gap:32px;align-items:start" class="premier-layout">
 
       <div style="display:flex;flex-direction:column;gap:32px;min-width:0">
 
-        <div>
+        <div id="fa-rabatt" style="scroll-margin-top:96px">
           <div class="section-heading spread">
-            <h2>Åpne kasse</h2>
+            <h2>Få en rabatt</h2>
           </div>
 
           <div style="border-radius:20px;border:1px solid var(--border-strong);background:linear-gradient(160deg,#18222f,#131a25);overflow:hidden" data-case-panel hidden>
             <div style="padding:22px 24px 16px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border)">
-              <span style="width:44px;height:44px;flex:none;border-radius:12px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.35);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--accent)" data-case-badge>–</span>
+              <span style="width:44px;height:44px;flex:none;border-radius:12px;background:rgba(var(--accent-rgb), .12);border:1px dashed rgba(var(--accent-rgb), .45);display:flex;align-items:center;justify-content:center;color:var(--accent)" data-case-badge><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16a1 1 0 0 1 1 1v2.6a2 2 0 0 0 0 3.8v2.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2.6a2 2 0 0 0 0-3.8V7.5a1 1 0 0 1 1-1z"></path><line x1="9.5" y1="14.5" x2="14.5" y2="9.5"></line><circle cx="9.7" cy="10" r=".9"></circle><circle cx="14.3" cy="14" r=".9"></circle></svg></span>
               <h3 style="margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#fff" data-case-title>–</h3>
             </div>
+            <div style="position:relative;padding:22px 0;background:radial-gradient(120% 100% at 50% 0%,rgba(var(--accent-rgb), .07),transparent 70%);overflow:hidden">
+              <div style="position:relative;overflow:hidden;height:130px">
+                <div class="case-reel" data-case-preview-reel></div>
+              </div>
+            </div>
             <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
-              <p class="section-sub" style="margin:0" data-case-panel-sub>Åpne kassen for å trekke en tilfeldig rabatt fra en av partnerne våre.</p>
-              <button type="button" class="btn-primary" style="width:100%" data-open-case>Åpne kassen</button>
+              <p class="section-sub" style="margin:0" data-case-panel-sub>Åpne rabatten for å trekke en tilfeldig rabatt fra en av partnerne våre.</p>
+              <button type="button" class="btn-primary" style="width:100%" data-open-case>Åpne rabatten</button>
             </div>
           </div>
-          <p class="section-sub" data-case-empty>Ingen ledige kasser. Nå et nytt nivå for å få en kasse!</p>
+          <p class="section-sub" data-case-empty>Ingen ledige rabatter. Nå et nytt nivå for å få en rabatt!</p>
         </div>
 
         <div data-case-grid-wrap hidden>
           <div class="section-heading spread">
-            <h2 style="font-size:16px">Andre kasser</h2>
+            <h2 style="font-size:16px">Andre rabatter</h2>
           </div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" data-case-grid></div>
         </div>
@@ -125,15 +125,23 @@
       <div class="faq-list">
         <details class="faq-item">
           <summary>Hvordan tjener jeg poeng?</summary>
-          <p class="faq-answer">Du får poeng av å spille triksene våre – skåren din i et triks legges rett til poengsummen din. I tillegg kan du spinne lykkehjulet her på premiersiden én gang om dagen og vinne mellom 10 og 1000 poeng. Poengene samler seg opp og løfter deg oppover nivåene.</p>
+          <p class="faq-answer">Du får poeng av å spille triksene våre – skåren din i et triks legges rett til poengsummen din. Poengene samler seg opp og løfter deg oppover nivåene.</p>
         </details>
         <details class="faq-item">
-          <summary>Hva er en kasse, og hvordan får jeg en?</summary>
-          <p class="faq-answer">Hver gang du når et nytt nivå får du én kasse. Åpner du kassen, trekkes én tilfeldig rabatt fra partnerne våre – og den koden er din. Hver kasse kan bare åpnes én gang, men kassene forsvinner ikke: har du flere uåpnede kasser, ligger de under «Andre kasser» til du åpner dem.</p>
+          <summary>Hvordan får jeg en rabatt?</summary>
+          <p class="faq-answer">Hver gang du når et nytt nivå får du én rabatt å åpne. Åpner du den, trekkes én tilfeldig rabatt fra partnerne våre – og den koden er din. Hver rabatt kan bare åpnes én gang, men de forsvinner ikke: har du flere uåpnede rabatter, ligger de under «Andre rabatter» til du åpner dem.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Hva er velkomstbonusen?</summary>
+          <p class="faq-answer">Alle som registrerer seg får én velkomstbonus, uavhengig av nivå. Den åpner du akkurat som de andre rabattene, og koden havner i «Mine koder».</p>
+        </details>
+        <details class="faq-item">
+          <summary>Hva betyr «Støtter Snorre»?</summary>
+          <p class="faq-answer">Noen rabatter har taggen «Støtter Snorre». Bruker du en slik rabatt, støtter du meg:) Velkomstbonusen er aldri en av dem.</p>
         </details>
         <details class="faq-item">
           <summary>Hvorfor får noen bedre rabatter enn andre?</summary>
-          <p class="faq-answer">Rabattene har fire sjeldenhetsgrader: vanlig, sjelden, episk og legendarisk. Trekningen er tilfeldig og vektet, så de mest verdifulle rabattene dukker opp sjeldnere enn de vanlige. Alle har akkurat samme sjanse i hver kasse.</p>
+          <p class="faq-answer">Rabattene har fire sjeldenhetsgrader: vanlig, sjelden, episk og legendarisk. Trekningen er tilfeldig og vektet, så de mest verdifulle rabattene dukker opp sjeldnere enn de vanlige. Alle har akkurat samme sjanse hver gang.</p>
         </details>
         <details class="faq-item">
           <summary>Hvor finner jeg kodene jeg har fått?</summary>
@@ -141,15 +149,15 @@
         </details>
         <details class="faq-item">
           <summary>Kan en rabattkode gå ut på dato?</summary>
-          <p class="faq-answer">Ja. Noen kampanjer fra partnerne våre har en utløpsdato, og etter den datoen kan koden ikke lenger brukes eller trekkes i nye kasser. Rabatten det gjelder står oppgitt i beskrivelsen bak infosymbolet når du åpner kassen.</p>
+          <p class="faq-answer">Ja. Noen kampanjer fra partnerne våre har en utløpsdato, og etter den datoen kan koden ikke lenger brukes eller trekkes i nye rabatter. Rabatten det gjelder står oppgitt i beskrivelsen bak infosymbolet når du åpner den.</p>
         </details>
         <details class="faq-item">
           <summary>Hvordan bruker jeg en kode?</summary>
           <p class="faq-answer">Kopier koden med «Kopier koden», og lim den inn i rabattkodefeltet hos partneren når du handler. Har rabatten en lenke, tar «Gå til tilbudet» deg rett til riktig side.</p>
         </details>
         <details class="faq-item">
-          <summary>Må jeg være innlogget?</summary>
-          <p class="faq-answer">Du kan spille og samle poeng uten å være innlogget – poengene lagres midlertidig i nettleseren din og flyttes over på kontoen første gang du logger inn. For å åpne kasser og få rabattkoder må du ha en konto, slik at kodene blir liggende trygt på profilen din.</p>
+          <summary>Må jeg ha en konto?</summary>
+          <p class="faq-answer">Du kan spille og samle poeng uten å være innlogget – poengene lagres midlertidig i nettleseren din og flyttes over på kontoen første gang du registrerer deg eller logger inn. For å åpne rabatter og få rabattkoder må du ha en konto, slik at kodene blir liggende trygt på profilen din.</p>
         </details>
       </div>
     </section>
@@ -158,22 +166,22 @@
   <div id="site-footer"></div>
 </div>
 
-<!-- Kasse-modal: selve åpningen skjer i en pop-up, slik at båndet og rabatten
+<!-- Rabatt-modal: selve åpningen skjer i en pop-up, slik at båndet og rabatten
      får full oppmerksomhet -->
 <div class="modal-overlay" data-case-modal hidden>
   <div class="modal-backdrop" data-case-backdrop></div>
   <div class="modal-card" style="max-width:520px;align-items:stretch;gap:20px">
     <button type="button" class="modal-close" data-close-case aria-label="Lukk">×</button>
-    <h2 class="modal-title" style="text-align:center" data-case-modal-title>Åpne kassen</h2>
+    <h2 class="modal-title" style="text-align:center" data-case-modal-title>Åpne rabatten</h2>
 
-    <div style="position:relative;padding:22px 0;border-radius:16px;background:radial-gradient(120% 100% at 50% 0%,rgba(46,232,127,.09),transparent 70%);border:1px solid var(--border);overflow:hidden">
+    <div style="position:relative;padding:22px 0;border-radius:16px;background:radial-gradient(120% 100% at 50% 0%,rgba(var(--accent-rgb), .09),transparent 70%);border:1px solid var(--border);overflow:hidden">
       <div style="position:relative;overflow:hidden;height:130px" data-case-reel-viewport>
         <div class="case-reel" data-case-reel></div>
       </div>
-      <div style="position:absolute;top:14px;bottom:14px;left:50%;width:2px;transform:translateX(-1px);background:var(--accent);box-shadow:0 0 18px rgba(46,232,127,.6);pointer-events:none"></div>
+      <div style="position:absolute;top:14px;bottom:14px;left:50%;width:2px;transform:translateX(-1px);background:var(--accent);box-shadow:0 0 18px rgba(var(--accent-rgb), .6);pointer-events:none"></div>
     </div>
 
-    <button type="button" class="btn-primary" style="width:100%" data-case-open>Åpne kassen</button>
+    <button type="button" class="btn-primary" style="width:100%" data-case-open>Åpne rabatten</button>
 
     <div data-case-reveal hidden style="display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:16px;background:var(--bg);border:1px solid var(--border-strong)">
       <span style="width:70px;height:70px;flex:none;border-radius:12px;background:#1b2434;display:flex;align-items:center;justify-content:center;overflow:hidden" data-case-reveal-thumb></span>
@@ -185,29 +193,12 @@
           </button>
         </div>
         <span style="font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.1" data-case-reveal-value></span>
+        <span data-case-reveal-snorre></span>
         <span style="font-size:12px;font-weight:500;color:var(--muted)" data-case-reveal-code></span>
         <a class="case-reveal-link" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Gå til tilbudet ↗</a>
       </div>
       <button type="button" class="btn-primary" style="padding:13px 18px;font-size:13.5px" data-case-reveal-copy>Kopier koden</button>
     </div>
-  </div>
-</div>
-
-<!-- Lykkehjul-modal -->
-<div class="modal-overlay" data-spin-modal hidden>
-  <div class="modal-backdrop" data-spin-backdrop></div>
-  <div class="modal-card">
-    <button type="button" class="modal-close" data-close-spin aria-label="Lukk">×</button>
-    <h2 class="modal-title">Spinn og vinn poeng!</h2>
-    <div class="big-wheel-wrap">
-      <div class="big-wheel" data-big-wheel></div>
-      <svg width="24" height="18" viewBox="0 0 18 14" class="big-wheel-pointer">
-        <path d="M9 14 L0 0 L18 0 Z" fill="#2ee87f"></path>
-      </svg>
-    </div>
-    <p class="modal-result" data-spin-result></p>
-    <p class="modal-sub" data-spin-hint>Trykk på knappen for å spinne hjulet.</p>
-    <button class="btn-primary" type="button" style="width:100%" data-spin-action>Spinn!</button>
   </div>
 </div>
 
@@ -219,6 +210,7 @@
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
+<script src="js/snorre-tag.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/social.js"></script>
 <script src="js/dm-popup.js"></script>
@@ -228,9 +220,6 @@
   "use strict";
   const sb = window.supabaseClient;
   const Auth = window.StudillaAuth;
-
-  const WHEEL_VALUES = [10, 750, 100, 500, 50, 1000, 250, 400];
-  const WHEEL_COLORS = ["#2ee87f", "#1b2434"];
 
   const RARITY = {
     vanlig: { label: "VANLIG", color: "#7c8aa0" },
@@ -243,14 +232,10 @@
   let levels = [];
   let rewards = [];
   let openedCases = new Map(); // level_number -> { brand, title, sub, rarity, image_url, code }
+  const WELCOME = "welcome"; // nøkkelen til velkomstbonusen i openedCases / valg
   let selectedCaseLevel = null;
-  let miniRotation = 0;
-  let bigRotation = 0;
-  let spinning = false;
   let caseOpening = false;
   let caseModalOpen = false;
-  let spinsLeft = null; // null = ukjent/ikke lastet, -1 = ingen grense
-  let wheelSpinsPerDay = 1;
 
   function fmt(n) {
     return Math.round(n).toLocaleString("no-NO");
@@ -278,43 +263,6 @@
   function nextLevelInfo() {
     const dl = displayLevel();
     return levels.find((lv) => lv.level_number > dl) || null;
-  }
-
-  // ---------- SVG-hjul ----------
-  function polar(cx, cy, r, angleDeg) {
-    const rad = ((angleDeg - 90) * Math.PI) / 180;
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-  }
-
-  function wheelSVG(size, withLabels) {
-    const cx = size / 2, cy = size / 2, r = size / 2 - 4;
-    const n = WHEEL_VALUES.length;
-    const seg = 360 / n;
-    let paths = "", labels = "";
-    for (let i = 0; i < n; i++) {
-      const start = i * seg, end = (i + 1) * seg;
-      const p1 = polar(cx, cy, r, start);
-      const p2 = polar(cx, cy, r, end);
-      const color = WHEEL_COLORS[i % 2];
-      paths += `<path d="M${cx} ${cy} L${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A${r} ${r} 0 0 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z" fill="${color}"></path>`;
-      if (withLabels) {
-        const mid = start + seg / 2;
-        const lp = polar(cx, cy, r * 0.64, mid);
-        const textColor = color === "#2ee87f" ? "#0d1117" : "#e8edf5";
-        labels += `<text x="${lp.x.toFixed(2)}" y="${lp.y.toFixed(2)}" fill="${textColor}" font-size="${(size * 0.075).toFixed(1)}" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(${mid.toFixed(2)} ${lp.x.toFixed(2)} ${lp.y.toFixed(2)})" font-family="Poppins, sans-serif">${WHEEL_VALUES[i]}</text>`;
-      }
-    }
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-      <circle cx="${cx}" cy="${cy}" r="${r + 2}" fill="#0d1117"></circle>
-      ${paths}
-      ${labels}
-      <circle cx="${cx}" cy="${cy}" r="${size * 0.11}" fill="#131a25" stroke="rgba(46,232,127,.5)" stroke-width="3"></circle>
-    </svg>`;
-  }
-
-  function renderWheels() {
-    document.querySelector("[data-mini-wheel]").innerHTML = wheelSVG(132, false);
-    document.querySelector("[data-big-wheel]").innerHTML = wheelSVG(260, true);
   }
 
   // ---------- Hero / nivå-kort ----------
@@ -349,17 +297,26 @@
     document.querySelector('[data-stat-codes]').textContent = unlockedLevels().length;
   }
 
-  // ---------- Kasser ----------
+  // ---------- Rabatter ----------
   function unlockedLevels() {
     const dl = displayLevel();
     return levels.filter((lv) => lv.level_number <= dl).map((lv) => lv.level_number);
   }
 
+  // Velkomstbonusen ligger alltid først i køen til den er åpnet. For en
+  // utlogget besøkende vises den også, slik at siden viser hva man får.
   function unopenedLevels() {
-    return unlockedLevels().filter((n) => !openedCases.has(n));
+    const list = unlockedLevels().filter((n) => !openedCases.has(n));
+    return openedCases.has(WELCOME) ? list : [WELCOME, ...list];
   }
 
-  // ---------- Kassebåndet ----------
+  // Velkomstbonusen skal aldri være en «Støtter Snorre»-rabatt – heller ikke
+  // i båndet (databasen sikrer det samme i open_welcome_case).
+  function reelPool() {
+    return selectedCaseLevel === WELCOME ? rewards.filter((r) => !r.supports_snorre) : rewards;
+  }
+
+  // ---------- Rabattbåndet ----------
   // Båndet ruller kontinuerlig med én uendelig CSS-animasjon (se .case-reel i
   // css/style.css) i stedet for en ny transition annethvert sekund – det siste
   // ga et synlig hakk hver gang båndet startet på nytt. Tegningen bygges én
@@ -381,8 +338,9 @@
   // Trekker et sett med kort i helt tilfeldig rekkefølge. Er det færre
   // rabatter enn plasser i settet, stokkes puljen om på nytt for hver runde,
   // slik at rekkefølgen varierer i stedet for å gjenta seg selv.
-  function randomReelItems() {
-    const pool = rewards.length ? rewards : [{ brand: "?", title: "?", rarity: "vanlig" }];
+  function randomReelItems(source) {
+    const list = source || rewards;
+    const pool = list.length ? list : [{ brand: "?", title: "?", rarity: "vanlig" }];
     const items = [];
     while (items.length < REEL_SET_SIZE) items.push(...shuffled(pool));
     return items.slice(0, REEL_SET_SIZE);
@@ -414,7 +372,7 @@
       reel.classList.remove("is-fast");
       return;
     }
-    const set = randomReelItems().map(reelTileHTML).join("");
+    const set = randomReelItems(reelPool()).map(reelTileHTML).join("");
     reel.innerHTML = set + set; // to identiske sett = sømløs løkke på -50 %
     reel.style.transform = "";
     const setWidth = REEL_SET_SIZE * REEL_TILE_WIDTH;
@@ -424,7 +382,7 @@
     reel.classList.add("is-rolling");
   }
 
-  // Skru opp farten mens kassen faktisk åpnes, og stopp båndet når rabatten
+  // Skru opp farten mens rabatten faktisk åpnes, og stopp båndet når rabatten
   // er avslørt.
   function rushReelShuffle() {
     document.querySelector("[data-case-reel]").classList.add("is-fast");
@@ -440,6 +398,28 @@
     reel.style.transform = current === "none" ? "" : current;
   }
 
+  // Forhåndsvisning på selve siden: et rolig, evig bånd med logoene til
+  // partnerne, uavhengig av pop-upen. Bygges kun én gang per rabattsett.
+  let previewBuiltFor = null;
+  function startPreviewReel() {
+    const reel = document.querySelector("[data-case-preview-reel]");
+    if (!reel || previewBuiltFor === rewards) return;
+    previewBuiltFor = rewards;
+    const set = randomReelItems().map(reelTileHTML).join("");
+    reel.innerHTML = set + set;
+    const setWidth = REEL_SET_SIZE * REEL_TILE_WIDTH;
+    reel.style.animationDuration = `${(setWidth / REEL_SPEED_PX_S).toFixed(2)}s`;
+    reel.classList.add("is-rolling");
+  }
+
+  function caseName(key) {
+    return key === WELCOME ? "Velkomstbonusen" : `Nivå ${key}-rabatten`;
+  }
+
+  // Uåpnede rabatter tegnes som rabattkortet fra «Mine koder» (stiplet kant)
+  // med en billett-/prosent-ikon, i stedet for en egen ikon.
+  const TICKET_ICON = (size) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16a1 1 0 0 1 1 1v2.6a2 2 0 0 0 0 3.8v2.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2.6a2 2 0 0 0 0-3.8V7.5a1 1 0 0 1 1-1z"></path><line x1="9.5" y1="14.5" x2="14.5" y2="9.5"></line><circle cx="9.7" cy="10" r=".9"></circle><circle cx="14.3" cy="14" r=".9"></circle></svg>`;
+
   function selectCase(levelNumber) {
     selectedCaseLevel = levelNumber;
     renderCasePanel();
@@ -453,37 +433,36 @@
     const unopened = unopenedLevels();
 
     if (selectedCaseLevel === null || !unopened.includes(selectedCaseLevel)) {
-      selectedCaseLevel = unopened.length ? Math.min(...unopened) : null;
+      selectedCaseLevel = unopened.length ? unopened[0] : null;
     }
 
     panel.hidden = false;
     empty.style.display = "none";
+    startPreviewReel();
 
     const openBtn = document.querySelector("[data-case-open]");
     const panelBtn = document.querySelector("[data-open-case]");
     const panelSub = document.querySelector("[data-case-panel-sub]");
 
     if (selectedCaseLevel === null) {
-      document.querySelector("[data-case-badge]").textContent = "–";
-      document.querySelector("[data-case-title]").textContent = "Ingen ledige kasser";
+      document.querySelector("[data-case-title]").textContent = "Ingen ledige rabatter";
       const wait = unlockedLevels().length === 0
-        ? "Nå nivå 1 for å få din første kasse"
-        : "Nå et nytt nivå for å få en ny kasse";
+        ? "Nå nivå 1 for å få din første rabatt"
+        : "Nå et nytt nivå for å få en ny rabatt";
       panelBtn.textContent = wait;
       panelBtn.disabled = true;
-      panelSub.textContent = "Du får én kasse for hvert nivå du når.";
+      panelSub.textContent = "Du får én rabatt for hvert nivå du når.";
       openBtn.textContent = wait;
       openBtn.disabled = true;
-      document.querySelector("[data-case-modal-title]").textContent = "Ingen ledige kasser";
+      document.querySelector("[data-case-modal-title]").textContent = "Ingen ledige rabatter";
     } else {
-      document.querySelector("[data-case-badge]").textContent = selectedCaseLevel;
-      document.querySelector("[data-case-title]").textContent = `Nivå ${selectedCaseLevel}-kassen`;
-      panelBtn.textContent = `Åpne nivå ${selectedCaseLevel}-kassen`;
+      document.querySelector("[data-case-title]").textContent = caseName(selectedCaseLevel);
+      panelBtn.textContent = `Åpne ${caseName(selectedCaseLevel).toLowerCase()}`;
       panelBtn.disabled = caseOpening;
-      panelSub.textContent = "Åpne kassen for å trekke en tilfeldig rabatt fra en av partnerne våre.";
-      openBtn.textContent = caseOpening ? "Åpner kassen …" : `Åpne nivå ${selectedCaseLevel}-kassen`;
+      panelSub.textContent = "Åpne rabatten for å trekke en tilfeldig rabatt fra en av partnerne våre.";
+      openBtn.textContent = caseOpening ? "Åpner rabatten …" : `Åpne ${caseName(selectedCaseLevel).toLowerCase()}`;
       openBtn.disabled = caseOpening;
-      document.querySelector("[data-case-modal-title]").textContent = `Nivå ${selectedCaseLevel}-kassen`;
+      document.querySelector("[data-case-modal-title]").textContent = caseName(selectedCaseLevel);
     }
 
     // Båndet og rabatten lever i pop-upen; bygg/rull det kun når den er åpen.
@@ -503,9 +482,9 @@
     } else {
       gridWrap.hidden = false;
       grid.innerHTML = others.map((n) => `
-        <button type="button" data-case-pick="${n}" style="cursor:pointer;border-radius:14px;border:1px solid var(--border-strong);background:#131a25;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font-family:inherit">
-          <span style="width:34px;height:34px;border-radius:10px;background:rgba(46,232,127,.12);border:1px solid rgba(46,232,127,.35);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent)">${n}</span>
-          <span style="font-size:11.5px;font-weight:600;color:var(--muted)">Nivå ${n}</span>
+        <button type="button" data-case-pick="${n}" style="cursor:pointer;border-radius:14px;border:1px dashed rgba(var(--accent-rgb), .45);background:#131a25;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font-family:inherit">
+          <span style="width:34px;height:34px;border-radius:10px;background:rgba(var(--accent-rgb), .12);border:1px dashed rgba(var(--accent-rgb), .45);display:flex;align-items:center;justify-content:center;color:var(--accent)">${TICKET_ICON(18)}</span>
+          <span style="font-size:11.5px;font-weight:600;color:var(--muted)">${n === WELCOME ? "Velkomst" : `Nivå ${n}`}</span>
         </button>
       `).join("");
     }
@@ -519,21 +498,25 @@
 
     const shuffleStart = Date.now();
     rushReelShuffle();
-    const { data, error } = await sb.rpc("open_level_case", { p_level_number: selectedCaseLevel }).single();
+    const opening = selectedCaseLevel;
+    const { data, error } = await (opening === WELCOME
+      ? sb.rpc("open_welcome_case")
+      : sb.rpc("open_level_case", { p_level_number: opening })
+    ).single();
     const elapsed = Date.now() - shuffleStart;
     if (elapsed < 1500) await new Promise((r) => setTimeout(r, 1500 - elapsed));
     stopReelShuffle();
     caseOpening = false;
 
     if (error) {
-      document.querySelector("[data-case-open]").textContent = `Åpne nivå ${selectedCaseLevel}-kassen`;
+      document.querySelector("[data-case-open]").textContent = `Åpne ${caseName(opening).toLowerCase()}`;
       document.querySelector("[data-case-open]").disabled = false;
       startReelShuffle(true);
       window.alert(error.message.includes("Ingen rabatter") ? "Ingen rabatter er tilgjengelige akkurat nå. Prøv igjen senere." : error.message);
       return;
     }
 
-    openedCases.set(selectedCaseLevel, data);
+    openedCases.set(opening, data);
     showCaseReveal(data);
     renderLevelCard();
     renderFeed();
@@ -541,7 +524,7 @@
 
   function showCaseReveal(data) {
     const rar = RARITY[data.rarity] || RARITY.vanlig;
-    document.querySelector("[data-case-open]").textContent = "Kassen er åpnet";
+    document.querySelector("[data-case-open]").textContent = "Rabatten er åpnet";
     document.querySelector("[data-case-open]").disabled = true;
     const reveal = document.querySelector("[data-case-reveal]");
     reveal.hidden = false;
@@ -553,6 +536,8 @@
     rarityEl.textContent = `${rar.label} RABATT`;
     rarityEl.style.color = rar.color;
     document.querySelector("[data-case-reveal-info]").title = data.sub || "";
+    const tagSlot = document.querySelector("[data-case-reveal-snorre]");
+    tagSlot.innerHTML = data.supports_snorre && window.StudillaSnorreTag ? window.StudillaSnorreTag.html() : "";
     document.querySelector("[data-case-reveal-value]").textContent = `${data.title} hos ${data.brand}`;
     document.querySelector("[data-case-reveal-code]").textContent = `Kode: ${data.code} · lagret i «Mine koder»`;
     const linkEl = document.querySelector("[data-case-reveal-link]");
@@ -577,7 +562,7 @@
     setTimeout(() => { btn.textContent = original; }, 1500);
   }
 
-  // ---------- Kasse-pop-up ----------
+  // ---------- Rabatt-pop-up ----------
   function openCaseModal() {
     if (selectedCaseLevel === null) return;
     if (!profile) { window.location.href = "login.html"; return; }
@@ -599,13 +584,13 @@
   document.querySelector("[data-close-case]").addEventListener("click", closeCaseModal);
   document.querySelector("[data-case-backdrop]").addEventListener("click", closeCaseModal);
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { closeCaseModal(); closeSpinModal(); }
+    if (e.key === "Escape") { closeCaseModal(); }
   });
 
   document.querySelector("[data-case-open]").addEventListener("click", openSelectedCase);
   document.querySelector("[data-case-grid]").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-case-pick]");
-    if (btn) selectCase(Number(btn.dataset.casePick));
+    if (btn) selectCase(btn.dataset.casePick === WELCOME ? WELCOME : Number(btn.dataset.casePick));
   });
 
   // ---------- Sidepanel ----------
@@ -621,7 +606,7 @@
   async function renderFeed() {
     const list = document.querySelector("[data-feed-list]");
     if (!profile) {
-      list.innerHTML = `<p class="section-sub">Logg inn for å se koder du har låst opp.</p>`;
+      list.innerHTML = `<p class="section-sub">Registrer deg for å se koder du har låst opp.</p>`;
       return;
     }
     const { data, error } = await sb
@@ -651,177 +636,6 @@
       .join("");
   }
 
-  // ---------- Lykkehjul: dagsgrense ----------
-  // Hvor mange spinn hver spiller får per døgn settes i adminpanelet
-  // (app_settings.wheel_spins_per_day, 0 = ingen grense). For innloggede
-  // brukere håndheves grensen server-side av RPC-ene wheel_spins_left/
-  // spin_wheel, slik at den ikke kan omgås fra nettleseren. Utloggede gjester
-  // teller lokalt – de kan uansett ikke lagre poeng permanent.
-  const GUEST_SPIN_KEY = "studilla_guest_wheel_spins";
-
-  function utcDayKey() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  function msUntilReset() {
-    const now = Date.now();
-    return (Math.floor(now / 86400000) + 1) * 86400000 - now;
-  }
-
-  function guestSpinsUsedToday() {
-    try {
-      const raw = JSON.parse(window.localStorage.getItem(GUEST_SPIN_KEY) || "null");
-      return raw && raw.day === utcDayKey() ? Number(raw.count) || 0 : 0;
-    } catch (e) {
-      return 0;
-    }
-  }
-
-  function registerGuestSpin() {
-    try {
-      window.localStorage.setItem(GUEST_SPIN_KEY, JSON.stringify({ day: utcDayKey(), count: guestSpinsUsedToday() + 1 }));
-    } catch (e) {
-      /* localStorage utilgjengelig – grensen gjelder da kun denne sidevisningen */
-    }
-  }
-
-  async function refreshSpinsLeft() {
-    if (profile) {
-      const { data, error } = await sb.rpc("wheel_spins_left");
-      // Databaser som ikke har kjørt migrasjonen (schema.sql, seksjon 41–44)
-      // kjenner ikke RPC-en – da står hjulet fritt, som før.
-      spinsLeft = error ? -1 : Number(data);
-    } else {
-      spinsLeft = wheelSpinsPerDay === 0 ? -1 : Math.max(0, wheelSpinsPerDay - guestSpinsUsedToday());
-    }
-    renderSpinAvailability();
-    return spinsLeft;
-  }
-
-  function spinsLeftText() {
-    if (spinsLeft === -1 || spinsLeft === null) return "Ingen grense på antall spinn";
-    if (spinsLeft > 0) return `${spinsLeft} spinn igjen i dag`;
-    const total = Math.floor(msUntilReset() / 1000);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `Nytt spinn om ${pad(Math.floor(total / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
-  }
-
-  function renderSpinAvailability() {
-    const note = document.querySelector(".spin-card-note");
-    const openBtn = document.querySelector("[data-open-spin]");
-    const actionBtn = document.querySelector("[data-spin-action]");
-    const outOfSpins = spinsLeft === 0;
-
-    if (note) note.textContent = spinsLeftText();
-    if (openBtn) {
-      openBtn.disabled = outOfSpins;
-      openBtn.textContent = outOfSpins ? "Kom tilbake i morgen" : "Spinn hjulet";
-    }
-    if (actionBtn && !spinning) {
-      actionBtn.disabled = outOfSpins;
-      if (outOfSpins) actionBtn.textContent = "Kom tilbake i morgen";
-    }
-  }
-
-  // Teller ned mot midnatt (UTC) mens hjulet er brukt opp, slik at teksten
-  // ikke blir stående på et gammelt tall.
-  setInterval(() => { if (spinsLeft === 0) renderSpinAvailability(); }, 1000);
-
-  // ---------- Lykkehjul-modal ----------
-  function openSpinModal() {
-    if (spinsLeft === 0) return;
-    document.querySelector("[data-spin-modal]").hidden = false;
-    document.querySelector("[data-spin-result]").textContent = "";
-    document.querySelector("[data-spin-hint]").textContent = spinsLeft > 0
-      ? `Trykk på knappen for å spinne hjulet. Du har ${spinsLeft} spinn igjen i dag.`
-      : "Trykk på knappen for å spinne hjulet.";
-    document.querySelector("[data-spin-action]").textContent = "Spinn!";
-    document.querySelector("[data-spin-action]").disabled = false;
-  }
-
-  function closeSpinModal() {
-    if (spinning) return;
-    document.querySelector("[data-spin-modal]").hidden = true;
-  }
-
-  async function doSpin() {
-    if (spinning) return;
-    spinning = true;
-    const actionBtn = document.querySelector("[data-spin-action]");
-    actionBtn.disabled = true;
-    document.querySelector("[data-spin-hint]").textContent = "Hjulet spinner …";
-    document.querySelector("[data-spin-result]").textContent = "";
-
-    const idx = Math.floor(Math.random() * WHEEL_VALUES.length);
-    const value = WHEEL_VALUES[idx];
-    const seg = 360 / WHEEL_VALUES.length;
-    const targetCenter = idx * seg + seg / 2;
-    const spins = 5;
-    const deltaToAlign = ((360 - targetCenter - (bigRotation % 360)) % 360 + 360) % 360;
-    bigRotation += spins * 360 + deltaToAlign;
-
-    const wheelEl = document.querySelector("[data-big-wheel]");
-    wheelEl.style.transition = "transform 4s cubic-bezier(.17,.67,.32,1.1)";
-    wheelEl.style.transform = `rotate(${bigRotation}deg)`;
-
-    await new Promise((resolve) => setTimeout(resolve, 4100));
-
-    let newTotal;
-    if (profile) {
-      // spin_wheel logger spinnet og håndhever dagsgrensen server-side. Er
-      // ikke migrasjonen kjørt ennå, faller vi tilbake til add_points.
-      let { data, error } = await sb.rpc("spin_wheel", { p_delta: value });
-      if (error && /function|does not exist|schema cache/i.test(error.message || "")) {
-        ({ data, error } = await sb.rpc("add_points", { p_delta: value }));
-      }
-      if (error) {
-        document.querySelector("[data-spin-result]").textContent = "";
-        document.querySelector("[data-spin-hint]").textContent = error.message;
-        spinning = false;
-        await refreshSpinsLeft();
-        return;
-      }
-      if (data) {
-        profile.xp = data.xp;
-        profile.level = data.level;
-        newTotal = data.xp;
-      } else {
-        newTotal = currentPoints();
-      }
-    } else {
-      registerGuestSpin();
-      newTotal = Auth.addGuestPoints(value);
-    }
-
-    await refreshSpinsLeft();
-
-    document.querySelector("[data-spin-result]").textContent = `Du vant ${fmt(value)} poeng!`;
-    document.querySelector("[data-spin-hint]").textContent = spinsLeft === 0
-      ? `Du har nå ${fmt(newTotal)} poeng totalt. Du kan spinne igjen i morgen.`
-      : `Du har nå ${fmt(newTotal)} poeng totalt.`;
-    actionBtn.textContent = spinsLeft === 0 ? "Kom tilbake i morgen" : "Spinn igjen";
-    actionBtn.disabled = spinsLeft === 0;
-    spinning = false;
-
-    renderLevelCard();
-    renderCasePanel();
-    renderSpinAvailability();
-    Auth.renderHeaderAuth();
-  }
-
-  document.querySelector("[data-open-spin]").addEventListener("click", openSpinModal);
-  document.querySelector("[data-close-spin]").addEventListener("click", closeSpinModal);
-  document.querySelector("[data-spin-backdrop]").addEventListener("click", closeSpinModal);
-  document.querySelector("[data-spin-action]").addEventListener("click", doSpin);
-
-  // ---------- Mini-hjul: dekorativ konstant rotasjon ----------
-  function spinMiniForever() {
-    const el = document.querySelector("[data-mini-wheel]");
-    miniRotation += 360;
-    el.style.transition = "transform 12s linear";
-    el.style.transform = `rotate(${miniRotation}deg)`;
-  }
-
   // ---------- Init ----------
   // Utgåtte rabatter (expires_at i fortiden) er deaktivert og skal hverken
   // vises i båndet eller kunne trekkes – samme regel som open_level_case
@@ -830,13 +644,19 @@
   // de kolonnene; da henter vi rabattene uten dem i stedet for å stå igjen
   // med et tomt bånd.
   async function fetchRewards() {
-    const withExpiry = await sb
-      .from("rewards")
-      .select("id, brand, title, sub, rarity, image_url, link_url, expires_at")
-      .eq("active", true)
-      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
-      .order("sort_order");
-    if (!withExpiry.error) return withExpiry;
+    // supports_snorre (schema.sql, seksjon 65) kan mangle på eldre databaser.
+    for (const cols of [
+      "id, brand, title, sub, rarity, image_url, link_url, expires_at, supports_snorre",
+      "id, brand, title, sub, rarity, image_url, link_url, expires_at",
+    ]) {
+      const withExpiry = await sb
+        .from("rewards")
+        .select(cols)
+        .eq("active", true)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+        .order("sort_order");
+      if (!withExpiry.error) return withExpiry;
+    }
     return sb
       .from("rewards")
       .select("id, brand, title, sub, rarity, image_url")
@@ -845,67 +665,82 @@
   }
 
   async function loadLevels() {
-    const [levelsRes, rewardsRes, settingsRes] = await Promise.all([
+    const [levelsRes, rewardsRes] = await Promise.all([
       sb.from("levels").select("level_number, points_required").order("level_number"),
       fetchRewards(),
-      sb.from("app_settings").select("wheel_spins_per_day").eq("id", 1).maybeSingle(),
     ]);
     if (!levelsRes.error && levelsRes.data) levels = levelsRes.data;
     if (!rewardsRes.error && rewardsRes.data) rewards = rewardsRes.data;
-    if (!settingsRes.error && settingsRes.data && settingsRes.data.wheel_spins_per_day != null) {
-      wheelSpinsPerDay = Number(settingsRes.data.wheel_spins_per_day);
+  }
+
+  function openedFromRow(row) {
+    const rw = row.rewards;
+    return {
+      code: row.code,
+      brand: rw ? rw.brand : "",
+      title: rw ? rw.title : "",
+      sub: rw ? rw.sub : "",
+      rarity: rw ? rw.rarity : "vanlig",
+      image_url: rw ? rw.image_url : null,
+      link_url: rw ? rw.link_url : null,
+      supports_snorre: !!(rw && rw.supports_snorre),
+    };
+  }
+
+  // Prøver kolonnesettene i rekkefølge, så databaser uten rewards.link_url
+  // eller rewards.supports_snorre fortsatt får vist rabattene sine.
+  async function selectCases(table, key) {
+    for (const cols of [
+      "brand, title, sub, rarity, image_url, link_url, supports_snorre",
+      "brand, title, sub, rarity, image_url, link_url",
+      "brand, title, sub, rarity, image_url",
+    ]) {
+      const res = await sb.from(table).select(`${key}code, rewards(${cols})`).eq("user_id", profile.id);
+      if (!res.error) return res.data || [];
     }
+    return [];
   }
 
   async function loadOpenedCases() {
     openedCases = new Map();
     if (!profile) return;
-    let { data, error } = await sb
-      .from("user_level_cases")
-      .select("level_number, code, rewards(brand, title, sub, rarity, image_url, link_url)")
-      .eq("user_id", profile.id);
-    if (error) {
-      // Samme fallback som over for databaser uten rewards.link_url.
-      ({ data, error } = await sb
-        .from("user_level_cases")
-        .select("level_number, code, rewards(brand, title, sub, rarity, image_url)")
-        .eq("user_id", profile.id));
-    }
-    if (error || !data) return;
-    data.forEach((row) => {
-      openedCases.set(row.level_number, {
-        code: row.code,
-        brand: row.rewards ? row.rewards.brand : "",
-        title: row.rewards ? row.rewards.title : "",
-        sub: row.rewards ? row.rewards.sub : "",
-        rarity: row.rewards ? row.rewards.rarity : "vanlig",
-        image_url: row.rewards ? row.rewards.image_url : null,
-        link_url: row.rewards ? row.rewards.link_url : null,
-      });
-    });
+    const [levelRows, welcomeRows] = await Promise.all([
+      selectCases("user_level_cases", "level_number, "),
+      selectCases("user_welcome_cases", ""),
+    ]);
+    levelRows.forEach((row) => openedCases.set(row.level_number, openedFromRow(row)));
+    welcomeRows.forEach((row) => openedCases.set(WELCOME, openedFromRow(row)));
+  }
+
+  function updateSignupStrip() {
+    const strip = document.querySelector("[data-signup-strip]");
+    if (strip) strip.hidden = !!profile;
   }
 
   (async function init() {
     profile = await Auth.getCurrentProfile();
-    renderWheels();
-    spinMiniForever();
-    setInterval(spinMiniForever, 12000);
+    updateSignupStrip();
     renderFeed();
 
     await Promise.all([loadLevels(), loadOpenedCases()]);
-    await refreshSpinsLeft();
     renderLevelCard();
-    // Båndet bygges først når kasse-pop-upen åpnes (da med de ekte rabattene,
+    // Båndet bygges først når rabatt-pop-upen åpnes (da med de ekte rabattene,
     // i tilfeldig rekkefølge) – det er ingen grunn til å animere et bånd
     // ingen ser.
     renderCasePanel();
+    // Nyregistrerte lander på #fa-rabatt; innholdet over rekker å endre høyde
+    // mens siden lastes, så vi hopper dit først nå.
+    if (window.location.hash === "#fa-rabatt") {
+      const target = document.getElementById("fa-rabatt");
+      if (target) target.scrollIntoView();
+    }
   })();
 
   sb.auth.onAuthStateChange(async () => {
     profile = await Auth.getCurrentProfile();
+    updateSignupStrip();
     selectedCaseLevel = null;
     await loadOpenedCases();
-    await refreshSpinsLeft();
     renderLevelCard();
     renderCasePanel();
   });

@@ -45,7 +45,7 @@
     guestGameRecords: [],
     siteVisits: [],
     avatarOptions: { colors: [], icons: [] },
-    settings: { level_step: 1000, wheel_spins_per_day: 1, daily_game_rotation: true },
+    settings: { level_step: 10000, wheel_spins_per_day: 1, daily_game_rotation: true },
     gamesNeedMigration: false,
     rewardsNeedMigration: false,
     codesNeedMigration: false,
@@ -140,7 +140,7 @@
   async function loadRewards() {
     const full = await sb
       .from("rewards")
-      .select("id, brand, title, sub, rarity, image_url, active, code_type, general_code, expires_at, link_url, sort_order")
+      .select("id, brand, title, sub, rarity, image_url, active, code_type, general_code, expires_at, link_url, supports_snorre, sort_order")
       .order("sort_order", { ascending: true });
     if (!full.error) return full.data || [];
 
@@ -155,7 +155,7 @@
       console.error("[Studilla admin] Klarte ikke hente rabatter:", fallback.error.message);
       return [];
     }
-    return (fallback.data || []).map((r) => ({ ...r, expires_at: null, link_url: null }));
+    return (fallback.data || []).map((r) => ({ ...r, expires_at: null, link_url: null, supports_snorre: false }));
   }
 
   async function loadRewardCodes() {
@@ -181,7 +181,7 @@
 
     if (!full.error && full.data) {
       return {
-        level_step: Number(full.data.level_step) || 1000,
+        level_step: Number(full.data.level_step) || 10000,
         wheel_spins_per_day: full.data.wheel_spins_per_day == null ? 1 : Number(full.data.wheel_spins_per_day),
         daily_game_rotation: full.data.daily_game_rotation !== false,
       };
@@ -194,9 +194,9 @@
     if (basic.error || !basic.data) {
       // Fallback for prosjekter uten app_settings i det hele tatt (seksjon 36).
       state.settingsNeedMigration = true;
-      return { level_step: 1000, wheel_spins_per_day: 1, daily_game_rotation: true };
+      return { level_step: 10000, wheel_spins_per_day: 1, daily_game_rotation: true };
     }
-    return { level_step: Number(basic.data.level_step) || 1000, wheel_spins_per_day: 1, daily_game_rotation: true };
+    return { level_step: Number(basic.data.level_step) || 10000, wheel_spins_per_day: 1, daily_game_rotation: true };
   }
 
   async function loadGuestGameRecords() {
@@ -299,7 +299,7 @@
   }
 
   // En rabatt med utløpsdato i fortiden regnes som deaktivert: den trekkes
-  // ikke i kasser (schema.sql, seksjon 38) og merkes "UTGÅTT" i listene her.
+  // ikke i rabatter (schema.sql, seksjon 38) og merkes "UTGÅTT" i listene her.
   function isExpired(r) {
     return !!r.expires_at && new Date(r.expires_at).getTime() <= Date.now();
   }
@@ -1112,7 +1112,7 @@
   // mange nivåer stigen skal ha – resten regnes ut server-side av
   // admin_set_level_config (schema.sql, seksjon 39).
   function levelStep() {
-    return state.levelStepDraft != null ? state.levelStepDraft : (state.settings.level_step || 1000);
+    return state.levelStepDraft != null ? state.levelStepDraft : (state.settings.level_step || 10000);
   }
 
   function levelCount() {
@@ -1154,7 +1154,7 @@
             <span class="admin-row-title">Nivå ${lv.level_number}</span>
             <span class="admin-row-sub" style="font-family:inherit">${NOK(lv.points_required)} poeng kreves</span>
           </span>
-          <span class="admin-row-side-label">Gir én kasse</span>
+          <span class="admin-row-side-label">Gir én rabatt</span>
         </div>
       </div>
     `).join("");
@@ -1428,6 +1428,7 @@
               <span class="admin-pill-daily" style="background:rgba(157,107,245,.14);color:#9d6bf5">${RARITY_LABELS[r.rarity] || r.rarity}</span>
               ${expired ? `<span class="admin-pill-expired">UTGÅTT</span>` : ""}
               ${!r.active ? `<span class="admin-pill-hidden">DEAKTIVERT</span>` : ""}
+              ${r.supports_snorre ? `<span class="admin-pill-daily">STØTTER SNORRE</span>` : ""}
             </span>
             <span class="admin-row-sub">${isList ? `${stats.remaining}/${stats.total} koder igjen${stats.disabled ? ` · ${stats.disabled} deaktivert` : ""}` : `Én kode til alle: ${escapeHTML(r.general_code || "–")}`}${r.expires_at ? ` · ${expired ? "utgikk" : "utgår"} ${formatDate(r.expires_at)}` : ""}</span>
           </span>
@@ -1462,6 +1463,15 @@
             <label class="admin-field">UTLØPSDATO (VALGFRITT)
               <input type="date" value="${dateInputValue(r.expires_at)}" data-reward-field="expires_at"${state.rewardsNeedMigration ? " disabled" : ""}>
             </label>
+            <div class="admin-field">
+              <span>STØTTER SNORRE-TAGG</span>
+              <div style="display:flex;align-items:center;gap:10px">
+                <button type="button" class="admin-switch${r.supports_snorre ? " is-on" : ""}" data-reward-snorre-toggle="${r.id}" aria-label="Vis «Støtter Snorre»-taggen på rabatten"${state.rewardsNeedMigration ? " disabled" : ""}>
+                  <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
+                </button>
+                <span class="admin-card-sub" style="margin:0">Velkomstbonusen trekkes aldri blant disse.</span>
+              </div>
+            </div>
             <label class="admin-field">KODETYPE
               <select data-reward-field="code_type" title="Kodetype">
                 <option value="general" ${!isList ? "selected" : ""}>Generell (én kode til alle)</option>
@@ -1532,7 +1542,7 @@
       <div class="admin-card">
         <div>
           <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Sannsynlighet per sjeldenhet</h2>
-          <span class="admin-card-sub">Vekter relativt til hverandre – de trenger ikke summere til 100. Gjelder alle kasser.</span>
+          <span class="admin-card-sub">Vekter relativt til hverandre – de trenger ikke summere til 100. Gjelder alle rabatter.</span>
         </div>
         <div class="admin-stat-grid" style="grid-template-columns:repeat(4,1fr)">
           ${RARITY_ORDER.map((k) => {
@@ -1557,10 +1567,10 @@
       <div class="admin-card">
         <div>
           <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Test-spinn (kun admin)</h2>
-          <span class="admin-card-sub">Spinn kassen så mange ganger du vil for å se hva den kan gi. Dette er kun en forhåndsvisning – ingen kode blir reservert eller trukket fra puljen, og det påvirker ikke hva du selv eller andre brukere kan få når dere åpner en ekte kasse.</span>
+          <span class="admin-card-sub">Spinn rabatten så mange ganger du vil for å se hva den kan gi. Dette er kun en forhåndsvisning – ingen kode blir reservert eller trukket fra puljen, og det påvirker ikke hva du selv eller andre brukere kan få når dere åpner en ekte rabatt.</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
-          <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-admin-preview-spin ${p.spinning ? "disabled" : ""}>${p.spinning ? "Spinner …" : "Spinn testkasse"}</button>
+          <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-admin-preview-spin ${p.spinning ? "disabled" : ""}>${p.spinning ? "Spinner …" : "Spinn testrabatt"}</button>
         </div>
         ${p.error ? `<p class="admin-card-sub" style="color:#ff6b6b;margin-top:10px">${escapeHTML(p.error)}</p>` : ""}
         ${result ? `
@@ -2324,6 +2334,14 @@
       e.stopPropagation();
       const r = findReward(Number(rewardActiveToggle.dataset.rewardActiveToggle));
       if (r) toggleRewardActive(r).then((ok) => { if (ok) { renderMain(); flash(r.active ? "Rabatt aktivert" : "Rabatt deaktivert"); } });
+      return;
+    }
+
+    const rewardSnorreToggle = t.closest("[data-reward-snorre-toggle]");
+    if (rewardSnorreToggle) {
+      e.stopPropagation();
+      const r = findReward(Number(rewardSnorreToggle.dataset.rewardSnorreToggle));
+      if (r) saveReward(r, { supports_snorre: !r.supports_snorre }).then((ok) => { if (ok) { renderMain(); flash(r.supports_snorre ? "«Støtter Snorre» er på" : "«Støtter Snorre» er av"); } });
       return;
     }
 
