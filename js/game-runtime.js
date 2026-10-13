@@ -15,6 +15,7 @@
 
   const sb = window.supabaseClient;
   const Auth = window.StudillaAuth;
+  const Social = window.StudillaSocial;
 
   // Nivåsystemet er skrudd av for den live siden (se js/feature-flags.js):
   // nivå-baren og "nivå opp"-teksten på game over-kortet skal da ikke vises.
@@ -130,6 +131,29 @@
     return Math.max(0, Math.round(score * pointRateFor(gameId)));
   }
 
+  /**
+   * Er feilen fra Supabase «denne funksjonen finnes ikke»? Da er ikke
+   * supabase/schema.sql kjørt på nytt etter at seksjon 48 kom inn, og vi
+   * faller tilbake til den gamle skrivemåten i stedet for at ingen rekorder
+   * lagres i det hele tatt. Se submitScore under.
+   */
+  function isMissingFunction(error) {
+    if (!error) return false;
+    const msg = (error.message || "") + " " + (error.details || "");
+    return error.code === "PGRST202" || /does not exist|could not find the function/i.test(msg);
+  }
+
+  let warnedAboutMigration = false;
+
+  function warnMigration(what) {
+    if (warnedAboutMigration) return;
+    warnedAboutMigration = true;
+    console.warn(
+      `[Studilla] ${what} finnes ikke i databasen ennå. Kjør supabase/schema.sql på nytt ` +
+      "(seksjon 48) – inntil da lagres rekorder på den gamle, usikrede måten."
+    );
+  }
+
   async function submitScore(gameId, score, profile) {
     const rounded = Math.round(score);
     if (!Number.isFinite(rounded) || rounded <= 0) {
@@ -139,19 +163,26 @@
     const awarded = pointsFor(gameId, rounded);
 
     if (profile) {
-      const { error: insertError } = await sb
-        .from("game_records")
-        .insert({ user_id: profile.id, game_id: gameId, score: rounded });
-      if (insertError) {
-        console.error("[Studilla] Klarte ikke lagre rekord:", insertError.message);
-      }
+      // Rekorden lagres og poengene regnes ut SERVER-SIDE (se
+      // supabase/schema.sql, seksjon 48). Tidligere gjorde klienten et rått
+      // insert i game_records og kalte add_points() med et tall den valgte
+      // selv – begge deler kunne kjøres fra nettleserkonsollen med hvilken
+      // som helst verdi, så hele rangeringen kunne forfalskes på ett sekund.
+      let updatedProfile = null;
+      const { data, error } = await sb.rpc("submit_game_score", {
+        p_game_id: gameId,
+        p_score: rounded,
+      });
 
-      // add_points returnerer den oppdaterte profilraden direkte, så vi
-      // slipper å hente den på nytt i et eget kall etterpå (som kan gi
-      // race/cache-problemer og vise gammel xp/nivå i UIen).
-      const { data: updatedProfile, error: rpcError } = await sb.rpc("add_points", { p_delta: awarded });
-      if (rpcError) {
-        console.error("[Studilla] Klarte ikke oppdatere xp/nivå:", rpcError.message);
+      if (error && isMissingFunction(error)) {
+        warnMigration("submit_game_score");
+        await sb.from("game_records").insert({ user_id: profile.id, game_id: gameId, score: rounded });
+        const legacy = await sb.rpc("add_points", { p_delta: awarded });
+        updatedProfile = legacy.data || null;
+      } else if (error) {
+        console.error("[Studilla] Klarte ikke lagre rekord:", error.message);
+      } else {
+        updatedProfile = data || null;
       }
 
       const best = await loadBest(gameId, profile);
@@ -176,80 +207,397 @@
     return { saved: true, best, profile: null };
   }
 
-  function shellHTML() {
+  /**
+   * Liten konfetti-byge på ny rekord. Rene DOM-elementer med CSS-animasjon,
+   * ingen canvas eller bibliotek – og hoppes helt over for de som har bedt om
+   * mindre bevegelse i systeminnstillingene.
+   */
+  function fireConfetti(host) {
+    if (!host) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const colors = ["#2ee87f", "#7cf0ad", "#f5c451", "#8ab4ff", "#ff8fb1"];
+    host.innerHTML = "";
+    for (let i = 0; i < 28; i++) {
+      const bit = document.createElement("i");
+      bit.className = "game-over-confetti-bit";
+      bit.style.left = `${Math.random() * 100}%`;
+      bit.style.background = colors[i % colors.length];
+      bit.style.animationDelay = `${Math.random() * 0.25}s`;
+      bit.style.transform = `rotate(${Math.random() * 360}deg)`;
+      host.appendChild(bit);
+    }
+    window.setTimeout(() => { host.innerHTML = ""; }, 2200);
+  }
+
+  function hudHTML() {
     return `
-      <div class="game-shell">
-        <div class="game-hud">
-          <div class="game-hud-stat">
-            <span class="game-hud-label">Poeng</span>
-            <span class="game-hud-value" data-hud-score>0</span>
-          </div>
-          <div class="game-hud-stat">
-            <span class="game-hud-label">Rekord</span>
-            <span class="game-hud-value is-accent" data-hud-best>–</span>
-          </div>
-          <div class="game-hud-right">
-            <span class="demo-tag">Demo</span>
-            <div class="game-demo-info">
-              <button type="button" class="demo-info-btn" data-demo-info-btn aria-label="Om demoen" aria-expanded="false">i</button>
-              <div class="demo-info-popover" data-demo-info-popover hidden>Siden nettsiden er ny er ikke alle spillene perfekte. Jeg jobber med å gjøre de bedre :)</div>
-            </div>
-            <button type="button" class="btn-hud-restart" data-hud-restart>Nytt spill</button>
-          </div>
+      <div class="game-hud">
+        <div class="game-hud-stat">
+          <span class="game-hud-label">Poeng</span>
+          <span class="game-hud-value" data-hud-score>0</span>
         </div>
-        <div class="game-play-area" data-game-play-area></div>
-        <div class="game-milestone-toast" data-game-milestone></div>
-        <div class="game-over-overlay" data-game-over hidden>
-          <div class="game-over-card">
-            <h3 data-game-over-title>Spillet er over</h3>
-            <p class="game-over-score" data-game-over-score></p>
-            <p class="section-sub" data-game-over-best></p>
-            <div class="game-over-level" data-game-over-level hidden>
-              <div class="game-over-level-labels">
-                <span data-game-over-level-label>Nivå</span>
-                <span data-game-over-level-xp></span>
-              </div>
-              <div class="game-over-level-bar"><div class="game-over-level-fill" data-game-over-level-fill></div></div>
-              <p class="game-over-levelup" data-game-over-levelup>Nivå opp!</p>
-            </div>
-            <button type="button" class="btn-primary" data-game-over-restart>Spill igjen</button>
-          </div>
+        <div class="game-hud-stat">
+          <span class="game-hud-label">Rekord</span>
+          <span class="game-hud-value is-accent" data-hud-best>–</span>
         </div>
       </div>
     `;
   }
 
   /**
-   * Monterer poeng-HUD + game-over-overlay i en beholder, og returnerer et
+   * Innholdet i spillboksen. Merk hva som IKKE ligger inni .game-shell:
+   *
+   *  - Poeng/rekord-HUDen ligger i topplinjen over spillflaten (se
+   *    player.html og mount() under). .game-shell blir da bare selve brettet,
+   *    og skaleringen under kan derfor bruke HELE flaten til brettet i stedet
+   *    for å dele den med HUDen. HUDen slipper samtidig å bli blåst opp
+   *    sammen med brettet.
+   *  - Game over-kortet ligger som SØSKEN av .game-shell og dekker hele
+   *    flaten. Lå det inni skallet ville kortet blitt skalert sammen med
+   *    brettet, og teksten/knappen blitt absurd stor på store skjermer.
+   */
+  function stageHTML() {
+    return `
+      <div class="game-shell">
+        <div class="game-play-area" data-game-play-area></div>
+        <div class="game-milestone-toast" data-game-milestone></div>
+      </div>
+      <div class="game-over-overlay" data-game-over hidden role="dialog" aria-modal="true" aria-labelledby="game-over-title">
+        <div class="game-over-card">
+          <div class="game-over-confetti" data-game-over-confetti aria-hidden="true"></div>
+
+          <span class="game-over-eyebrow" data-game-over-eyebrow hidden>NY REKORD</span>
+          <h3 id="game-over-title" data-game-over-title>Runden er over</h3>
+
+          <div class="game-over-figure">
+            <span class="game-over-figure-num" data-game-over-score>0</span>
+            <span class="game-over-figure-label" data-game-over-score-label>POENG</span>
+          </div>
+
+          <!-- Rekorden din som tall i stedet for en setning, slik at kortet
+               svarer på «gikk det bra?» uten at spilleren må lese. -->
+          <div class="game-over-facts">
+            <div class="game-over-fact">
+              <span class="game-over-fact-num" data-game-over-best-num>–</span>
+              <span class="game-over-fact-label">DIN REKORD</span>
+            </div>
+            <div class="game-over-fact" data-game-over-earned-fact hidden>
+              <span class="game-over-fact-num is-accent" data-game-over-earned>–</span>
+              <span class="game-over-fact-label">POENG SAMLET OPP</span>
+            </div>
+          </div>
+
+          <p class="game-over-note" data-game-over-note hidden></p>
+
+          <div class="game-over-level" data-game-over-level hidden>
+            <div class="game-over-level-labels">
+              <span data-game-over-level-label>Nivå</span>
+              <span data-game-over-level-xp></span>
+            </div>
+            <div class="game-over-level-bar"><div class="game-over-level-fill" data-game-over-level-fill></div></div>
+            <p class="game-over-levelup" data-game-over-levelup>Nivå opp!</p>
+          </div>
+
+          <!-- «Spill på nytt» skal være det enkleste å gjøre: primærknappen,
+               forhåndsvalgt for tastatur, og Enter/mellomrom virker uten å
+               treffe den med musa. -->
+          <div class="game-over-actions">
+            <button type="button" class="btn-primary game-over-again" data-game-over-restart>Spill på nytt</button>
+            <a class="btn-outline game-over-next" data-game-over-next href="#">Se rangering</a>
+          </div>
+          <button type="button" class="game-over-share" data-game-over-share hidden>Utfordre en venn</button>
+        </div>
+      </div>
+
+      <!-- Menyen som åpnes fra «Utfordre en venn»: enten en delbar lenke, eller
+           en direktemelding til en venn eller gruppe (gjenbruker samme
+           vedleggsformat som «send et triks» i meldinger.html). -->
+      <div class="modal-overlay share-overlay" data-share-overlay hidden role="dialog" aria-modal="true" aria-labelledby="share-overlay-title">
+        <div class="modal-backdrop" data-share-backdrop></div>
+        <div class="modal-card share-modal-card">
+          <button type="button" class="modal-close" data-share-close aria-label="Lukk">×</button>
+          <h3 id="share-overlay-title" class="modal-title">Utfordre en venn</h3>
+
+          <div class="share-menu" data-share-menu>
+            <button type="button" class="btn-outline share-menu-btn" data-share-copy>Del lenke til spillet</button>
+            <button type="button" class="btn-outline share-menu-btn" data-share-dm hidden>Send til en venn</button>
+            <button type="button" class="btn-outline share-menu-btn" data-share-group hidden>Send til en gruppe</button>
+          </div>
+
+          <div class="share-picker" data-share-picker hidden>
+            <button type="button" class="share-picker-back" data-share-back>← Tilbake</button>
+            <div class="share-picker-list" data-share-list></div>
+          </div>
+
+          <p class="share-status" data-share-status hidden></p>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Skalerer game-shell opp ELLER ned slik at selve brettet alltid fyller
+   * mest mulig av spillflaten (.player-stage-inner, som dekker hele skjermen
+   * under toppmenyen og topplinjen – se css/style.css), uansett hvor stort
+   * spillets eget brett er og uansett hvor stor flaten er. Siden spillsiden
+   * ikke kan scrolles (se css/style.css, is-player-view), måtte spillet
+   * ellers enten bli beskåret (for stort) eller flyte i et hav av tomrom
+   * (for lite) i stedet for å fylle flaten.
+   *
+   * Skallet er absoluttposisjonert og sentrert i flaten (se .game-shell i
+   * css/style.css). Det er med vilje: da er skallets layout helt frikoblet
+   * fra flatens størrelse, og offsetWidth/offsetHeight gir alltid brettets
+   * EGEN, utransformerte størrelse. Da skallet lå i normal flyt med
+   * `max-width: 100%` ble det klemt sammen av flaten på smale skjermer,
+   * mens brettet inni beholdt sin faste bredde og hang utenfor på begge
+   * sider. Målingen under leste da en for liten "naturlig" bredde, regnet ut
+   * en for stor skala, og brettet ble beskåret i begge kanter på mobil.
+   */
+  // Et tak på oppskaleringen finnes fortsatt, men bare som en fornuftsgrense:
+  // brettene er rene DOM-elementer (skalerer knivskarpt), og de to
+  // canvas-baserte spillene tegner nå om i den faktiske skjermoppløsningen
+  // via session.onScale() i stedet for å bli strukket opp som et bilde.
+  const MAX_SCALE = 4;
+
+  function watchShellFit(container, shellEl, onScale) {
+    let lastScale = 0;
+
+    function fit() {
+      // Flaten har litt luft rundt seg (padding) som brettet ikke skal legge
+      // seg oppå, så den trekkes fra den tilgjengelige plassen.
+      const cs = window.getComputedStyle(container);
+      const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+      const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const availW = container.clientWidth - padX;
+      const availH = container.clientHeight - padY;
+      // offsetWidth/offsetHeight er upåvirket av vår egen transform, så
+      // skallet trenger ikke nullstilles først (det ga en synlig blafring
+      // ved hver eneste resize).
+      const naturalW = shellEl.offsetWidth;
+      const naturalH = shellEl.offsetHeight;
+      if (availW <= 0 || availH <= 0 || !naturalW || !naturalH) return;
+      const scale = Math.min(MAX_SCALE, availW / naturalW, availH / naturalH);
+      if (!Number.isFinite(scale) || scale <= 0) return;
+      shellEl.style.transform = `translate(-50%, -50%) scale(${scale})`;
+      // Bare varsle ved reelle endringer: mottakeren (canvas-spillene) bygger
+      // om tegneflaten sin, som er for dyrt å gjøre på hver eneste måling.
+      if (Math.abs(scale - lastScale) > 0.01) {
+        lastScale = scale;
+        if (onScale) onScale(scale);
+      }
+    }
+
+    if (window.ResizeObserver) {
+      // Observerer BÅDE skallet og flaten. Skallets naturlige høyde endres
+      // når spillmodulen fyller spillflaten sin rett etter mount() – det er
+      // da vi først må regne ut skaleringen. Flatens høyde endres bl.a. når
+      // mobilnettleserens adressefelt glir inn/ut, noe som ikke gir noen
+      // window-resize i alle nettlesere. Skallet er absoluttposisjonert, så
+      // det kan ikke selv påvirke flatens størrelse – ingen løkke.
+      const ro = new ResizeObserver(fit);
+      ro.observe(shellEl);
+      ro.observe(container);
+    }
+    window.addEventListener("resize", fit);
+    window.addEventListener("orientationchange", fit);
+    requestAnimationFrame(fit);
+  }
+
+  /**
+   * Monterer poeng-HUD + spillflate + game-over-kort, og returnerer et
    * "session"-objekt spillmodulen bruker til å tegne brettet sitt og
    * rapportere poeng.
    */
   async function mount(container, gameId) {
-    container.innerHTML = shellHTML();
-    container.classList.add("player-stage-active");
+    container.innerHTML = stageHTML();
+
+    // HUDen hører hjemme i topplinjen over spillflaten (se player.html).
+    // Finnes ikke den plassen (f.eks. hvis kjøretiden brukes fra en annen
+    // side), legges HUDen først i selve flaten i stedet, slik at poeng og
+    // rekord alltid vises et sted.
+    const hudSlot = document.querySelector("[data-player-hud]");
+    if (hudSlot) {
+      hudSlot.innerHTML = hudHTML();
+    } else {
+      container.insertAdjacentHTML("afterbegin", hudHTML());
+    }
+    const hudRoot = hudSlot || container;
+
+    // Spillmoduler som tegner på canvas melder seg på her for å bygge om
+    // tegneflaten sin i den faktiske skjermoppløsningen når skalaen endres.
+    // Uten det ville canvaset blitt strukket opp som et bilde og blitt
+    // synlig uskarpt så snart spillet fyller en stor skjerm.
+    let scaleHandler = null;
+    let currentScale = 1;
+    watchShellFit(container, container.querySelector(".game-shell"), (scale) => {
+      currentScale = scale;
+      if (scaleHandler) scaleHandler(scale);
+    });
 
     const els = {
-      score: container.querySelector("[data-hud-score]"),
-      best: container.querySelector("[data-hud-best]"),
-      restartBtn: container.querySelector("[data-hud-restart]"),
-      demoInfoBtn: container.querySelector("[data-demo-info-btn]"),
-      demoInfoPopover: container.querySelector("[data-demo-info-popover]"),
+      score: hudRoot.querySelector("[data-hud-score]"),
+      best: hudRoot.querySelector("[data-hud-best]"),
       playArea: container.querySelector("[data-game-play-area]"),
       milestone: container.querySelector("[data-game-milestone]"),
       overlay: container.querySelector("[data-game-over]"),
       overlayTitle: container.querySelector("[data-game-over-title]"),
+      overlayEyebrow: container.querySelector("[data-game-over-eyebrow]"),
       overlayScore: container.querySelector("[data-game-over-score]"),
-      overlayBest: container.querySelector("[data-game-over-best]"),
+      overlayScoreLabel: container.querySelector("[data-game-over-score-label]"),
+      overlayBestNum: container.querySelector("[data-game-over-best-num]"),
+      overlayEarnedFact: container.querySelector("[data-game-over-earned-fact]"),
+      overlayEarned: container.querySelector("[data-game-over-earned]"),
+      overlayNote: container.querySelector("[data-game-over-note]"),
+      overlayConfetti: container.querySelector("[data-game-over-confetti]"),
+      overlayNext: container.querySelector("[data-game-over-next]"),
+      overlayShare: container.querySelector("[data-game-over-share]"),
       overlayRestart: container.querySelector("[data-game-over-restart]"),
       overlayLevel: container.querySelector("[data-game-over-level]"),
       overlayLevelLabel: container.querySelector("[data-game-over-level-label]"),
       overlayLevelXp: container.querySelector("[data-game-over-level-xp]"),
       overlayLevelFill: container.querySelector("[data-game-over-level-fill]"),
       overlayLevelUp: container.querySelector("[data-game-over-levelup]"),
+      shareOverlay: container.querySelector("[data-share-overlay]"),
+      shareBackdrop: container.querySelector("[data-share-backdrop]"),
+      shareClose: container.querySelector("[data-share-close]"),
+      shareMenu: container.querySelector("[data-share-menu]"),
+      shareCopyBtn: container.querySelector("[data-share-copy]"),
+      shareDmBtn: container.querySelector("[data-share-dm]"),
+      shareGroupBtn: container.querySelector("[data-share-group]"),
+      sharePicker: container.querySelector("[data-share-picker]"),
+      shareBack: container.querySelector("[data-share-back]"),
+      shareList: container.querySelector("[data-share-list]"),
+      shareStatus: container.querySelector("[data-share-status]"),
     };
 
     let best = await loadBest(gameId, await Auth.getCurrentProfile());
     els.best.textContent = best.toLocaleString("no-NO");
+
+    function closeShareOverlay() {
+      els.shareOverlay.hidden = true;
+    }
+    els.shareClose.addEventListener("click", closeShareOverlay);
+    els.shareBackdrop.addEventListener("click", closeShareOverlay);
+    els.shareBack.addEventListener("click", () => {
+      els.sharePicker.hidden = true;
+      els.shareMenu.hidden = false;
+    });
+
+    /**
+     * Viser vennene/gruppene dine (samme data som Venner-siden) slik at man
+     * kan sende utfordringen som en direktemelding i stedet for å bare dele
+     * en lenke. Bruker det samme vedleggsformatet som «send et triks» i
+     * meldinger.html, slik at kortet ser likt ut i innboksen uansett hvor
+     * det ble sendt fra.
+     */
+    async function openSharePicker(kind, attachmentBody) {
+      els.shareMenu.hidden = true;
+      els.sharePicker.hidden = false;
+      els.shareStatus.hidden = true;
+      els.shareList.innerHTML = '<p class="share-status">Laster …</p>';
+
+      let rows = [];
+      try {
+        rows = kind === "dm" ? await Social.friendsList() : await Social.groupThreads();
+      } catch (e) {
+        rows = [];
+      }
+
+      if (!rows.length) {
+        els.shareList.innerHTML = `<p class="share-status">${
+          kind === "dm" ? "Du har ingen venner ennå." : "Du er ikke med i noen grupper ennå."
+        }</p>`;
+        return;
+      }
+
+      els.shareList.innerHTML = rows.map((r, i) => {
+        const label = kind === "dm" ? r.username : r.name;
+        const avatar = kind === "dm"
+          ? Auth.avatarHTML({ avatar_color: r.avatar_color, avatar_icon: r.avatar_icon }, 32)
+          : `<span class="group-avatar" style="width:32px;height:32px;font-size:13px">${Social.escapeHTML((label || "?").trim()[0] || "?").toUpperCase()}</span>`;
+        return `<button type="button" class="share-picker-item" data-share-pick="${i}">${avatar}<span class="share-picker-name">${Social.escapeHTML(label)}</span></button>`;
+      }).join("");
+
+      els.shareList.querySelectorAll("[data-share-pick]").forEach((pickBtn) => {
+        pickBtn.addEventListener("click", async () => {
+          const row = rows[Number(pickBtn.dataset.sharePick)];
+          pickBtn.disabled = true;
+          try {
+            if (kind === "dm") {
+              await Social.send(row.user_id, attachmentBody);
+            } else {
+              await Social.sendGroupMessage(row.group_id, attachmentBody);
+            }
+            const label = kind === "dm" ? row.username : row.name;
+            els.shareList.innerHTML = `<p class="share-status">Sendt til ${Social.escapeHTML(label)} ✓</p>`;
+            window.setTimeout(closeShareOverlay, 900);
+          } catch (e) {
+            pickBtn.disabled = false;
+            els.shareStatus.hidden = false;
+            els.shareStatus.textContent = (e && e.message) || "Klarte ikke sende meldingen.";
+          }
+        });
+      });
+    }
+
+    /**
+     * «Utfordre en venn» åpner en liten meny i stedet for å dele med det
+     * samme: enten en delbar lenke (nettleserens egen delefunksjon der den
+     * finnes, ellers kopiert til utklippstavla), eller en direktemelding til
+     * en venn eller gruppe.
+     */
+    let copyResetTimer = null;
+    function setupShare(currentGameId, score, profile) {
+      const games = window.STUDILLA_GAMES || [];
+      const game = games.find((g) => g.id === currentGameId);
+      const name = game ? game.name : "Studilla";
+      const url = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(currentGameId)}`;
+      const text = `Jeg fikk ${score.toLocaleString("no-NO")} i ${name} på Studilla. Klarer du å slå meg?`;
+      const attachmentBody = Social ? Social.buildBody({ kind: "spill", ref: currentGameId }, text) : text;
+      const canSend = !!profile && Social && Social.isAvailable();
+
+      els.overlayShare.hidden = false;
+      els.overlayShare.onclick = () => {
+        els.shareMenu.hidden = false;
+        els.sharePicker.hidden = true;
+        els.shareStatus.hidden = true;
+        els.shareCopyBtn.textContent = "Del lenke til spillet";
+        els.shareDmBtn.textContent = profile ? "Send til en venn" : "Send til en venn (logg inn)";
+        els.shareGroupBtn.textContent = profile ? "Send til en gruppe" : "Send til en gruppe (logg inn)";
+        els.shareDmBtn.hidden = profile ? !canSend : false;
+        els.shareGroupBtn.hidden = profile ? !canSend : false;
+        els.shareOverlay.hidden = false;
+      };
+
+      // Bare kopiering, ingen delingsdialog: knappeteksten bytter midlertidig.
+      els.shareCopyBtn.onclick = async () => {
+        const full = `${text} ${url}`;
+        let ok = false;
+        try {
+          await navigator.clipboard.writeText(full);
+          ok = true;
+        } catch (e) {
+          try {
+            const ta = document.createElement("textarea");
+            ta.value = full;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            ok = document.execCommand("copy");
+            ta.remove();
+          } catch (e2) {}
+        }
+        if (!ok) return;
+        els.shareCopyBtn.textContent = "Kopiert!";
+        window.clearTimeout(copyResetTimer);
+        copyResetTimer = window.setTimeout(() => { els.shareCopyBtn.textContent = "Del lenke til spillet"; }, 2000);
+      };
+
+      const goLogin = () => { window.location.href = "login.html"; };
+      els.shareDmBtn.onclick = profile ? () => openSharePicker("dm", attachmentBody) : goLogin;
+      els.shareGroupBtn.onclick = profile ? () => openSharePicker("group", attachmentBody) : goLogin;
+    }
 
     let restartHandler = null;
     let pendingHeaderAnimation = null;
@@ -283,23 +631,7 @@
       }
       if (restartHandler) restartHandler();
     }
-    els.restartBtn.addEventListener("click", fireRestart);
     els.overlayRestart.addEventListener("click", fireRestart);
-
-    if (els.demoInfoBtn && els.demoInfoPopover) {
-      els.demoInfoBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const willShow = els.demoInfoPopover.hidden;
-        els.demoInfoPopover.hidden = !willShow;
-        els.demoInfoBtn.setAttribute("aria-expanded", String(willShow));
-      });
-      document.addEventListener("click", (e) => {
-        if (!els.demoInfoPopover.hidden && !e.target.closest(".game-demo-info")) {
-          els.demoInfoPopover.hidden = true;
-          els.demoInfoBtn.setAttribute("aria-expanded", "false");
-        }
-      });
-    }
 
     /**
      * Animerer nivå-stolpen på game-over-kortet fra forrige nivåprogresjon
@@ -348,6 +680,17 @@
 
     return {
       playArea: els.playArea,
+
+      /**
+       * Meld deg på endringer i hvor mye spillet skaleres opp/ned for å fylle
+       * skjermen (se watchShellFit). Kalles med én gang med skalaen som
+       * gjelder nå, og deretter hver gang den endrer seg. Brukes av de
+       * canvas-baserte spillene til å tegne i riktig oppløsning.
+       */
+      onScale(cb) {
+        scaleHandler = cb;
+        if (cb) cb(currentScale);
+      },
 
       /** Lagret stilling fra forrige økt, eller null. */
       savedState() {
@@ -405,7 +748,7 @@
 
         // Ikke oppdater header-widgeten med sluttresultatet med en gang: den
         // holdes på forrige tilstand og animeres til den nye først når
-        // spilleren trykker "Spill igjen" / "Nytt spill". Faller tilbake til
+        // spilleren trykker "Spill igjen". Faller tilbake til
         // forrige profil (ingen synlig endring) hvis xp/nivå-oppdateringen
         // feilet, i stedet for å la resten av visningen krasje.
         const newProfile = prevProfile ? result.profile || prevProfile : null;
@@ -418,21 +761,45 @@
         const isNewBest = result.saved && score > prevBest;
         const roundedScore = Math.max(0, Math.round(score));
         const leveledUp = !!(newProfile && prevProfile && newProfile.level > prevProfile.level);
-
-        els.overlayTitle.textContent = opts.title || "Spillet er over";
         const awardedPoints = pointsFor(gameId, roundedScore);
-        els.overlayScore.textContent = awardedPoints === roundedScore
-          ? `Du fikk ${roundedScore.toLocaleString("no-NO")} poeng.`
-          : `Du fikk ${roundedScore.toLocaleString("no-NO")} i skår – det ble ${awardedPoints.toLocaleString("no-NO")} poeng.`;
-        els.overlayBest.textContent = isNewBest
-          ? "Ny personlig rekord! 🎉"
-          : `Rekord: ${best.toLocaleString("no-NO")} poeng.`;
+
+        els.overlayTitle.textContent = opts.title || (isNewBest ? "Ny rekord!" : "Runden er over");
+        els.overlayEyebrow.hidden = !isNewBest;
+        els.overlayScore.textContent = roundedScore.toLocaleString("no-NO");
+        els.overlayScoreLabel.textContent = awardedPoints === roundedScore ? "POENG" : "SKÅR";
+        els.overlayBestNum.textContent = best.toLocaleString("no-NO");
+
+        const showEarned = !!prevProfile && awardedPoints > 0;
+        els.overlayEarnedFact.hidden = !showEarned;
+        if (showEarned) els.overlayEarned.textContent = `+${awardedPoints.toLocaleString("no-NO")}`;
+
+        // For utloggede: en linje om at rekorden kun ligger i nettleseren.
+        const note = prevProfile ? "" : "Du er ikke logget inn – rekorden ligger kun i denne nettleseren.";
+        els.overlayNote.hidden = !note;
+        els.overlayNote.textContent = note;
+
+        if (isNewBest) fireConfetti(els.overlayConfetti);
+
+        // «Se rangering» peker på rangeringssiden for akkurat dette trikset,
+        // åpen direkte på fanen for det – se ?spill=-håndteringen i
+        // rangering.html.
+        els.overlayNext.hidden = false;
+        els.overlayNext.href = prevProfile
+          ? `rangering.html?spill=${encodeURIComponent(gameId)}`
+          : "login.html";
+        els.overlayNext.textContent = prevProfile ? "Se rangering" : "Registrer deg";
+
+        setupShare(gameId, roundedScore, prevProfile);
+
         if (LEVELS_ENABLED) {
           animateOverlayLevel(prevProfile, newProfile);
         } else {
           els.overlayLevel.hidden = true;
         }
         els.overlay.hidden = false;
+        // Fokus på «Spill på nytt» slik at Enter starter en ny runde med det
+        // samme – både for tastaturbrukere og for den som bare vil videre.
+        try { els.overlayRestart.focus({ preventScroll: true }); } catch (e) {}
 
         if (LEVELS_ENABLED && leveledUp && window.StudillaLevelUp) {
           window.StudillaLevelUp.show(prevProfile, newProfile);

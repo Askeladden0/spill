@@ -33,7 +33,7 @@
 
   // Poeng en utlogget besøkende har "tjent" (f.eks. ved å spinne hjulet uten
   // å være innlogget). Lagres lokalt i nettleseren og vises i headeren i
-  // stedet for nivå-widgeten, sammen med en "Logg inn"-knapp, slik at
+  // stedet for nivå-widgeten, sammen med en "Registrer deg"-knapp, slik at
   // besøkende ser hva de går glipp av å ikke lagre permanent.
   function getGuestPoints() {
     const raw = window.localStorage.getItem(GUEST_POINTS_KEY);
@@ -73,24 +73,32 @@
     if (!guestPoints && !bestEntries.length) return;
 
     if (bestEntries.length) {
-      const { error } = await sb
-        .from("game_records")
-        .insert(bestEntries.map((e) => ({ user_id: profile.id, game_id: e.gameId, score: e.score })));
-      if (error) {
+      // Går gjennom claim_guest_progress (supabase/schema.sql, seksjon 48),
+      // som kjører hver rad gjennom det samme taket som en vanlig runde.
+      // Ellers hadde gjeste-nøklene i localStorage vært en bakvei rundt
+      // valideringen: sett studilla_guest_best_2048 til 9 999 999, logg inn,
+      // og du står øverst på topplista.
+      const { error } = await sb.rpc("claim_guest_progress", {
+        p_records: bestEntries.map((e) => ({ game_id: e.gameId, score: e.score })),
+      });
+      if (error && (error.code === "PGRST202" || /does not exist|could not find the function/i.test(error.message || ""))) {
+        console.warn("[Studilla] claim_guest_progress mangler – kjør supabase/schema.sql på nytt.");
+        const legacy = await sb
+          .from("game_records")
+          .insert(bestEntries.map((e) => ({ user_id: profile.id, game_id: e.gameId, score: e.score })));
+        if (!legacy.error) bestEntries.forEach((e) => window.localStorage.removeItem(e.key));
+      } else if (error) {
         console.error("[Studilla] Klarte ikke overføre gjesterekorder:", error.message);
       } else {
         bestEntries.forEach((e) => window.localStorage.removeItem(e.key));
       }
     }
 
-    if (guestPoints > 0) {
-      const { error } = await sb.rpc("add_points", { p_delta: guestPoints });
-      if (error) {
-        console.error("[Studilla] Klarte ikke overføre gjestepoeng:", error.message);
-      } else {
-        window.localStorage.removeItem(GUEST_POINTS_KEY);
-      }
-    }
+    // Gjestepoengene fra lykkehjulet er nå dekket av rekordoverføringen over
+    // for spilte runder. Poeng som stammer fra hjulet kan ikke lenger legges
+    // til fritt (add_points er stengt for klienten, seksjon 48), så nøkkelen
+    // ryddes bort i stedet for å bli stående og love noe vi ikke gir.
+    if (guestPoints > 0) window.localStorage.removeItem(GUEST_POINTS_KEY);
 
     await renderHeaderAuth();
   }
@@ -236,7 +244,7 @@
             <span class="login-avatar">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#96a3b8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
             </span>
-            Logg inn
+            Registrer deg
           </button>
         </a>
       `;
@@ -249,6 +257,17 @@
   async function renderHeaderAuth() {
     const [profile] = await Promise.all([getCurrentProfile(), loadLevels()]);
     renderHeaderWithProfile(profile);
+    renderAuthOnlyLinks(!!profile);
+    if (profile && window.StudillaSocial) window.StudillaSocial.refreshUnreadBadge();
+  }
+
+  /**
+   * Lenker som kun gir mening når man er logget inn (i dag «Venner»/
+   * meldinger). Skjult i markupen som standard, slik at en utlogget besøkende
+   * aldri ser dem blinke innom mens profilen lastes.
+   */
+  function renderAuthOnlyLinks(signedIn) {
+    document.querySelectorAll("[data-auth-only]").forEach((el) => { el.hidden = !signedIn; });
   }
 
   /**

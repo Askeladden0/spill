@@ -9,62 +9,20 @@
 (function () {
   "use strict";
 
-  // Nivå-/premiesystemet er skrudd av for den live siden (se
-  // js/feature-flags.js) – «Premier» skal derfor ikke vises i toppmenyen så
-  // lenge bryteren står på false, uten at lenken/siden fjernes fra koden.
-  const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
-
-  const PREMIER_NAV_LINK = `
-        <a href="premier.html" class="nav-link" data-page="premier">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3"></path><path d="M7 5H4v2a3 3 0 0 0 3 3"></path></svg>
-          Premier
-        </a>`;
-
-  const HEADER_HTML = `
-  <header class="site-header">
-    <div class="header-left">
-      <a href="index.html" class="logo">
-        <span class="logo-mark"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"/><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"/></svg></span>
-        <span class="logo-text">Studi<span>ll</span>a</span>
-      </a>
-      <nav class="main-nav">
-        <a href="index.html#spill" class="nav-link" data-page="spill">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><rect x="2" y="6" width="20" height="12" rx="5"></rect></svg>
-          Triks
-        </a>${LEVELS_ENABLED ? PREMIER_NAV_LINK : ""}
-        <a href="rangering.html" class="nav-link" data-page="rangering">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
-          Rangering
-        </a>
-        <a href="admin.html" class="nav-link" data-page="admin" data-admin-only style="display:none">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-2.9 8.3-7 10-4.1-1.7-7-5.6-7-10V6l7-3z"></path><path d="M9.5 12.2l1.8 1.8 3.4-3.6"></path></svg>
-          Admin
-        </a>
-      </nav>
-    </div>
-
-    <div class="header-right" data-auth-slot></div>
-  </header>`;
-
-  const FOOTER_HTML = `
-  <footer class="site-footer">
-    <div class="footer-brand">
-      <span class="footer-logo-mark"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><rect x="3" y="10" width="6" height="11" rx="2.5" fill="#1f8f5f"/><rect x="13" y="4" width="6" height="17" rx="2.5" fill="#3ddc84"/></svg></span>
-      <span class="footer-copy">© 2026 Studilla</span>
-    </div>
-    <nav class="footer-nav">
-      <a href="kontakt.html">Kontakt</a>
-      <a href="vilkar.html#personvern">Personvern</a>
-      <a href="vilkar.html">Vilkår</a>
-      <a href="admin.html" data-admin-only style="display:none">Admin</a>
-    </nav>
-  </footer>`;
+  // Header-/footer-markupen ligger i js/layout-markup.js, som må lastes før
+  // denne filen. Byggesteget (build/build.mjs) leser den samme filen og
+  // skriver markupen rett inn i HTML-en, så i produksjon finnes menyen
+  // allerede – da er slot-ene borte og innsettingen under hopper over.
+  const LAYOUT = window.STUDILLA_LAYOUT;
+  if (!LAYOUT) {
+    console.error("js/layout-markup.js må lastes før js/layout.js");
+  }
 
   const headerSlot = document.getElementById("site-header");
-  if (headerSlot) headerSlot.outerHTML = HEADER_HTML;
+  if (headerSlot && LAYOUT) headerSlot.outerHTML = LAYOUT.header;
 
   const footerSlot = document.getElementById("site-footer");
-  if (footerSlot) footerSlot.outerHTML = FOOTER_HTML;
+  if (footerSlot && LAYOUT) footerSlot.outerHTML = LAYOUT.footer;
 
   /**
    * Marker menypunktet som hører til siden man står på med aksentfargen.
@@ -79,4 +37,45 @@
   document.querySelectorAll(".nav-link[data-page]").forEach((link) => {
     link.classList.toggle("is-active", link.getAttribute("data-page") === current);
   });
+
+  /**
+   * Mobil-meny: toppmenyen var tidligere en horisontalt scrollbar liste på
+   * mobil, som gjorde at «Rangering» ble skjult utenfor skjermen. Nå åpnes
+   * hele lenkelisten som et nedtrekkspanel under headeren via hamburger-
+   * knappen, slik at alle sidene er synlige med det samme.
+   */
+  const header = document.querySelector(".site-header");
+  const menuToggle = header && header.querySelector(".mobile-menu-toggle");
+  const mainNav = document.getElementById("main-nav");
+
+  function closeMobileMenu() {
+    if (!header) return;
+    header.classList.remove("is-menu-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+  }
+
+  if (header && menuToggle && mainNav) {
+    menuToggle.addEventListener("click", () => {
+      const isOpen = header.classList.toggle("is-menu-open");
+      menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+
+    mainNav.addEventListener("click", (event) => {
+      if (event.target.closest(".nav-link")) closeMobileMenu();
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!header.classList.contains("is-menu-open")) return;
+      if (header.contains(event.target)) return;
+      closeMobileMenu();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeMobileMenu();
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 720) closeMobileMenu();
+    });
+  }
 })();

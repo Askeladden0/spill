@@ -1,4 +1,8 @@
-# Simple workflow for deploying static content to GitHub Pages
+# Bygger nettsiden og publiserer den til GitHub Pages.
+#
+# Byggesteget (build/build.mjs) setter sammen sidene fra felles head/meny og
+# legger på innholdshash for cache-busting. Det er dist/ som publiseres – ikke
+# repoet slik det står. Feiler bygget, stopper utrullingen.
 name: Deploy static content to Pages
 
 on:
@@ -31,13 +35,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build
+        run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          # Bare det ferdig bygde nettstedet publiseres
+          path: 'dist'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

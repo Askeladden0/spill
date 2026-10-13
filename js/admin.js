@@ -45,12 +45,13 @@
     guestGameRecords: [],
     siteVisits: [],
     avatarOptions: { colors: [], icons: [] },
-    settings: { level_step: 1000, wheel_spins_per_day: 1, daily_game_rotation: true },
+    settings: { level_step: 10000, wheel_spins_per_day: 1, daily_game_rotation: true },
     gamesNeedMigration: false,
     rewardsNeedMigration: false,
     codesNeedMigration: false,
     settingsNeedMigration: false,
     wheelNeedMigration: false,
+    siteVisitsNeedMigration: false,
     wheelSpinsDraft: null,
 
     paletteOpen: false,
@@ -73,6 +74,18 @@
     openCodeLists: new Set(),
     openCodeTables: new Set(),
     rewardUploadBusy: new Set(),
+
+    // Profilbilder
+    avatarUploadBusy: false,
+    // Hvilken bruker sitt profilbilde som redigeres i brukerlista.
+    editingAvatar: null,
+
+    // Moderering
+    notifications: [],
+    notificationsNeedMigration: false,
+    blocks: [],
+    openBlock: null,        // "<blocker_id>:<blocked_id>"
+    blockConversation: [],
 
     // Nivåer
     levelStepDraft: null,
@@ -127,7 +140,7 @@
   async function loadRewards() {
     const full = await sb
       .from("rewards")
-      .select("id, brand, title, sub, rarity, image_url, active, code_type, general_code, expires_at, link_url, sort_order")
+      .select("id, brand, title, sub, rarity, image_url, active, code_type, general_code, expires_at, link_url, supports_snorre, sort_order")
       .order("sort_order", { ascending: true });
     if (!full.error) return full.data || [];
 
@@ -142,7 +155,7 @@
       console.error("[Studilla admin] Klarte ikke hente rabatter:", fallback.error.message);
       return [];
     }
-    return (fallback.data || []).map((r) => ({ ...r, expires_at: null, link_url: null }));
+    return (fallback.data || []).map((r) => ({ ...r, expires_at: null, link_url: null, supports_snorre: false }));
   }
 
   async function loadRewardCodes() {
@@ -168,7 +181,7 @@
 
     if (!full.error && full.data) {
       return {
-        level_step: Number(full.data.level_step) || 1000,
+        level_step: Number(full.data.level_step) || 10000,
         wheel_spins_per_day: full.data.wheel_spins_per_day == null ? 1 : Number(full.data.wheel_spins_per_day),
         daily_game_rotation: full.data.daily_game_rotation !== false,
       };
@@ -181,9 +194,9 @@
     if (basic.error || !basic.data) {
       // Fallback for prosjekter uten app_settings i det hele tatt (seksjon 36).
       state.settingsNeedMigration = true;
-      return { level_step: 1000, wheel_spins_per_day: 1, daily_game_rotation: true };
+      return { level_step: 10000, wheel_spins_per_day: 1, daily_game_rotation: true };
     }
-    return { level_step: Number(basic.data.level_step) || 1000, wheel_spins_per_day: 1, daily_game_rotation: true };
+    return { level_step: Number(basic.data.level_step) || 10000, wheel_spins_per_day: 1, daily_game_rotation: true };
   }
 
   async function loadGuestGameRecords() {
@@ -202,14 +215,38 @@
     if (error) {
       // Tabellen finnes ikke før supabase/schema.sql (seksjon 46) er kjørt på
       // nytt – feiler stille og lar aktivitetsgrafen vise 0 i stedet for å
-      // velte hele adminpanelet.
+      // velte hele adminpanelet, men varsler admin i stedet for å late som om
+      // det ikke er noen aktive personer.
+      state.siteVisitsNeedMigration = true;
       return [];
     }
+    state.siteVisitsNeedMigration = false;
+    return data || [];
+  }
+
+  /**
+   * Varsler og blokkeringer (supabase/schema.sql seksjon 62–63). Begge feiler
+   * stille på databaser der migrasjonen ikke er kjørt – da vises en beskjed i
+   * seksjonen i stedet for at hele panelet velter.
+   */
+  async function loadNotifications() {
+    const { data, error } = await sb.rpc("admin_notifications_list", { p_limit: 100 });
+    if (error) {
+      state.notificationsNeedMigration = true;
+      return [];
+    }
+    state.notificationsNeedMigration = false;
+    return data || [];
+  }
+
+  async function loadBlocks() {
+    const { data, error } = await sb.rpc("admin_blocks_overview");
+    if (error) return [];
     return data || [];
   }
 
   async function loadAll() {
-    const [profilesRes, levelsRes, rewards, rarityRes, rewardCodes, claimsRes, recordsRes, guestRecords, siteVisits, avatarRes, games, settings] = await Promise.all([
+    const [profilesRes, levelsRes, rewards, rarityRes, rewardCodes, claimsRes, recordsRes, guestRecords, siteVisits, avatarRes, games, settings, notifications, blocks] = await Promise.all([
       sb.from("profiles").select("id, username, xp, level, is_admin, created_at, avatar_icon, avatar_color").order("created_at", { ascending: false }),
       sb.from("levels").select("level_number, points_required").order("level_number", { ascending: true }),
       loadRewards(),
@@ -222,6 +259,8 @@
       sb.from("avatar_options").select("colors, icons").eq("id", 1).single(),
       loadGames(),
       loadSettings(),
+      loadNotifications(),
+      loadBlocks(),
     ]);
 
     if (profilesRes.error) console.error("[Studilla admin] Klarte ikke hente brukere:", profilesRes.error.message);
@@ -243,6 +282,8 @@
     state.avatarOptions = avatarRes.data || { colors: [], icons: [] };
     state.games = games;
     state.settings = settings;
+    state.notifications = notifications;
+    state.blocks = blocks;
     state.levelStepDraft = null;
     state.levelCountDraft = null;
     state.wheelSpinsDraft = null;
@@ -258,7 +299,7 @@
   }
 
   // En rabatt med utløpsdato i fortiden regnes som deaktivert: den trekkes
-  // ikke i kasser (schema.sql, seksjon 38) og merkes "UTGÅTT" i listene her.
+  // ikke i rabatter (schema.sql, seksjon 38) og merkes "UTGÅTT" i listene her.
   function isExpired(r) {
     return !!r.expires_at && new Date(r.expires_at).getTime() <= Date.now();
   }
@@ -303,6 +344,7 @@
     oversikt: "Oversikt", statistikk: "Statistikk", spill: "Spill",
     nivaaer: "Nivåer", lykkehjul: "Lykkehjul", rabatter: "Rabatter", brukere: "Brukere", avatar: "Profilbilder",
     koder: "Rabattkoder", drift: "Drift",
+    varsler: "Varsler", blokkeringer: "Blokkeringer",
   };
   const VIEW_HINTS = {
     spill: "Dra ⠿ for rekkefølge. Åpne et spill for navn, beskrivelse og bilder.",
@@ -312,6 +354,8 @@
     brukere: "Klikk en rad for detaljer. Endringer lagres med én gang.",
     avatar: "Farger og ikoner nye brukere tildeles tilfeldig ved registrering.",
     koder: "Status og logg. Rabattene redigeres under «Rabatter».",
+    varsler: "Nye registreringer og blokkeringer, nyeste øverst.",
+    blokkeringer: "Hvem har blokkert hvem. Åpne en rad for å lese samtalen mellom partene.",
   };
 
   function goView(view) {
@@ -325,6 +369,14 @@
     els.navButtons.forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.nav === state.view);
     });
+    // Antall uleste varsler på «Varsler», slik at en ny registrering eller en
+    // blokkering synes uten at man må klikke seg inn i seksjonen.
+    const badge = document.querySelector("[data-nav-notifications]");
+    if (badge) {
+      const n = unreadNotificationCount();
+      badge.hidden = n <= 0;
+      badge.textContent = n > 99 ? "99+" : String(n);
+    }
   }
 
   function renderTopbar() {
@@ -510,6 +562,9 @@
     const rangeSwitch = opts.withRangeSwitch
       ? `<span class="admin-range-switch">${["7d", "30d", "90d"].map((id) => `<button type="button" class="admin-range-btn${state.activityRange === id ? " is-active" : ""}" data-activity-range="${id}">${id === "7d" ? "7 dager" : id === "30d" ? "30 dager" : "90 dager"}</button>`).join("")}</span>`
       : "";
+    const migrationNote = state.siteVisitsNeedMigration
+      ? `<p class="admin-card-sub" style="margin:0">⚠ Kjør <code>supabase/schema.sql</code> på nytt i Supabase (seksjon 46) for å ta i bruk "aktive personer".</p>`
+      : "";
     return `
       <div class="admin-card">
         <div class="admin-card-head">
@@ -526,6 +581,7 @@
             </span>
           </span>
         </div>
+        ${migrationNote}
         ${barsHTML(series, { highlightLast: true })}
       </div>
     `;
@@ -1056,7 +1112,7 @@
   // mange nivåer stigen skal ha – resten regnes ut server-side av
   // admin_set_level_config (schema.sql, seksjon 39).
   function levelStep() {
-    return state.levelStepDraft != null ? state.levelStepDraft : (state.settings.level_step || 1000);
+    return state.levelStepDraft != null ? state.levelStepDraft : (state.settings.level_step || 10000);
   }
 
   function levelCount() {
@@ -1098,7 +1154,7 @@
             <span class="admin-row-title">Nivå ${lv.level_number}</span>
             <span class="admin-row-sub" style="font-family:inherit">${NOK(lv.points_required)} poeng kreves</span>
           </span>
-          <span class="admin-row-side-label">Gir én kasse</span>
+          <span class="admin-row-side-label">Gir én rabatt</span>
         </div>
       </div>
     `).join("");
@@ -1372,6 +1428,7 @@
               <span class="admin-pill-daily" style="background:rgba(157,107,245,.14);color:#9d6bf5">${RARITY_LABELS[r.rarity] || r.rarity}</span>
               ${expired ? `<span class="admin-pill-expired">UTGÅTT</span>` : ""}
               ${!r.active ? `<span class="admin-pill-hidden">DEAKTIVERT</span>` : ""}
+              ${r.supports_snorre ? `<span class="admin-pill-daily">STØTTER SNORRE</span>` : ""}
             </span>
             <span class="admin-row-sub">${isList ? `${stats.remaining}/${stats.total} koder igjen${stats.disabled ? ` · ${stats.disabled} deaktivert` : ""}` : `Én kode til alle: ${escapeHTML(r.general_code || "–")}`}${r.expires_at ? ` · ${expired ? "utgikk" : "utgår"} ${formatDate(r.expires_at)}` : ""}</span>
           </span>
@@ -1406,6 +1463,15 @@
             <label class="admin-field">UTLØPSDATO (VALGFRITT)
               <input type="date" value="${dateInputValue(r.expires_at)}" data-reward-field="expires_at"${state.rewardsNeedMigration ? " disabled" : ""}>
             </label>
+            <div class="admin-field">
+              <span>STØTTER SNORRE-TAGG</span>
+              <div style="display:flex;align-items:center;gap:10px">
+                <button type="button" class="admin-switch${r.supports_snorre ? " is-on" : ""}" data-reward-snorre-toggle="${r.id}" aria-label="Vis «Støtter Snorre»-taggen på rabatten"${state.rewardsNeedMigration ? " disabled" : ""}>
+                  <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
+                </button>
+                <span class="admin-card-sub" style="margin:0">Velkomstrabatten trekkes aldri blant disse.</span>
+              </div>
+            </div>
             <label class="admin-field">KODETYPE
               <select data-reward-field="code_type" title="Kodetype">
                 <option value="general" ${!isList ? "selected" : ""}>Generell (én kode til alle)</option>
@@ -1476,7 +1542,7 @@
       <div class="admin-card">
         <div>
           <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Sannsynlighet per sjeldenhet</h2>
-          <span class="admin-card-sub">Vekter relativt til hverandre – de trenger ikke summere til 100. Gjelder alle kasser.</span>
+          <span class="admin-card-sub">Vekter relativt til hverandre – de trenger ikke summere til 100. Gjelder alle rabatter.</span>
         </div>
         <div class="admin-stat-grid" style="grid-template-columns:repeat(4,1fr)">
           ${RARITY_ORDER.map((k) => {
@@ -1501,10 +1567,10 @@
       <div class="admin-card">
         <div>
           <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Test-spinn (kun admin)</h2>
-          <span class="admin-card-sub">Spinn kassen så mange ganger du vil for å se hva den kan gi. Dette er kun en forhåndsvisning – ingen kode blir reservert eller trukket fra puljen, og det påvirker ikke hva du selv eller andre brukere kan få når dere åpner en ekte kasse.</span>
+          <span class="admin-card-sub">Spinn rabatten så mange ganger du vil for å se hva den kan gi. Dette er kun en forhåndsvisning – ingen kode blir reservert eller trukket fra puljen, og det påvirker ikke hva du selv eller andre brukere kan få når dere åpner en ekte rabatt.</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
-          <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-admin-preview-spin ${p.spinning ? "disabled" : ""}>${p.spinning ? "Spinner …" : "Spinn testkasse"}</button>
+          <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-admin-preview-spin ${p.spinning ? "disabled" : ""}>${p.spinning ? "Spinner …" : "Spinn testrabatt"}</button>
         </div>
         ${p.error ? `<p class="admin-card-sub" style="color:#ff6b6b;margin-top:10px">${escapeHTML(p.error)}</p>` : ""}
         ${result ? `
@@ -1620,6 +1686,7 @@
                 <label class="admin-stat-box">POENG<input type="number" min="0" value="${u.xp}" data-user-xp="${u.id}"></label>
                 <label class="admin-stat-box">NIVÅ<input type="number" min="1" value="${u.level}" data-user-level="${u.id}"></label>
               </div>
+              ${renderUserAvatarEditor(u)}
             </div>
           ` : ""}
         </div>
@@ -1637,6 +1704,62 @@
         ${rows || `<div class="admin-empty-users">Ingen brukere passer søket.</div>`}
       </div>
     `;
+  }
+
+  /**
+   * Profilbildet til en bruker, redigerbart herfra. Admin har allerede lov til
+   * å oppdatere andres profiler (profiles_update_admin i schema.sql seksjon 9)
+   * – dette gir bare knappene til å gjøre det, med nøyaktig de samme figurene
+   * og fargene brukeren selv velger mellom. Nyttig når noen har satt et
+   * opplastet bilde som ikke kan stå.
+   */
+  function renderUserAvatarEditor(u) {
+    const open = state.editingAvatar === u.id;
+    if (!open) {
+      return `
+        <div class="admin-user-avatar-row">
+          ${window.StudillaAvatars.avatarBadgeHTML(u.avatar_color, u.avatar_icon, 40, { className: "admin-icon-badge" })}
+          <span class="admin-row-side-label">${escapeHTML(window.StudillaAvatars.figureLabel(u.avatar_icon))}</span>
+          <span class="admin-card-spacer"></span>
+          <button type="button" class="admin-btn-ghost" data-user-avatar-edit="${u.id}">Endre profilbilde</button>
+        </div>
+      `;
+    }
+
+    const icons = state.avatarOptions.icons || [];
+    const colors = state.avatarOptions.colors || [];
+    const isImage = window.StudillaAvatars.isImageIcon;
+    return `
+      <div class="admin-user-avatar-editor">
+        <div class="admin-user-avatar-row">
+          ${window.StudillaAvatars.avatarBadgeHTML(u.avatar_color, u.avatar_icon, 40, { className: "admin-icon-badge" })}
+          <span class="admin-row-side-label">${escapeHTML(window.StudillaAvatars.figureLabel(u.avatar_icon))}</span>
+          <span class="admin-card-spacer"></span>
+          <button type="button" class="admin-btn-ghost" data-user-avatar-edit="${u.id}">Ferdig</button>
+        </div>
+        <p class="admin-card-sub" style="margin:0">Figur</p>
+        <div class="figure-grid">
+          ${icons.map((key) => `
+            <button type="button" class="figure-swatch${isImage(key) ? " avatar-image-swatch" : ""}${key === u.avatar_icon ? " is-selected" : ""}" data-user-avatar-icon="${u.id}" data-value="${escapeHTML(key)}" title="${escapeHTML(window.StudillaAvatars.figureLabel(key))}">${window.StudillaAvatars.figureSVG(key)}</button>
+          `).join("")}
+        </div>
+        <p class="admin-card-sub" style="margin:0">Farge</p>
+        <div class="swatch-row">
+          ${colors.map((c) => `
+            <button type="button" class="swatch${c === u.avatar_color ? " is-selected" : ""}" style="background:${escapeHTML(c)}" data-user-avatar-color="${u.id}" data-value="${escapeHTML(c)}" aria-label="Velg farge ${escapeHTML(c)}"></button>
+          `).join("")}
+        </div>
+        <span class="admin-card-sub">Valgene er de samme brukeren selv har. Nye bilder legges inn under «Profilbilder».</span>
+      </div>
+    `;
+  }
+
+  async function saveUserAvatar(u, fields) {
+    const { error } = await sb.from("profiles").update(fields).eq("id", u.id);
+    if (error) return flash(Auth.friendlyAuthError(error));
+    Object.assign(u, fields);
+    renderUsersDynamic();
+    flash("Profilbilde lagret");
   }
 
   function updateUsersCount() {
@@ -1740,6 +1863,8 @@
   // Profilbilder
   // ---------------------------------------------------------------------
 
+  const AVATAR_IMAGE_BUCKET = "avatar-images";
+
   async function saveAvatarOptions() {
     const { error } = await sb
       .from("avatar_options")
@@ -1749,9 +1874,49 @@
     return true;
   }
 
+  async function uploadAvatarImage(file) {
+    if (!file) return;
+    const allowed = { "image/png": "png", "image/jpeg": "jpg" };
+    const ext = allowed[file.type];
+    if (!ext) return flash("Kun PNG og JPG er støttet.");
+    if (file.size > 5 * 1024 * 1024) return flash("Bildet er for stort (maks 5 MB).");
+
+    state.avatarUploadBusy = true;
+    renderMain();
+
+    const path = `custom/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error: uploadError } = await sb.storage
+      .from(AVATAR_IMAGE_BUCKET)
+      .upload(path, file, { contentType: file.type, upsert: true });
+
+    if (uploadError) {
+      state.avatarUploadBusy = false;
+      renderMain();
+      return flash(Auth.friendlyAuthError(uploadError));
+    }
+
+    const { data: pub } = sb.storage.from(AVATAR_IMAGE_BUCKET).getPublicUrl(path);
+    state.avatarOptions.icons.push(pub.publicUrl);
+    state.avatarUploadBusy = false;
+    const ok = await saveAvatarOptions();
+    renderMain();
+    if (ok) flash("Profilbilde lagt til");
+  }
+
+  function removeAvatarImage(url) {
+    const icons = state.avatarOptions.icons;
+    if (icons.length <= 1) return flash("Du må ha minst ett profilbilde/én figur.");
+    const idx = icons.indexOf(url);
+    if (idx === -1) return;
+    icons.splice(idx, 1);
+    saveAvatarOptions().then((ok) => { if (ok) { renderMain(); flash("Profilbilde fjernet"); } });
+  }
+
   function renderAvatar() {
     const colors = state.avatarOptions.colors || [];
     const icons = state.avatarOptions.icons || [];
+    const customImages = icons.filter((key) => window.StudillaAvatars.isImageIcon(key));
+    const busy = state.avatarUploadBusy;
     return `
       <div class="admin-avatar-grid">
         <div class="admin-card">
@@ -1782,8 +1947,181 @@
             `).join("")}
           </div>
         </div>
+        <div class="admin-card admin-avatar-custom">
+          <div>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Egne profilbilder</h2>
+            <span class="admin-card-sub">Last opp bilder brukerne kan velge som profilbilde, i tillegg til figurene.</span>
+          </div>
+          <label class="admin-dropzone${busy ? " is-busy" : ""}" data-avatar-dropzone>
+            <span class="admin-dropzone-preview">🖼</span>
+            <span class="admin-dropzone-text">
+              <span class="admin-dropzone-main">${busy ? "Laster opp …" : "Dra inn et bilde"}</span>
+              <span class="admin-dropzone-sub">Slipp et bilde her, eller klikk for å velge. PNG/JPG, maks 5 MB.</span>
+            </span>
+            <input type="file" accept="image/png,image/jpeg" data-avatar-upload ${busy ? "disabled" : ""}>
+          </label>
+          ${customImages.length ? `
+            <div class="figure-grid" style="max-width:420px">
+              ${customImages.map((url) => `
+                <span class="figure-swatch avatar-image-swatch" style="padding:0">
+                  ${window.StudillaAvatars.figureSVG(url)}
+                  <button type="button" class="admin-dropzone-clear avatar-image-remove" data-remove-avatar-image="${escapeHTML(url)}" title="Fjern bildet" aria-label="Fjern bildet">×</button>
+                </span>
+              `).join("")}
+            </div>
+          ` : ""}
+        </div>
       </div>
     `;
+  }
+
+  // ---------------------------------------------------------------------
+  // Varsler – nye registreringer og blokkeringer
+  // ---------------------------------------------------------------------
+
+  function unreadNotificationCount() {
+    return state.notifications.filter((n) => !n.read_at).length;
+  }
+
+  const NOTIFICATION_META = {
+    signup: { label: "NY BRUKER", cls: "is-signup" },
+    block: { label: "BLOKKERING", cls: "is-block" },
+  };
+
+  function renderVarsler() {
+    if (state.notificationsNeedMigration) {
+      return `
+        <div class="admin-section">
+          <div class="admin-card">
+            <h2 style="margin:0 0 6px;font-size:15px;font-weight:800;color:var(--text-strong)">Varsler er ikke slått på ennå</h2>
+            <span class="admin-card-sub">Kjør <code>supabase/schema.sql</code> på nytt (seksjon 62) for å begynne å logge nye registreringer og blokkeringer.</span>
+          </div>
+        </div>
+      `;
+    }
+
+    const unread = unreadNotificationCount();
+    const rows = state.notifications.map((n) => {
+      const meta = NOTIFICATION_META[n.kind] || { label: n.kind.toUpperCase(), cls: "" };
+      // Blokkeringsvarsler lenker rett til samtalen mellom de to, som er det
+      // eneste stedet man faktisk kan vurdere hva som har skjedd.
+      const action = n.kind === "block" && n.actor_id && n.target_id
+        ? `<button type="button" class="admin-btn-ghost" data-open-block="${n.actor_id}:${n.target_id}">Se samtalen</button>`
+        : n.actor_username
+          ? `<a class="admin-profile-link" href="spillerprofil.html?u=${encodeURIComponent(n.actor_username)}" target="_blank">Profil ↗</a>`
+          : "";
+      return `
+        <div class="admin-notification${n.read_at ? "" : " is-unread"}">
+          <span class="admin-notification-kind ${meta.cls}">${meta.label}</span>
+          <span class="admin-notification-body">${escapeHTML(n.body)}</span>
+          <span class="admin-notification-time">${new Date(n.created_at).toLocaleString("no-NO")}</span>
+          ${action}
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="admin-section">
+        <div class="admin-toolbar">
+          <span class="admin-toolbar-count">${state.notifications.length} varsler${unread ? ` · ${unread} uleste` : ""}</span>
+          <span class="admin-card-spacer"></span>
+          <button type="button" class="admin-btn-ghost" data-notifications-read ${unread ? "" : "disabled"}>Marker alle som lest</button>
+        </div>
+        <div class="admin-row-list">${rows || `<p class="admin-card-sub">Ingen varsler ennå.</p>`}</div>
+      </div>
+    `;
+  }
+
+  async function markNotificationsRead() {
+    const { error } = await sb.rpc("admin_notifications_mark_read");
+    if (error) return flash(Auth.friendlyAuthError(error));
+    const now = new Date().toISOString();
+    state.notifications.forEach((n) => { if (!n.read_at) n.read_at = now; });
+    renderAll();
+    flash("Varsler markert som lest");
+  }
+
+  // ---------------------------------------------------------------------
+  // Blokkeringer
+  // ---------------------------------------------------------------------
+
+  function blockKey(b) { return `${b.blocker_id}:${b.blocked_id}`; }
+
+  function renderBlokkeringer() {
+    const rows = state.blocks.map((b) => {
+      const key = blockKey(b);
+      const open = state.openBlock === key;
+      return `
+        <div class="admin-row-card">
+          <div class="admin-row-head" style="cursor:default">
+            <span class="admin-row-titles">
+              <span class="admin-row-title-line">
+                <span class="admin-row-title">${escapeHTML(b.blocker_username)}</span>
+                <span class="admin-row-side-label">blokkerte</span>
+                <span class="admin-row-title">${escapeHTML(b.blocked_username)}</span>
+              </span>
+              <span class="admin-row-sub">${b.message_count} meldinger · ${formatDate(b.created_at)}</span>
+            </span>
+            <button type="button" class="admin-btn-ghost" data-open-block="${key}">${open ? "Skjul samtalen" : "Se samtalen"}</button>
+            <button type="button" class="admin-btn-ghost is-danger" data-remove-block="${key}">Opphev</button>
+          </div>
+          ${open ? `
+            <div class="admin-conversation">
+              ${state.blockConversation.length
+                ? state.blockConversation.map((m) => `
+                    <div class="admin-conversation-row">
+                      <span class="admin-conversation-who">${escapeHTML(m.sender_username)}</span>
+                      <span class="admin-conversation-body">${escapeHTML(m.body)}</span>
+                      <span class="admin-conversation-time">${new Date(m.created_at).toLocaleString("no-NO")}</span>
+                    </div>`).join("")
+                : `<p class="admin-card-sub">Ingen meldinger mellom disse to.</p>`}
+            </div>` : ""}
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="admin-section">
+        <div class="admin-toolbar">
+          <span class="admin-toolbar-count">${state.blocks.length} blokkeringer</span>
+        </div>
+        <div class="admin-card">
+          <span class="admin-card-sub">
+            Innsyn i samtalen er et administratorverktøy for å vurdere om det ligger
+            noe alvorlig bak en blokkering. Bruk det deretter.
+          </span>
+        </div>
+        <div class="admin-row-list">${rows || `<p class="admin-card-sub">Ingen har blokkert noen.</p>`}</div>
+      </div>
+    `;
+  }
+
+  async function toggleBlockConversation(key) {
+    if (state.openBlock === key) {
+      state.openBlock = null;
+      state.blockConversation = [];
+      return renderMain();
+    }
+    const [a, b] = key.split(":");
+    const { data, error } = await sb.rpc("admin_conversation", { p_a: a, p_b: b });
+    if (error) return flash(Auth.friendlyAuthError(error));
+    state.openBlock = key;
+    state.blockConversation = data || [];
+    if (state.view !== "blokkeringer") return goView("blokkeringer");
+    renderMain();
+  }
+
+  async function removeBlock(key) {
+    const [a, b] = key.split(":");
+    const row = state.blocks.find((x) => blockKey(x) === key);
+    if (!row) return;
+    if (!window.confirm(`Oppheve blokkeringen ${row.blocker_username} → ${row.blocked_username}?`)) return;
+    const { error } = await sb.rpc("admin_remove_block", { p_blocker: a, p_blocked: b });
+    if (error) return flash(Auth.friendlyAuthError(error));
+    state.blocks = state.blocks.filter((x) => blockKey(x) !== key);
+    if (state.openBlock === key) { state.openBlock = null; state.blockConversation = []; }
+    renderMain();
+    flash("Blokkering opphevet");
   }
 
   // ---------------------------------------------------------------------
@@ -1897,6 +2235,8 @@
       brukere: renderBrukere,
       avatar: renderAvatar,
       koder: renderKoder,
+      varsler: renderVarsler,
+      blokkeringer: renderBlokkeringer,
       drift: renderEmptyView,
     };
     const fn = renderers[state.view] || renderOversikt;
@@ -1997,6 +2337,14 @@
       return;
     }
 
+    const rewardSnorreToggle = t.closest("[data-reward-snorre-toggle]");
+    if (rewardSnorreToggle) {
+      e.stopPropagation();
+      const r = findReward(Number(rewardSnorreToggle.dataset.rewardSnorreToggle));
+      if (r) saveReward(r, { supports_snorre: !r.supports_snorre }).then((ok) => { if (ok) { renderMain(); flash(r.supports_snorre ? "«Støtter Snorre» er på" : "«Støtter Snorre» er av"); } });
+      return;
+    }
+
     const rewardDeactivate = t.closest("[data-reward-deactivate]");
     if (rewardDeactivate) {
       const r = findReward(Number(rewardDeactivate.dataset.rewardDeactivate));
@@ -2081,8 +2429,33 @@
       state.editingName = state.editingName === id ? null : id;
       return renderUsersDynamic();
     }
+    const avatarEdit = t.closest("[data-user-avatar-edit]");
+    if (avatarEdit) {
+      const id = avatarEdit.dataset.userAvatarEdit;
+      state.editingAvatar = state.editingAvatar === id ? null : id;
+      return renderUsersDynamic();
+    }
+    const avatarIcon = t.closest("[data-user-avatar-icon]");
+    if (avatarIcon) {
+      const u = findUser(avatarIcon.dataset.userAvatarIcon);
+      if (u) saveUserAvatar(u, { avatar_icon: avatarIcon.dataset.value });
+      return;
+    }
+    const avatarColor = t.closest("[data-user-avatar-color]");
+    if (avatarColor) {
+      const u = findUser(avatarColor.dataset.userAvatarColor);
+      if (u) saveUserAvatar(u, { avatar_color: avatarColor.dataset.value });
+      return;
+    }
     const delUser = t.closest("[data-user-delete]");
     if (delUser) { const u = findUser(delUser.dataset.userDelete); if (u) deleteUser(u); return; }
+
+    // Varsler og blokkeringer
+    if (t.closest("[data-notifications-read]")) return markNotificationsRead();
+    const openBlock = t.closest("[data-open-block]");
+    if (openBlock) return toggleBlockConversation(openBlock.dataset.openBlock);
+    const removeBlockBtn = t.closest("[data-remove-block]");
+    if (removeBlockBtn) return removeBlock(removeBlockBtn.dataset.removeBlock);
     if (t.closest("[data-bulk-admin]")) return bulkSetAdmin(true);
     if (t.closest("[data-bulk-unadmin]")) return bulkSetAdmin(false);
     if (t.closest("[data-bulk-delete]")) return bulkDelete();
@@ -2128,10 +2501,20 @@
       saveAvatarOptions().then((ok) => { if (ok) { renderMain(); flash("Farge lagt til"); } });
       return;
     }
+    const removeAvatarImg = t.closest("[data-remove-avatar-image]");
+    if (removeAvatarImg) {
+      removeAvatarImage(removeAvatarImg.dataset.removeAvatarImage);
+      return;
+    }
   }
 
   function onMainChange(e) {
     const t = e.target;
+    if (t.matches("[data-avatar-upload]")) {
+      const file = t.files && t.files[0];
+      if (file) uploadAvatarImage(file);
+      return;
+    }
     const rewardUpload = t.closest("[data-reward-upload]");
     if (rewardUpload) {
       const r = findReward(Number(rewardUpload.dataset.rewardUpload));
@@ -2230,10 +2613,10 @@
     e.dataTransfer.effectAllowed = "move";
   }
   function onMainDragOver(e) {
-    // Slippsonen for rabattbilder: markeres direkte på elementet (ikke via
-    // state + render), siden en rerendring midt i et dra-og-slipp bytter ut
-    // DOM-noden og avbryter selve slippet.
-    const zone = e.target.closest("[data-reward-dropzone]");
+    // Slippsonene for rabatt-/profilbilder: markeres direkte på elementet
+    // (ikke via state + render), siden en rerendring midt i et dra-og-slipp
+    // bytter ut DOM-noden og avbryter selve slippet.
+    const zone = e.target.closest("[data-reward-dropzone], [data-avatar-dropzone]");
     if (zone) {
       if (zone.classList.contains("is-busy")) return;
       e.preventDefault();
@@ -2245,18 +2628,27 @@
     if (e.target.closest("[data-game-row]")) e.preventDefault();
   }
   function onMainDragLeave(e) {
-    const zone = e.target.closest("[data-reward-dropzone]");
+    const zone = e.target.closest("[data-reward-dropzone], [data-avatar-dropzone]");
     if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove("is-dragover");
   }
   function onMainDrop(e) {
-    const zone = e.target.closest("[data-reward-dropzone]");
-    if (zone) {
+    const rewardZone = e.target.closest("[data-reward-dropzone]");
+    if (rewardZone) {
       e.preventDefault();
-      zone.classList.remove("is-dragover");
-      if (zone.classList.contains("is-busy")) return;
-      const r = findReward(Number(zone.dataset.rewardDropzone));
+      rewardZone.classList.remove("is-dragover");
+      if (rewardZone.classList.contains("is-busy")) return;
+      const r = findReward(Number(rewardZone.dataset.rewardDropzone));
       const file = e.dataTransfer.files && e.dataTransfer.files[0];
       if (r && file) uploadRewardImage(r, file);
+      return;
+    }
+    const avatarZone = e.target.closest("[data-avatar-dropzone]");
+    if (avatarZone) {
+      e.preventDefault();
+      avatarZone.classList.remove("is-dragover");
+      if (avatarZone.classList.contains("is-busy")) return;
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) uploadAvatarImage(file);
       return;
     }
     const row = e.target.closest("[data-game-row]");

@@ -6,13 +6,10 @@
 <title>Studilla · Innstillinger</title>
 <meta name="description" content="Administrer kontoen og innstillingene dine hos Studilla.">
 <meta name="robots" content="noindex, nofollow">
-<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-<link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
-<meta name="theme-color" content="#0d1117">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css" data-studilla-head>
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/social.css">
 </head>
 <body data-page="profil">
 <div class="page">
@@ -32,7 +29,9 @@
       <div class="settings-layout">
         <nav class="settings-nav" data-settings-nav>
           <a href="#profil-seksjon" class="settings-nav-link is-active" data-nav-target="profil-seksjon">Profil</a>
+          <a href="#varsler-seksjon" class="settings-nav-link" data-nav-target="varsler-seksjon">Varsler</a>
           <a href="#personvern-seksjon" class="settings-nav-link" data-nav-target="personvern-seksjon">Personvern</a>
+          <a href="#blokkerte-seksjon" class="settings-nav-link" data-nav-target="blokkerte-seksjon">Blokkerte</a>
           <a href="#konto-seksjon" class="settings-nav-link" data-nav-target="konto-seksjon">Konto</a>
         </nav>
 
@@ -78,6 +77,23 @@
             </div>
           </div>
 
+          <div class="settings-card" id="varsler-seksjon">
+            <div class="settings-section">
+              <h2>Varsler</h2>
+              <span class="settings-section-sub">Hva som skal dukke opp mens du er andre steder på siden.</span>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Vis nye meldinger som sprettopp</span>
+                <span>Et lite kort nede i hjørnet når noen skriver til deg, uansett hvilken side du står på. Prikken i menyen vises uansett.</span>
+              </div>
+              <button type="button" class="toggle-switch" data-toggle-popups aria-label="Vis nye meldinger som sprettopp">
+                <span class="toggle-switch-knob"></span>
+              </button>
+            </div>
+          </div>
+
           <div class="settings-card" id="personvern-seksjon">
             <div class="settings-section">
               <h2>Personvern</h2>
@@ -108,6 +124,18 @@
                 <span data-public-profile-url>–</span>
               </div>
               <a class="btn-outline-sm" data-public-profile-link href="#">Åpne</a>
+            </div>
+          </div>
+
+          <!-- Blokkerte brukere. Lista er privat: den som er blokkert får ikke
+               vite det, og ingen andre enn deg ser den. -->
+          <div class="settings-card" id="blokkerte-seksjon">
+            <div class="settings-section">
+              <h2>Blokkerte brukere</h2>
+              <span class="settings-section-sub">Dere kan ikke sende meldinger til hverandre eller være venner. De får ikke beskjed om at du har blokkert dem.</span>
+            </div>
+            <div data-blocked-list>
+              <p class="section-sub">Laster …</p>
             </div>
           </div>
 
@@ -160,11 +188,14 @@
 <script src="js/consent.js"></script>
 <script src="js/cookie-banner.js"></script>
 <script src="js/feature-flags.js"></script>
+<script src="js/layout-markup.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/social.js"></script>
+<script src="js/dm-popup.js"></script>
 <script src="js/visit-tracking.js"></script>
 <script src="js/games-data.js"></script>
 <script>
@@ -173,6 +204,7 @@
   const sb = window.supabaseClient;
   const Auth = window.StudillaAuth;
   const Avatars = window.StudillaAvatars;
+  const Social = window.StudillaSocial;
 
   let profile = null;
   let avatarOptions = { colors: [], icons: [] };
@@ -202,6 +234,25 @@
     const toggle = document.querySelector("[data-toggle-hidden]");
     toggle.classList.toggle("is-on", !!profile.is_hidden);
   }
+
+  // Sprettoppvarselet (js/dm-popup.js) er på som standard. Kolonnen mangler
+  // på databaser der migrasjonen ikke er kjørt – da regnes den som på, som
+  // er standardverdien.
+  function renderNotifications() {
+    const toggle = document.querySelector("[data-toggle-popups]");
+    toggle.classList.toggle("is-on", profile.dm_popups_enabled !== false);
+  }
+
+  document.querySelector("[data-toggle-popups]").addEventListener("click", async () => {
+    const nextValue = profile.dm_popups_enabled === false;
+    const { error } = await sb.from("profiles").update({ dm_popups_enabled: nextValue }).eq("id", profile.id);
+    if (error) {
+      console.error(error);
+      return;
+    }
+    profile.dm_popups_enabled = nextValue;
+    renderNotifications();
+  });
 
   // ---------- Brukernavn ----------
   const usernameToggleBtn = document.querySelector("[data-toggle-username-form]");
@@ -276,7 +327,7 @@
     figurePicker.innerHTML = (avatarOptions.icons || [])
       .map(
         (key) => `
-        <button type="button" class="figure-swatch ${key === profile.avatar_icon ? "is-selected" : ""}" data-figure="${key}" title="${Avatars.figureLabel(key)}">${Avatars.figureSVG(key)}</button>
+        <button type="button" class="figure-swatch${Avatars.isImageIcon(key) ? " avatar-image-swatch" : ""} ${key === profile.avatar_icon ? "is-selected" : ""}" data-figure="${key}" title="${Avatars.figureLabel(key)}">${Avatars.figureSVG(key)}</button>
       `
       )
       .join("");
@@ -325,6 +376,61 @@
   document.querySelector("[data-close-avatar-modal]").addEventListener("click", closeAvatarModal);
   document.querySelector("[data-avatar-modal-backdrop]").addEventListener("click", closeAvatarModal);
 
+  function relTime(iso) {
+    const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    if (days <= 0) return "i dag";
+    if (days === 1) return "i går";
+    return `${days} dager siden`;
+  }
+
+  /**
+   * Blokkerte brukere. Går gjennom my_blocked_users (schema.sql seksjon 59)
+   * fordi user_blocks bare inneholder id-er, og andres profilrader er stengt
+   * for vanlige brukere – uten den hadde lista vist rå uuid-er.
+   */
+  async function renderBlocked() {
+    const el = document.querySelector("[data-blocked-list]");
+    if (!Social) {
+      el.innerHTML = `<p class="section-sub">Blokkering er ikke satt opp ennå.</p>`;
+      return;
+    }
+
+    let rows = [];
+    try {
+      rows = await Social.blockedUsers();
+    } catch (e) {
+      el.innerHTML = `<p class="section-sub">Klarte ikke hente lista.</p>`;
+      return;
+    }
+
+    if (!rows.length) {
+      el.innerHTML = `<p class="section-sub">Du har ikke blokkert noen.</p>`;
+      return;
+    }
+
+    el.innerHTML = rows
+      .map((b) => `
+        <div class="settings-row">
+          <div style="display:flex;align-items:center;gap:12px">
+            ${Avatars.avatarBadgeHTML(b.avatar_color, b.avatar_icon, 34)}
+            <div class="settings-row-label">
+              <span>${Social.escapeHTML(b.username)}</span>
+              <span>Blokkert ${relTime(b.created_at)}</span>
+            </div>
+          </div>
+          <button type="button" class="btn-outline-sm" data-unblock="${b.user_id}">Opphev</button>
+        </div>`)
+      .join("");
+
+    el.querySelectorAll("[data-unblock]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        await Social.unblock(btn.dataset.unblock);
+        renderBlocked();
+      });
+    });
+  }
+
   // ---------- Sticky-nav aktiv seksjon ----------
   document.querySelectorAll("[data-nav-target]").forEach((link) => {
     link.addEventListener("click", () => {
@@ -359,6 +465,8 @@
     document.querySelector("[data-settings-main]").hidden = false;
     renderIdentity();
     renderPrivacy();
+    renderNotifications();
+    renderBlocked();
     await loadAvatarOptions();
   })();
 })();

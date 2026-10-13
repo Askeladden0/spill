@@ -1,0 +1,14 @@
+{
+  "name": "studilla",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Studilla – statisk nettside med et lite byggesteg for felles head/meny og cache-busting.",
+  "type": "module",
+  "scripts": {
+    "build": "node build/build.mjs",
+    "dev": "node build/build.mjs && cd dist && python3 -m http.server 8000"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

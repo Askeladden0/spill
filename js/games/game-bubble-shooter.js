@@ -11,20 +11,70 @@
   "use strict";
 
   const GAME_ID = "bubble-shooter";
-  const COLS = 9;
   const RADIUS = 20;
   const COL_WIDTH = RADIUS * 2;
   const ROW_HEIGHT = RADIUS * Math.sqrt(3);
-  const FILLED_ROWS = 6;
   const TOTAL_ROWS = 13;
+  const FILLED_ROWS = 8;
+  // Høyden på selve kulefeltet – alt over skytteren.
+  const FIELD_HEIGHT = Math.round(TOTAL_ROWS * ROW_HEIGHT + RADIUS * 2 + 90);
+  // Selve spillbrettet (hele spilleflaten) skal ha sideforholdet 7:6
+  // (bredde:høyde), så antall kolonner beregnes ut fra høyden i stedet for
+  // å være et fast tall.
+  const BOARD_RATIO_W = 7;
+  const BOARD_RATIO_H = 6;
+  const COLS = Math.round((FIELD_HEIGHT * (BOARD_RATIO_W / BOARD_RATIO_H)) / COL_WIDTH);
   const WIDTH = COLS * COL_WIDTH;
-  const HEIGHT = Math.round(TOTAL_ROWS * ROW_HEIGHT + RADIUS * 2 + 90);
-  const SHOOTER_Y = HEIGHT - 40;
+  const SHOOTER_Y = FIELD_HEIGHT - 40;
+  // Kanvaset må være litt høyere enn kulefeltet: skytteren TEGNES et stykke
+  // under SHOOTER_Y (se render()), og med høyden satt til kulefeltet alene
+  // ble den nederste delen av kula og holderen klippet bort av kanten.
+  // Det var lett å overse da brettet var lite, men er godt synlig nå som
+  // spillet fyller skjermen. Kolonnetallet regnes fortsatt ut fra
+  // kulefeltet, så brettet og fysikken er nøyaktig som før.
+  const HEIGHT = SHOOTER_Y + RADIUS * 2 + 18;
   const DANGER_Y = SHOOTER_Y - RADIUS * 2.4;
   const SPEED = 620; // px/sek
   const MAX_AIM_DEG = 75;
 
-  const PALETTE = ["#f55c9b", "#3f8ff0", "#2ee87f", "#f5c95c", "#a56cf5"];
+  const ASSET_DIR = "assets/img/games/bubble-shooter/";
+  const BUBBLE_COLORS = {
+    red: "#e8384f",
+    orange: "#f2892a",
+    yellow: "#f0c419",
+    green: "#22b34f",
+    skyblue: "#29b6e8",
+    blue: "#3f66e0",
+    purple: "#a83fe8",
+    magenta: "#d63fc9",
+    pink: "#f28fce",
+  };
+  const PALETTE = Object.keys(BUBBLE_COLORS);
+
+  const bubbleImages = {};
+  for (const name of PALETTE) {
+    const img = new Image();
+    img.src = ASSET_DIR + name + ".svg";
+    bubbleImages[name] = img;
+  }
+  const skyImage = new Image();
+  skyImage.src = ASSET_DIR + "bg-sky.svg";
+
+  // Lagrede spill fra før paletten ble byttet til bilde-assets kan ha
+  // hex-fargekoder liggende i brettet/current/next. Map dem til de nye
+  // fargenøklene, ellers vises de gamle kulene fortsatt med flat farge
+  // i stedet for de nye illustrerte assetsa.
+  const LEGACY_COLOR_MAP = {
+    "#f55c9b": "magenta",
+    "#3f8ff0": "blue",
+    "#2ee87f": "green",
+    "#f5c95c": "yellow",
+    "#a56cf5": "purple",
+    indigo: "blue",
+  };
+  function migrateColor(color) {
+    return LEGACY_COLOR_MAP[color] || color;
+  }
 
   function colsInRow(r) {
     return r % 2 === 0 ? COLS : COLS - 1;
@@ -49,7 +99,17 @@
   }
 
   function start(container) {
-    let grid = [];
+    // Fylles med bobler av initGame()/resumeGame() først etter mount().
+    // Startes likevel som et fullt, tomt rutenett (ikke []): session.onScale()
+    // kaller applyRenderScale() -> render() synkront med én gang den kobles
+    // til, FØR initGame() rekker å kjøre – og på skjermer med
+    // devicePixelRatio > 1 (så godt som alle mobiler og Retina-skjermer)
+    // trigges den første ombyggingen av tegneflaten alltid, uansett hvor lite
+    // brettet skaleres visuelt (se applyRenderScale). Var grid fortsatt []
+    // da, kastet render() en TypeError på grid[r][c], og siden det skjedde
+    // synkront inni .then()-kallbacken under, stoppet resten av den (inkl.
+    // initGame()) å kjøre i det hele tatt – brettet ble stående helt tomt.
+    let grid = Array.from({ length: TOTAL_ROWS }, (_, r) => Array(colsInRow(r)).fill(null));
     let score = 0;
     let over = false;
     let current = null;
@@ -62,15 +122,23 @@
     let rafId = null;
     let lastTime = 0;
     let effects = [];
+    // Hvor mange ekte skjermpiksler det går på én av canvasets egne
+    // koordinatpiksler. Settes av session.onScale() under.
+    let renderScale = 1;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
-        <p class="game-bubble-hint">Sikt med mus/finger og trykk/klikk for å skyte. Match tre eller flere kuler med samme farge!</p>
         <canvas class="board-bubble" data-board-bubble width="${WIDTH}" height="${HEIGHT}"></canvas>
       `;
       canvas = session.playArea.querySelector("[data-board-bubble]");
       ctx = canvas.getContext("2d");
+      // Spillflaten skalerer hele brettet opp for å fylle skjermen (se
+      // watchShellFit i js/game-runtime.js). Et canvas som bare strekkes opp
+      // blir uskarpt, så tegneflaten bygges i stedet om i den oppløsningen
+      // brettet faktisk vises i. CSS-størrelsen holdes fast på canvasets egne
+      // koordinater, slik at oppsettet rundt ikke endrer seg.
+      session.onScale(applyRenderScale);
       session.onRestart(() => initGame());
       attachControls();
       // Fortsett en påbegynt runde hvis den ligger lagret, ellers ny runde.
@@ -92,14 +160,16 @@
       if (!validGrid) return false;
       if (saved.grid.every((row) => row.every((cell) => !cell))) return false;
 
-      grid = saved.grid.map((row) => row.slice());
+      grid = saved.grid.map((row) => row.map((cell) => (cell ? migrateColor(cell) : cell)));
       score = Number(saved.score) || 0;
       over = false;
       moving = null;
       effects = [];
       aimAngle = 0;
-      current = PALETTE.includes(saved.current) ? saved.current : randomColor();
-      next = PALETTE.includes(saved.next) ? saved.next : randomColor();
+      const savedCurrent = migrateColor(saved.current);
+      const savedNext = migrateColor(saved.next);
+      current = PALETTE.includes(savedCurrent) ? savedCurrent : randomColor();
+      next = PALETTE.includes(savedNext) ? savedNext : randomColor();
       session.setScore(score);
       session.hideOverlay();
       render();
@@ -331,8 +401,11 @@
     function pointerPos(e) {
       const rect = canvas.getBoundingClientRect();
       const t = e.touches && e.touches[0] ? e.touches[0] : e;
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
+      // WIDTH/HEIGHT (koordinatsystemet), ikke canvas.width/height
+      // (tegneflaten): de to er ikke like når tegneflaten bygges opp i høyere
+      // oppløsning, og sikte-punktet ville da havnet langt utenfor brettet.
+      const scaleX = WIDTH / rect.width;
+      const scaleY = HEIGHT / rect.height;
       return { x: (t.clientX - rect.left) * scaleX, y: (t.clientY - rect.top) * scaleY };
     }
 
@@ -362,9 +435,14 @@
     }
 
     function drawBubble(x, y, color) {
+      const img = bubbleImages[color];
+      if (img && img.complete && img.naturalWidth) {
+        ctx.drawImage(img, x - RADIUS, y - RADIUS, RADIUS * 2, RADIUS * 2);
+        return;
+      }
       ctx.beginPath();
       ctx.arc(x, y, RADIUS - 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = color;
+      ctx.fillStyle = BUBBLE_COLORS[color] || color;
       ctx.fill();
       ctx.beginPath();
       ctx.arc(x - RADIUS * 0.3, y - RADIUS * 0.35, RADIUS * 0.28, 0, Math.PI * 2);
@@ -372,9 +450,39 @@
       ctx.fill();
     }
 
+    /**
+     * Bygger om tegneflaten slik at én koordinatpiksel tilsvarer én ekte
+     * skjermpiksel ved den skaleringen brettet vises i nå. Taket på 3 holder
+     * minnebruken nede på skjermer med høy pikseltetthet.
+     */
+    function applyRenderScale(scale) {
+      if (!canvas) return;
+      // Låses uansett: tegneflaten (width/height-attributtene) endrer også
+      // canvasets naturlige størrelse, så uten en eksplisitt CSS-størrelse
+      // ville brettet hoppet i størrelse når oppløsningen endres.
+      canvas.style.width = `${WIDTH}px`;
+      canvas.style.height = `${HEIGHT}px`;
+      const dpr = window.devicePixelRatio || 1;
+      const next = Math.min(3, Math.max(1, (scale || 1) * dpr));
+      if (Math.abs(next - renderScale) < 0.01 && canvas.width) return;
+      renderScale = next;
+      canvas.width = Math.round(WIDTH * renderScale);
+      canvas.height = Math.round(HEIGHT * renderScale);
+      render();
+    }
+
     function render() {
       if (!ctx) return;
+      // Alt tegnes i canvasets egne WIDTH/HEIGHT-koordinater; denne
+      // transformen oversetter dem til den faktiske tegneflaten.
+      ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
       ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      if (skyImage.complete && skyImage.naturalWidth) {
+        ctx.drawImage(skyImage, 0, 0, WIDTH, HEIGHT);
+      } else {
+        ctx.fillStyle = "#bfe4fb";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      }
 
       ctx.strokeStyle = "rgba(255,80,120,.35)";
       ctx.setLineDash([6, 6]);
@@ -413,13 +521,36 @@
       if (!moving && !over) {
         const dx = Math.sin(aimAngle);
         const dy = -Math.cos(aimAngle);
-        ctx.strokeStyle = "rgba(255,255,255,.25)";
-        ctx.setLineDash([4, 8]);
+        const originX = WIDTH / 2;
+        const originY = SHOOTER_Y + RADIUS + 10;
+        const shaftStart = RADIUS + 8;
+        const shaftEnd = RADIUS + 34;
+        const baseX = originX + dx * shaftStart;
+        const baseY = originY + dy * shaftStart;
+        const tipX = originX + dx * shaftEnd;
+        const tipY = originY + dy * shaftEnd;
+
+        ctx.strokeStyle = "rgba(255,255,255,.85)";
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(WIDTH / 2, SHOOTER_Y);
-        ctx.lineTo(WIDTH / 2 + dx * 260, SHOOTER_Y + dy * 260);
+        ctx.moveTo(baseX, baseY);
+        ctx.lineTo(tipX, tipY);
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.lineWidth = 1;
+
+        const headLen = 12;
+        const angle = Math.atan2(dy, dx);
+        const leftX = tipX - headLen * Math.cos(angle - Math.PI / 6);
+        const leftY = tipY - headLen * Math.sin(angle - Math.PI / 6);
+        const rightX = tipX - headLen * Math.cos(angle + Math.PI / 6);
+        const rightY = tipY - headLen * Math.sin(angle + Math.PI / 6);
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.lineTo(leftX, leftY);
+        ctx.lineTo(rightX, rightY);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(255,255,255,.9)";
+        ctx.fill();
       }
 
       ctx.beginPath();

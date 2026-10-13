@@ -3,26 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Studilla · Nye triks hver dag</title>
-<meta name="description" content="Oppdag nye triks for å spare og tjene penger hver dag. Fullfør daglige utfordringer og samle poeng.">
+<title>Studilla</title>
+<meta name="description" content="Nye triks hver dag. Slå din egen rekord og se hvem av vennene dine som ligger foran.">
 <meta property="og:title" content="Studilla · Nye triks hver dag">
-<meta property="og:description" content="Oppdag nye triks for å spare og tjene penger hver dag. Fullfør daglige utfordringer og samle poeng.">
+<meta property="og:description" content="Nye triks hver dag. Slå din egen rekord og se hvem av vennene dine som ligger foran.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Studilla">
 <meta name="twitter:card" content="summary">
-<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-<link rel="mask-icon" href="assets/img/favicon.svg" color="#2ee87f">
-<meta name="theme-color" content="#0d1117">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css" data-studilla-head>
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/social.css">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "Studilla",
-  "description": "Triks for å spare og tjene penger — fullfør daglige utfordringer og samle poeng."
+  "description": "Nye triks hver dag – slå din egen rekord og se hvem av vennene dine som ligger foran."
 }
 </script>
 </head>
@@ -31,21 +28,38 @@
 
   <div id="site-header"></div>
 
-  <main>
-    <section>
-      <div class="section-heading">
-        <h1>Dagens triks</h1>
-        <span class="section-sub" data-daily-countdown>Byttes ut ved midnatt</span>
+  <main id="hovedinnhold">
+    <!-- Hilsen fra Snorre i full bredde øverst. -->
+    <section class="hero-section">
+      <div class="hero-greeting">
+        <h1>Hellu:) Hyggelig å se deg!</h1>
+        <p class="hero-lead">
+          Jeg har drevet og bygget denne nettsiden de siste ukene etter det ble satt inn
+          nettfiltre i Osloskolen. Gjerne send meg en melding her eller på TikTok med
+          tilbakemeldinger.
+        </p>
+        <div class="hero-byline">
+          <img src="assets/img/snorre-saus-avatar.jpeg" alt="" width="28" height="28">
+          <span>Snorre Saus</span>
+          <span class="hero-byline-sep">·</span>
+          <a href="kontakt.html">Send en melding</a>
+        </div>
       </div>
-      <div class="hero-card" data-hero></div>
     </section>
 
-    <section id="spill">
-      <div class="section-heading spread">
-        <h2>Alle triks</h2>
-        <span class="section-sub" data-game-count></span>
-      </div>
+    <!-- Teaser for velkomstrabatten (js/case-teaser.js). Samme boks som på
+         premiesiden; vises ikke når rabatten allerede er åpnet. -->
+    <section class="case-teaser" data-case-teaser hidden></section>
+
+    <section id="alle">
       <div class="game-grid" data-game-grid></div>
+    </section>
+
+    <!-- Guidene lå tidligere som en isolert øy bak ett menypunkt. Forsiden
+         viser nå den fremhevede guiden i full bredde, med én vei videre til
+         resten – i stedet for en rad med små kort. -->
+    <section data-front-guide-section hidden>
+      <div data-front-guide></div>
     </section>
   </main>
 
@@ -55,13 +69,21 @@
 <script src="js/consent.js"></script>
 <script src="js/cookie-banner.js"></script>
 <script src="js/feature-flags.js"></script>
+<script src="js/layout-markup.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/avatar-figures.js"></script>
+<script src="js/snorre-tag.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/social.js"></script>
+<script src="js/dm-popup.js"></script>
 <script src="js/visit-tracking.js"></script>
 <script src="js/games-data.js"></script>
+<script src="js/guides-data.js"></script>
+<script src="js/levelup-modal.js"></script>
+<script src="js/game-runtime.js"></script>
+<script src="js/case-teaser.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

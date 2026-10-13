@@ -119,7 +119,18 @@
       .join(" ");
   }
 
+  // Avatar-ikoner er enten en av de innebygde figur-nøklene over, eller en
+  // URL til et bilde admin har lastet opp (avatar-images-bucketen, se
+  // supabase/schema.sql seksjon 31b) lagret direkte som avatar_icon.
+  function isImageIcon(key) {
+    return typeof key === "string" && /^https?:\/\//.test(key);
+  }
+
   function figureSVG(key) {
+    if (isImageIcon(key)) {
+      const safeUrl = key.replace(/"/g, "%22");
+      return `<img src="${safeUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit">`;
+    }
     const spec = FIGURES[key] || FIGURES[DEFAULT_FIGURE];
     const shapes = spec.shapes
       .map(([tag, attrs]) => {
@@ -132,20 +143,23 @@
   }
 
   function figureLabel(key) {
+    if (isImageIcon(key)) return "Opplastet bilde";
     return (FIGURES[key] || FIGURES[DEFAULT_FIGURE]).label;
   }
 
   /**
    * Ferdig avatar-badge (farget boks med figur i) i ønsket størrelse.
-   * Brukes overalt i stedet for det gamle emoji-badget.
+   * Brukes overalt i stedet for det gamle emoji-badget. For opplastede
+   * bilder fylles hele boksen (uten padding rundt figuren).
    */
   function avatarBadgeHTML(colorHex, figureKey, size, opts) {
     const px = size || 30;
     const color = colorHex || DEFAULT_COLORS[0];
-    const pad = Math.round(px * 0.16);
+    const isImage = isImageIcon(figureKey);
+    const pad = isImage ? 0 : Math.round(px * 0.16);
     const extraClass = (opts && opts.className) ? " " + opts.className : "";
     const extraAttrs = (opts && opts.attrs) || "";
-    return `<span class="avatar-badge${extraClass}" style="width:${px}px;height:${px}px;background:${color};border:1px solid ${color}66;color:${HOLE_FILL};padding:${pad}px" ${extraAttrs}>${figureSVG(figureKey)}</span>`;
+    return `<span class="avatar-badge${extraClass}" style="width:${px}px;height:${px}px;background:${color};border:1px solid ${color}66;color:${HOLE_FILL};padding:${pad}px;overflow:hidden" ${extraAttrs}>${figureSVG(figureKey)}</span>`;
   }
 
   window.StudillaAvatars = {
@@ -153,6 +167,7 @@
     FIGURE_KEYS,
     DEFAULT_FIGURE,
     DEFAULT_COLORS,
+    isImageIcon,
     figureSVG,
     figureLabel,
     avatarBadgeHTML,

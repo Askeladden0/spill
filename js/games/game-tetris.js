@@ -48,7 +48,6 @@
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
-        <p class="game-tetris-hint">Piltaster/WASD for å flytte, opp/W for å rotere, mellomrom for hard drop. Sveip eller bruk knappene på mobil.</p>
         <div class="tetris-layout">
           <div class="board-tetris" data-board-tetris tabindex="0"></div>
           <div class="tetris-side">
@@ -216,7 +215,7 @@
         if (!occupied(rotated, piece.row, piece.col + kick)) {
           piece.cells = rotated;
           piece.col += kick;
-          render();
+          render(null, null, true);
           return;
         }
       }
@@ -300,16 +299,22 @@
       while (tryMove(1, 0)) dist++;
       if (dist > 0) {
         score += dist * 2;
-        const boardEl = session.playArea.querySelector("[data-board-tetris]");
-        if (boardEl) {
-          boardEl.classList.remove("is-impact");
-          // eslint-disable-next-line no-unused-expressions
-          boardEl.offsetWidth;
-          boardEl.classList.add("is-impact");
-        }
+        pulseBoard("is-impact-hard");
       }
       lockPiece();
       session.setScore(score);
+    }
+
+    // Kort visuell puls på selve brettet (rødt "BOOM" for hardt fall).
+    // Fjernes og legges på igjen for å tvinge omstart av CSS-animasjonen
+    // selv om samme klasse allerede er lagt til nylig.
+    function pulseBoard(className) {
+      const boardEl = session.playArea.querySelector("[data-board-tetris]");
+      if (!boardEl) return;
+      boardEl.classList.remove(className);
+      // eslint-disable-next-line no-unused-expressions
+      boardEl.offsetWidth;
+      boardEl.classList.add(className);
     }
 
     function endGame() {
@@ -324,7 +329,7 @@
       return r;
     }
 
-    function render(flashRows, justLockedKeys) {
+    function render(flashRows, justLockedKeys, rotating) {
       flashRows = flashRows || [];
       justLockedKeys = justLockedKeys || [];
       const boardEl = session.playArea.querySelector("[data-board-tetris]");
@@ -350,6 +355,7 @@
           const key = `${r},${c}`;
           if (active.has(key)) {
             cell.classList.add("is-filled", `is-${piece.color}`);
+            if (rotating) cell.classList.add("is-rotating");
           } else if (grid[r][c]) {
             cell.classList.add("is-filled", `is-${grid[r][c]}`);
             if (flashRows.includes(r)) cell.classList.add("is-clearing");

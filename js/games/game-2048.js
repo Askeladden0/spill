@@ -37,7 +37,6 @@
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
-        <p class="game-2048-hint">Bruk piltastene (eller sveip på mobil) for å flytte brikkene. Like tall slås sammen!</p>
         <div class="board-2048" data-board-2048 tabindex="0">
           <div class="board-2048-grid" data-board-2048-grid></div>
           <div class="board-2048-tiles" data-board-2048-tiles></div>
@@ -238,9 +237,16 @@
       return null;
     }
 
+    // Brikkenes top/left settes i det LOKALE (utransformerte) koordinat-
+    // systemet til brettet, siden hele spillskallet kan bli skalert ned med
+    // en CSS transform (js/game-runtime.js, watchShellFit) for å få plass i
+    // spillboksen. getBoundingClientRect() ville gitt skjermstørrelsen ETTER
+    // den skaleringen, som gjør brikkene feil store/plassert (de sklir
+    // utenfor rutene) så snart skallet skaleres ned. offsetWidth er
+    // upåvirket av forfedres transform og er derfor riktig her.
     function boardMetrics() {
-      const rect = boardGridEl.getBoundingClientRect();
-      const cellSize = (rect.width - (SIZE - 1) * GRID_GAP) / SIZE;
+      const width = boardGridEl.offsetWidth;
+      const cellSize = (width - (SIZE - 1) * GRID_GAP) / SIZE;
       return { cellSize };
     }
 

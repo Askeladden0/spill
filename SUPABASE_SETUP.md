@@ -35,8 +35,8 @@ Denne siden bruker [Supabase](https://supabase.com) for innlogging (brukernavn
 
 ## 3. Skru på innlogging med brukernavn
 
-Studilla logger inn med **brukernavn og passord** – ingen e-post og ingen
-Google-innlogging. Supabase Auth krever teknisk sett en e-postadresse per
+Studilla logger inn med **brukernavn og passord** (uten e-post), med «Fortsett med Google» som
+alternativ. Supabase Auth krever teknisk sett en e-postadresse per
 konto, så `js/auth.js` lager en intern adresse ut fra brukernavnet
 (`brukernavn@brukere.studilla.no`). Adressen brukes aldri til å sende noe, og
 den vises ikke for brukeren.
@@ -46,8 +46,9 @@ bekreftelse til en adresse som ikke finnes, og kontoen blir aldri aktiv:
 
 1. Supabase-dashbordet → **Authentication → Providers → Email**: la
    «Email» stå på, men skru **av** «Confirm email».
-2. Samme sted: skru **av** eventuelle andre providere (Google osv.) – de brukes
-   ikke lenger av `login.html`.
+2. Samme sted: skru **på** Google-provideren (klient-ID og hemmelighet fra Google
+   Cloud Console) hvis Google-innlogging skal virke, og legg nettstedets URL til
+   under **URL Configuration → Redirect URLs**.
 
 Fordi det ikke finnes noen e-postadresse, kan et glemt passord ikke
 tilbakestilles automatisk. Et passord byttes ved at en admin setter et nytt

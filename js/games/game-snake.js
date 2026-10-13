@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const SIZE = 16;
+  const SIZE = 10;
   const GAME_ID = "snake";
   const TICK_MS = 130;
 
@@ -22,15 +22,15 @@
     let timer = null;
     let session = null;
     let cellEls = null;
-    // Satt til true når en lagret runde er gjenopptatt: slangen står stille
-    // til spilleren gjør sitt første trekk, slik at man ikke krasjer med en
-    // gang siden åpnes igjen.
-    let waitingForResume = false;
+    let headFaceCell = null;
+    // Satt til true frem til spilleren trykker høyre-tast (eller sveiper
+    // høyre): slangen står stille helt til da, både ved ny runde og ved en
+    // gjenopptatt lagret runde, slik at man ikke krasjer med en gang.
+    let waitingToStart = false;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
       session.playArea.innerHTML = `
-        <p class="game-snake-hint">Bruk piltastene/WASD (eller sveip på mobil) for å styre slangen. Spis prikkene og unngå veggen og deg selv!</p>
         <div class="board-snake" data-board-snake tabindex="0"></div>
       `;
       session.onRestart(() => initGame());
@@ -65,7 +65,7 @@
 
       if (timer) clearInterval(timer);
       timer = null;
-      waitingForResume = true;
+      waitingToStart = true;
 
       const boardEl = session.playArea.querySelector("[data-board-snake]");
       if (boardEl) boardEl.focus({ preventScroll: true });
@@ -88,10 +88,10 @@
       session.setScore(0);
       session.hideOverlay();
       session.clearState();
-      waitingForResume = false;
+      waitingToStart = true;
 
       if (timer) clearInterval(timer);
-      timer = setInterval(tick, TICK_MS);
+      timer = null;
 
       const boardEl = session.playArea.querySelector("[data-board-snake]");
       if (boardEl) boardEl.focus({ preventScroll: true });
@@ -147,24 +147,36 @@
     function endGame() {
       over = true;
       if (timer) clearInterval(timer);
+      const face = headFaceCell && headFaceCell.querySelector(".snake-face");
+      if (face) face.classList.add("is-dead");
+      const boardEl = session.playArea.querySelector("[data-board-snake]");
+      if (boardEl) {
+        boardEl.classList.add("is-shaking");
+        setTimeout(() => boardEl.classList.remove("is-shaking"), 400);
+      }
       session.finish(score);
     }
 
     // Rutene bygges kun én gang og gjenbrukes videre (i stedet for å bygges
     // helt på nytt hvert eneste tikk). Slik kan CSS-overganger og
     // pop-animasjonen på nytt hode faktisk spille av i stedet for å bli
-    // avbrutt av at elementene stadig erstattes med helt nye.
+    // avbrutt av at elementene stadig erstattes med helt nye. Sjakkmønster-
+    // klassen (is-tile-b) settes kun her, siden brettmønsteret aldri endrer
+    // seg – render() rører den ikke.
     function buildBoard() {
       const boardEl = session.playArea.querySelector("[data-board-snake]");
       if (!boardEl) return null;
       boardEl.innerHTML = "";
       boardEl.style.setProperty("--snake-size", SIZE);
+      boardEl.classList.remove("is-shaking");
       cellEls = [];
+      headFaceCell = null;
+      faceEl = null;
       for (let r = 0; r < SIZE; r++) {
         const rowEls = [];
         for (let c = 0; c < SIZE; c++) {
           const cell = document.createElement("div");
-          cell.className = "cell-snake";
+          cell.className = "cell-snake" + ((r + c) % 2 ? " is-tile-b" : "");
           boardEl.appendChild(cell);
           rowEls.push(cell);
         }
@@ -173,25 +185,95 @@
       return boardEl;
     }
 
+    const DIR_DELTA = {
+      up: { dr: -1, dc: 0 },
+      down: { dr: 1, dc: 0 },
+      left: { dr: 0, dc: -1 },
+      right: { dr: 0, dc: 1 },
+    };
+
+    // Finner hvilke retninger et slangesegment henger sammen med naboene
+    // sine i (mot hodet og/eller mot halen), slik at kroppen kan tegnes som
+    // ett sammenhengende rør i stedet for adskilte klosser.
+    function segmentConnections(i) {
+      const cur = snake[i];
+      const dirs = [];
+      const neighbors = [snake[i - 1], snake[i + 1]];
+      for (const n of neighbors) {
+        if (!n) continue;
+        const dr = n.r - cur.r;
+        const dc = n.c - cur.c;
+        for (const dir in DIR_DELTA) {
+          if (DIR_DELTA[dir].dr === dr && DIR_DELTA[dir].dc === dc) dirs.push(dir);
+        }
+      }
+      return dirs;
+    }
+
+    const ROUND = 46;
+    const FLAT = 0;
+
+    function applyTubeShape(cell, dirs) {
+      const has = (d) => dirs.includes(d);
+      const tl = has("up") || has("left") ? FLAT : ROUND;
+      const tr = has("up") || has("right") ? FLAT : ROUND;
+      const br = has("down") || has("right") ? FLAT : ROUND;
+      const bl = has("down") || has("left") ? FLAT : ROUND;
+      cell.style.borderRadius = `${tl}% ${tr}% ${br}% ${bl}%`;
+    }
+
+    // Ansiktet (øyne/munn/tunge) er ett og samme DOM-element som bare
+    // *flyttes* til den nye hode-cellen hvert tikk (appendChild flytter
+    // uten å ødelegge elementet). Blunk- og tunge-flikk-animasjonene er
+    // CSS-animasjoner på dette elementet – lages det på nytt hvert tikk
+    // (slangen flytter seg jo hvert tikk) starter animasjonen på 0 igjen
+    // hver gang, og rekker aldri frem til blunket/flikket.
+    let faceEl = null;
+    function ensureFace(cell) {
+      if (!faceEl) {
+        faceEl = document.createElement("div");
+        faceEl.className = "snake-face";
+        faceEl.innerHTML =
+          '<span class="snake-eye snake-eye-l"><span class="snake-eye-ball"></span></span>' +
+          '<span class="snake-eye snake-eye-r"><span class="snake-eye-ball"></span></span>' +
+          '<span class="snake-mouth"></span>' +
+          '<span class="snake-tongue"></span>' +
+          '<span class="snake-hit"></span>';
+      }
+      if (faceEl.parentNode !== cell) cell.appendChild(faceEl);
+      return faceEl;
+    }
+
     function render(ateAt) {
       if (!session.playArea.querySelector("[data-board-snake]")) return;
       if (!cellEls) buildBoard();
       for (let r = 0; r < SIZE; r++) {
         for (let c = 0; c < SIZE; c++) {
           const cell = cellEls[r][c];
-          cell.className = "cell-snake";
+          cell.classList.remove("is-food", "is-head", "is-body", "is-eating");
+          cell.style.borderRadius = "";
+          delete cell.dataset.dir;
+
           if (food && food.r === r && food.c === c) {
             cell.classList.add("is-food");
           }
           const segIndex = snake.findIndex((seg) => seg.r === r && seg.c === c);
           if (segIndex === 0) {
             cell.classList.add("is-head");
+            cell.dataset.dir = direction;
+            applyTubeShape(cell, segmentConnections(segIndex));
             if (ateAt && ateAt.r === r && ateAt.c === c) cell.classList.add("is-eating");
           } else if (segIndex > 0) {
             cell.classList.add("is-body");
+            applyTubeShape(cell, segmentConnections(segIndex));
           }
         }
       }
+
+      const headSeg = snake[0];
+      const headCell = cellEls[headSeg.r][headSeg.c];
+      ensureFace(headCell);
+      headFaceCell = headCell;
     }
 
     const KEY_DIRECTIONS = {
@@ -207,13 +289,16 @@
 
     function setDirection(dir) {
       if (!dir || !session || over) return;
-      nextDirection = dir;
-      // Første trekk etter en gjenopptatt runde setter slangen i gang igjen.
-      if (waitingForResume) {
-        waitingForResume = false;
+      // Slangen står stille til spilleren trykker/sveiper høyre – da starter
+      // runden. Andre taster/retninger ignoreres helt til det skjer.
+      if (waitingToStart) {
+        if (dir !== "right") return;
+        waitingToStart = false;
         if (timer) clearInterval(timer);
         timer = setInterval(tick, TICK_MS);
+        return;
       }
+      nextDirection = dir;
     }
 
     function attachControls() {

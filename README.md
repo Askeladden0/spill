@@ -3,6 +3,54 @@
 Statisk frontend + Supabase-backend for spillnettsiden, basert på designfilen
 `Spillnettside.dc.html`. Mørkt tema, grønn aksentfarge (`#2ee87f`), Poppins-font.
 
+## Bygg og kjøring
+
+Nettsiden er fortsatt helt statisk – ingen rammeverk, ingen avhengigheter.
+Det eneste som er lagt til er et lite byggesteg (`build/build.mjs`, ren Node)
+som gjør to ting:
+
+1. **Setter sammen sidene fra felles deler.** Det som er likt på alle sidene
+   – favicon, fonter, stilark, analytics – ligger i `build/partials/head.html`
+   og ingen andre steder. Toppmeny og bunnmeny ligger i `js/layout-markup.js`
+   og skrives rett inn i HTML-en, slik at menylenkene finnes i sidekilden
+   (bedre for SEO) og siden ikke hopper når JavaScript kjører.
+2. **Cache-busting.** Alle lokale lenker til `css/`, `js/`, `assets/` og
+   `documents/` får `?v=<innholdshash>`, så nettlesere henter nye filer med
+   det samme etter en utrulling – i stedet for å bli sittende med gamle.
+
+```bash
+npm run build   # bygger nettstedet til dist/
+npm run dev     # bygger og starter en lokal server på http://localhost:8000
+```
+
+`dist/` er generert og ligger i `.gitignore`. Det er `dist/` GitHub Pages
+publiserer (se `.github/workflows/static.yml`) – ikke repoet slik det står.
+Feiler bygget, stopper utrullingen.
+
+### Åpne kildefilene direkte
+
+Du kan fortsatt dobbeltklikke en HTML-fil og få riktig design uten å bygge.
+Head-markøren i hver side er med vilje en ekte stilark-lenke:
+
+```html
+<link rel="stylesheet" href="css/style.css" data-studilla-head>
+```
+
+Byggesteget bytter hele den taggen ut med det felles head-innholdet. Ubygget
+mangler du bare favicon, fonter og analytics – meny og bunnmeny settes inn av
+`js/layout.js` som før.
+
+### Når du legger til en ny side
+
+1. Kopier `<head>`-en fra en eksisterende side: `charset`, `viewport`, egen
+   `<title>` og `description`, og head-markøren over.
+2. Ta med `<div id="site-header"></div>` og `<div id="site-footer"></div>`
+   der meny og bunnmeny skal være.
+3. Last `js/layout-markup.js` rett før `js/layout.js`.
+
+Bygget feiler med en tydelig melding hvis markøren mangler, eller hvis en side
+lenker til en fil som ikke finnes.
+
 ## Filstruktur
 
 ```
@@ -12,6 +60,9 @@ spill/
 ├── rangering.html          Rangering-siden – delt layout, plassholderinnhold
 ├── player.html            Delt spillmal – viser ETT spill basert på ?id=<slug> i URL-en.
 │                          Det lages IKKE én fil per spill; alle spill går gjennom denne malen.
+├── guider.html            Guider og ressurser – oversikt over alle guider (se under)
+├── guide.html             Delt guide-mal – viser ÉN guide basert på ?id=<slug> i URL-en,
+│                          akkurat som player.html gjør for spill
 ├── login.html             Logg inn / registrer deg (brukernavn + passord)
 ├── profil.html            Profilside – avatar, brukernavn, nivå, rekorder, slett konto
 ├── admin.html             Adminpanel – eget sidemeny-dashbord (se under), krever admin-status
@@ -21,14 +72,23 @@ spill/
 │                          Brukes av alle sider – endringer her slår ut overalt.
 ├── js/
 │   ├── games-data.js      Midlertidig "database" med spillobjekter (se under)
-│   ├── layout.js          Delt topp-nav/bunnmeny + markering av aktivt menypunkt
+│   ├── guides-data.js     Samme mønster som games-data.js, men for guider/moduler (se under)
+│   ├── guides.js          Rendring + admin-redigering for guider.html/guide.html
+│   ├── layout-markup.js   HTML-en for topp-nav og bunnmeny – eneste kilde, leses
+│   │                      både av layout.js i nettleseren og av byggesteget
+│   ├── layout.js          Setter inn header/footer (hvis bygget ikke har gjort det),
+│   │                      markerer aktivt menypunkt og styrer mobilmenyen
 │   ├── main.js            Rendrer heltefelt, spillrutenett og spillside
 │   ├── admin.js           All logikk for adminpanelet (admin.html)
 │   ├── supabase-config.js Supabase-nøkler (må fylles inn, se SUPABASE_SETUP.md)
 │   └── auth.js            Delt innloggingslogikk: header-avatar, admin-lenke, tilgangssjekk
+├── build/
+│   ├── build.mjs           Byggesteget: felles head/meny + cache-busting → dist/
+│   └── partials/
+│       └── head.html       Delt <head>-innhold for alle sidene
 ├── supabase/
 │   └── schema.sql          Databaseskjema: profiler, avatar-innstillinger, spillrekorder, nivåer,
-│                          rabattkoder, RLS
+│                          rabattkoder, guider/guide-moduler, RLS
 ├── SUPABASE_SETUP.md       Steg-for-steg-guide for å koble opp Supabase-prosjektet
 └── assets/
     └── img/
@@ -45,7 +105,7 @@ prosjekt, kjøre `supabase/schema.sql`, skru av e-postbekreftelse, koble
 
 Kort oppsummert:
 - **Registrering**: brukernavn + passord (brukernavn 5–20 tegn, passord min. 8
-  tegn med bokstav+tall). Verken e-post eller Google-innlogging er i bruk, og
+  tegn med bokstav+tall). Google-innlogging er et valgfritt alternativ, og
   2FA er ikke satt opp. Supabase krever en e-postadresse per konto, så
   `js/auth.js` lager en intern adresse ut fra brukernavnet
   (`brukernavn@brukere.studilla.no`) – den brukes aldri til å sende noe.
@@ -200,3 +260,40 @@ direkte via `player.html?id=...`), dra for å endre rekkefølgen, eller slett
 det helt. `js/games-data.js` henter denne tabellen ved sidelasting og fyller
 `window.STUDILLA_GAMES` i place; den statiske listen øverst i filen er kun en
 fallback hvis Supabase er utilgjengelig.
+
+## Guider og ressurser (`guider.html` / `guide.html`)
+
+Guidene ligger i Supabase-tabellene `guides` (ett kort per guide: overskrift,
+kategori, ingress, "mengde spart/tjent" og lesetid) og `guide_modules` (selve
+innholdet – én rad per modul, i rekkefølge). `js/guides-data.js` henter begge
+og fyller `window.STUDILLA_GUIDES`/`window.STUDILLA_GUIDE_MODULES` på samme
+måte som `js/games-data.js` gjør for spill, med en tilsvarende fallback-liste
+(eksempelguiden fra designet) hvis Supabase er utilgjengelig eller migrasjonen
+i `supabase/schema.sql` ikke er kjørt ennå.
+
+**Det finnes ingen egen adminpanel-seksjon for dette.** Er man innlogget som
+admin, dukker det i stedet opp rediger-/slette-knapper direkte på kortene på
+`guider.html` og inne i selve guiden på `guide.html` (`js/guides.js`) – helt
+uten at andre besøkende ser noe til dem. Derfra kan en admin:
+
+- Opprette, redigere (overskrift, kategori, ingress, mengde spart/tjent,
+  lesetid, toppbilde) og slette guider, samt velge hvilken guide som vises
+  fremhevet øverst på `guider.html`.
+- Bygge innholdet i en guide som en fritt sammensatt rekke moduler – legg til,
+  rediger, flytt opp/ned eller slett hver enkelt modul. Modultypene er:
+  - **Tekst** – overskrift (H2/H3), brødtekst, punktliste og en tips-boks.
+  - **Fil** – en nedlastbar fil (lastes opp til `guide-files`-bøtta i Storage).
+  - **Tabell** – egne kolonneoverskrifter og rader.
+  - **Gevinst** – en liste med poster (beskrivelse + beløp), summert automatisk
+    til "dette kan du tjene/spare" øverst i modulen og i sidefeltet.
+  - **Avstemning** – spørsmål + svaralternativer. Alle (også utlogget) kan
+    stemme; opptellingen skjer server-side i RPC-en `guide_vote_poll` slik at
+    den ikke kan forbikobles fra nettleseren, og nettleseren husker i
+    `localStorage` at man allerede har stemt.
+  - **Triks** – lenke til et eksisterende triks (hentet fra `games-data.js`,
+    med bilde/navn/beskrivelse) eller en egendefinert lenke.
+
+Innholdsfortegnelsen i sidefeltet på `guide.html` bygges automatisk ut fra
+modulene som har en tittel (tekst-overskrift, tabelltittel osv.), og
+"gevinstpotensial"-kortet i sidefeltet plukkes fra guidens gevinst-modul, hvis
+den har en.
