@@ -4301,6 +4301,224 @@ create view public.profiles_public as
 
 grant select on public.profiles_public to anon, authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 67. Gjentatte rabatter: sjansen for å få samme rabatt igjen bygges opp
+--     gradvis i stedet for at rabatten er utelukket for alltid.
+--
+--     Etter at en bruker har fått en rabatt er sjansen for å trekke den igjen
+--     0 % ved neste kasse, og stiger så like mye for hver kasse (k = hvilken
+--     kasse etter utdelingen det er): faktor = (k - 1) / 9, begrenset til 1.
+--     Kasse 1 etter = 0, kasse 5 = 4/9, kasse 10 = 1 (full vekt, like stor
+--     sjanse som alle andre rabatter). Faktoren multipliseres med
+--     sjeldenhetsvekten (rarity_weights) i den vektede trekningen.
+--
+--     Antall kasser siden sist telles som rader i user_codes nyere enn
+--     brukerens siste kode for rabatten (hver trekning, både nivåkasser og
+--     velkomstkassen, legger inn én rad der). Den unike indeksen fra
+--     seksjon 20 (én kode per bruker per rabatt) fjernes, ellers kunne ikke
+--     samme rabatt utdeles to ganger.
+-- ---------------------------------------------------------------------------
+drop index if exists public.user_codes_user_reward_idx;
+create index if not exists user_codes_user_reward_idx
+  on public.user_codes (user_id, reward_id)
+  where reward_id is not null;
+
+create or replace function public.reward_repeat_factor(p_user_id uuid, p_reward_id bigint)
+returns numeric
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select case
+    when last_id is null then 1::numeric
+    else least(1::numeric, (draws_since)::numeric / 9)
+  end
+  from (
+    select max(uc.id) as last_id,
+           (select count(*) from public.user_codes u2
+             where u2.user_id = p_user_id
+               and u2.id > coalesce(max(uc.id), 0)) as draws_since
+      from public.user_codes uc
+     where uc.user_id = p_user_id and uc.reward_id = p_reward_id
+  ) s;
+$$;
+
+revoke all on function public.reward_repeat_factor(uuid, bigint) from public;
+
+drop function if exists public.open_level_case(int);
+create or replace function public.open_level_case(p_level_number int)
+returns table (brand text, title text, sub text, rarity text, image_url text, link_url text, supports_snorre boolean, code text, already_opened boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  my_level int;
+  existing public.user_level_cases;
+  r public.rewards;
+  picked_code text;
+  remaining bigint;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å åpne en kasse';
+  end if;
+
+  select level into my_level from public.profiles where id = auth.uid();
+  if my_level is null or my_level < p_level_number then
+    raise exception 'Du har ikke låst opp dette nivået ennå';
+  end if;
+
+  select * into existing from public.user_level_cases
+   where user_id = auth.uid() and level_number = p_level_number;
+
+  if existing is not null then
+    select * into r from public.rewards where id = existing.reward_id;
+    if r is null then
+      return query select null::text, null::text, null::text, null::text, null::text, null::text, false, existing.code, true;
+      return;
+    end if;
+    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, existing.code, true;
+    return;
+  end if;
+
+  select rw.* into r
+    from public.rewards rw
+    join public.rarity_weights ww on ww.rarity = rw.rarity
+    cross join lateral (select public.reward_repeat_factor(auth.uid(), rw.id) as f) rf
+   where rw.active
+     and (rw.expires_at is null or rw.expires_at > now())
+     and ww.weight > 0
+     and rf.f > 0
+   order by -ln(random()) / (ww.weight * rf.f)
+   limit 1;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    picked_code := r.general_code;
+  else
+    update public.reward_codes
+       set claimed_by = auth.uid(), claimed_at = now()
+     where id = (
+       select id from public.reward_codes
+        where reward_id = r.id and claimed_by is null and not disabled
+        order by id
+        limit 1
+        for update skip locked
+     )
+     returning reward_codes.code into picked_code;
+
+    if picked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+
+    select count(*) into remaining from public.reward_codes
+     where reward_id = r.id and claimed_by is null and not disabled;
+    if remaining = 0 then
+      update public.rewards set active = false where id = r.id;
+    end if;
+  end if;
+
+  insert into public.user_level_cases (user_id, level_number, reward_id, code)
+  values (auth.uid(), p_level_number, r.id, picked_code);
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, r.id);
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, picked_code, false;
+end;
+$$;
+
+revoke all on function public.open_level_case(int) from public;
+grant execute on function public.open_level_case(int) to authenticated;
+
+drop function if exists public.open_welcome_case();
+create or replace function public.open_welcome_case()
+returns table (brand text, title text, sub text, rarity text, image_url text, link_url text, supports_snorre boolean, code text, already_opened boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  existing public.user_welcome_cases;
+  r public.rewards;
+  picked_code text;
+  remaining bigint;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å åpne en kasse';
+  end if;
+
+  select * into existing from public.user_welcome_cases
+   where user_id = auth.uid();
+
+  if existing is not null then
+    select * into r from public.rewards where id = existing.reward_id;
+    if r is null then
+      return query select null::text, null::text, null::text, null::text, null::text, null::text, false, existing.code, true;
+      return;
+    end if;
+    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, existing.code, true;
+    return;
+  end if;
+
+  select rw.* into r
+    from public.rewards rw
+    join public.rarity_weights ww on ww.rarity = rw.rarity
+    cross join lateral (select public.reward_repeat_factor(auth.uid(), rw.id) as f) rf
+   where rw.active
+     and not rw.supports_snorre
+     and (rw.expires_at is null or rw.expires_at > now())
+     and ww.weight > 0
+     and rf.f > 0
+   order by -ln(random()) / (ww.weight * rf.f)
+   limit 1;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    picked_code := r.general_code;
+  else
+    update public.reward_codes
+       set claimed_by = auth.uid(), claimed_at = now()
+     where id = (
+       select id from public.reward_codes
+        where reward_id = r.id and claimed_by is null and not disabled
+        order by id
+        limit 1
+        for update skip locked
+     )
+     returning reward_codes.code into picked_code;
+
+    if picked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+
+    select count(*) into remaining from public.reward_codes
+     where reward_id = r.id and claimed_by is null and not disabled;
+    if remaining = 0 then
+      update public.rewards set active = false where id = r.id;
+    end if;
+  end if;
+
+  insert into public.user_welcome_cases (user_id, reward_id, code)
+  values (auth.uid(), r.id, picked_code);
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, r.id);
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, picked_code, false;
+end;
+$$;
+
+revoke all on function public.open_welcome_case() from public;
+grant execute on function public.open_welcome_case() to authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
