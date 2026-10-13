@@ -281,6 +281,10 @@
               <span class="game-over-fact-num" data-game-over-best-num>–</span>
               <span class="game-over-fact-label">DIN REKORD</span>
             </div>
+            <div class="game-over-fact" data-game-over-earned-fact hidden>
+              <span class="game-over-fact-num is-accent" data-game-over-earned>–</span>
+              <span class="game-over-fact-label">POENG TJENT</span>
+            </div>
           </div>
 
           <p class="game-over-note" data-game-over-note hidden></p>
@@ -441,6 +445,8 @@
       overlayScore: container.querySelector("[data-game-over-score]"),
       overlayScoreLabel: container.querySelector("[data-game-over-score-label]"),
       overlayBestNum: container.querySelector("[data-game-over-best-num]"),
+      overlayEarnedFact: container.querySelector("[data-game-over-earned-fact]"),
+      overlayEarned: container.querySelector("[data-game-over-earned]"),
       overlayNote: container.querySelector("[data-game-over-note]"),
       overlayConfetti: container.querySelector("[data-game-over-confetti]"),
       overlayNext: container.querySelector("[data-game-over-next]"),
@@ -747,6 +753,10 @@
         els.overlayScore.textContent = roundedScore.toLocaleString("no-NO");
         els.overlayScoreLabel.textContent = awardedPoints === roundedScore ? "POENG" : "SKÅR";
         els.overlayBestNum.textContent = best.toLocaleString("no-NO");
+
+        const showEarned = LEVELS_ENABLED && !!prevProfile && awardedPoints > 0;
+        els.overlayEarnedFact.hidden = !showEarned;
+        if (showEarned) els.overlayEarned.textContent = `+${awardedPoints.toLocaleString("no-NO")}`;
 
         // For utloggede: en linje om at rekorden kun ligger i nettleseren.
         const note = prevProfile ? "" : "Du er ikke logget inn – rekorden ligger kun i denne nettleseren.";
