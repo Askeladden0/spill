@@ -29,15 +29,6 @@
   <div id="site-header"></div>
 
   <main id="hovedinnhold">
-    <!-- Vises kun for utloggede (flyttet hit fra forsiden). -->
-    <section class="signup-strip" data-signup-strip hidden>
-      <div class="signup-strip-text">
-        <strong>Registrer deg for å få rabatter.</strong>
-        <span>Du får en velkomstbonus med en gang du har registrert deg, og en ny rabatt for hvert nivå du når. Det tar ti sekunder å lage konto – kun brukernavn og passord.</span>
-      </div>
-      <a class="btn-primary" href="login.html">Registrer deg</a>
-    </section>
-
     <section class="premier-hero-grid">
       <div class="level-card">
         <div class="level-ring-wrap" data-level-ring-wrap>
@@ -55,7 +46,7 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
           <h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-.025em;color:#fff" data-level-headline>Laster nivå …</h1>
-          <p style="margin:0;font-size:15px;line-height:1.6;color:var(--muted);max-width:46ch;text-wrap:pretty">Fullfør triks for å samle poeng. Hvert nivå låser opp nye rabattkoder fra våre partnere — de blir liggende i «Mine koder» til du bruker dem.</p>
+          <p style="margin:0;font-size:15px;line-height:1.6;color:var(--muted);max-width:46ch;text-wrap:pretty">Fullfør triks for å samle poeng. Hvert nivå låser opp nye rabattkoder — de blir liggende i «Mine koder» til du bruker dem.</p>
           <div class="level-stats-row">
             <div class="level-stat">
               <span class="level-stat-num is-accent" data-stat-codes>7</span>
@@ -91,7 +82,7 @@
               </div>
             </div>
             <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
-              <p class="section-sub" style="margin:0" data-case-panel-sub>Åpne rabatten for å trekke en tilfeldig rabatt fra en av partnerne våre.</p>
+              <p class="section-sub" style="margin:0" data-case-panel-sub>Registrer deg gratis for å trekke en tilfeldig rabatt.</p>
               <button type="button" class="btn-primary" style="width:100%" data-open-case>Åpne rabatten</button>
             </div>
           </div>
@@ -103,6 +94,13 @@
             <h2 style="font-size:16px">Andre rabatter</h2>
           </div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" data-case-grid></div>
+        </div>
+
+        <div data-my-codes-wrap hidden>
+          <div class="section-heading spread">
+            <h2 style="font-size:16px">Mine koder</h2>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px" data-my-codes></div>
         </div>
 
       </div>
@@ -129,7 +127,7 @@
         </details>
         <details class="faq-item">
           <summary>Hvordan får jeg en rabatt?</summary>
-          <p class="faq-answer">Hver gang du når et nytt nivå får du én rabatt å åpne. Åpner du den, trekkes én tilfeldig rabatt fra partnerne våre – og den koden er din. Hver rabatt kan bare åpnes én gang, men de forsvinner ikke: har du flere uåpnede rabatter, ligger de under «Andre rabatter» til du åpner dem.</p>
+          <p class="faq-answer">Hver gang du når et nytt nivå får du én rabatt å åpne. Åpner du den, trekkes én tilfeldig rabatt – og den koden er din. Hver rabatt kan bare åpnes én gang, men de forsvinner ikke: har du flere uåpnede rabatter, ligger de under «Andre rabatter» til du åpner dem.</p>
         </details>
         <details class="faq-item">
           <summary>Hva er velkomstbonusen?</summary>
@@ -145,15 +143,15 @@
         </details>
         <details class="faq-item">
           <summary>Hvor finner jeg kodene jeg har fått?</summary>
-          <p class="faq-answer">Alle koder du har hentet blir liggende under «Mine koder» på profilsiden din. De blir der selv om rabatten senere tas av siden, så du kan hente dem fram igjen når du skal bruke dem.</p>
+          <p class="faq-answer">Alle koder du har hentet blir liggende under «Mine koder» på profilsiden din og her på siden, rett under «Få en rabatt». De blir der selv om rabatten senere tas av siden, så du kan hente dem fram igjen når du skal bruke dem.</p>
         </details>
         <details class="faq-item">
           <summary>Kan en rabattkode gå ut på dato?</summary>
-          <p class="faq-answer">Ja. Noen kampanjer fra partnerne våre har en utløpsdato, og etter den datoen kan koden ikke lenger brukes eller trekkes i nye rabatter. Rabatten det gjelder står oppgitt i beskrivelsen bak infosymbolet når du åpner den.</p>
+          <p class="faq-answer">Ja. Noen rabatter har en utløpsdato, og etter den datoen kan koden ikke lenger brukes eller trekkes i nye rabatter. Rabatten det gjelder står oppgitt i beskrivelsen bak infosymbolet når du åpner den.</p>
         </details>
         <details class="faq-item">
           <summary>Hvordan bruker jeg en kode?</summary>
-          <p class="faq-answer">Kopier koden med «Kopier koden», og lim den inn i rabattkodefeltet hos partneren når du handler. Har rabatten en lenke, tar «Gå til tilbudet» deg rett til riktig side.</p>
+          <p class="faq-answer">Kopier koden med «Kopier koden», og lim den inn i rabattkodefeltet når du handler. Har rabatten en lenke, tar «Gå til tilbudet» deg rett til riktig side.</p>
         </details>
         <details class="faq-item">
           <summary>Må jeg ha en konto?</summary>
@@ -185,22 +183,30 @@
 
     <div class="case-reveal" data-case-reveal hidden>
       <span class="case-reveal-logo" data-case-reveal-thumb></span>
-      <div class="case-reveal-rarity">
-        <span data-case-reveal-rarity></span>
-        <button type="button" class="case-reveal-info" aria-label="Mer info om rabatten" data-tip="" data-case-reveal-info>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        </button>
-      </div>
       <h3 class="case-reveal-value" data-case-reveal-value></h3>
       <span data-case-reveal-snorre></span>
-      <div class="case-reveal-code">
-        <span class="case-reveal-code-label">Din kode</span>
-        <span class="case-reveal-code-value" data-case-reveal-code></span>
+      <button type="button" class="case-reveal-code code-neon" data-case-reveal-codebox aria-label="Kopier koden">
+        <span class="case-reveal-code-label" data-copy-label>Din kode</span>
+        <span class="case-reveal-code-row"><span class="case-reveal-code-value" data-case-reveal-code></span><svg class="case-reveal-code-copy" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"></rect><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"></path></svg></span>
+      </button>
+      <div class="case-reveal-sub" data-case-reveal-sub hidden>
+        <span class="case-reveal-sub-label">Info</span>
+        <p class="case-reveal-sub-text" data-sub-text></p>
+        <button type="button" class="case-reveal-more" data-sub-more hidden>Se mer</button>
       </div>
-      <button type="button" class="btn-primary case-reveal-copy" data-case-reveal-copy>Kopier koden</button>
       <a class="case-reveal-link" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Gå til tilbudet ↗</a>
       <p class="case-reveal-note">Koden er lagret i «Mine koder» på profilen din.</p>
     </div>
+  </div>
+</div>
+
+<!-- Full info om en rabatt (når teksten ikke får plass på kortet) -->
+<div class="modal-overlay" style="z-index:110" data-info-modal hidden>
+  <div class="modal-backdrop" data-info-backdrop></div>
+  <div class="modal-card" style="max-width:440px;align-items:stretch;text-align:left">
+    <button type="button" class="modal-close" data-close-info aria-label="Lukk"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="5" x2="19" y2="19"></line><line x1="19" y1="5" x2="5" y2="19"></line></svg></button>
+    <h2 class="modal-title" data-info-title>Info</h2>
+    <p style="margin:0;font-size:14px;line-height:1.6;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere" data-info-text></p>
   </div>
 </div>
 
@@ -302,7 +308,8 @@
   // ---------- Rabatter ----------
   function unlockedLevels() {
     const dl = displayLevel();
-    return levels.filter((lv) => lv.level_number <= dl).map((lv) => lv.level_number);
+    // Nivå 1 er startnivået og gir velkomstbonusen, ikke en egen rabatt.
+    return levels.filter((lv) => lv.level_number > 1 && lv.level_number <= dl).map((lv) => lv.level_number);
   }
 
   // Velkomstbonusen ligger alltid først i køen til den er åpnet. For en
@@ -528,9 +535,7 @@
 
     if (selectedCaseLevel === null) {
       document.querySelector("[data-case-title]").textContent = "Ingen ledige rabatter";
-      const wait = unlockedLevels().length === 0
-        ? "Nå nivå 1 for å få din første rabatt"
-        : "Nå et nytt nivå for å få en ny rabatt";
+      const wait = "Nå et nytt nivå for å få en ny rabatt";
       panelBtn.textContent = wait;
       panelBtn.disabled = true;
       panelSub.textContent = "Du får én rabatt for hvert nivå du når.";
@@ -541,7 +546,9 @@
       document.querySelector("[data-case-title]").textContent = caseName(selectedCaseLevel);
       panelBtn.textContent = `Åpne ${caseName(selectedCaseLevel).toLowerCase()}`;
       panelBtn.disabled = caseOpening;
-      panelSub.textContent = "Åpne rabatten for å trekke en tilfeldig rabatt fra en av partnerne våre.";
+      panelSub.textContent = profile
+        ? "Åpne rabatten for å trekke en tilfeldig rabatt."
+        : "Registrer deg gratis for å trekke en tilfeldig rabatt.";
       openBtn.textContent = caseOpening ? "Åpner rabatten …" : `Åpne ${caseName(selectedCaseLevel).toLowerCase()}`;
       openBtn.disabled = caseOpening;
       document.querySelector("[data-case-modal-title]").textContent = caseName(selectedCaseLevel);
@@ -570,6 +577,40 @@
         </button>
       `).join("");
     }
+  }
+
+  // «Mine koder»: alle rabatter brukeren har åpnet, tegnet som samme kort som
+  // vises når en rabatt trekkes (.case-reveal), nyeste først.
+  function myCodeCardHTML(c) {
+    const rar = RARITY[c.rarity] || RARITY.vanlig;
+    const neon = window.StudillaSnorreTag ? window.StudillaSnorreTag.neonFor(c.code) : "";
+    return `
+      <div class="case-reveal" style="--reveal-color:${rar.color};animation:none" data-my-code-card data-title="${escapeHtml(c.title)} hos ${escapeHtml(c.brand)}" data-sub="${escapeHtml(c.sub || "")}">
+        <span class="case-reveal-logo">${c.image_url ? `<img src="${escapeHtml(c.image_url)}" alt="">` : `<span>[ logo ]</span>`}</span>
+        <h3 class="case-reveal-value" style="font-size:22px">${escapeHtml(c.title)} hos ${escapeHtml(c.brand)}</h3>
+        ${c.supports_snorre && window.StudillaSnorreTag ? `<span>${window.StudillaSnorreTag.html()}</span>` : ""}
+        <button type="button" class="case-reveal-code code-neon" style="background:${neon}" data-copy-code="${escapeHtml(c.code)}" aria-label="Kopier koden">
+          <span class="case-reveal-code-label" data-copy-label>Din kode</span>
+          <span class="case-reveal-code-row"><span class="case-reveal-code-value">${escapeHtml(c.code)}</span><svg class="case-reveal-code-copy" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"></rect><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"></path></svg></span>
+        </button>
+        <div class="case-reveal-sub" hidden>
+          <span class="case-reveal-sub-label">Info</span>
+          <p class="case-reveal-sub-text" data-sub-text></p>
+          <button type="button" class="case-reveal-more" data-sub-more hidden>Se mer</button>
+        </div>
+        ${c.link_url ? `<a class="case-reveal-link" href="${escapeHtml(c.link_url)}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
+      </div>`;
+  }
+
+  function renderMyCodes() {
+    const wrap = document.querySelector("[data-my-codes-wrap]");
+    const list = document.querySelector("[data-my-codes]");
+    const mine = profile ? Array.from(openedCases.values()).filter((c) => c.code).reverse() : [];
+    wrap.hidden = !mine.length;
+    list.innerHTML = mine.map(myCodeCardHTML).join("");
+    list.querySelectorAll("[data-my-code-card]").forEach((card) => {
+      setupSub(card.querySelector(".case-reveal-sub"), card.dataset.sub, card.dataset.title);
+    });
   }
 
   async function openSelectedCase() {
@@ -601,6 +642,7 @@
     caseOpening = false;
     openedCases.set(opening, data);
     showCaseReveal(data);
+    renderMyCodes();
     renderLevelCard();
     renderFeed();
   }
@@ -613,18 +655,13 @@
     reveal.style.setProperty("--reveal-color", rar.color);
     const thumb = document.querySelector("[data-case-reveal-thumb]");
     thumb.innerHTML = data.image_url ? `<img src="${data.image_url}" alt="">` : `<span>[ logo ]</span>`;
-    const rarityEl = document.querySelector("[data-case-reveal-rarity]");
-    rarityEl.textContent = `${rar.label} RABATT`;
-    const infoBtn = document.querySelector("[data-case-reveal-info]");
-    infoBtn.dataset.tip = data.sub || "";
-    infoBtn.hidden = !data.sub;
     const tagSlot = document.querySelector("[data-case-reveal-snorre]");
     tagSlot.innerHTML = data.supports_snorre && window.StudillaSnorreTag ? window.StudillaSnorreTag.html() : "";
     document.querySelector("[data-case-reveal-value]").textContent = `${data.title} hos ${data.brand}`;
     document.querySelector("[data-case-reveal-code]").textContent = data.code;
-    const codeBox = document.querySelector(".case-reveal-code");
+    const codeBox = document.querySelector("[data-case-reveal-codebox]");
+    codeBox.dataset.copyCode = data.code;
     codeBox.style.background = window.StudillaSnorreTag ? window.StudillaSnorreTag.neonFor(data.code) : "";
-    codeBox.classList.add("code-neon");
     const linkEl = document.querySelector("[data-case-reveal-link]");
     // Lenken er valgfri per rabatt (rewards.link_url) – skjul den helt når
     // partneren ikke har oppgitt noen.
@@ -635,17 +672,45 @@
       linkEl.removeAttribute("href");
       linkEl.hidden = true;
     }
-    document.querySelector("[data-case-reveal-copy]").onclick = () => {
-      navigator.clipboard && navigator.clipboard.writeText(data.code).then(() => flashCopy());
-    };
+    setupSub(reveal.querySelector("[data-case-reveal-sub]"), data.sub, `${data.title} hos ${data.brand}`);
   }
 
-  function flashCopy() {
-    const btn = document.querySelector("[data-case-reveal-copy]");
-    const original = btn.textContent;
-    btn.textContent = "Kopiert!";
-    setTimeout(() => { btn.textContent = original; }, 1500);
+  // Info under koden: klippes etter noen linjer, og «Se mer» åpner en pop-up
+  // med hele teksten når den ikke får plass.
+  function setupSub(box, text, title) {
+    const more = box.querySelector("[data-sub-more]");
+    const textEl = box.querySelector("[data-sub-text]");
+    textEl.textContent = text || "";
+    box.hidden = !text;
+    more.hidden = true;
+    more.dataset.title = title || "Info";
+    more.dataset.full = text || "";
+    if (text && textEl.scrollHeight > textEl.clientHeight + 1) more.hidden = false;
   }
+
+  function openInfoModal(title, text) {
+    document.querySelector("[data-info-title]").textContent = title;
+    document.querySelector("[data-info-text]").textContent = text;
+    document.querySelector("[data-info-modal]").hidden = false;
+  }
+  function closeInfoModal() { document.querySelector("[data-info-modal]").hidden = true; }
+
+  document.addEventListener("click", (e) => {
+    const more = e.target.closest("[data-sub-more]");
+    if (more) { openInfoModal(more.dataset.title, more.dataset.full); return; }
+    const copyEl = e.target.closest("[data-copy-code]");
+    if (copyEl && navigator.clipboard) {
+      navigator.clipboard.writeText(copyEl.dataset.copyCode).then(() => {
+        const label = copyEl.querySelector("[data-copy-label]");
+        if (!label) return;
+        label.textContent = "Kopiert!";
+        clearTimeout(copyEl._t);
+        copyEl._t = setTimeout(() => { label.textContent = "Din kode"; }, 1500);
+      });
+    }
+  });
+  document.querySelector("[data-close-info]").addEventListener("click", closeInfoModal);
+  document.querySelector("[data-info-backdrop]").addEventListener("click", closeInfoModal);
 
   // ---------- Rabatt-pop-up ----------
   function openCaseModal() {
@@ -670,7 +735,10 @@
   document.querySelector("[data-close-case]").addEventListener("click", closeCaseModal);
   document.querySelector("[data-case-backdrop]").addEventListener("click", closeCaseModal);
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { closeCaseModal(); }
+    if (e.key === "Escape") {
+      const info = document.querySelector("[data-info-modal]");
+      if (!info.hidden) closeInfoModal(); else closeCaseModal();
+    }
   });
 
   document.querySelector("[data-case-open]").addEventListener("click", openSelectedCase);
@@ -689,37 +757,50 @@
     return `${Math.round(hrs / 24)} d siden`;
   }
 
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  }
+
+  const FEED_STEP = 5;
+  let feedRows = [];
+  let feedShown = FEED_STEP;
+
   async function renderFeed() {
     const list = document.querySelector("[data-feed-list]");
-    if (!profile) {
-      list.innerHTML = `<p class="section-sub">Registrer deg for å se koder du har låst opp.</p>`;
-      return;
-    }
-    const { data, error } = await sb
-      .from("user_codes")
-      .select("brand, title, created_at")
-      .eq("user_id", profile.id)
-      .order("created_at", { ascending: false })
-      .limit(5);
+    const { data, error } = await sb.rpc("recent_unlocks", { p_limit: 50 });
 
     if (error || !data || !data.length) {
       list.innerHTML = `<p class="section-sub">Ingen koder låst opp ennå.</p>`;
       return;
     }
+    feedRows = data;
+    paintFeed();
+  }
 
-    list.innerHTML = data
-      .map(
-        (c) => `
+  function paintFeed() {
+    const list = document.querySelector("[data-feed-list]");
+    const rows = feedRows.slice(0, feedShown)
+      .map((c) => {
+        const mine = profile && c.username.toLowerCase() === profile.username.toLowerCase();
+        const who = mine
+          ? "Du"
+          : `<a href="spillerprofil.html?u=${encodeURIComponent(c.username)}" style="color:inherit;font-weight:700">${escapeHtml(c.username)}</a>`;
+        return `
       <div class="feed-row">
-        ${Auth.avatarHTML(profile, 36)}
+        ${Auth.avatarHTML(c, 36)}
         <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
-          <span class="feed-text">Du låste opp ${c.title} hos ${c.brand}</span>
+          <span class="feed-text">${who} låste opp ${escapeHtml(c.title)} hos ${escapeHtml(c.brand)}</span>
           <span class="feed-time">${relativeTime(c.created_at)}</span>
         </div>
-      </div>
-    `
-      )
+      </div>`;
+      })
       .join("");
+    const more = feedShown < feedRows.length
+      ? `<button type="button" class="btn-outline" style="width:100%;margin-top:12px" data-feed-more>Vis flere</button>`
+      : "";
+    list.innerHTML = rows + more;
+    const btn = list.querySelector("[data-feed-more]");
+    if (btn) btn.addEventListener("click", () => { feedShown += FEED_STEP; paintFeed(); });
   }
 
   // ---------- Init ----------
@@ -798,18 +879,13 @@
     welcomeRows.forEach((row) => openedCases.set(WELCOME, openedFromRow(row)));
   }
 
-  function updateSignupStrip() {
-    const strip = document.querySelector("[data-signup-strip]");
-    if (strip) strip.hidden = !!profile;
-  }
-
   (async function init() {
     profile = await Auth.getCurrentProfile();
-    updateSignupStrip();
     renderFeed();
 
     await Promise.all([loadLevels(), loadOpenedCases()]);
     renderLevelCard();
+    renderMyCodes();
     // Båndet bygges først når rabatt-pop-upen åpnes (da med de ekte rabattene,
     // i tilfeldig rekkefølge) – det er ingen grunn til å animere et bånd
     // ingen ser.
@@ -830,10 +906,10 @@
 
   sb.auth.onAuthStateChange(async () => {
     profile = await Auth.getCurrentProfile();
-    updateSignupStrip();
     selectedCaseLevel = null;
     await loadOpenedCases();
     renderLevelCard();
+    renderMyCodes();
     renderCasePanel();
   });
 })();

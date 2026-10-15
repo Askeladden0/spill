@@ -130,6 +130,15 @@
   </div>
 </div>
 
+<div class="modal-overlay" style="z-index:110" data-info-modal hidden>
+  <div class="modal-backdrop" data-info-backdrop></div>
+  <div class="modal-card" style="max-width:440px;align-items:stretch;text-align:left">
+    <button type="button" class="modal-close" data-close-info aria-label="Lukk"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="5" x2="19" y2="19"></line><line x1="19" y1="5" x2="5" y2="19"></line></svg></button>
+    <h2 class="modal-title" data-info-title>Info</h2>
+    <p style="margin:0;font-size:14px;line-height:1.6;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere" data-info-text></p>
+  </div>
+</div>
+
 <script src="js/consent.js"></script>
 <script src="js/cookie-banner.js"></script>
 <script src="js/feature-flags.js"></script>
@@ -192,7 +201,7 @@
       Avatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, 86);
     document.querySelector("[data-profile-username]").textContent = profile.username;
     document.querySelector("[data-profile-level-pill]").textContent = `NIVÅ ${profile.level}`;
-    document.querySelector("[data-profile-email-line]").textContent = `${profile.email} · medlem siden ${new Date(profile.created_at).toLocaleDateString("no-NO", { month: "long", year: "numeric" })}`;
+    document.querySelector("[data-profile-email-line]").textContent = `Medlem siden ${new Date(profile.created_at).toLocaleDateString("no-NO", { month: "long", year: "numeric" })}`;
     document.querySelector("[data-default-username-banner]").hidden = !profile.username_is_default;
     document.querySelector("[data-public-profile-link]").href = `spillerprofil.html?u=${encodeURIComponent(profile.username)}`;
   }
@@ -268,20 +277,33 @@
       .join("");
   }
 
-  function codeCardHTML(c, opts) {
-    const surfaceClass = opts && opts.inSurface ? " is-in-surface" : "";
+  const RARITY_COLORS = { vanlig: "#7c8aa0", sjelden: "#4b8ef0", episk: "#9d6bf5", legendarisk: "#f0b429" };
+
+  function escapeHtml(str) {
+    return String(str == null ? "" : str).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  }
+
+  // Samme kort som når en rabatt trekkes på premier-siden.
+  function codeCardHTML(c) {
+    const color = RARITY_COLORS[c.rarity] || RARITY_COLORS.vanlig;
+    const neon = window.StudillaSnorreTag ? window.StudillaSnorreTag.neonFor(c.code) : "";
+    const heading = `${escapeHtml(c.title)} hos ${escapeHtml(c.brand)}`;
     return `
-      <div class="code-card${surfaceClass}">
-        <span class="code-card-notch is-left"></span>
-        <span class="code-card-notch is-right"></span>
-        <div class="code-card-head"><span class="code-card-brand">${c.brand.toUpperCase()}</span><span class="code-card-date">Hentet ${relTime(c.created_at)}</span></div>
-        <span class="code-card-title">${c.title}</span>
+      <div class="case-reveal" style="--reveal-color:${color};animation:none" data-code-card data-title="${heading}" data-sub="${escapeHtml(c.sub || "")}">
+        <span class="case-reveal-logo">${c.image_url ? `<img src="${escapeHtml(c.image_url)}" alt="">` : `<span>[ logo ]</span>`}</span>
+        <h3 class="case-reveal-value" style="font-size:22px">${heading}</h3>
         ${c.supports_snorre && window.StudillaSnorreTag ? `<span>${window.StudillaSnorreTag.html()}</span>` : ""}
-        ${c.link_url ? `<a class="case-reveal-link" href="${c.link_url}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
-        <div class="code-card-foot">
-          <span class="code-card-foot-label code-neon" style="background:${window.StudillaSnorreTag ? window.StudillaSnorreTag.neonFor(c.code) : "var(--accent)"}">${c.code}</span>
-          <button type="button" class="btn-copy-code" data-copy-code="${c.code}">Kopier</button>
+        <button type="button" class="case-reveal-code code-neon" style="background:${neon}" data-copy-code="${escapeHtml(c.code)}" aria-label="Kopier koden">
+          <span class="case-reveal-code-label" data-copy-label>Din kode</span>
+          <span class="case-reveal-code-row"><span class="case-reveal-code-value">${escapeHtml(c.code)}</span><svg class="case-reveal-code-copy" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"></rect><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"></path></svg></span>
+        </button>
+        <div class="case-reveal-sub" hidden>
+          <span class="case-reveal-sub-label">Info</span>
+          <p class="case-reveal-sub-text" data-sub-text></p>
+          <button type="button" class="case-reveal-more" data-sub-more hidden>Se mer</button>
         </div>
+        ${c.link_url ? `<a class="case-reveal-link" href="${escapeHtml(c.link_url)}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
+        <p class="case-reveal-note">Hentet ${relTime(c.created_at)}</p>
       </div>
     `;
   }
@@ -294,7 +316,7 @@
       moreLabel.textContent = "";
       return;
     }
-    slot.innerHTML = codeCardHTML(codes[0], { inSurface: true });
+    slot.innerHTML = codeCardHTML(codes[0]);
     moreLabel.textContent = codes.length > 1 ? `${codes.length - 1} flere` : "";
   }
 
@@ -388,17 +410,44 @@
     grid.innerHTML = codes.map((c) => codeCardHTML(c)).join("");
   }
 
-  function bindCopyButtons() {
-    document.querySelectorAll("[data-copy-code]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const code = btn.dataset.copyCode;
-        navigator.clipboard?.writeText(code);
-        const original = btn.textContent;
-        btn.textContent = "Kopiert!";
-        setTimeout(() => { btn.textContent = original; }, 1500);
-      });
+  // Info under koden klippes til tre linjer; «Se mer» vises bare når teksten
+  // ikke får plass. Må kjøres når kortet er synlig (ellers er høyden 0).
+  function setupCodeSubs() {
+    document.querySelectorAll("[data-code-card]").forEach((card) => {
+      const box = card.querySelector(".case-reveal-sub");
+      const textEl = box.querySelector("[data-sub-text]");
+      const more = box.querySelector("[data-sub-more]");
+      const text = card.dataset.sub;
+      textEl.textContent = text;
+      box.hidden = !text;
+      more.dataset.title = card.dataset.title;
+      more.dataset.full = text;
+      more.hidden = !(text && textEl.scrollHeight > textEl.clientHeight + 1);
     });
   }
+
+  document.addEventListener("click", (e) => {
+    const more = e.target.closest("[data-sub-more]");
+    if (more) {
+      document.querySelector("[data-info-title]").textContent = more.dataset.title;
+      document.querySelector("[data-info-text]").textContent = more.dataset.full;
+      document.querySelector("[data-info-modal]").hidden = false;
+      return;
+    }
+    const copyEl = e.target.closest("[data-copy-code]");
+    if (copyEl && navigator.clipboard) {
+      navigator.clipboard.writeText(copyEl.dataset.copyCode).then(() => {
+        const label = copyEl.querySelector("[data-copy-label]");
+        label.textContent = "Kopiert!";
+        clearTimeout(copyEl._t);
+        copyEl._t = setTimeout(() => { label.textContent = "Din kode"; }, 1500);
+      });
+    }
+  });
+  const closeInfoModal = () => { document.querySelector("[data-info-modal]").hidden = true; };
+  document.querySelector("[data-close-info]").addEventListener("click", closeInfoModal);
+  document.querySelector("[data-info-backdrop]").addEventListener("click", closeInfoModal);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInfoModal(); });
 
   function renderTabs() {
     document.querySelectorAll("[data-profile-tabs] [data-tab]").forEach((btn) => {
@@ -407,6 +456,7 @@
     document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
       panel.hidden = panel.dataset.tabPanel !== tab;
     });
+    setupCodeSubs();
   }
 
   function applyFeatureVisibility() {
@@ -425,7 +475,6 @@
     renderActivity();
     renderRecords();
     renderCodesTab();
-    bindCopyButtons();
     renderTabs();
   }
 
@@ -513,20 +562,31 @@
   // kortet. Databaser uten reward_id/link_url (eldre migrasjoner) svarer med
   // en feil – da vises kortet uten lenke, som før.
   async function fetchCodes() {
-    const withLink = await sb
-      .from("user_codes")
-      .select("brand, title, code, created_at, rewards(link_url, supports_snorre)")
-      .eq("user_id", profile.id)
-      .order("created_at", { ascending: false });
-    if (!withLink.error) {
-      return {
-        data: (withLink.data || []).map((c) => ({
-          ...c,
-          link_url: c.rewards ? c.rewards.link_url : null,
-          supports_snorre: !!(c.rewards && c.rewards.supports_snorre),
-        })),
-        error: null,
-      };
+    // Prøver kolonnesettene i rekkefølge, så databaser uten nyere kolonner
+    // fortsatt får vist kodene sine.
+    for (const cols of [
+      "link_url, supports_snorre, sub, rarity, image_url",
+      "link_url, supports_snorre",
+      "link_url",
+    ]) {
+      const res = await sb
+        .from("user_codes")
+        .select(`brand, title, code, created_at, rewards(${cols})`)
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false });
+      if (!res.error) {
+        return {
+          data: (res.data || []).map((c) => ({
+            ...c,
+            link_url: c.rewards ? c.rewards.link_url : null,
+            supports_snorre: !!(c.rewards && c.rewards.supports_snorre),
+            sub: c.rewards ? c.rewards.sub : "",
+            rarity: c.rewards ? c.rewards.rarity : "vanlig",
+            image_url: c.rewards ? c.rewards.image_url : null,
+          })),
+          error: null,
+        };
+      }
     }
     return sb
       .from("user_codes")

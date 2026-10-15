@@ -4512,6 +4512,11 @@ begin
     return;
   end if;
 
+  -- Nivå 1 er startnivået og gir velkomstbonusen (open_welcome_case) i stedet.
+  if p_level_number <= 1 then
+    raise exception 'Nivå 1 gir velkomstbonusen, ikke en egen rabatt';
+  end if;
+
   select rw.* into r
     from public.rewards rw
     join public.rarity_weights ww on ww.rarity = rw.rarity
@@ -4567,7 +4572,7 @@ revoke all on function public.open_welcome_case() from public;
 grant execute on function public.open_welcome_case() to authenticated;
 
 -- ---------------------------------------------------------------------------
--- 68. Prioritert velkomstbonus.
+-- 69. Prioritert velkomstbonus.
 --
 --     app_settings.welcome_priority er en ordnet liste med rewards.id (satt i
 --     adminpanelet under Rabatter). open_welcome_case() gir brukeren den
@@ -4683,6 +4688,38 @@ $$;
 
 revoke all on function public.open_welcome_case() from public;
 grant execute on function public.open_welcome_case() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 68. «Nettopp låst opp» er felles for alle: premier.html viser de siste
+--     rabattene som alle brukere har låst opp (brukernavn, avatar, rabatt og
+--     tidspunkt) – også for utloggede. user_codes er låst til egen rad, så
+--     dette går via en SECURITY DEFINER-funksjon som aldri returnerer selve
+--     koden. Brukere som har skjult seg (profiles.is_hidden) utelates.
+-- ---------------------------------------------------------------------------
+create or replace function public.recent_unlocks(p_limit int default 20)
+returns table (
+  username text,
+  avatar_color text,
+  avatar_icon text,
+  brand text,
+  title text,
+  created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select p.username, p.avatar_color, p.avatar_icon, c.brand, c.title, c.created_at
+    from public.user_codes c
+    join public.profiles p on p.id = c.user_id
+   where not p.is_hidden
+   order by c.created_at desc
+   limit least(greatest(coalesce(p_limit, 20), 1), 50);
+$$;
+
+revoke all on function public.recent_unlocks(int) from public;
+grant execute on function public.recent_unlocks(int) to anon, authenticated;
 
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
