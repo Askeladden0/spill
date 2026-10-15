@@ -87,7 +87,11 @@
     // deg» og fører nyregistrerte videre til rabatten på premier.html);
     // innloggede går rett til rabatten.
     const btn = root.querySelector("[data-teaser-open]");
-    if (profile) btn.textContent = "Åpne velkomstbonusen";
+    if (profile) {
+      btn.textContent = "Åpne velkomstbonusen";
+    } else {
+      root.querySelector("[data-teaser-sub]").textContent = "Registrer deg gratis for å trekke en tilfeldig rabatt fra en av partnerne våre.";
+    }
     btn.addEventListener("click", () => {
       window.location.href = profile ? "premier.html#velkomst" : "login.html";
     });
