@@ -201,7 +201,7 @@
       Avatars.avatarBadgeHTML(profile.avatar_color, profile.avatar_icon, 86);
     document.querySelector("[data-profile-username]").textContent = profile.username;
     document.querySelector("[data-profile-level-pill]").textContent = `NIVÅ ${profile.level}`;
-    document.querySelector("[data-profile-email-line]").textContent = `${profile.email} · medlem siden ${new Date(profile.created_at).toLocaleDateString("no-NO", { month: "long", year: "numeric" })}`;
+    document.querySelector("[data-profile-email-line]").textContent = `Medlem siden ${new Date(profile.created_at).toLocaleDateString("no-NO", { month: "long", year: "numeric" })}`;
     document.querySelector("[data-default-username-banner]").hidden = !profile.username_is_default;
     document.querySelector("[data-public-profile-link]").href = `spillerprofil.html?u=${encodeURIComponent(profile.username)}`;
   }
