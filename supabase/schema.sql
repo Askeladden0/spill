@@ -4566,6 +4566,124 @@ $$;
 revoke all on function public.open_welcome_case() from public;
 grant execute on function public.open_welcome_case() to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 68. Prioritert velkomstbonus.
+--
+--     app_settings.welcome_priority er en ordnet liste med rewards.id (satt i
+--     adminpanelet under Rabatter). open_welcome_case() gir brukeren den
+--     første rabatten i listen som er tilgjengelig: aktiv, ikke utgått, ikke
+--     «Støtter Snorre» og med minst én ledig kode (eller generell kode). Er
+--     ingen i listen tilgjengelig, trekkes det tilfeldig som før.
+-- ---------------------------------------------------------------------------
+alter table public.app_settings
+  add column if not exists welcome_priority bigint[] not null default '{}';
+
+drop function if exists public.open_welcome_case();
+create or replace function public.open_welcome_case()
+returns table (brand text, title text, sub text, rarity text, image_url text, link_url text, supports_snorre boolean, code text, already_opened boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  existing public.user_welcome_cases;
+  r public.rewards;
+  picked_code text;
+  remaining bigint;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å åpne en kasse';
+  end if;
+
+  select * into existing from public.user_welcome_cases
+   where user_id = auth.uid();
+
+  if existing is not null then
+    select * into r from public.rewards where id = existing.reward_id;
+    if r is null then
+      return query select null::text, null::text, null::text, null::text, null::text, null::text, false, existing.code, true;
+      return;
+    end if;
+    return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, existing.code, true;
+    return;
+  end if;
+
+  -- 1) Første tilgjengelige rabatt i admins prioriteringsliste.
+  select rw.* into r
+    from public.app_settings s
+    cross join lateral unnest(s.welcome_priority) with ordinality as p(reward_id, pos)
+    join public.rewards rw on rw.id = p.reward_id
+   where s.id = 1
+     and rw.active
+     and not rw.supports_snorre
+     and (rw.expires_at is null or rw.expires_at > now())
+     and (
+       rw.code_type = 'general'
+       or exists (
+         select 1 from public.reward_codes rc
+          where rc.reward_id = rw.id and rc.claimed_by is null and not rc.disabled
+       )
+     )
+   order by p.pos
+   limit 1;
+
+  -- 2) Ingen i listen er tilgjengelig: tilfeldig trekning som før.
+  if r is null then
+    select rw.* into r
+      from public.rewards rw
+      join public.rarity_weights ww on ww.rarity = rw.rarity
+      cross join lateral (select public.reward_repeat_factor(auth.uid(), rw.id) as f) rf
+     where rw.active
+       and not rw.supports_snorre
+       and (rw.expires_at is null or rw.expires_at > now())
+       and ww.weight > 0
+       and rf.f > 0
+     order by -ln(random()) / (ww.weight * rf.f)
+     limit 1;
+  end if;
+
+  if r is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  if r.code_type = 'general' then
+    picked_code := r.general_code;
+  else
+    update public.reward_codes
+       set claimed_by = auth.uid(), claimed_at = now()
+     where id = (
+       select id from public.reward_codes
+        where reward_id = r.id and claimed_by is null and not disabled
+        order by id
+        limit 1
+        for update skip locked
+     )
+     returning reward_codes.code into picked_code;
+
+    if picked_code is null then
+      raise exception 'Ingen flere koder igjen for denne rabatten akkurat nå';
+    end if;
+
+    select count(*) into remaining from public.reward_codes
+     where reward_id = r.id and claimed_by is null and not disabled;
+    if remaining = 0 then
+      update public.rewards set active = false where id = r.id;
+    end if;
+  end if;
+
+  insert into public.user_welcome_cases (user_id, reward_id, code)
+  values (auth.uid(), r.id, picked_code);
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, r.id);
+
+  return query select r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, picked_code, false;
+end;
+$$;
+
+revoke all on function public.open_welcome_case() from public;
+grant execute on function public.open_welcome_case() to authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
