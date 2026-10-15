@@ -77,7 +77,7 @@
           </div>
         </div>
         <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
-          <p class="section-sub" style="margin:0" data-teaser-sub>Åpne rabatten for å trekke en tilfeldig rabatt fra en av partnerne våre.</p>
+          <p class="section-sub" style="margin:0" data-teaser-sub>Åpne rabatten for å trekke en tilfeldig rabatt.</p>
           <button type="button" class="btn-primary" style="width:100%" data-teaser-open>Registrer deg</button>
         </div>
       </div>`;

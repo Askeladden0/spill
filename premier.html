@@ -46,7 +46,7 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
           <h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-.025em;color:#fff" data-level-headline>Laster nivå …</h1>
-          <p style="margin:0;font-size:15px;line-height:1.6;color:var(--muted);max-width:46ch;text-wrap:pretty">Fullfør triks for å samle poeng. Hvert nivå låser opp nye rabattkoder fra våre partnere — de blir liggende i «Mine koder» til du bruker dem.</p>
+          <p style="margin:0;font-size:15px;line-height:1.6;color:var(--muted);max-width:46ch;text-wrap:pretty">Fullfør triks for å samle poeng. Hvert nivå låser opp nye rabattkoder — de blir liggende i «Mine koder» til du bruker dem.</p>
           <div class="level-stats-row">
             <div class="level-stat">
               <span class="level-stat-num is-accent" data-stat-codes>7</span>
@@ -120,7 +120,7 @@
         </details>
         <details class="faq-item">
           <summary>Hvordan får jeg en rabatt?</summary>
-          <p class="faq-answer">Hver gang du når et nytt nivå får du én rabatt å åpne. Åpner du den, trekkes én tilfeldig rabatt fra partnerne våre – og den koden er din. Hver rabatt kan bare åpnes én gang, men de forsvinner ikke: har du flere uåpnede rabatter, ligger de under «Andre rabatter» til du åpner dem.</p>
+          <p class="faq-answer">Hver gang du når et nytt nivå får du én rabatt å åpne. Åpner du den, trekkes én tilfeldig rabatt – og den koden er din. Hver rabatt kan bare åpnes én gang, men de forsvinner ikke: har du flere uåpnede rabatter, ligger de under «Andre rabatter» til du åpner dem.</p>
         </details>
         <details class="faq-item">
           <summary>Hva er velkomstbonusen?</summary>
@@ -140,11 +140,11 @@
         </details>
         <details class="faq-item">
           <summary>Kan en rabattkode gå ut på dato?</summary>
-          <p class="faq-answer">Ja. Noen kampanjer fra partnerne våre har en utløpsdato, og etter den datoen kan koden ikke lenger brukes eller trekkes i nye rabatter. Rabatten det gjelder står oppgitt i beskrivelsen bak infosymbolet når du åpner den.</p>
+          <p class="faq-answer">Ja. Noen rabatter har en utløpsdato, og etter den datoen kan koden ikke lenger brukes eller trekkes i nye rabatter. Rabatten det gjelder står oppgitt i beskrivelsen bak infosymbolet når du åpner den.</p>
         </details>
         <details class="faq-item">
           <summary>Hvordan bruker jeg en kode?</summary>
-          <p class="faq-answer">Kopier koden med «Kopier koden», og lim den inn i rabattkodefeltet hos partneren når du handler. Har rabatten en lenke, tar «Gå til tilbudet» deg rett til riktig side.</p>
+          <p class="faq-answer">Kopier koden med «Kopier koden», og lim den inn i rabattkodefeltet når du handler. Har rabatten en lenke, tar «Gå til tilbudet» deg rett til riktig side.</p>
         </details>
         <details class="faq-item">
           <summary>Må jeg ha en konto?</summary>
@@ -532,7 +532,7 @@
       panelBtn.textContent = `Åpne ${caseName(selectedCaseLevel).toLowerCase()}`;
       panelBtn.disabled = caseOpening;
       panelSub.textContent = profile
-        ? "Åpne rabatten for å trekke en tilfeldig rabatt fra en av partnerne våre."
+        ? "Åpne rabatten for å trekke en tilfeldig rabatt."
         : "Registrer deg gratis for å trekke en tilfeldig rabatt.";
       openBtn.textContent = caseOpening ? "Åpner rabatten …" : `Åpne ${caseName(selectedCaseLevel).toLowerCase()}`;
       openBtn.disabled = caseOpening;
