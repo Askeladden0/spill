@@ -66,6 +66,10 @@
 
       <div style="display:flex;flex-direction:column;gap:32px;min-width:0">
 
+        <!-- Velkomsthjulet (js/welcome-wheel.js) – samme modul som på forsiden.
+             Vises til velkomstbonusen er hentet. -->
+        <div id="velkomst" style="scroll-margin-top:96px" data-welcome-wheel hidden></div>
+
         <div id="fa-rabatt" style="scroll-margin-top:96px">
           <div class="section-heading spread">
             <h2>Få en rabatt</h2>
@@ -131,7 +135,7 @@
         </details>
         <details class="faq-item">
           <summary>Hva er velkomstbonusen?</summary>
-          <p class="faq-answer">Alle som registrerer seg får én velkomstbonus, uavhengig av nivå. Den åpner du akkurat som de andre rabattene, og koden havner i «Mine koder».</p>
+          <p class="faq-answer">Alle som registrerer seg får én velkomstbonus, uavhengig av nivå. Du spinner velkomsthjulet én gang, og rabatten det lander på er din. Koden havner i «Mine koder».</p>
         </details>
         <details class="faq-item">
           <summary>Hva betyr «Støtter Snorre»?</summary>
@@ -223,6 +227,7 @@
 <script src="js/social.js"></script>
 <script src="js/dm-popup.js"></script>
 <script src="js/visit-tracking.js"></script>
+<script src="js/welcome-wheel.js"></script>
 <script>
 (function () {
   "use strict";
@@ -312,17 +317,15 @@
     return levels.filter((lv) => lv.level_number > 1 && lv.level_number <= dl).map((lv) => lv.level_number);
   }
 
-  // Velkomstbonusen ligger alltid først i køen til den er åpnet. For en
-  // utlogget besøkende vises den også, slik at siden viser hva man får.
+  // Velkomstbonusen er et eget hjul (js/welcome-wheel.js) og ligger ikke i
+  // køen av nivårabatter; den lagres likevel i openedCases under WELCOME så
+  // koden vises i «Mine koder».
   function unopenedLevels() {
-    const list = unlockedLevels().filter((n) => !openedCases.has(n));
-    return openedCases.has(WELCOME) ? list : [WELCOME, ...list];
+    return unlockedLevels().filter((n) => !openedCases.has(n));
   }
 
-  // Velkomstbonusen skal aldri være en «Støtter Snorre»-rabatt – heller ikke
-  // i båndet (databasen sikrer det samme i open_welcome_case).
   function reelPool() {
-    return selectedCaseLevel === WELCOME ? rewards.filter((r) => !r.supports_snorre) : rewards;
+    return rewards;
   }
 
   // ---------- Rabattbåndet ----------
@@ -502,7 +505,7 @@
   }
 
   function caseName(key) {
-    return key === WELCOME ? "Velkomstbonusen" : `Nivå ${key}-rabatten`;
+    return `Nivå ${key}-rabatten`;
   }
 
   // Uåpnede rabatter tegnes som rabattkortet fra «Mine koder» (stiplet kant)
@@ -573,7 +576,7 @@
       grid.innerHTML = others.map((n) => `
         <button type="button" data-case-pick="${n}" style="cursor:pointer;border-radius:14px;border:1px dashed rgba(var(--accent-rgb), .45);background:#131a25;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font-family:inherit">
           <span style="width:34px;height:34px;border-radius:10px;background:rgba(var(--accent-rgb), .12);border:1px dashed rgba(var(--accent-rgb), .45);display:flex;align-items:center;justify-content:center;color:var(--accent)">${TICKET_ICON(18)}</span>
-          <span style="font-size:11.5px;font-weight:600;color:var(--muted)">${n === WELCOME ? "Velkomst" : `Nivå ${n}`}</span>
+          <span style="font-size:11.5px;font-weight:600;color:var(--muted)">Nivå ${n}</span>
         </button>
       `).join("");
     }
@@ -622,10 +625,7 @@
     const shuffleStart = Date.now();
     rushReelShuffle();
     const opening = selectedCaseLevel;
-    const { data, error } = await (opening === WELCOME
-      ? sb.rpc("open_welcome_case")
-      : sb.rpc("open_level_case", { p_level_number: opening })
-    ).single();
+    const { data, error } = await sb.rpc("open_level_case", { p_level_number: opening }).single();
     const elapsed = Date.now() - shuffleStart;
     if (elapsed < REEL_RAMP_MS) await new Promise((r) => setTimeout(r, REEL_RAMP_MS - elapsed));
 
@@ -744,7 +744,7 @@
   document.querySelector("[data-case-open]").addEventListener("click", openSelectedCase);
   document.querySelector("[data-case-grid]").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-case-pick]");
-    if (btn) selectCase(btn.dataset.casePick === WELCOME ? WELCOME : Number(btn.dataset.casePick));
+    if (btn) selectCase(Number(btn.dataset.casePick));
   });
 
   // ---------- Sidepanel ----------
@@ -879,6 +879,24 @@
     welcomeRows.forEach((row) => openedCases.set(WELCOME, openedFromRow(row)));
   }
 
+  // Velkomsthjulet vises til velkomstbonusen er hentet. Utloggede ser hjulet
+  // og sendes til registrering når de trykker på knappen.
+  async function renderWelcomeWheel() {
+    const host = document.querySelector("[data-welcome-wheel]");
+    if (!window.StudillaWelcomeWheel) return;
+    if (openedCases.has(WELCOME)) { host.hidden = true; host.innerHTML = ""; return; }
+    await window.StudillaWelcomeWheel.mount(host, {
+      mode: "live",
+      profile,
+      onOpened: (data) => {
+        openedCases.set(WELCOME, data);
+        renderMyCodes();
+        renderLevelCard();
+        renderFeed();
+      },
+    });
+  }
+
   (async function init() {
     profile = await Auth.getCurrentProfile();
     renderFeed();
@@ -886,21 +904,18 @@
     await Promise.all([loadLevels(), loadOpenedCases()]);
     renderLevelCard();
     renderMyCodes();
+    await renderWelcomeWheel();
     // Båndet bygges først når rabatt-pop-upen åpnes (da med de ekte rabattene,
     // i tilfeldig rekkefølge) – det er ingen grunn til å animere et bånd
     // ingen ser.
     renderCasePanel();
     // Nyregistrerte lander på #fa-rabatt; innholdet over rekker å endre høyde
     // mens siden lastes, så vi hopper dit først nå.
+    // Fra forsiden og rett etter registrering (#velkomst) går man rett til
+    // velkomsthjulet; ellers til «Få en rabatt».
     if (window.location.hash === "#fa-rabatt" || window.location.hash === "#velkomst") {
-      const target = document.getElementById("fa-rabatt");
+      const target = document.getElementById(window.location.hash === "#velkomst" && !openedCases.has(WELCOME) ? "velkomst" : "fa-rabatt");
       if (target) target.scrollIntoView();
-    }
-    // Fra «Åpne velkomstrabatten» på forsiden og rett etter registrering går
-    // man rett til pop-upen der rabatten åpnes.
-    if (window.location.hash === "#velkomst" && profile && unopenedLevels().includes(WELCOME)) {
-      selectCase(WELCOME);
-      openCaseModal();
     }
   })();
 
@@ -911,6 +926,7 @@
     renderLevelCard();
     renderMyCodes();
     renderCasePanel();
+    renderWelcomeWheel();
   });
 })();
 </script>

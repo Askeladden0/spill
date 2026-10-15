@@ -2897,3 +2897,33 @@ html.is-player-view main { max-width: none; }
   .public-profile-header { flex-direction: column; text-align: center; }
   .public-profile-stats { margin-left: 0; justify-content: center; }
 }
+
+/* ---------- Velkomsthjulet (js/welcome-wheel.js) ---------- */
+.welcome-wheel-wrap {
+  position: relative;
+  width: min(300px, 78vw);
+  padding-top: 12px;
+}
+
+.welcome-wheel {
+  width: 100%;
+  aspect-ratio: 1;
+  will-change: transform;
+}
+
+.welcome-wheel-idle { animation: welcomeWheelIdle 40s linear infinite; }
+
+@keyframes welcomeWheelIdle { to { transform: rotate(360deg); } }
+
+.welcome-wheel-pointer {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .5));
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-wheel-idle { animation: none; }
+}

@@ -45,7 +45,7 @@
     guestGameRecords: [],
     siteVisits: [],
     avatarOptions: { colors: [], icons: [] },
-    settings: { level_step: 10000, wheel_spins_per_day: 1, daily_game_rotation: true, welcome_priority: [] },
+    settings: { level_step: 10000, wheel_spins_per_day: 1, daily_game_rotation: true, welcome_priority: [], welcome_slots: 10, welcome_fallback: [] },
     gamesNeedMigration: false,
     rewardsNeedMigration: false,
     codesNeedMigration: false,
@@ -175,7 +175,7 @@
   async function loadSettings() {
     const full = await sb
       .from("app_settings")
-      .select("level_step, wheel_spins_per_day, daily_game_rotation, welcome_priority")
+      .select("level_step, wheel_spins_per_day, daily_game_rotation, welcome_priority, welcome_slots, welcome_fallback")
       .eq("id", 1)
       .maybeSingle();
 
@@ -185,6 +185,8 @@
         wheel_spins_per_day: full.data.wheel_spins_per_day == null ? 1 : Number(full.data.wheel_spins_per_day),
         daily_game_rotation: full.data.daily_game_rotation !== false,
         welcome_priority: (full.data.welcome_priority || []).map(Number),
+        welcome_slots: Number(full.data.welcome_slots) || 10,
+        welcome_fallback: (full.data.welcome_fallback || []).map(Number),
       };
     }
 
@@ -195,9 +197,9 @@
     if (basic.error || !basic.data) {
       // Fallback for prosjekter uten app_settings i det hele tatt (seksjon 36).
       state.settingsNeedMigration = true;
-      return { level_step: 10000, wheel_spins_per_day: 1, daily_game_rotation: true, welcome_priority: [] };
+      return { level_step: 10000, wheel_spins_per_day: 1, daily_game_rotation: true, welcome_priority: [], welcome_slots: 10, welcome_fallback: [] };
     }
-    return { level_step: Number(basic.data.level_step) || 10000, wheel_spins_per_day: 1, daily_game_rotation: true, welcome_priority: [] };
+    return { level_step: Number(basic.data.level_step) || 10000, wheel_spins_per_day: 1, daily_game_rotation: true, welcome_priority: [], welcome_slots: 10, welcome_fallback: [] };
   }
 
   async function loadGuestGameRecords() {
@@ -1627,11 +1629,16 @@
     `;
   }
 
-  // Velkomstbonus: prioritert liste over rabatter. Nye brukere får den
-  // første i listen som fortsatt er tilgjengelig (aktiv, ikke utgått og med
-  // ledige koder); er alle tomme, trekkes det tilfeldig som før. Trekningen
-  // skjer i open_welcome_case() (schema.sql, seksjon 68).
-  function welcomePriority() { return state.settings.welcome_priority || []; }
+  // Velkomsthjulet: admin velger rabattene på hjulet (annenhver rute, i
+  // rekkefølge), hvor mange ruter det har, og hvilke rabatter som tar over
+  // plassen når en går tom. Trekningen skjer i spin_welcome_wheel()
+  // (schema.sql, seksjon 71).
+  const WELCOME_LISTS = {
+    welcome_priority: { add: "Lagt til på hjulet", remove: "Fjernet fra hjulet", move: "Rekkefølgen er lagret" },
+    welcome_fallback: { add: "Lagt til som reserve", remove: "Fjernet som reserve", move: "Rekkefølgen er lagret" },
+  };
+
+  function welcomeList(key) { return state.settings[key] || []; }
 
   function welcomeStatus(r) {
     if (!r.active) return { ok: false, text: "skrudd av" };
@@ -1641,22 +1648,19 @@
     return left > 0 ? { ok: true, text: `${left} koder igjen` } : { ok: false, text: "tom for koder" };
   }
 
-  async function saveWelcomePriority(list, message) {
-    await saveSetting({ welcome_priority: list }, message);
-  }
-
-  function moveWelcome(id, delta) {
-    const list = welcomePriority().slice();
+  function moveWelcome(key, id, delta) {
+    const list = welcomeList(key).slice();
     const i = list.indexOf(id);
     const j = i + delta;
     if (i < 0 || j < 0 || j >= list.length) return;
     [list[i], list[j]] = [list[j], list[i]];
-    return saveWelcomePriority(list, "Prioriteringen er lagret");
+    return saveSetting({ [key]: list }, WELCOME_LISTS[key].move);
   }
 
-  function renderWelcomePriority() {
+  function welcomeListHTML(key, emptyText) {
     const disabled = state.wheelNeedMigration || state.settingsNeedMigration ? " disabled" : "";
-    const list = welcomePriority();
+    const list = welcomeList(key);
+    const taken = new Set([...welcomeList("welcome_priority"), ...welcomeList("welcome_fallback")]);
     const items = list.map((id, i) => {
       const r = findReward(id);
       if (!r) return "";
@@ -1666,32 +1670,54 @@
           <span style="font-weight:800;color:var(--accent);width:22px">${i + 1}.</span>
           <span style="flex:1;min-width:0;font-weight:700;color:var(--text-strong)">${escapeHTML(r.title)} hos ${escapeHTML(r.brand)}</span>
           <span class="admin-card-sub" style="margin:0;color:${st.ok ? "inherit" : "#ff6b6b"}">${st.text}</span>
-          <button type="button" class="admin-btn-ghost" data-welcome-move="up" data-welcome-id="${id}"${i === 0 ? " disabled" : ""}${disabled} aria-label="Flytt opp">↑</button>
-          <button type="button" class="admin-btn-ghost" data-welcome-move="down" data-welcome-id="${id}"${i === list.length - 1 ? " disabled" : ""}${disabled} aria-label="Flytt ned">↓</button>
-          <button type="button" class="admin-btn-ghost is-danger" data-welcome-remove="${id}"${disabled} aria-label="Fjern">×</button>
+          <button type="button" class="admin-btn-ghost" data-welcome-move="up" data-welcome-key="${key}" data-welcome-id="${id}"${i === 0 ? " disabled" : ""}${disabled} aria-label="Flytt opp">↑</button>
+          <button type="button" class="admin-btn-ghost" data-welcome-move="down" data-welcome-key="${key}" data-welcome-id="${id}"${i === list.length - 1 ? " disabled" : ""}${disabled} aria-label="Flytt ned">↓</button>
+          <button type="button" class="admin-btn-ghost is-danger" data-welcome-remove="${id}" data-welcome-key="${key}"${disabled} aria-label="Fjern">×</button>
         </div>
       `;
     }).join("");
     const options = state.rewards
-      .filter((r) => !r.supports_snorre && !list.includes(r.id))
+      .filter((r) => !r.supports_snorre && !taken.has(r.id))
       .map((r) => `<option value="${r.id}">${escapeHTML(r.brand)} – ${escapeHTML(r.title)}</option>`)
       .join("");
+    return `
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+        ${items || `<p class="admin-card-sub" style="margin:0">${emptyText}</p>`}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <select data-welcome-select="${key}"${disabled} style="flex:1;min-width:200px">
+          <option value="">Velg rabatt å legge til …</option>
+          ${options}
+        </select>
+        <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-welcome-add="${key}"${disabled}>Legg til</button>
+      </div>
+    `;
+  }
 
+  function renderWelcomePriority() {
+    const disabled = state.wheelNeedMigration || state.settingsNeedMigration ? " disabled" : "";
+    const slots = state.settings.welcome_slots || 10;
     return `
       <div class="admin-card">
         <div>
-          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Velkomstbonus</h2>
-          <span class="admin-card-sub">Nye brukere får den øverste rabatten i listen. Er den tom for koder, utløpt eller skrudd av, går de videre til neste. Er hele listen tom, trekkes velkomstbonusen tilfeldig. «Støtter Snorre»-rabatter kan ikke brukes.</span>
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Velkomsthjul</h2>
+          <span class="admin-card-sub">Nye brukere spinner et hjul og får rabatten det lander på. Rabattene du velger under fordeles annenhver rute rundt hjulet, i rekkefølgen under. «Støtter Snorre»-rabatter kan ikke brukes.</span>
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
-          ${items || `<p class="admin-card-sub" style="margin:0">Ingen valgt ennå – velkomstbonusen trekkes tilfeldig.</p>`}
+        ${welcomeListHTML("welcome_priority", "Ingen rabatter på hjulet ennå – velkomsthjulet vises ikke før du legger til minst én.")}
+
+        <div style="margin-top:20px">
+          <h3 style="margin:0 0 4px;font-size:14px;font-weight:800;color:var(--text-strong)">Antall ruter</h3>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <input type="number" min="2" max="24" step="1" value="${slots}" data-welcome-slots${disabled} style="width:90px">
+            <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-welcome-slots-save${disabled}>Lagre</button>
+            <span class="admin-card-sub" style="margin:0">Mellom 2 og 24. Flere ruter av samme rabatt gir større sjanse for den.</span>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px">
-          <select data-welcome-select${disabled} style="flex:1;min-width:200px">
-            <option value="">Velg rabatt å legge til …</option>
-            ${options}
-          </select>
-          <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-welcome-add${disabled}>Legg til</button>
+
+        <div style="margin-top:20px">
+          <h3 style="margin:0 0 4px;font-size:14px;font-weight:800;color:var(--text-strong)">Hvis en rabatt går tom</h3>
+          <span class="admin-card-sub">Er en rabatt tom for koder, utløpt eller skrudd av, tar disse over rutene dens (første ledige først, fordelt rundt hjulet).</span>
+          ${welcomeListHTML("welcome_fallback", "Ingen reserve valgt – rutene til en tom rabatt fordeles på de andre på hjulet.")}
         </div>
       </div>
     `;
@@ -2415,20 +2441,28 @@
     const delGame = t.closest("[data-game-delete]");
     if (delGame) { const g = findGame(delGame.dataset.gameDelete); if (g) deleteGame(g); return; }
 
-    // Velkomstbonus
+    // Velkomsthjul
     const welcomeAdd = t.closest("[data-welcome-add]");
     if (welcomeAdd) {
-      const sel = els.main.querySelector("[data-welcome-select]");
+      const key = welcomeAdd.dataset.welcomeAdd;
+      const sel = els.main.querySelector(`[data-welcome-select="${key}"]`);
       const id = Number(sel && sel.value);
       if (!id) return flash("Velg en rabatt først.");
-      return saveWelcomePriority([...welcomePriority(), id], "Lagt til i velkomstbonusen");
+      return saveSetting({ [key]: [...welcomeList(key), id] }, WELCOME_LISTS[key].add);
     }
     const welcomeMove = t.closest("[data-welcome-move]");
-    if (welcomeMove) return moveWelcome(Number(welcomeMove.dataset.welcomeId), welcomeMove.dataset.welcomeMove === "up" ? -1 : 1);
+    if (welcomeMove) return moveWelcome(welcomeMove.dataset.welcomeKey, Number(welcomeMove.dataset.welcomeId), welcomeMove.dataset.welcomeMove === "up" ? -1 : 1);
     const welcomeRemove = t.closest("[data-welcome-remove]");
     if (welcomeRemove) {
+      const key = welcomeRemove.dataset.welcomeKey;
       const id = Number(welcomeRemove.dataset.welcomeRemove);
-      return saveWelcomePriority(welcomePriority().filter((x) => x !== id), "Fjernet fra velkomstbonusen");
+      return saveSetting({ [key]: welcomeList(key).filter((x) => x !== id) }, WELCOME_LISTS[key].remove);
+    }
+    if (t.closest("[data-welcome-slots-save]")) {
+      const input = els.main.querySelector("[data-welcome-slots]");
+      const n = Math.round(Number(input && input.value));
+      if (!Number.isFinite(n) || n < 2 || n > 24) return flash("Antall ruter må være mellom 2 og 24.");
+      return saveSetting({ welcome_slots: n }, "Antall ruter er lagret");
     }
 
     // Lykkehjul

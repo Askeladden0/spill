@@ -4759,6 +4759,225 @@ $$;
 revoke all on function public.welcome_bonus_preview() from public;
 grant execute on function public.welcome_bonus_preview() to anon, authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 71. Velkomstbonusen som lykkehjul.
+--
+--     Hjulet har app_settings.welcome_slots ruter (standard 10). Rutene fylles
+--     annenhver gang fra welcome_priority (rabattene på hjulet, i rekkefølge).
+--     Er en rabatt tom/utløpt/av, tar rabattene i welcome_fallback over
+--     plassen (f.eks. Temu). spin_welcome_wheel() trekker en tilfeldig rute og
+--     gir den rabatten (én spinning per bruker, som open_welcome_case).
+--     welcome_wheel_config() gir forsiden/premiesiden rutene uten koder.
+-- ---------------------------------------------------------------------------
+alter table public.app_settings
+  add column if not exists welcome_slots int not null default 10,
+  add column if not exists welcome_fallback bigint[] not null default '{}';
+
+alter table public.app_settings drop constraint if exists app_settings_welcome_slots_check;
+alter table public.app_settings
+  add constraint app_settings_welcome_slots_check check (welcome_slots between 2 and 24);
+
+create or replace function public.welcome_reward_available(p_reward_id bigint)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1 from public.rewards rw
+     where rw.id = p_reward_id
+       and rw.active
+       and not rw.supports_snorre
+       and (rw.expires_at is null or rw.expires_at > now())
+       and (
+         rw.code_type = 'general'
+         or exists (
+           select 1 from public.reward_codes rc
+            where rc.reward_id = rw.id and rc.claimed_by is null and not rc.disabled
+         )
+       )
+  );
+$$;
+
+revoke all on function public.welcome_reward_available(bigint) from public;
+
+create or replace function public.welcome_wheel_slots()
+returns table (slot int, reward_id bigint)
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  s public.app_settings;
+  all_main bigint[];
+  avail_main bigint[];
+  avail_fb bigint[];
+  m int;
+  fbn int;
+  amn int;
+  i int;
+  n int := 0;
+  rid bigint;
+begin
+  select * into s from public.app_settings where id = 1;
+  if s is null then return; end if;
+
+  all_main := s.welcome_priority;
+  m := coalesce(cardinality(all_main), 0);
+  if m = 0 then return; end if;
+
+  select coalesce(array_agg(t.x order by t.ord), '{}') into avail_main
+    from unnest(all_main) with ordinality as t(x, ord)
+   where public.welcome_reward_available(t.x);
+  select coalesce(array_agg(t.x order by t.ord), '{}') into avail_fb
+    from unnest(s.welcome_fallback) with ordinality as t(x, ord)
+   where public.welcome_reward_available(t.x);
+  fbn := cardinality(avail_fb);
+  amn := cardinality(avail_main);
+
+  for i in 0 .. s.welcome_slots - 1 loop
+    rid := all_main[(i % m) + 1];
+    if not public.welcome_reward_available(rid) then
+      if fbn > 0 then
+        rid := avail_fb[(i % fbn) + 1];
+      elsif amn > 0 then
+        rid := avail_main[(i % amn) + 1];
+      else
+        rid := null;
+      end if;
+    end if;
+    if rid is not null then
+      n := n + 1;
+      slot := n;
+      reward_id := rid;
+      return next;
+    end if;
+  end loop;
+end;
+$$;
+
+revoke all on function public.welcome_wheel_slots() from public;
+
+create or replace function public.welcome_wheel_config()
+returns table (slot int, brand text, title text, sub text, rarity text, image_url text)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select ws.slot, rw.brand, rw.title, rw.sub, rw.rarity, rw.image_url
+    from public.welcome_wheel_slots() ws
+    join public.rewards rw on rw.id = ws.reward_id
+   order by ws.slot;
+$$;
+
+revoke all on function public.welcome_wheel_config() from public;
+grant execute on function public.welcome_wheel_config() to anon, authenticated;
+
+drop function if exists public.spin_welcome_wheel();
+create or replace function public.spin_welcome_wheel()
+returns table (slot int, brand text, title text, sub text, rarity text, image_url text, link_url text, supports_snorre boolean, code text, already_opened boolean)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  existing public.user_welcome_cases;
+  r public.rewards;
+  picked_code text;
+  remaining bigint;
+  slot_nums int[];
+  rids bigint[];
+  n int;
+  idx int;
+  tried int[] := '{}';
+  chosen_slot int;
+begin
+  if auth.uid() is null then
+    raise exception 'Du må være innlogget for å spinne hjulet';
+  end if;
+
+  select * into existing from public.user_welcome_cases
+   where user_id = auth.uid();
+
+  if existing is not null then
+    select * into r from public.rewards where id = existing.reward_id;
+    select ws.slot into chosen_slot from public.welcome_wheel_slots() ws
+     where ws.reward_id = existing.reward_id order by ws.slot limit 1;
+    if r is null then
+      return query select coalesce(chosen_slot, 1), null::text, null::text, null::text, null::text, null::text, null::text, false, existing.code, true;
+      return;
+    end if;
+    return query select coalesce(chosen_slot, 1), r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, existing.code, true;
+    return;
+  end if;
+
+  select array_agg(ws.slot order by ws.slot), array_agg(ws.reward_id order by ws.slot)
+    into slot_nums, rids
+    from public.welcome_wheel_slots() ws;
+  n := coalesce(cardinality(slot_nums), 0);
+  if n = 0 then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  -- Trekk en tilfeldig rute. Er koden tatt i mellomtiden, prøv en annen rute.
+  while picked_code is null and cardinality(tried) < n loop
+    select p into idx from generate_series(1, n) p
+     where p <> all(tried) order by random() limit 1;
+    tried := tried || idx;
+
+    select * into r from public.rewards where id = rids[idx];
+    if r.code_type = 'general' then
+      picked_code := r.general_code;
+    else
+      update public.reward_codes
+         set claimed_by = auth.uid(), claimed_at = now()
+       where id = (
+         select rc.id from public.reward_codes rc
+          where rc.reward_id = r.id and rc.claimed_by is null and not rc.disabled
+          order by rc.id
+          limit 1
+          for update skip locked
+       )
+       returning reward_codes.code into picked_code;
+
+      if picked_code is not null then
+        select count(*) into remaining from public.reward_codes rc
+         where rc.reward_id = r.id and rc.claimed_by is null and not rc.disabled;
+        if remaining = 0 then
+          update public.rewards set active = false where id = r.id;
+        end if;
+      end if;
+    end if;
+  end loop;
+
+  if picked_code is null then
+    raise exception 'Ingen rabatter tilgjengelig akkurat nå';
+  end if;
+
+  insert into public.user_welcome_cases (user_id, reward_id, code)
+  values (auth.uid(), r.id, picked_code);
+
+  insert into public.user_codes (user_id, brand, title, code, reward_id)
+  values (auth.uid(), r.brand, r.title, picked_code, r.id);
+
+  return query select slot_nums[idx], r.brand, r.title, r.sub, r.rarity, r.image_url, r.link_url, r.supports_snorre, picked_code, false;
+end;
+$$;
+
+revoke all on function public.spin_welcome_wheel() from public;
+grant execute on function public.spin_welcome_wheel() to authenticated;
+
+-- Dagens oppsett: Adidas, Dominos (20 % på stor pizza), Gymshark; Temu tar over
+-- når en går tom.
+update public.app_settings
+   set welcome_priority = '{8,21,27}',
+       welcome_fallback = '{20}',
+       welcome_slots = 10
+ where id = 1;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
