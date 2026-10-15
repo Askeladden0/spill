@@ -29,15 +29,6 @@
   <div id="site-header"></div>
 
   <main id="hovedinnhold">
-    <!-- Vises kun for utloggede (flyttet hit fra forsiden). -->
-    <section class="signup-strip" data-signup-strip hidden>
-      <div class="signup-strip-text">
-        <strong>Registrer deg for å få rabatter.</strong>
-        <span>Du får en velkomstbonus med en gang du har registrert deg, og en ny rabatt for hvert nivå du når. Det tar ti sekunder å lage konto – kun brukernavn og passord.</span>
-      </div>
-      <a class="btn-primary" href="login.html">Registrer deg</a>
-    </section>
-
     <section class="premier-hero-grid">
       <div class="level-card">
         <div class="level-ring-wrap" data-level-ring-wrap>
@@ -796,14 +787,8 @@
     welcomeRows.forEach((row) => openedCases.set(WELCOME, openedFromRow(row)));
   }
 
-  function updateSignupStrip() {
-    const strip = document.querySelector("[data-signup-strip]");
-    if (strip) strip.hidden = !!profile;
-  }
-
   (async function init() {
     profile = await Auth.getCurrentProfile();
-    updateSignupStrip();
     renderFeed();
 
     await Promise.all([loadLevels(), loadOpenedCases()]);
@@ -828,7 +813,6 @@
 
   sb.auth.onAuthStateChange(async () => {
     profile = await Auth.getCurrentProfile();
-    updateSignupStrip();
     selectedCaseLevel = null;
     await loadOpenedCases();
     renderLevelCard();
