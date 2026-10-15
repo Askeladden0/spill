@@ -42,6 +42,11 @@
           <button type="submit" class="btn-primary" style="width:100%">Logg inn</button>
         </form>
 
+        <div data-welcome-preview style="display:none;align-items:center;gap:12px;padding:12px 14px;margin-bottom:16px;border-radius:12px;border:1px solid var(--border-strong);background:rgba(var(--accent-rgb), .08)">
+          <span data-welcome-logo style="width:44px;height:44px;flex:none;border-radius:10px;background:#1b2434;overflow:hidden;display:flex;align-items:center;justify-content:center"></span>
+          <span style="font-size:14px;line-height:1.35;color:var(--text-strong)">Registrer deg og få <strong data-welcome-text></strong> i velkomstbonus.</span>
+        </div>
+
         <form data-register-form>
           <label class="auth-field">
             <span>Brukernavn</span>
@@ -112,7 +117,29 @@
       const isLogin = tab.dataset.tab === "login";
       loginForm.hidden = !isLogin;
       registerForm.hidden = isLogin;
+      showWelcome();
     });
+  });
+
+  // Viser hvilken rabatt man får ved registrering (admin velger den under
+  // Rabatter → Velkomstbonus). Bare synlig på «Registrer deg»-fanen.
+  const welcomeBox = document.querySelector("[data-welcome-preview]");
+  let welcomePreview = null;
+  function showWelcome() {
+    welcomeBox.style.display = welcomePreview && !registerForm.hidden ? "flex" : "none";
+  }
+  sb.rpc("welcome_bonus_preview").then(({ data, error }) => {
+    if (error || !data || !data.length) return;
+    welcomePreview = data[0];
+    welcomeBox.querySelector("[data-welcome-text]").textContent = `${welcomePreview.title} hos ${welcomePreview.brand}`;
+    if (welcomePreview.image_url) {
+      const img = document.createElement("img");
+      img.src = welcomePreview.image_url;
+      img.alt = "";
+      img.style.cssText = "width:100%;height:100%;object-fit:cover";
+      welcomeBox.querySelector("[data-welcome-logo]").appendChild(img);
+    }
+    showWelcome();
   });
 
   // Innlogging skjer med brukernavn og passord. Supabase Auth krever teknisk

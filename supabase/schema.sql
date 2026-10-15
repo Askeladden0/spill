@@ -4721,6 +4721,44 @@ $$;
 revoke all on function public.recent_unlocks(int) from public;
 grant execute on function public.recent_unlocks(int) to anon, authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 70. Forhåndsvisning av velkomstbonusen.
+--
+--     welcome_bonus_preview() returnerer rabatten en ny bruker får (første
+--     tilgjengelige i welcome_priority, samme regler som open_welcome_case),
+--     uten kode, slik at forsiden og registreringssiden kan vise den. Tom når
+--     listen er tom eller ingen i den er tilgjengelig (da trekkes den
+--     tilfeldig).
+-- ---------------------------------------------------------------------------
+create or replace function public.welcome_bonus_preview()
+returns table (brand text, title text, sub text, rarity text, image_url text)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select rw.brand, rw.title, rw.sub, rw.rarity, rw.image_url
+    from public.app_settings s
+    cross join lateral unnest(s.welcome_priority) with ordinality as p(reward_id, pos)
+    join public.rewards rw on rw.id = p.reward_id
+   where s.id = 1
+     and rw.active
+     and not rw.supports_snorre
+     and (rw.expires_at is null or rw.expires_at > now())
+     and (
+       rw.code_type = 'general'
+       or exists (
+         select 1 from public.reward_codes rc
+          where rc.reward_id = rw.id and rc.claimed_by is null and not rc.disabled
+       )
+     )
+   order by p.pos
+   limit 1;
+$$;
+
+revoke all on function public.welcome_bonus_preview() from public;
+grant execute on function public.welcome_bonus_preview() to anon, authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
