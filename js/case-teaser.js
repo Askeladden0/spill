@@ -90,7 +90,7 @@
     if (profile) {
       btn.textContent = "Åpne velkomstbonusen";
     } else {
-      root.querySelector("[data-teaser-sub]").textContent = "Registrer deg gratis for å trekke en tilfeldig rabatt fra en av partnerne våre.";
+      root.querySelector("[data-teaser-sub]").textContent = "Registrer deg gratis for å trekke en tilfeldig rabatt.";
     }
     btn.addEventListener("click", () => {
       window.location.href = profile ? "premier.html#velkomst" : "login.html";
