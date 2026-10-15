@@ -82,7 +82,7 @@
               </div>
             </div>
             <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
-              <p class="section-sub" style="margin:0" data-case-panel-sub>Åpne rabatten for å trekke en tilfeldig rabatt fra en av partnerne våre.</p>
+              <p class="section-sub" style="margin:0" data-case-panel-sub>Registrer deg gratis for å trekke en tilfeldig rabatt fra en av partnerne våre.</p>
               <button type="button" class="btn-primary" style="width:100%" data-open-case>Åpne rabatten</button>
             </div>
           </div>
@@ -293,7 +293,8 @@
   // ---------- Rabatter ----------
   function unlockedLevels() {
     const dl = displayLevel();
-    return levels.filter((lv) => lv.level_number <= dl).map((lv) => lv.level_number);
+    // Nivå 1 er startnivået og gir velkomstbonusen, ikke en egen rabatt.
+    return levels.filter((lv) => lv.level_number > 1 && lv.level_number <= dl).map((lv) => lv.level_number);
   }
 
   // Velkomstbonusen ligger alltid først i køen til den er åpnet. For en
@@ -519,9 +520,7 @@
 
     if (selectedCaseLevel === null) {
       document.querySelector("[data-case-title]").textContent = "Ingen ledige rabatter";
-      const wait = unlockedLevels().length === 0
-        ? "Nå nivå 1 for å få din første rabatt"
-        : "Nå et nytt nivå for å få en ny rabatt";
+      const wait = "Nå et nytt nivå for å få en ny rabatt";
       panelBtn.textContent = wait;
       panelBtn.disabled = true;
       panelSub.textContent = "Du får én rabatt for hvert nivå du når.";
@@ -532,7 +531,9 @@
       document.querySelector("[data-case-title]").textContent = caseName(selectedCaseLevel);
       panelBtn.textContent = `Åpne ${caseName(selectedCaseLevel).toLowerCase()}`;
       panelBtn.disabled = caseOpening;
-      panelSub.textContent = "Åpne rabatten for å trekke en tilfeldig rabatt fra en av partnerne våre.";
+      panelSub.textContent = profile
+        ? "Åpne rabatten for å trekke en tilfeldig rabatt fra en av partnerne våre."
+        : "Registrer deg gratis for å trekke en tilfeldig rabatt fra en av partnerne våre.";
       openBtn.textContent = caseOpening ? "Åpner rabatten …" : `Åpne ${caseName(selectedCaseLevel).toLowerCase()}`;
       openBtn.disabled = caseOpening;
       document.querySelector("[data-case-modal-title]").textContent = caseName(selectedCaseLevel);
@@ -684,16 +685,25 @@
     return String(str).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   }
 
+  const FEED_STEP = 5;
+  let feedRows = [];
+  let feedShown = FEED_STEP;
+
   async function renderFeed() {
     const list = document.querySelector("[data-feed-list]");
-    const { data, error } = await sb.rpc("recent_unlocks", { p_limit: 20 });
+    const { data, error } = await sb.rpc("recent_unlocks", { p_limit: 50 });
 
     if (error || !data || !data.length) {
       list.innerHTML = `<p class="section-sub">Ingen koder låst opp ennå.</p>`;
       return;
     }
+    feedRows = data;
+    paintFeed();
+  }
 
-    list.innerHTML = data
+  function paintFeed() {
+    const list = document.querySelector("[data-feed-list]");
+    const rows = feedRows.slice(0, feedShown)
       .map((c) => {
         const mine = profile && c.username.toLowerCase() === profile.username.toLowerCase();
         const who = mine
@@ -709,6 +719,12 @@
       </div>`;
       })
       .join("");
+    const more = feedShown < feedRows.length
+      ? `<button type="button" class="btn-outline" style="width:100%;margin-top:12px" data-feed-more>Vis flere</button>`
+      : "";
+    list.innerHTML = rows + more;
+    const btn = list.querySelector("[data-feed-more]");
+    if (btn) btn.addEventListener("click", () => { feedShown += FEED_STEP; paintFeed(); });
   }
 
   // ---------- Init ----------

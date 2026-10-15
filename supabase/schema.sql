@@ -4512,6 +4512,11 @@ begin
     return;
   end if;
 
+  -- Nivå 1 er startnivået og gir velkomstbonusen (open_welcome_case) i stedet.
+  if p_level_number <= 1 then
+    raise exception 'Nivå 1 gir velkomstbonusen, ikke en egen rabatt';
+  end if;
+
   select rw.* into r
     from public.rewards rw
     join public.rarity_weights ww on ww.rarity = rw.rarity
