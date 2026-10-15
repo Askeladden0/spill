@@ -183,22 +183,30 @@
 
     <div class="case-reveal" data-case-reveal hidden>
       <span class="case-reveal-logo" data-case-reveal-thumb></span>
-      <div class="case-reveal-rarity">
-        <span data-case-reveal-rarity></span>
-        <button type="button" class="case-reveal-info" aria-label="Mer info om rabatten" data-tip="" data-case-reveal-info>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        </button>
-      </div>
       <h3 class="case-reveal-value" data-case-reveal-value></h3>
       <span data-case-reveal-snorre></span>
-      <div class="case-reveal-code">
-        <span class="case-reveal-code-label">Din kode</span>
-        <span class="case-reveal-code-value" data-case-reveal-code></span>
+      <button type="button" class="case-reveal-code code-neon" data-case-reveal-codebox aria-label="Kopier koden">
+        <span class="case-reveal-code-label" data-copy-label>Din kode</span>
+        <span class="case-reveal-code-row"><span class="case-reveal-code-value" data-case-reveal-code></span><svg class="case-reveal-code-copy" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"></rect><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"></path></svg></span>
+      </button>
+      <div class="case-reveal-sub" data-case-reveal-sub hidden>
+        <span class="case-reveal-sub-label">Info</span>
+        <p class="case-reveal-sub-text" data-sub-text></p>
+        <button type="button" class="case-reveal-more" data-sub-more hidden>Se mer</button>
       </div>
-      <button type="button" class="btn-primary case-reveal-copy" data-case-reveal-copy>Kopier koden</button>
       <a class="case-reveal-link" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Gå til tilbudet ↗</a>
       <p class="case-reveal-note">Koden er lagret i «Mine koder» på profilen din.</p>
     </div>
+  </div>
+</div>
+
+<!-- Full info om en rabatt (når teksten ikke får plass på kortet) -->
+<div class="modal-overlay" style="z-index:110" data-info-modal hidden>
+  <div class="modal-backdrop" data-info-backdrop></div>
+  <div class="modal-card" style="max-width:440px;align-items:stretch;text-align:left">
+    <button type="button" class="modal-close" data-close-info aria-label="Lukk"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="5" x2="19" y2="19"></line><line x1="19" y1="5" x2="5" y2="19"></line></svg></button>
+    <h2 class="modal-title" data-info-title>Info</h2>
+    <p style="margin:0;font-size:14px;line-height:1.6;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere" data-info-text></p>
   </div>
 </div>
 
@@ -577,19 +585,19 @@
     const rar = RARITY[c.rarity] || RARITY.vanlig;
     const neon = window.StudillaSnorreTag ? window.StudillaSnorreTag.neonFor(c.code) : "";
     return `
-      <div class="case-reveal" style="--reveal-color:${rar.color};animation:none">
+      <div class="case-reveal" style="--reveal-color:${rar.color};animation:none" data-my-code-card data-title="${escapeHtml(c.title)} hos ${escapeHtml(c.brand)}" data-sub="${escapeHtml(c.sub || "")}">
         <span class="case-reveal-logo">${c.image_url ? `<img src="${escapeHtml(c.image_url)}" alt="">` : `<span>[ logo ]</span>`}</span>
-        <div class="case-reveal-rarity">
-          <span>${rar.label} RABATT</span>
-          ${c.sub ? `<button type="button" class="case-reveal-info" aria-label="Mer info om rabatten" data-tip="${escapeHtml(c.sub)}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></button>` : ""}
-        </div>
         <h3 class="case-reveal-value" style="font-size:22px">${escapeHtml(c.title)} hos ${escapeHtml(c.brand)}</h3>
         ${c.supports_snorre && window.StudillaSnorreTag ? `<span>${window.StudillaSnorreTag.html()}</span>` : ""}
-        <div class="case-reveal-code code-neon" style="background:${neon}">
-          <span class="case-reveal-code-label">Din kode</span>
-          <span class="case-reveal-code-value">${escapeHtml(c.code)}</span>
+        <button type="button" class="case-reveal-code code-neon" style="background:${neon}" data-copy-code="${escapeHtml(c.code)}" aria-label="Kopier koden">
+          <span class="case-reveal-code-label" data-copy-label>Din kode</span>
+          <span class="case-reveal-code-row"><span class="case-reveal-code-value">${escapeHtml(c.code)}</span><svg class="case-reveal-code-copy" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"></rect><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"></path></svg></span>
+        </button>
+        <div class="case-reveal-sub" hidden>
+          <span class="case-reveal-sub-label">Info</span>
+          <p class="case-reveal-sub-text" data-sub-text></p>
+          <button type="button" class="case-reveal-more" data-sub-more hidden>Se mer</button>
         </div>
-        <button type="button" class="btn-primary case-reveal-copy" data-my-code-copy="${escapeHtml(c.code)}">Kopier koden</button>
         ${c.link_url ? `<a class="case-reveal-link" href="${escapeHtml(c.link_url)}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
       </div>`;
   }
@@ -600,16 +608,10 @@
     const mine = profile ? Array.from(openedCases.values()).filter((c) => c.code).reverse() : [];
     wrap.hidden = !mine.length;
     list.innerHTML = mine.map(myCodeCardHTML).join("");
-  }
-
-  document.querySelector("[data-my-codes]").addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-my-code-copy]");
-    if (!btn || !navigator.clipboard) return;
-    navigator.clipboard.writeText(btn.dataset.myCodeCopy).then(() => {
-      btn.textContent = "Kopiert!";
-      setTimeout(() => { btn.textContent = "Kopier koden"; }, 1500);
+    list.querySelectorAll("[data-my-code-card]").forEach((card) => {
+      setupSub(card.querySelector(".case-reveal-sub"), card.dataset.sub, card.dataset.title);
     });
-  });
+  }
 
   async function openSelectedCase() {
     if (caseOpening || selectedCaseLevel === null) return;
@@ -653,18 +655,13 @@
     reveal.style.setProperty("--reveal-color", rar.color);
     const thumb = document.querySelector("[data-case-reveal-thumb]");
     thumb.innerHTML = data.image_url ? `<img src="${data.image_url}" alt="">` : `<span>[ logo ]</span>`;
-    const rarityEl = document.querySelector("[data-case-reveal-rarity]");
-    rarityEl.textContent = `${rar.label} RABATT`;
-    const infoBtn = document.querySelector("[data-case-reveal-info]");
-    infoBtn.dataset.tip = data.sub || "";
-    infoBtn.hidden = !data.sub;
     const tagSlot = document.querySelector("[data-case-reveal-snorre]");
     tagSlot.innerHTML = data.supports_snorre && window.StudillaSnorreTag ? window.StudillaSnorreTag.html() : "";
     document.querySelector("[data-case-reveal-value]").textContent = `${data.title} hos ${data.brand}`;
     document.querySelector("[data-case-reveal-code]").textContent = data.code;
-    const codeBox = document.querySelector(".case-reveal-code");
+    const codeBox = document.querySelector("[data-case-reveal-codebox]");
+    codeBox.dataset.copyCode = data.code;
     codeBox.style.background = window.StudillaSnorreTag ? window.StudillaSnorreTag.neonFor(data.code) : "";
-    codeBox.classList.add("code-neon");
     const linkEl = document.querySelector("[data-case-reveal-link]");
     // Lenken er valgfri per rabatt (rewards.link_url) – skjul den helt når
     // partneren ikke har oppgitt noen.
@@ -675,17 +672,45 @@
       linkEl.removeAttribute("href");
       linkEl.hidden = true;
     }
-    document.querySelector("[data-case-reveal-copy]").onclick = () => {
-      navigator.clipboard && navigator.clipboard.writeText(data.code).then(() => flashCopy());
-    };
+    setupSub(reveal.querySelector("[data-case-reveal-sub]"), data.sub, `${data.title} hos ${data.brand}`);
   }
 
-  function flashCopy() {
-    const btn = document.querySelector("[data-case-reveal-copy]");
-    const original = btn.textContent;
-    btn.textContent = "Kopiert!";
-    setTimeout(() => { btn.textContent = original; }, 1500);
+  // Info under koden: klippes etter noen linjer, og «Se mer» åpner en pop-up
+  // med hele teksten når den ikke får plass.
+  function setupSub(box, text, title) {
+    const more = box.querySelector("[data-sub-more]");
+    const textEl = box.querySelector("[data-sub-text]");
+    textEl.textContent = text || "";
+    box.hidden = !text;
+    more.hidden = true;
+    more.dataset.title = title || "Info";
+    more.dataset.full = text || "";
+    if (text && textEl.scrollHeight > textEl.clientHeight + 1) more.hidden = false;
   }
+
+  function openInfoModal(title, text) {
+    document.querySelector("[data-info-title]").textContent = title;
+    document.querySelector("[data-info-text]").textContent = text;
+    document.querySelector("[data-info-modal]").hidden = false;
+  }
+  function closeInfoModal() { document.querySelector("[data-info-modal]").hidden = true; }
+
+  document.addEventListener("click", (e) => {
+    const more = e.target.closest("[data-sub-more]");
+    if (more) { openInfoModal(more.dataset.title, more.dataset.full); return; }
+    const copyEl = e.target.closest("[data-copy-code]");
+    if (copyEl && navigator.clipboard) {
+      navigator.clipboard.writeText(copyEl.dataset.copyCode).then(() => {
+        const label = copyEl.querySelector("[data-copy-label]");
+        if (!label) return;
+        label.textContent = "Kopiert!";
+        clearTimeout(copyEl._t);
+        copyEl._t = setTimeout(() => { label.textContent = "Din kode"; }, 1500);
+      });
+    }
+  });
+  document.querySelector("[data-close-info]").addEventListener("click", closeInfoModal);
+  document.querySelector("[data-info-backdrop]").addEventListener("click", closeInfoModal);
 
   // ---------- Rabatt-pop-up ----------
   function openCaseModal() {
@@ -710,7 +735,10 @@
   document.querySelector("[data-close-case]").addEventListener("click", closeCaseModal);
   document.querySelector("[data-case-backdrop]").addEventListener("click", closeCaseModal);
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { closeCaseModal(); }
+    if (e.key === "Escape") {
+      const info = document.querySelector("[data-info-modal]");
+      if (!info.hidden) closeInfoModal(); else closeCaseModal();
+    }
   });
 
   document.querySelector("[data-case-open]").addEventListener("click", openSelectedCase);

@@ -831,6 +831,8 @@ a.guide-trick-card:hover { border-color: rgba(var(--accent-rgb), .35); }
 }
 .case-reveal-code {
   width: 100%;
+  font: inherit;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -861,6 +863,28 @@ a.guide-trick-card:hover { border-color: rgba(var(--accent-rgb), .35); }
   word-break: break-all;
   user-select: all;
 }
-.case-reveal-copy { width: 100%; }
 .case-reveal .case-reveal-link { align-self: center; margin-top: 0; }
 .case-reveal-note { margin: 0; font-size: 12px; color: var(--muted); }
+
+/* Kodeboksen er en knapp: trykk for å kopiere */
+.case-reveal-code-row { display: flex; align-items: center; justify-content: center; gap: 10px; max-width: 100%; }
+.case-reveal-code-copy { flex: none; color: #0d1117; opacity: .75; }
+.case-reveal-code:hover .case-reveal-code-copy { opacity: 1; }
+.case-reveal-code:active { transform: scale(.99); }
+.case-reveal-code.code-neon .case-reveal-code-copy { color: #0d1117; }
+
+/* Info under koden, klippet til tre linjer med «Se mer» */
+.case-reveal-sub { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.case-reveal-sub[hidden] { display: none; }
+.case-reveal-sub-label { font-size: 10.5px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.case-reveal-sub-text {
+  margin: 0; font-size: 13px; line-height: 1.5; color: var(--text);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  overflow-wrap: anywhere; white-space: pre-line;
+}
+.case-reveal-more {
+  padding: 0; border: none; background: none; cursor: pointer; font: inherit;
+  font-size: 12.5px; font-weight: 700; color: var(--accent);
+}
+.case-reveal-more[hidden] { display: none; }
+.case-reveal-more:hover { color: var(--accent-light); }

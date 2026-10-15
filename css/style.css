@@ -2084,15 +2084,17 @@ html.is-player-view main { max-width: none; }
   inset: 0;
   z-index: 100;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .modal-overlay[hidden] { display: none; }
 
 .modal-backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(6, 9, 14, .82);
   backdrop-filter: blur(3px);
@@ -2101,6 +2103,7 @@ html.is-player-view main { max-width: none; }
 .modal-card {
   position: relative;
   z-index: 1;
+  margin: auto;
   width: 100%;
   max-width: 420px;
   background: var(--surface);
