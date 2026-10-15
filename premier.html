@@ -96,6 +96,13 @@
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" data-case-grid></div>
         </div>
 
+        <div data-my-codes-wrap hidden>
+          <div class="section-heading spread">
+            <h2 style="font-size:16px">Mine koder</h2>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px" data-my-codes></div>
+        </div>
+
       </div>
 
       <aside class="premier-side">
@@ -136,7 +143,7 @@
         </details>
         <details class="faq-item">
           <summary>Hvor finner jeg kodene jeg har fått?</summary>
-          <p class="faq-answer">Alle koder du har hentet blir liggende under «Mine koder» på profilsiden din. De blir der selv om rabatten senere tas av siden, så du kan hente dem fram igjen når du skal bruke dem.</p>
+          <p class="faq-answer">Alle koder du har hentet blir liggende under «Mine koder» på profilsiden din og her på siden, rett under «Få en rabatt». De blir der selv om rabatten senere tas av siden, så du kan hente dem fram igjen når du skal bruke dem.</p>
         </details>
         <details class="faq-item">
           <summary>Kan en rabattkode gå ut på dato?</summary>
@@ -564,6 +571,46 @@
     }
   }
 
+  // «Mine koder»: alle rabatter brukeren har åpnet, tegnet som samme kort som
+  // vises når en rabatt trekkes (.case-reveal), nyeste først.
+  function myCodeCardHTML(c) {
+    const rar = RARITY[c.rarity] || RARITY.vanlig;
+    const neon = window.StudillaSnorreTag ? window.StudillaSnorreTag.neonFor(c.code) : "";
+    return `
+      <div class="case-reveal" style="--reveal-color:${rar.color};animation:none">
+        <span class="case-reveal-logo">${c.image_url ? `<img src="${escapeHtml(c.image_url)}" alt="">` : `<span>[ logo ]</span>`}</span>
+        <div class="case-reveal-rarity">
+          <span>${rar.label} RABATT</span>
+          ${c.sub ? `<button type="button" class="case-reveal-info" aria-label="Mer info om rabatten" data-tip="${escapeHtml(c.sub)}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="11"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></button>` : ""}
+        </div>
+        <h3 class="case-reveal-value" style="font-size:22px">${escapeHtml(c.title)} hos ${escapeHtml(c.brand)}</h3>
+        ${c.supports_snorre && window.StudillaSnorreTag ? `<span>${window.StudillaSnorreTag.html()}</span>` : ""}
+        <div class="case-reveal-code code-neon" style="background:${neon}">
+          <span class="case-reveal-code-label">Din kode</span>
+          <span class="case-reveal-code-value">${escapeHtml(c.code)}</span>
+        </div>
+        <button type="button" class="btn-primary case-reveal-copy" data-my-code-copy="${escapeHtml(c.code)}">Kopier koden</button>
+        ${c.link_url ? `<a class="case-reveal-link" href="${escapeHtml(c.link_url)}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
+      </div>`;
+  }
+
+  function renderMyCodes() {
+    const wrap = document.querySelector("[data-my-codes-wrap]");
+    const list = document.querySelector("[data-my-codes]");
+    const mine = profile ? Array.from(openedCases.values()).filter((c) => c.code).reverse() : [];
+    wrap.hidden = !mine.length;
+    list.innerHTML = mine.map(myCodeCardHTML).join("");
+  }
+
+  document.querySelector("[data-my-codes]").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-my-code-copy]");
+    if (!btn || !navigator.clipboard) return;
+    navigator.clipboard.writeText(btn.dataset.myCodeCopy).then(() => {
+      btn.textContent = "Kopiert!";
+      setTimeout(() => { btn.textContent = "Kopier koden"; }, 1500);
+    });
+  });
+
   async function openSelectedCase() {
     if (caseOpening || selectedCaseLevel === null) return;
     if (!profile) { window.location.href = "login.html"; return; }
@@ -593,6 +640,7 @@
     caseOpening = false;
     openedCases.set(opening, data);
     showCaseReveal(data);
+    renderMyCodes();
     renderLevelCard();
     renderFeed();
   }
@@ -809,6 +857,7 @@
 
     await Promise.all([loadLevels(), loadOpenedCases()]);
     renderLevelCard();
+    renderMyCodes();
     // Båndet bygges først når rabatt-pop-upen åpnes (da med de ekte rabattene,
     // i tilfeldig rekkefølge) – det er ingen grunn til å animere et bånd
     // ingen ser.
@@ -832,6 +881,7 @@
     selectedCaseLevel = null;
     await loadOpenedCases();
     renderLevelCard();
+    renderMyCodes();
     renderCasePanel();
   });
 })();
