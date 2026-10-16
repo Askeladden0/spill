@@ -1719,24 +1719,24 @@
     return `
       <div class="admin-card">
         <div>
-          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Velkomsthjul</h2>
-          <span class="admin-card-sub">Nye brukere spinner et hjul og får rabatten det lander på. Rabattene du velger under fordeles annenhver rute rundt hjulet, i rekkefølgen under. «Støtter Snorre»-rabatter kan ikke brukes.</span>
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Velkomstbonus</h2>
+          <span class="admin-card-sub">Nye brukere spinner samme rullebånd som «Få en rabatt», men med bare rabattene du velger under som alternativer, og får den båndet lander på. «Støtter Snorre»-rabatter kan ikke brukes.</span>
         </div>
-        ${welcomeListHTML("welcome_priority", "Ingen rabatter på hjulet ennå – velkomsthjulet vises ikke før du legger til minst én.")}
+        ${welcomeListHTML("welcome_priority", "Ingen alternativer ennå – velkomstbonusen vises ikke før du legger til minst én.")}
 
         <div style="margin-top:20px">
-          <h3 style="margin:0 0 4px;font-size:14px;font-weight:800;color:var(--text-strong)">Antall ruter</h3>
+          <h3 style="margin:0 0 4px;font-size:14px;font-weight:800;color:var(--text-strong)">Antall plasser</h3>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <input type="number" min="2" max="24" step="1" value="${slots}" data-welcome-slots${disabled} style="width:90px">
             <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-welcome-slots-save${disabled}>Lagre</button>
-            <span class="admin-card-sub" style="margin:0">Mellom 2 og 24. Flere ruter av samme rabatt gir større sjanse for den.</span>
+            <span class="admin-card-sub" style="margin:0">Mellom 2 og 24. Plassene fordeles på alternativene i rekkefølge; flere plasser til samme rabatt gir større sjanse for den. Båndet viser hver rabatt én gang.</span>
           </div>
         </div>
 
         <div style="margin-top:20px">
           <h3 style="margin:0 0 4px;font-size:14px;font-weight:800;color:var(--text-strong)">Hvis en rabatt går tom</h3>
-          <span class="admin-card-sub">Er en rabatt tom for koder, utløpt eller skrudd av, tar disse over rutene dens (første ledige først, fordelt rundt hjulet).</span>
-          ${welcomeListHTML("welcome_fallback", "Ingen reserve valgt – rutene til en tom rabatt fordeles på de andre på hjulet.")}
+          <span class="admin-card-sub">Er en rabatt tom for koder, utløpt eller skrudd av, tar disse over plassene dens (første ledige først).</span>
+          ${welcomeListHTML("welcome_fallback", "Ingen reserve valgt – plassene til en tom rabatt fordeles på de andre alternativene.")}
         </div>
       </div>
     `;
