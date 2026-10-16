@@ -56,18 +56,23 @@
       const lp = polar(cx, cy, r * 0.62, mid);
       const textColor = color === "#2ee87f" ? "#0d1117" : "#e8edf5";
       if (slots[i].image_url) {
-        // Logo på hvit bakplate så den synes på både grønn og mørk rute.
-        const lw = Math.min(r * 0.36, ((2 * Math.PI * r * 0.66) / n) * 0.8);
-        const lh = lw * 0.72;
-        const lg = polar(cx, cy, r * 0.66, mid);
-        labels += `<g transform="rotate(${(mid - 90).toFixed(2)} ${lg.x.toFixed(2)} ${lg.y.toFixed(2)})">
-          <rect x="${(lg.x - lw / 2).toFixed(2)}" y="${(lg.y - lh / 2).toFixed(2)}" width="${lw.toFixed(2)}" height="${lh.toFixed(2)}" rx="5" fill="#fff"></rect>
-          <image href="${esc(slots[i].image_url)}" x="${(lg.x - lw / 2 + 3).toFixed(2)}" y="${(lg.y - lh / 2 + 3).toFixed(2)}" width="${(lw - 6).toFixed(2)}" height="${(lh - 6).toFixed(2)}" preserveAspectRatio="xMidYMid meet"></image>
-        </g>`;
+        // Kvadratisk logo ytterst i ruta (hvit plate så den synes på både grønn
+        // og mørk rute), og rabattnavnet innenfor, begge langs radius.
+        const sq = Math.min(r * 0.3, ((2 * Math.PI * r * 0.74) / n) * 0.8);
+        const lg = polar(cx, cy, r * 0.76, mid);
+        const tp = polar(cx, cy, r * 0.42, mid);
+        const t = String(slots[i].title || slots[i].brand || "");
+        const title = t.length > 11 ? t.slice(0, 10) + "…" : t;
+        const rot = (mid - 90).toFixed(2);
+        labels += `<g transform="rotate(${rot} ${lg.x.toFixed(2)} ${lg.y.toFixed(2)})">
+          <rect x="${(lg.x - sq / 2).toFixed(2)}" y="${(lg.y - sq / 2).toFixed(2)}" width="${sq.toFixed(2)}" height="${sq.toFixed(2)}" rx="5" fill="#fff"></rect>
+          <image href="${esc(slots[i].image_url)}" x="${(lg.x - sq / 2 + 3).toFixed(2)}" y="${(lg.y - sq / 2 + 3).toFixed(2)}" width="${(sq - 6).toFixed(2)}" height="${(sq - 6).toFixed(2)}" preserveAspectRatio="xMidYMid meet"></image>
+        </g>
+        <text x="${tp.x.toFixed(2)}" y="${tp.y.toFixed(2)}" fill="${textColor}" font-size="${(SIZE * 0.04).toFixed(1)}" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(${rot} ${tp.x.toFixed(2)} ${tp.y.toFixed(2)})" font-family="Poppins, sans-serif">${esc(title)}</text>`;
         continue;
       }
       const label = String(slots[i].brand || "").split(" ")[0].slice(0, 10);
-      labels +=`<text x="${lp.x.toFixed(2)}" y="${lp.y.toFixed(2)}" fill="${textColor}" font-size="${(SIZE * 0.058).toFixed(1)}" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(${(mid - 90).toFixed(2)} ${lp.x.toFixed(2)} ${lp.y.toFixed(2)})" font-family="Poppins, sans-serif">${esc(label)}</text>`;
+      labels += `<text x="${lp.x.toFixed(2)}" y="${lp.y.toFixed(2)}" fill="${textColor}" font-size="${(SIZE * 0.058).toFixed(1)}" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(${(mid - 90).toFixed(2)} ${lp.x.toFixed(2)} ${lp.y.toFixed(2)})" font-family="Poppins, sans-serif">${esc(label)}</text>`;
     }
     return `<svg width="100%" height="100%" viewBox="0 0 ${SIZE} ${SIZE}" aria-hidden="true">
       <circle cx="${cx}" cy="${cy}" r="${r + 2}" fill="#0d1117"></circle>
