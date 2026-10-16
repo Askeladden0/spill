@@ -7,7 +7,10 @@
  * spin_welcome_wheel() (schema.sql, seksjon 71), så hjulet kan ikke jukses
  * med i nettleseren.
  *
- *   StudillaWelcomeWheel.mount(root, { mode: "teaser" | "live", profile, onOpened })
+ *   StudillaWelcomeWheel.mount(root, { mode: "teaser" | "live", profile, onOpened, simulate })
+ *
+ * simulate: admin-simulering (js/admin-simulate.js) – spinner lokalt, uten
+ *           serverkall, så ingen kode forbrukes.
  *
  * teaser: knappen sender utloggede til registrering og innloggede til
  *         premier.html#velkomst.
@@ -79,6 +82,7 @@
   async function mount(root, opts) {
     const options = opts || {};
     const live = options.mode === "live";
+    const simulate = !!options.simulate;
     const profile = options.profile || null;
     const slots = await fetchSlots();
     // Uten hjul (admin har ikke valgt rabatter) vises ingenting.
@@ -137,11 +141,14 @@
           </button>
           ${data.sub ? `<p class="case-reveal-sub-text" style="display:block;-webkit-line-clamp:unset;max-height:none">${esc(data.sub)}</p>` : ""}
           ${data.link_url ? `<a class="case-reveal-use" style="background:${neon}" href="${esc(data.link_url)}" target="_blank" rel="noopener noreferrer">Bruk koden ${LINK_ICON}</a>` : ""}
-          <p class="case-reveal-note">Koden er lagret i «Mine koder» på profilen din.</p>
+          ${simulate
+            ? `<p class="case-reveal-note">Simulering – ingen kode er brukt eller lagret.</p><button type="button" class="btn-primary" style="width:100%;margin-top:12px" data-ww-again>Simuler på nytt</button>`
+            : `<p class="case-reveal-note">Koden er lagret i «Mine koder» på profilen din.</p>`}
         </div>`;
     }
 
-    root.addEventListener("click", (e) => {
+    root.onclick = (e) => {
+      if (e.target.closest("[data-ww-again]")) { mount(root, options); return; }
       const copyEl = e.target.closest("[data-ww-copy]");
       if (copyEl && navigator.clipboard) {
         navigator.clipboard.writeText(copyEl.dataset.wwCopy).then(() => {
@@ -152,7 +159,7 @@
           copyEl._t = setTimeout(() => { label.textContent = "Din kode"; }, 1500);
         });
       }
-    });
+    };
 
     async function spin() {
       if (spinning || opened) return;
@@ -160,7 +167,15 @@
       btn.disabled = true;
       btn.textContent = "Hjulet spinner …";
 
-      const { data, error } = await sb.rpc("spin_welcome_wheel").single();
+      // Admin-simulering: trekker en tilfeldig rute lokalt uten å kalle
+      // serveren, så ingen kode tas av og ingenting lagres.
+      let data, error;
+      if (simulate) {
+        const pick = slots[Math.floor(Math.random() * slots.length)];
+        data = Object.assign({}, pick, { code: "SIMULERT", link_url: "", already_opened: false });
+      } else {
+        ({ data, error } = await sb.rpc("spin_welcome_wheel").single());
+      }
       if (error) {
         spinning = false;
         btn.disabled = false;
@@ -194,7 +209,7 @@
       opened = true;
       spinning = false;
       showReveal(data);
-      if (typeof options.onOpened === "function") options.onOpened(data);
+      if (!simulate && typeof options.onOpened === "function") options.onOpened(data);
     }
 
     btn.addEventListener("click", () => {
