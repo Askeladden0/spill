@@ -198,7 +198,7 @@
         <p class="case-reveal-sub-text" data-sub-text></p>
         <button type="button" class="case-reveal-more" data-sub-more hidden>Se mer</button>
       </div>
-      <a class="case-reveal-link" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Gå til tilbudet ↗</a>
+      <a class="case-reveal-use" target="_blank" rel="noopener noreferrer" data-case-reveal-link hidden>Bruk koden <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"></path><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"></path></svg></a>
       <p class="case-reveal-note">Koden er lagret i «Mine koder» på profilen din.</p>
     </div>
   </div>
@@ -601,7 +601,7 @@
           <p class="case-reveal-sub-text" data-sub-text></p>
           <button type="button" class="case-reveal-more" data-sub-more hidden>Se mer</button>
         </div>
-        ${c.link_url ? `<a class="case-reveal-link" href="${escapeHtml(c.link_url)}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
+        ${c.link_url ? `<a class="case-reveal-use" style="background:${neon}" href="${escapeHtml(c.link_url)}" target="_blank" rel="noopener noreferrer">Bruk koden <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"></path><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"></path></svg></a>` : ""}
       </div>`;
   }
 
@@ -663,10 +663,11 @@
     codeBox.dataset.copyCode = data.code;
     codeBox.style.background = window.StudillaSnorreTag ? window.StudillaSnorreTag.neonFor(data.code) : "";
     const linkEl = document.querySelector("[data-case-reveal-link]");
-    // Lenken er valgfri per rabatt (rewards.link_url) – skjul den helt når
-    // partneren ikke har oppgitt noen.
+    // Knappen er valgfri per rabatt (rewards.link_url følger admins lenke og
+    // av/på-bryter) – skjul den helt når den er av eller mangler lenke.
     if (data.link_url) {
       linkEl.href = data.link_url;
+      linkEl.style.background = codeBox.style.background;
       linkEl.hidden = false;
     } else {
       linkEl.removeAttribute("href");

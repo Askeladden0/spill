@@ -138,11 +138,20 @@
   }
 
   async function loadRewards() {
+    const latest = await sb
+      .from("rewards")
+      .select("id, brand, title, sub, rarity, image_url, active, code_type, general_code, expires_at, link_url, use_url, use_button, supports_snorre, sort_order")
+      .order("sort_order", { ascending: true });
+    if (!latest.error) return latest.data || [];
+
+    // «Bruk koden»-kolonnene (schema.sql, seksjon 72) mangler: da er lenken
+    // fortsatt redigerbar via link_url, men uten av/på-bryter.
+    state.useButtonNeedsMigration = true;
     const full = await sb
       .from("rewards")
       .select("id, brand, title, sub, rarity, image_url, active, code_type, general_code, expires_at, link_url, supports_snorre, sort_order")
       .order("sort_order", { ascending: true });
-    if (!full.error) return full.data || [];
+    if (!full.error) return (full.data || []).map((r) => ({ ...r, use_url: r.link_url, use_button: true }));
 
     // Fallback for prosjekter som ikke har kjørt migrasjonen med
     // rewards.expires_at / rewards.link_url ennå (schema.sql, seksjon 33).
@@ -155,7 +164,7 @@
       console.error("[Studilla admin] Klarte ikke hente rabatter:", fallback.error.message);
       return [];
     }
-    return (fallback.data || []).map((r) => ({ ...r, expires_at: null, link_url: null, supports_snorre: false }));
+    return (fallback.data || []).map((r) => ({ ...r, expires_at: null, link_url: null, use_url: null, use_button: true, supports_snorre: false }));
   }
 
   async function loadRewardCodes() {
@@ -1322,6 +1331,7 @@
     const { error } = await sb.from("rewards").update(fields).eq("id", r.id);
     if (error) { flash(Auth.friendlyAuthError(error)); return false; }
     Object.assign(r, fields);
+    if (state.useButtonNeedsMigration && "link_url" in fields) r.use_url = fields.link_url;
     return true;
   }
 
@@ -1496,9 +1506,18 @@
             <label class="admin-field is-wide">BILDE
               ${rewardUploadRowHTML(r)}
             </label>
-            <label class="admin-field">LENKE TIL TILBUDET (VALGFRITT)
-              <input type="url" value="${escapeHTML(r.link_url || "")}" placeholder="https://partner.no/kampanje" data-reward-field="link_url"${state.rewardsNeedMigration ? " disabled" : ""}>
+            <label class="admin-field">LENKE FOR «BRUK KODEN»-KNAPPEN
+              <input type="url" value="${escapeHTML(r.use_url || "")}" placeholder="https://partner.no/kampanje" data-reward-field="use_url"${state.rewardsNeedMigration ? " disabled" : ""}>
             </label>
+            <div class="admin-field">
+              <span>VIS «BRUK KODEN»-KNAPP</span>
+              <div style="display:flex;align-items:center;gap:10px">
+                <button type="button" class="admin-switch${r.use_button ? " is-on" : ""}" data-reward-use-toggle="${r.id}" aria-label="Vis «Bruk koden»-knappen under koden"${state.rewardsNeedMigration || state.useButtonNeedsMigration ? " disabled" : ""}>
+                  <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
+                </button>
+                <span class="admin-card-sub" style="margin:0">${state.useButtonNeedsMigration ? "Kjør schema.sql (seksjon 72) for å låse opp bryteren." : "Knappen vises bare når det også er en lenke."}</span>
+              </div>
+            </div>
             <label class="admin-field">UTLØPSDATO (VALGFRITT)
               <input type="date" value="${dateInputValue(r.expires_at)}" data-reward-field="expires_at"${state.rewardsNeedMigration ? " disabled" : ""}>
             </label>
@@ -2348,7 +2367,7 @@
         isList ? stats.remaining : "–",
         isExpired(r) ? "Utgått" : r.active ? "Aktiv" : "Deaktivert",
         r.expires_at ? new Date(r.expires_at).toLocaleDateString("no-NO") : "",
-        r.link_url || "",
+        r.use_url || r.link_url || "",
       ];
     });
     downloadCSV("rabattkoder-oversikt.csv", ["Merke", "Tittel", "Sjeldenhet", "Type", "Totalt", "Ledige", "Status", "Utløper", "Lenke"], rows);
@@ -2492,6 +2511,14 @@
       e.stopPropagation();
       const r = findReward(Number(rewardActiveToggle.dataset.rewardActiveToggle));
       if (r) toggleRewardActive(r).then((ok) => { if (ok) { renderMain(); flash(r.active ? "Rabatt aktivert" : "Rabatt deaktivert"); } });
+      return;
+    }
+
+    const rewardUseToggle = t.closest("[data-reward-use-toggle]");
+    if (rewardUseToggle) {
+      e.stopPropagation();
+      const r = findReward(Number(rewardUseToggle.dataset.rewardUseToggle));
+      if (r) saveReward(r, { use_button: !r.use_button }).then((ok) => { if (ok) { renderMain(); flash(r.use_button ? "«Bruk koden»-knappen er på" : "«Bruk koden»-knappen er av"); } });
       return;
     }
 
@@ -2732,9 +2759,10 @@
           if (Number.isNaN(d.getTime())) return flash("Ugyldig dato.");
           fields.expires_at = d.toISOString();
         }
-      } else if (field === "link_url") {
+      } else if (field === "use_url") {
         if (value && !/^https?:\/\//i.test(value)) return flash("Lenken må starte med http:// eller https://");
-        fields.link_url = value || null;
+        // Uten «Bruk koden»-kolonnene (seksjon 72) er link_url selve lenken.
+        fields[state.useButtonNeedsMigration ? "link_url" : "use_url"] = value || null;
       } else if (field === "code_type") {
         fields.code_type = value;
         if (value === "general" && !r.general_code) fields.general_code = "BYTT-MEG";
