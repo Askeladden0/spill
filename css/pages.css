@@ -864,6 +864,21 @@ a.guide-trick-card:hover { border-color: rgba(var(--accent-rgb), .35); }
   user-select: all;
 }
 .case-reveal .case-reveal-link { align-self: center; margin-top: 0; }
+
+/* «Bruk koden»: lenkeknapp i samme neonfarge som kodeboksen over */
+.case-reveal-use {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  font-size: 15px; font-weight: 800; letter-spacing: -.01em;
+  color: #0d1117; background: var(--accent);
+  text-decoration: none;
+}
+.case-reveal-use[hidden] { display: none; }
+.case-reveal-use:hover { filter: brightness(1.08); }
+.case-reveal-use:active { transform: scale(.99); }
+.case-reveal-use svg { flex: none; }
 .case-reveal-note { margin: 0; font-size: 12px; color: var(--muted); }
 
 /* Kodeboksen er en knapp: trykk for å kopiere */

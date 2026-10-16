@@ -4978,6 +4978,34 @@ update public.app_settings
        welcome_slots = 10
  where id = 1;
 
+-- 72. «Bruk koden»-knappen under koden.
+--     use_url er lenken admin redigerer, use_button er av/på-bryteren. En
+--     trigger holder link_url (som alle RPC-ene og klientene allerede leser)
+--     lik use_url når knappen er på, og null når den er av – så ingen av
+--     funksjonene over må skrives om.
+alter table public.rewards add column if not exists use_url text;
+alter table public.rewards add column if not exists use_button boolean not null default true;
+
+update public.rewards set use_url = link_url where use_url is null and link_url is not null;
+
+create or replace function public.sync_reward_link_url()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.link_url := case when new.use_button then nullif(btrim(new.use_url), '') else null end;
+  return new;
+end;
+$$;
+
+drop trigger if exists rewards_sync_link_url on public.rewards;
+create trigger rewards_sync_link_url
+  before insert or update on public.rewards
+  for each row execute function public.sync_reward_link_url();
+
+-- Kjør triggeren én gang over eksisterende rader.
+update public.rewards set use_button = use_button;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

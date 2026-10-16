@@ -23,6 +23,7 @@
   const RARITY_COLOR = { sjelden: "#4b8ef0", episk: "#9d6bf5", legendarisk: "#f0b429", vanlig: "#7c8aa0" };
   const TICKET_ICON = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16a1 1 0 0 1 1 1v2.6a2 2 0 0 0 0 3.8v2.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2.6a2 2 0 0 0 0-3.8V7.5a1 1 0 0 1 1-1z"></path><line x1="9.5" y1="14.5" x2="14.5" y2="9.5"></line><circle cx="9.7" cy="10" r=".9"></circle><circle cx="14.3" cy="14" r=".9"></circle></svg>';
   const COPY_ICON = '<svg class="case-reveal-code-copy" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"></rect><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"></path></svg>';
+  const LINK_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"></path><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"></path></svg>';
   const SIZE = 300;
 
   function esc(v) {
@@ -135,7 +136,7 @@
             <span class="case-reveal-code-row"><span class="case-reveal-code-value">${esc(data.code)}</span>${COPY_ICON}</span>
           </button>
           ${data.sub ? `<p class="case-reveal-sub-text" style="display:block;-webkit-line-clamp:unset;max-height:none">${esc(data.sub)}</p>` : ""}
-          ${data.link_url ? `<a class="case-reveal-link" href="${esc(data.link_url)}" target="_blank" rel="noopener noreferrer">Gå til tilbudet ↗</a>` : ""}
+          ${data.link_url ? `<a class="case-reveal-use" style="background:${neon}" href="${esc(data.link_url)}" target="_blank" rel="noopener noreferrer">Bruk koden ${LINK_ICON}</a>` : ""}
           <p class="case-reveal-note">Koden er lagret i «Mine koder» på profilen din.</p>
         </div>`;
     }
