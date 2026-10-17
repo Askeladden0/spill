@@ -4259,8 +4259,9 @@ begin
     update public.app_settings
        set level_step = level_step * 10, level_scale_x10_done = true, updated_at = now()
      where id = 1;
-    update public.levels lv
-       set points_required = (lv.level_number - 1) * (select level_step from public.app_settings where id = 1);
+    -- Gå via recompute slik at step_override per nivå respekteres (en rett
+    -- (n-1)*steg ga feil poengkrav, f.eks. 500 000 på nivå 1).
+    perform public.recompute_level_thresholds();
   end if;
 end;
 $$;
