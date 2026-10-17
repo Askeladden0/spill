@@ -230,7 +230,6 @@
     const { pct, xp, threshold } = xpProgress(profile);
     return `
       <div class="xp-widget" data-xp-widget>
-        <div class="xp-level" data-xp-level>${displayLevel(profile)}</div>
         <div class="xp-meta">
           <div class="xp-labels"><span data-xp-level-label>NIVÅ ${displayLevel(profile)}</span><span data-xp-fraction>${xp}/${threshold}</span></div>
           <div class="xp-bar"><div class="xp-bar-fill" data-xp-bar-fill style="width:${pct}%"></div></div>
@@ -326,7 +325,6 @@
     renderHeaderWithProfile(prevProfile);
     const widget = slot.querySelector("[data-xp-widget]");
     const fill = slot.querySelector("[data-xp-bar-fill]");
-    const levelEl = slot.querySelector("[data-xp-level]");
     const levelLabel = slot.querySelector("[data-xp-level-label]");
     const fraction = slot.querySelector("[data-xp-fraction]");
     if (!widget || !fill) return;
@@ -338,7 +336,6 @@
     function applyFinal() {
       fill.style.width = `${to.pct}%`;
       fraction.textContent = `${to.xp}/${to.threshold}`;
-      levelEl.textContent = displayLevel(newProfile);
       levelLabel.textContent = `NIVÅ ${displayLevel(newProfile)}`;
       widget.classList.add("is-leveling");
       widget.addEventListener("animationend", () => widget.classList.remove("is-leveling"), { once: true });
