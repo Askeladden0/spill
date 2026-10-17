@@ -562,7 +562,7 @@
       if (next) {
         drawBubble(WIDTH - RADIUS - 8, HEIGHT - RADIUS - 8, next);
         ctx.fillStyle = "rgba(255,255,255,.6)";
-        ctx.font = "10px DM Sans, sans-serif";
+        ctx.font = "10px Figtree, sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("neste", WIDTH - RADIUS - 8, HEIGHT - RADIUS * 2 - 12);
       }

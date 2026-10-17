@@ -46,7 +46,7 @@
             '<button type="button" id="scb-accept-all" class="scb-btn scb-btn-primary">Godta alle</button>' +
           '</div>' +
         '</div>' +
-        '<div id="scb-preferences" style="display:none;position:relative;z-index:1;width:100%;max-width:460px;background:#201c2b;border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:30px 30px 26px;flex-direction:column;gap:18px;box-shadow:0 24px 64px rgba(0,0,0,.5);font-family:\'DM Sans\',system-ui,sans-serif;">' +
+        '<div id="scb-preferences" style="display:none;position:relative;z-index:1;width:100%;max-width:460px;background:#201c2b;border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:30px 30px 26px;flex-direction:column;gap:18px;box-shadow:0 24px 64px rgba(0,0,0,.5);font-family:\'Figtree\',system-ui,sans-serif;">' +
           '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">' +
             '<div style="display:flex;flex-direction:column;gap:4px;">' +
               '<h2 style="margin:0;font-size:19px;font-weight:700;letter-spacing:-.02em;color:#ffffff;">Tilpass cookies</h2>' +

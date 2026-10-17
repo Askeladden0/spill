@@ -1063,7 +1063,7 @@ select:focus-visible,
   background: var(--surface);
   backdrop-filter: blur(8px);
   box-shadow: 0 16px 48px rgba(0, 0, 0, .45);
-  font-family: "DM Sans", system-ui, sans-serif;
+  font-family: "Figtree", system-ui, sans-serif;
 }
 
 .scb-bar-text {

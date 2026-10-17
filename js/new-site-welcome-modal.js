@@ -42,7 +42,7 @@
       text-align: center;
       box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
       animation: ssWelcomeSlideUp 0.25s ease;
-      font-family: "DM Sans", Arial, sans-serif;
+      font-family: "Figtree", Arial, sans-serif;
     }
     #ss-welcome-modal h2 { font-size: 1.3rem; color: #f2f2f2; margin-bottom: 0.8rem; font-weight: 700; }
     #ss-welcome-modal p { font-size: 0.9rem; color: #aaa; line-height: 1.7; margin-bottom: 1.2rem; }
@@ -53,7 +53,7 @@
       border: none;
       padding: 0.75rem 1.6rem;
       font-size: 0.9rem;
-      font-family: "DM Sans", Arial, sans-serif;
+      font-family: "Figtree", Arial, sans-serif;
       font-weight: 700;
       border-radius: 4px;
       cursor: pointer;
