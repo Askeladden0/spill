@@ -27,5 +27,8 @@
     const profile = await Auth.getCurrentProfile();
     if (await opened(profile)) return;
     window.StudillaWelcomeWheel.mount(root, { mode: "teaser", profile });
+    // FAQ-en følger velkomstbonusen: vises bare mens hjulet vises.
+    const faq = document.querySelector("[data-case-faq]");
+    if (faq) faq.hidden = root.hidden;
   })();
 })();
