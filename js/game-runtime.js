@@ -21,19 +21,10 @@
   // nivå-baren og "nivå opp"-teksten på game over-kortet skal da ikke vises.
   const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
 
-  // Poengterskler som viser en kort "Block Blast"-aktig tekst midt i
-  // spillflaten når spilleren når dem i én økt. Delt på tvers av alle spill
-  // (samme terskler for alle) fordi poenggivningen er balansert til å ligge
-  // på omtrent samme skala uansett hvilket spill man spiller.
-  const MILESTONES = [
-    { score: 100, text: "Fin start!" },
-    { score: 300, text: "Bra jobbet!" },
-    { score: 700, text: "Nice!" },
-    { score: 1500, text: "Awesome!" },
-    { score: 3000, text: "Fantastisk!" },
-    { score: 6000, text: "Utrolig!" },
-    { score: 12000, text: "Legendarisk!" },
-  ];
+  // Poengterskler som kunne vist en kort rosetekst midt i spillflaten
+  // ("Fin start!", "Awesome!" osv.). Meldingene er fjernet med vilje; listen
+  // er tom slik at ingenting vises.
+  const MILESTONES = [];
 
   function guestBestKey(gameId) {
     return `studilla_guest_best_${gameId}`;
