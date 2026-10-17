@@ -919,7 +919,7 @@ html.is-player-view main { max-width: none; }
   border-radius: 16px;
   background:
     radial-gradient(circle at 50% 42%, rgba(245, 201, 92, .12), rgba(245, 201, 92, 0) 60%),
-    linear-gradient(135deg, #272235, #17141f);
+    #131a25;
   border: 1px solid var(--border-strong);
   outline: none;
   touch-action: none;
@@ -978,17 +978,17 @@ html.is-player-view main { max-width: none; }
   100% { transform: scale(1); box-shadow: none; }
 }
 
-.tile-2048[data-value="2"] { background: #201c2b; color: var(--text-strong); }
-.tile-2048[data-value="4"] { background: #272235; color: var(--text-strong); }
+.tile-2048[data-value="2"] { background: #1b2434; color: #e8edf5; }
+.tile-2048[data-value="4"] { background: #202b3d; color: #e8edf5; }
 .tile-2048[data-value="8"] { background: #5c8df5; color: #fff; }
-.tile-2048[data-value="16"] { background: #5cf5df; color: #17141f; }
-.tile-2048[data-value="32"] { background: #8bf05c; color: #17141f; }
-.tile-2048[data-value="64"] { background: #f5c95c; color: #201c2b; }
-.tile-2048[data-value="128"] { background: #f5a15c; color: #201c2b; font-size: 24px; }
+.tile-2048[data-value="16"] { background: #5cf5df; color: #0d1117; }
+.tile-2048[data-value="32"] { background: #8bf05c; color: #0d1117; }
+.tile-2048[data-value="64"] { background: #f5c95c; color: #0d1117; }
+.tile-2048[data-value="128"] { background: #f5a15c; color: #0d1117; font-size: 24px; }
 .tile-2048[data-value="256"] { background: #f55c9b; color: #fff; font-size: 24px; }
 .tile-2048[data-value="512"] { background: #a56cf5; color: #fff; font-size: 24px; }
 .tile-2048[data-value="1024"] { background: #5c8df5; color: #fff; font-size: 20px; }
-.tile-2048[data-value="2048"] { background: #2ee87f; color: #17141f; font-size: 20px; box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .55), 0 0 16px rgba(var(--accent-rgb), .4); animation: tilePop .25s cubic-bezier(.34, 1.56, .64, 1), tileGlow 1.6s ease-in-out infinite; }
+.tile-2048[data-value="2048"] { background: #2ee87f; color: #0d1117; font-size: 20px; box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .55), 0 0 16px rgba(var(--accent-rgb), .4); animation: tilePop .25s cubic-bezier(.34, 1.56, .64, 1), tileGlow 1.6s ease-in-out infinite; }
 .tile-2048[data-value="2048plus"] { background: #17141f; color: #2ee87f; border: 1px solid var(--accent); font-size: 18px; }
 
 @keyframes tileGlow {
