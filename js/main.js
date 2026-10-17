@@ -16,18 +16,19 @@
         <a href="player.html?id=${encodeURIComponent(g.id)}" class="game-thumb" aria-label="Åpne ${g.name}">
           ${g.thumbnail
             ? `<img class="game-thumb-img" src="${g.thumbnail}" alt="" loading="lazy">`
-            : `<span class="game-thumb-slot">[ bilde ]</span>`}
-          <div class="game-thumb-gradient"></div>
-          <h3 class="game-title">${g.name}</h3>
+            : ""}
         </a>
         <div class="game-body">
+          <h3 class="game-title">${g.name}</h3>
           <!-- Knappen lå tidligere inni <a>, som både er ugyldig HTML
                (klikkbart element inni et klikkbart element) og ga to
                tabulator-stopp for samme mål. Nå er hele kortet én lenke.
                «Se rangering» ved siden av gir veien til topplista for nettopp
                dette trikset, uten å måtte finne det i en nedtrekksmeny. -->
-          <a class="btn-start" href="player.html?id=${encodeURIComponent(g.id)}">Start</a>
-          <a class="btn-ghost btn-card-secondary" href="rangering.html?spill=${encodeURIComponent(g.id)}">Se rangering</a>
+          <div class="game-actions">
+            <a class="btn-start" href="player.html?id=${encodeURIComponent(g.id)}">Start</a>
+            <a class="btn-ghost btn-card-secondary" href="rangering.html?spill=${encodeURIComponent(g.id)}">Se rangering</a>
+          </div>
         </div>
       </article>
     `;
@@ -53,18 +54,15 @@
     if (!daily) return;
 
     el.innerHTML = `
-      ${daily.pointsMultiplier ? `
-        <div class="hero-badge">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z"></path></svg>
-          ${daily.pointsMultiplier}
-        </div>` : ""}
       <div class="hero-media" data-hero-media>
-        ${daily.thumbnail
-          ? `<img class="hero-media-img" src="${daily.thumbnail}" alt="" fetchpriority="high">`
-          : `<span class="hero-placeholder-label">Dagens triks</span>`}
-        <div class="hero-gradient"></div>
+        <div class="hero-image">
+          ${daily.thumbnail
+            ? `<img class="hero-media-img" src="${daily.thumbnail}" alt="" fetchpriority="high">`
+            : ""}
+        </div>
         <div class="hero-content">
           <h2>${daily.name}</h2>
+          ${daily.pointsMultiplier ? `<p class="hero-bonus">${daily.pointsMultiplier}</p>` : ""}
           <p class="hero-desc">${daily.description || ""}</p>
           <button type="button" class="btn-primary" data-hero-start>Start her</button>
         </div>
@@ -199,7 +197,7 @@
         <div class="guide-feature-media">
           ${guide.coverUrl
             ? `<img src="${esc(guide.coverUrl)}" alt="">`
-            : `<span class="hero-placeholder-label">${esc(guide.title)}</span>`}
+            : ""}
         </div>
       </div>
     `;

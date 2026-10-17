@@ -370,7 +370,7 @@
       if (over) return;
       over = true;
       moving = null;
-      session.finish(score, { title: won ? "Brettet er tomt! 🎉" : "Spillet er over" });
+      session.finish(score, { title: won ? "Brettet er tomt!" : "Spillet er over" });
     }
 
     function shoot() {
@@ -562,7 +562,7 @@
       if (next) {
         drawBubble(WIDTH - RADIUS - 8, HEIGHT - RADIUS - 8, next);
         ctx.fillStyle = "rgba(255,255,255,.6)";
-        ctx.font = "10px Poppins, sans-serif";
+        ctx.font = "10px DM Sans, sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("neste", WIDTH - RADIUS - 8, HEIGHT - RADIUS * 2 - 12);
       }
