@@ -26,7 +26,8 @@
   (async function init() {
     const profile = await Auth.getCurrentProfile();
     if (await opened(profile)) return;
-    window.StudillaWelcomeWheel.mount(root, { mode: "teaser", profile });
+    // mount er async: vent til hjulet er tegnet (eller skjult) før FAQ-en styres.
+    await window.StudillaWelcomeWheel.mount(root, { mode: "teaser", profile });
     // FAQ-en følger velkomstbonusen: vises bare mens hjulet vises.
     const faq = document.querySelector("[data-case-faq]");
     if (faq) faq.hidden = root.hidden;
