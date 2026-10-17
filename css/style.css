@@ -46,6 +46,7 @@ html, body {
   color: var(--text);
   font-family: var(--font-body);
   font-size: 16px;
+  font-weight: 500;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
@@ -63,6 +64,8 @@ h1, h2, h3, h4,
 .game-title,
 .btn-primary,
 .btn-start { font-family: var(--font-display); }
+h1, h2, h3, h4, .logo-text, .game-title { font-weight: 800; }
+.btn-primary, .btn-start { font-weight: 700; }
 
 .page {
   min-height: 100vh;
@@ -403,6 +406,7 @@ main {
   background: var(--accent);
   color: var(--bg);
   font-size: 16px;
+  font-weight: 500;
   font-weight: 700;
   cursor: pointer;
   transition: background .15s ease;
@@ -842,6 +846,7 @@ html.is-player-view main { max-width: none; }
   border: none;
   background: transparent;
   font-size: 16px;
+  font-weight: 500;
   line-height: 1;
   cursor: pointer;
   padding: 2px 4px;
@@ -2056,6 +2061,7 @@ html.is-player-view main { max-width: none; }
   background: var(--surface-2);
   color: var(--muted);
   font-size: 16px;
+  font-weight: 500;
   line-height: 1;
   cursor: pointer;
 }
@@ -2610,6 +2616,7 @@ html.is-player-view main { max-width: none; }
   background: var(--bg);
   color: var(--muted);
   font-size: 16px;
+  font-weight: 500;
   line-height: 1;
   cursor: pointer;
   z-index: 3;
