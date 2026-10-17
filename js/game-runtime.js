@@ -253,6 +253,13 @@
         <div class="game-play-area" data-game-play-area></div>
         <div class="game-milestone-toast" data-game-milestone></div>
       </div>
+      <!-- Antall ganger spillet er spilt. Ligger utenfor .game-shell slik at
+           den ikke skaleres med brettet, og ligger nede i høyre hjørne av
+           spillflaten. Skjult til tallet er hentet. -->
+      <div class="game-plays-box" data-game-plays hidden title="Antall ganger spillet er spilt">
+        <span class="game-plays-num" data-game-plays-num>0</span>
+        <span class="game-plays-label">spilt</span>
+      </div>
       <div class="game-over-overlay" data-game-over hidden role="dialog" aria-modal="true" aria-labelledby="game-over-title">
         <div class="game-over-card">
           <div class="game-over-confetti" data-game-over-confetti aria-hidden="true"></div>
@@ -460,6 +467,23 @@
       shareList: container.querySelector("[data-share-list]"),
       shareStatus: container.querySelector("[data-share-status]"),
     };
+
+    // Antall ganger spillet er spilt (alle brukere + gjester). Hentes i
+    // bakgrunnen; boksen vises først når vi har et tall, og blir skjult hvis
+    // funksjonen ikke finnes ennå (schema.sql, seksjon 73 ikke kjørt).
+    const playsBox = container.querySelector("[data-game-plays]");
+    const playsNum = container.querySelector("[data-game-plays-num]");
+    let playCount = null;
+    function renderPlayCount() {
+      if (playCount === null) return;
+      playsNum.textContent = new Intl.NumberFormat("no-NO", { notation: playCount >= 10000 ? "compact" : "standard" }).format(playCount);
+      playsBox.hidden = false;
+    }
+    sb.rpc("game_play_count", { p_game_id: gameId }).then(({ data, error }) => {
+      if (error || data === null || data === undefined) return;
+      playCount = Number(data);
+      renderPlayCount();
+    });
 
     let best = await loadBest(gameId, await Auth.getCurrentProfile());
     els.best.textContent = best.toLocaleString("no-NO");
@@ -735,6 +759,10 @@
         const [prevProfile] = await Promise.all([Auth.getCurrentProfile(), Auth.loadLevels()]);
         const result = await submitScore(gameId, score, prevProfile);
         best = Math.max(best, result.best);
+        if (playCount !== null && Math.round(score) > 0) {
+          playCount += 1;
+          renderPlayCount();
+        }
         els.best.textContent = best.toLocaleString("no-NO");
 
         // Ikke oppdater header-widgeten med sluttresultatet med en gang: den

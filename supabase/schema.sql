@@ -5006,6 +5006,27 @@ create trigger rewards_sync_link_url
 -- Kjør triggeren én gang over eksisterende rader.
 update public.rewards set use_button = use_button;
 
+-- ---------------------------------------------------------------------------
+-- 73. game_play_count – hvor mange ganger et spill er spilt. Vises i en liten
+--     firkantet boks nede i høyre hjørne på spillsiden (js/game-runtime.js).
+--     Summerer innloggede runder (game_records) og gjesterunder
+--     (guest_game_plays, som ellers kun er lesbar for admin). Funksjonen
+--     er SECURITY DEFINER og returnerer bare et tall – ingen rader lekker.
+-- ---------------------------------------------------------------------------
+create or replace function public.game_play_count(p_game_id text)
+returns bigint
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select (select count(*) from public.game_records where game_id = p_game_id)
+       + (select count(*) from public.guest_game_plays where game_id = p_game_id);
+$$;
+
+revoke all on function public.game_play_count(text) from public;
+grant execute on function public.game_play_count(text) to anon, authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):
