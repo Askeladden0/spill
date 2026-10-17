@@ -42,9 +42,8 @@
       text-align: center;
       box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
       animation: ssWelcomeSlideUp 0.25s ease;
-      font-family: "Poppins", Arial, sans-serif;
+      font-family: "DM Sans", Arial, sans-serif;
     }
-    #ss-welcome-modal .ss-welcome-icon { font-size: 2.2rem; margin-bottom: 0.8rem; display: block; }
     #ss-welcome-modal h2 { font-size: 1.3rem; color: #f2f2f2; margin-bottom: 0.8rem; font-weight: 700; }
     #ss-welcome-modal p { font-size: 0.9rem; color: #aaa; line-height: 1.7; margin-bottom: 1.2rem; }
     #ss-welcome-modal .ss-welcome-sign { font-style: italic; color: #2ee87f; font-weight: 700; }
@@ -54,7 +53,7 @@
       border: none;
       padding: 0.75rem 1.6rem;
       font-size: 0.9rem;
-      font-family: "Poppins", Arial, sans-serif;
+      font-family: "DM Sans", Arial, sans-serif;
       font-weight: 700;
       border-radius: 4px;
       cursor: pointer;
@@ -71,7 +70,6 @@
 
   const overlay = document.createElement("div");
   overlay.id = "ss-welcome-overlay";
-  const icon = isGuide ? "📄" : "🎮";
   const title = isGuide ? "Denne guiden har flyttet!" : "Dette spillet har flyttet!";
   const body = isGuide
     ? "Dette er min nye nettside – med guider og spill, pluss flere filer og maler."
@@ -80,7 +78,6 @@
 
   overlay.innerHTML = `
     <div id="ss-welcome-modal" role="dialog" aria-modal="true" aria-labelledby="ss-welcome-title">
-      <span class="ss-welcome-icon">${icon}</span>
       <h2 id="ss-welcome-title">${title}</h2>
       <p>${body}<br><span class="ss-welcome-sign">- Snorre Saus</span></p>
       <button class="ss-welcome-btn" id="ss-welcome-close">${btnText}</button>

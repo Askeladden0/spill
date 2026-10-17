@@ -49,7 +49,7 @@
     a: "#ff5c9d", b: "#ffb23f", c: "#4bf2c3", d: "#4d8cff", e: "#c76bff", f: "#ffe14d",
   };
 
-  const COMBO_LABELS = ["", "", "⚡ DOBBEL! ⚡", "💥 TRIPPEL! 💥", "🔥 KVADRIPPEL! 🔥", "🌟 WOW! 🌟"];
+  const COMBO_LABELS = ["", "", "DOBBEL!", "TRIPPEL!", "KVADRIPPEL!", "WOW!"];
 
   // Ren visuell fest når to eller flere rader/kolonner sprenges samtidig –
   // partikkelsprut + en kort komboetikett. Poenggivningen skjer uavhengig

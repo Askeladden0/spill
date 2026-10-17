@@ -46,29 +46,29 @@
             '<button type="button" id="scb-accept-all" class="scb-btn scb-btn-primary">Godta alle</button>' +
           '</div>' +
         '</div>' +
-        '<div id="scb-preferences" style="display:none;position:relative;z-index:1;width:100%;max-width:460px;background:#131a25;border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:30px 30px 26px;flex-direction:column;gap:18px;box-shadow:0 24px 64px rgba(0,0,0,.5);font-family:\'Poppins\',system-ui,sans-serif;">' +
+        '<div id="scb-preferences" style="display:none;position:relative;z-index:1;width:100%;max-width:460px;background:#201c2b;border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:30px 30px 26px;flex-direction:column;gap:18px;box-shadow:0 24px 64px rgba(0,0,0,.5);font-family:\'DM Sans\',system-ui,sans-serif;">' +
           '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">' +
             '<div style="display:flex;flex-direction:column;gap:4px;">' +
-              '<h2 style="margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em;color:#ffffff;">Tilpass cookies</h2>' +
-              '<p style="margin:0;font-size:13px;color:#7c8aa0;">Velg hva du vil tillate. Du kan endre dette senere.</p>' +
+              '<h2 style="margin:0;font-size:19px;font-weight:700;letter-spacing:-.02em;color:#ffffff;">Tilpass cookies</h2>' +
+              '<p style="margin:0;font-size:13px;color:#8d8799;">Velg hva du vil tillate. Du kan endre dette senere.</p>' +
             '</div>' +
-            '<button type="button" id="scb-back" aria-label="Tilbake" style="flex-shrink:0;width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:#0d1117;color:#96a3b8;font-size:15px;line-height:1;cursor:pointer;">←</button>' +
+            '<button type="button" id="scb-back" aria-label="Tilbake" style="flex-shrink:0;width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:#17141f;color:#a9a3b6;font-size:15px;line-height:1;cursor:pointer;">←</button>' +
           '</div>' +
           '<div style="display:flex;flex-direction:column;gap:10px;">' +
-            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#0d1117;border:1px solid rgba(255,255,255,.06);">' +
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#17141f;border:1px solid rgba(255,255,255,.06);">' +
               '<div style="display:flex;flex-direction:column;gap:4px;">' +
-                '<span style="font-size:14px;font-weight:700;color:#e8edf5;">Nødvendige</span>' +
-                '<span style="font-size:12.5px;line-height:1.5;color:#7c8aa0;">Kreves for at Studilla skal fungere som den skal. Kan ikke skrus av.</span>' +
+                '<span style="font-size:14px;font-weight:700;color:#ece8f2;">Nødvendige</span>' +
+                '<span style="font-size:13px;line-height:1.5;color:#8d8799;">Kreves for at Studilla skal fungere som den skal. Kan ikke skrus av.</span>' +
               '</div>' +
               '<span style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;margin-top:2px;">' +
                 '<span style="position:absolute;inset:0;background:#2ee87f;border-radius:99px;opacity:.5;"></span>' +
                 '<span style="position:absolute;width:16px;height:16px;left:19px;top:3px;background:#fff;border-radius:50%;opacity:.5;"></span>' +
               '</span>' +
             '</div>' +
-            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#0d1117;border:1px solid rgba(255,255,255,.06);">' +
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#17141f;border:1px solid rgba(255,255,255,.06);">' +
               '<div style="display:flex;flex-direction:column;gap:4px;">' +
-                '<span style="font-size:14px;font-weight:700;color:#e8edf5;">Statistikk</span>' +
-                '<span style="font-size:12.5px;line-height:1.5;color:#7c8aa0;">Hjelper oss å forstå hvilke triks som brukes, slik at vi kan forbedre dem.</span>' +
+                '<span style="font-size:14px;font-weight:700;color:#ece8f2;">Statistikk</span>' +
+                '<span style="font-size:13px;line-height:1.5;color:#8d8799;">Hjelper oss å forstå hvilke triks som brukes, slik at vi kan forbedre dem.</span>' +
               '</div>' +
               '<label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;margin-top:2px;cursor:pointer;">' +
                 '<input type="checkbox" id="scb-stats" style="opacity:0;width:0;height:0;">' +
@@ -76,10 +76,10 @@
                 '<span id="scb-stats-dot" style="' + dotStyle(false) + '"></span>' +
               '</label>' +
             '</div>' +
-            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#0d1117;border:1px solid rgba(255,255,255,.06);">' +
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#17141f;border:1px solid rgba(255,255,255,.06);">' +
               '<div style="display:flex;flex-direction:column;gap:4px;">' +
-                '<span style="font-size:14px;font-weight:700;color:#e8edf5;">Markedsføring</span>' +
-                '<span style="font-size:12.5px;line-height:1.5;color:#7c8aa0;">Brukes for å vise relevante rabatter og annonser til deg, blant annet via Google Ads.</span>' +
+                '<span style="font-size:14px;font-weight:700;color:#ece8f2;">Markedsføring</span>' +
+                '<span style="font-size:13px;line-height:1.5;color:#8d8799;">Brukes for å vise relevante rabatter og annonser til deg, blant annet via Google Ads.</span>' +
               '</div>' +
               '<label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;margin-top:2px;cursor:pointer;">' +
                 '<input type="checkbox" id="scb-marketing" style="opacity:0;width:0;height:0;">' +
@@ -89,8 +89,8 @@
             '</div>' +
           '</div>' +
           '<div style="display:flex;gap:10px;margin-top:2px;">' +
-            '<button type="button" id="scb-reject" style="flex:1;padding:13px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8edf5;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;">Avvis alle</button>' +
-            '<button type="button" id="scb-save" style="flex:1;padding:13px;border:none;border-radius:10px;background:#2ee87f;color:#0d1117;font-size:13.5px;font-weight:800;letter-spacing:-.01em;cursor:pointer;">Lagre valg</button>' +
+            '<button type="button" id="scb-reject" style="flex:1;padding:13px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#ece8f2;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">Avvis alle</button>' +
+            '<button type="button" id="scb-save" style="flex:1;padding:13px;border:none;border-radius:10px;background:#2ee87f;color:#17141f;font-size:14px;font-weight:700;letter-spacing:-.01em;cursor:pointer;">Lagre valg</button>' +
           '</div>' +
         '</div>' +
       '</div>';

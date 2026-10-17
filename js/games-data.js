@@ -198,10 +198,7 @@ window.STUDILLA_GAMES_READY = (async function loadGames() {
  * "mine rekorder" osv. Faller tilbake til en tom plassholder hvis spillet
  * ikke har noe ikon satt ennå.
  */
-window.gameIconHTML = function gameIconHTML(game, size) {
-  const px = size || 22;
-  if (!game || !game.icon) {
-    return `<span class="game-icon-badge" style="width:${px}px;height:${px}px"></span>`;
-  }
-  return `<img class="game-icon-badge" src="${game.icon}" alt="" width="${px}" height="${px}" style="width:${px}px;height:${px}px">`;
+// Spillikonene er tatt bort fra grensesnittet; funksjonen beholdes så eksisterende kall ikke feiler.
+window.gameIconHTML = function gameIconHTML() {
+  return "";
 };

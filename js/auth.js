@@ -185,6 +185,22 @@
     return levelsCache;
   }
 
+  // Nivået regnes alltid fra poengene (som på premier.html). profiles.level går
+  // aldri ned, så etter endret nivåstige kunne toppmenyen vise feil nivå.
+  function displayLevel(profile) {
+    const levels = levelsCache || [];
+    if (!levels.length) return profile.level;
+    let best = levels[0].level_number;
+    let bestReq = -Infinity;
+    levels.forEach((l) => {
+      if (profile.xp >= l.points_required && l.points_required >= bestReq) {
+        best = l.level_number;
+        bestReq = l.points_required;
+      }
+    });
+    return best;
+  }
+
   function xpProgress(profile) {
     const xp = profile.xp;
     const levels = levelsCache || [];
@@ -214,9 +230,9 @@
     const { pct, xp, threshold } = xpProgress(profile);
     return `
       <div class="xp-widget" data-xp-widget>
-        <div class="xp-level" data-xp-level>${profile.level}</div>
+        <div class="xp-level" data-xp-level>${displayLevel(profile)}</div>
         <div class="xp-meta">
-          <div class="xp-labels"><span data-xp-level-label>NIVÅ ${profile.level}</span><span data-xp-fraction>${xp}/${threshold}</span></div>
+          <div class="xp-labels"><span data-xp-level-label>NIVÅ ${displayLevel(profile)}</span><span data-xp-fraction>${xp}/${threshold}</span></div>
           <div class="xp-bar"><div class="xp-bar-fill" data-xp-bar-fill style="width:${pct}%"></div></div>
         </div>
       </div>
@@ -242,7 +258,7 @@
         <a href="login.html">
           <button class="login-btn" type="button">
             <span class="login-avatar">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#96a3b8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a9a3b6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
             </span>
             Registrer deg
           </button>
@@ -317,13 +333,13 @@
 
     const from = xpProgress(prevProfile);
     const to = xpProgress(newProfile);
-    const leveledUp = newProfile.level > prevProfile.level;
+    const leveledUp = displayLevel(newProfile) > displayLevel(prevProfile);
 
     function applyFinal() {
       fill.style.width = `${to.pct}%`;
       fraction.textContent = `${to.xp}/${to.threshold}`;
-      levelEl.textContent = newProfile.level;
-      levelLabel.textContent = `NIVÅ ${newProfile.level}`;
+      levelEl.textContent = displayLevel(newProfile);
+      levelLabel.textContent = `NIVÅ ${displayLevel(newProfile)}`;
       widget.classList.add("is-leveling");
       widget.addEventListener("animationend", () => widget.classList.remove("is-leveling"), { once: true });
     }

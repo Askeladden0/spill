@@ -695,7 +695,7 @@
         </div>
 
         <div>
-          <h2 style="margin:0 0 12px;font-size:14.5px;font-weight:800;color:var(--text-strong)">Hurtighandlinger</h2>
+          <h2 style="margin:0 0 12px;font-size:15px;font-weight:700;color:var(--text-strong)">Hurtighandlinger</h2>
           <div class="admin-quick-actions">
             <button type="button" class="admin-quick-btn" data-quick="new-game"><span>+</span>Nytt spill</button>
             <button type="button" class="admin-quick-btn" data-quick="new-level"><span>+</span>Nytt nivå</button>
@@ -1048,7 +1048,7 @@
             <span class="admin-row-titles">
               <span class="admin-row-title-line">
                 <span class="admin-row-title">${escapeHTML(g.name)}</span>
-                ${daily ? `<span class="admin-pill-daily">★ DAGENS</span>` : ""}
+                ${daily ? `<span class="admin-pill-daily">DAGENS</span>` : ""}
                 ${g.hidden ? `<span class="admin-pill-hidden">SKJULT</span>` : ""}
               </span>
               <span class="admin-row-sub">${escapeHTML(g.id)}</span>
@@ -1080,7 +1080,7 @@
                 <span class="admin-dropzone-sub" style="padding-top:4px">1 = skåren gis 1:1. 2 = dobbelt så mange poeng, 0,5 = halvparten. Rekordene lagres alltid som den rå skåren.</span>
               </label>
               <div class="admin-row-actions">
-                <button type="button" class="btn-start" style="width:auto;padding:10px 15px;opacity:${daily || rotationOn ? ".55" : "1"}" data-game-set-daily="${g.id}"${rotationOn ? " disabled title=\"Skru av automatisk rotasjon for å velge dagens triks selv\"" : ""}>${daily ? "★ Er dagens triks" : "Sett som dagens triks"}</button>
+                <button type="button" class="btn-start" style="width:auto;padding:10px 15px;opacity:${daily || rotationOn ? ".55" : "1"}" data-game-set-daily="${g.id}"${rotationOn ? " disabled title=\"Skru av automatisk rotasjon for å velge dagens triks selv\"" : ""}>${daily ? "Er dagens triks" : "Sett som dagens triks"}</button>
                 <button type="button" class="btn-danger" style="padding:10px 15px" data-game-delete="${g.id}">Slett spill</button>
               </div>
             </div>
@@ -1215,7 +1215,7 @@
       <div class="admin-section">
         <div class="admin-card">
           <div>
-            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Poeng per nivå</h2>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Poeng per nivå</h2>
             <span class="admin-card-sub">Standard antall poeng for å gå opp ett nivå. Du kan overstyre enkeltnivåer i listen under – de andre nivåene beholder sitt eget steg og flytter seg bare med.</span>
           </div>
           ${migrationNote}
@@ -1281,7 +1281,7 @@
       <div class="admin-section">
         <div class="admin-card">
           <div>
-            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Spinn per dag</h2>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Spinn per dag</h2>
             <span class="admin-card-sub">Hvor mange ganger hver spiller kan spinne lykkehjulet i løpet av ett døgn. Døgnet nullstilles ved midnatt (UTC). Sett tallet til 0 for å fjerne grensen helt.</span>
           </div>
           ${migrationNote}
@@ -1298,7 +1298,7 @@
 
         <div class="admin-card">
           <div>
-            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Slik virker hjulet</h2>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Slik virker hjulet</h2>
             <span class="admin-card-sub">Hjulet gir mellom 10 og 1000 poeng per spinn, og poengene legges rett på spilleren. Utloggede besøkende kan også spinne, men poengene deres lagres bare i nettleseren til de logger inn.</span>
           </div>
         </div>
@@ -1599,7 +1599,7 @@
     return `
       <div class="admin-card">
         <div>
-          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Sannsynlighet per sjeldenhet</h2>
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Sannsynlighet per sjeldenhet</h2>
           <span class="admin-card-sub">Vekter relativt til hverandre – de trenger ikke summere til 100. Gjelder alle rabatter.</span>
         </div>
         <div class="admin-stat-grid" style="grid-template-columns:repeat(4,1fr)">
@@ -1624,7 +1624,7 @@
     return `
       <div class="admin-card">
         <div>
-          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Test-spinn (kun admin)</h2>
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Test-spinn (kun admin)</h2>
           <span class="admin-card-sub">Spinn rabatten så mange ganger du vil for å se hva den kan gi. Dette er kun en forhåndsvisning – ingen kode blir reservert eller trukket fra puljen, og det påvirker ikke hva du selv eller andre brukere kan få når dere åpner en ekte rabatt.</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
@@ -1633,13 +1633,13 @@
         ${p.error ? `<p class="admin-card-sub" style="color:#ff6b6b;margin-top:10px">${escapeHTML(p.error)}</p>` : ""}
         ${result ? `
           <div style="display:flex;align-items:center;gap:16px;margin-top:16px;padding:16px 18px;border-radius:14px;background:var(--bg);border:1px solid var(--border-strong)">
-            <span style="width:56px;height:56px;flex:none;border-radius:12px;background:#1b2434;display:flex;align-items:center;justify-content:center;overflow:hidden">
-              ${result.image_url ? `<img src="${result.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#6b7b93">[ logo ]</span>`}
+            <span style="width:56px;height:56px;flex:none;border-radius:12px;background:#201c2b;display:flex;align-items:center;justify-content:center;overflow:hidden">
+              ${result.image_url ? `<img src="${result.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#7c768a">[ logo ]</span>`}
             </span>
             <div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1">
-              <span style="font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent)">${(RARITY_LABELS[result.rarity] || result.rarity).toUpperCase()} RABATT</span>
-              <span style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:#fff">${escapeHTML(result.title)} hos ${escapeHTML(result.brand)}</span>
-              <span style="font-size:12px;font-weight:500;color:var(--muted)">Kode: ${escapeHTML(result.code)}</span>
+              <span style="font-size:13px;font-weight:700;letter-spacing:.12em;color:var(--accent)">${(RARITY_LABELS[result.rarity] || result.rarity).toUpperCase()} RABATT</span>
+              <span style="font-size:16px;font-weight:700;letter-spacing:-.02em;color:#fff">${escapeHTML(result.title)} hos ${escapeHTML(result.brand)}</span>
+              <span style="font-size:13px;font-weight:500;color:var(--muted)">Kode: ${escapeHTML(result.code)}</span>
             </div>
             <button type="button" class="admin-btn-ghost" data-admin-preview-copy>Kopier koden</button>
           </div>
@@ -1686,7 +1686,7 @@
       const st = welcomeStatus(r);
       return `
         <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--bg);border:1px solid var(--border-strong)">
-          <span style="font-weight:800;color:var(--accent);width:22px">${i + 1}.</span>
+          <span style="font-weight:700;color:var(--accent);width:22px">${i + 1}.</span>
           <span style="flex:1;min-width:0;font-weight:700;color:var(--text-strong)">${escapeHTML(r.title)} hos ${escapeHTML(r.brand)}</span>
           <span class="admin-card-sub" style="margin:0;color:${st.ok ? "inherit" : "#ff6b6b"}">${st.text}</span>
           <button type="button" class="admin-btn-ghost" data-welcome-move="up" data-welcome-key="${key}" data-welcome-id="${id}"${i === 0 ? " disabled" : ""}${disabled} aria-label="Flytt opp">↑</button>
@@ -1719,13 +1719,13 @@
     return `
       <div class="admin-card">
         <div>
-          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Velkomstbonus</h2>
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Velkomstbonus</h2>
           <span class="admin-card-sub">Nye brukere spinner samme rullebånd som «Få en rabatt», men med bare rabattene du velger under som alternativer, og får den båndet lander på. «Støtter Snorre»-rabatter kan ikke brukes.</span>
         </div>
         ${welcomeListHTML("welcome_priority", "Ingen alternativer ennå – velkomstbonusen vises ikke før du legger til minst én.")}
 
         <div style="margin-top:20px">
-          <h3 style="margin:0 0 4px;font-size:14px;font-weight:800;color:var(--text-strong)">Antall plasser</h3>
+          <h3 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-strong)">Antall plasser</h3>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <input type="number" min="2" max="24" step="1" value="${slots}" data-welcome-slots${disabled} style="width:90px">
             <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-welcome-slots-save${disabled}>Lagre</button>
@@ -1734,7 +1734,7 @@
         </div>
 
         <div style="margin-top:20px">
-          <h3 style="margin:0 0 4px;font-size:14px;font-weight:800;color:var(--text-strong)">Hvis en rabatt går tom</h3>
+          <h3 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-strong)">Hvis en rabatt går tom</h3>
           <span class="admin-card-sub">Er en rabatt tom for koder, utløpt eller skrudd av, tar disse over plassene dens (første ledige først).</span>
           ${welcomeListHTML("welcome_fallback", "Ingen reserve valgt – plassene til en tom rabatt fordeles på de andre alternativene.")}
         </div>
@@ -1798,7 +1798,7 @@
 
     const headCols = USER_COLS.map(([id, label]) => `
       <button type="button" class="admin-users-sort-btn${id !== "username" ? " align-end" : ""}${state.sort === id ? " is-active" : ""}" data-sort-col="${id}">
-        ${label}<span style="font-size:9px">${state.sort === id ? (state.dir === "asc" ? "▲" : "▼") : ""}</span>
+        ${label}<span style="font-size:13px">${state.sort === id ? (state.dir === "asc" ? "▲" : "▼") : ""}</span>
       </button>
     `).join("");
 
@@ -2074,7 +2074,7 @@
       <div class="admin-avatar-grid">
         <div class="admin-card">
           <div>
-            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Farger</h2>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Farger</h2>
             <span class="admin-card-sub">Nye brukere får én tilfeldig farge herfra.</span>
           </div>
           <div class="swatch-row">
@@ -2091,7 +2091,7 @@
         </div>
         <div class="admin-card">
           <div>
-            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Figurer</h2>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Figurer</h2>
             <span class="admin-card-sub">Velg hvilke figurer nye brukere kan få tildelt og selv velge mellom.</span>
           </div>
           <div class="figure-grid" style="max-width:420px">
@@ -2102,7 +2102,7 @@
         </div>
         <div class="admin-card admin-avatar-custom">
           <div>
-            <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Egne profilbilder</h2>
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Egne profilbilder</h2>
             <span class="admin-card-sub">Last opp bilder brukerne kan velge som profilbilde, i tillegg til figurene.</span>
           </div>
           <label class="admin-dropzone${busy ? " is-busy" : ""}" data-avatar-dropzone>
@@ -2146,7 +2146,7 @@
       return `
         <div class="admin-section">
           <div class="admin-card">
-            <h2 style="margin:0 0 6px;font-size:15px;font-weight:800;color:var(--text-strong)">Varsler er ikke slått på ennå</h2>
+            <h2 style="margin:0 0 6px;font-size:15px;font-weight:700;color:var(--text-strong)">Varsler er ikke slått på ennå</h2>
             <span class="admin-card-sub">Kjør <code>supabase/schema.sql</code> på nytt (seksjon 62) for å begynne å logge nye registreringer og blokkeringer.</span>
           </div>
         </div>
@@ -2334,7 +2334,7 @@
           <button type="button" class="admin-btn-ghost" data-koder-download-all>Last ned full oversikt (CSV)</button>
         </div>
         <div class="admin-card" style="overflow-x:auto">
-          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Rabatter</h2>
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Rabatter</h2>
           <span class="admin-card-sub">Rediger rabattene under «Rabatter». Her ser du status og kan laste ned lister.</span>
           <table class="records-table">
             <thead><tr><th>Rabatt</th><th>Sjeldenhet</th><th>Koder</th><th>Utløper</th><th>Status</th><th></th></tr></thead>
@@ -2342,7 +2342,7 @@
           </table>
         </div>
         <div class="admin-card" style="overflow-x:auto">
-          <h2 style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--text-strong)">Logg – hvem har fått hvilken kode</h2>
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Logg – hvem har fått hvilken kode</h2>
           <span class="admin-card-sub">${state.claims.length} hentede koder totalt, nyeste øverst.</span>
           <table class="records-table">
             <thead><tr><th>Bruker</th><th>Rabatt</th><th>Kode</th><th>Hentet</th></tr></thead>

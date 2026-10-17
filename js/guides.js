@@ -39,67 +39,16 @@
   function coerceModuleId(raw) { return /^\d+$/.test(raw) ? Number(raw) : raw; }
   function friendlyError(error) { return (error && error.message) || "Noe gikk galt. Prøv igjen."; }
 
-  // Inline SVG-ikoner. Emoji-glyfene (✎/🗑) som sto her før ble tegnet ulikt i
-  // hver nettleser og var vanskelige å se mot mørk bakgrunn – disse arver
-  // currentColor og har lik strektykkelse som resten av grensesnittet.
-  const ICON_PATHS = {
-    edit: '<path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>',
-    trash: '<path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6M14 11v6"></path>',
-    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle>',
-    eyeOff: '<path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6.4 0 10 6 10 6a17.8 17.8 0 0 1-3.3 4"></path><path d="M6.6 6.7A17.6 17.6 0 0 0 2 12s3.6 7 10 7a9.8 9.8 0 0 0 5.1-1.4"></path><path d="M3 3l18 18"></path>',
-    up: '<path d="M12 19V5"></path><path d="M6 11l6-6 6 6"></path>',
-    down: '<path d="M12 5v14"></path><path d="M18 13l-6 6-6-6"></path>',
-    plus: '<path d="M12 5v14M5 12h14"></path>',
-    x: '<path d="M18 6 6 18M6 6l12 12"></path>',
-    check: '<path d="M20 6 9 17l-5-5"></path>',
-    image: '<rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="8.5" cy="9.5" r="1.5"></circle><path d="m4 17 5-5 4 4 3-2 4 4"></path>',
-    text: '<path d="M4 6h16M4 12h16M4 18h10"></path>',
-    file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"></path><path d="M14 3v5h5"></path><path d="M12 12v5"></path><path d="m9.5 14.5 2.5 2.5 2.5-2.5"></path>',
-    table: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 10v10M15 10v10"></path>',
-    coins: '<circle cx="12" cy="12" r="9"></circle><path d="M14.5 9h-3.2a1.8 1.8 0 0 0 0 3.6h1.4a1.8 1.8 0 0 1 0 3.6H9.5"></path><path d="M12 7.5v9"></path>',
-    poll: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path>',
-    heart: '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35Z"></path>',
-    game: '<path d="M6 12h4M8 10v4"></path><circle cx="16" cy="11" r="1"></circle><circle cx="18.5" cy="13.5" r="1"></circle><rect x="2" y="6" width="20" height="12" rx="5"></rect>',
-    drag: '<circle cx="9" cy="6" r="1.4"></circle><circle cx="15" cy="6" r="1.4"></circle><circle cx="9" cy="12" r="1.4"></circle><circle cx="15" cy="12" r="1.4"></circle><circle cx="9" cy="18" r="1.4"></circle><circle cx="15" cy="18" r="1.4"></circle>',
-    settings: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"></path>'
-  };
-  function icon(name, size) {
-    const d = ICON_PATHS[name];
-    if (!d) return "";
-    const s = size || 16;
-    return `<svg class="guide-ico" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  // Ikoner er tatt bort fra siden; kun knapper som ellers ville stått tomme får et ord.
+  const ICON_TEXT = { x: "Lukk", up: "Opp", down: "Ned", heart: "Lik" };
+  function icon(name) {
+    return ICON_TEXT[name] ? `<span>${ICON_TEXT[name]}</span>` : "";
   }
 
-  /**
-   * Symbolene en guide kan merkes med. Guidekortene skilte seg tidligere bare
-   * på tittel og et eventuelt toppbilde; et ikon gjør at man ser hva guiden
-   * handler om på et blunk, også der det ikke ligger noe bilde. Settet er
-   * bevisst lite og fast – nøkkelen lagres i guides.icon (schema.sql seksjon
-   * 64), slik at symbolet tegnes likt i alle nettlesere.
-   */
-  const GUIDE_ICONS = [
-    ["penger", "Penger", '<circle cx="12" cy="12" r="9"></circle><path d="M14.5 9h-3.2a1.8 1.8 0 0 0 0 3.6h1.4a1.8 1.8 0 0 1 0 3.6H9.5"></path><path d="M12 7.5v9"></path>'],
-    ["sparing", "Sparing", '<path d="M4 11a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v4a3 3 0 0 1-3 3h-1v2h-3v-2H8v2H5v-2.4A7 7 0 0 1 4 15Z"></path><circle cx="15.5" cy="11" r="1"></circle><path d="M8 8h3"></path>'],
-    ["skole", "Skole", '<path d="M3 8.5 12 4l9 4.5-9 4.5Z"></path><path d="M7 11v5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-5"></path><path d="M21 8.5V15"></path>'],
-    ["dokument", "Dokument", '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"></path><path d="M14 3v5h5"></path><path d="M9 13h6M9 17h4"></path>'],
-    ["kalender", "Kalender", '<rect x="3" y="5" width="18" height="16" rx="2.5"></rect><path d="M3 10h18M8 3v4M16 3v4"></path>'],
-    ["tips", "Tips", '<path d="M9.5 18h5"></path><path d="M10 21h4"></path><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6h5.4c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z"></path>'],
-    ["megafon", "Si ifra", '<path d="M4 10v4a2 2 0 0 0 2 2h2l7 4V4L8 8H6a2 2 0 0 0-2 2Z"></path><path d="M18.5 9a4 4 0 0 1 0 6"></path>'],
-    ["graf", "Tall og statistikk", '<path d="M3 17l5-6 4 4 4-7 5 5"></path><path d="M3 21h18"></path>'],
-    ["gruppe", "Samarbeid", '<circle cx="9" cy="8" r="3.4"></circle><path d="M2.5 20c0-3.6 2.9-5.6 6.5-5.6s6.5 2 6.5 5.6"></path><path d="M16 5.2a3.4 3.4 0 0 1 0 6.6"></path><path d="M18 14.8c2.2.6 3.5 2.3 3.5 5.2"></path>'],
-    ["klokke", "Tidsbruk", '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5.2l3.4 2"></path>'],
-    ["verktoy", "Praktisk", '<path d="M14.7 6.3a4 4 0 0 0 5 5L14 17l-3 3-3-3 3-3Z"></path><path d="m6.5 6.5 3 3"></path>'],
-    ["stjerne", "Anbefalt", '<path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 17l-5.3 2.7 1.1-5.9L3.5 9.7l5.9-.8Z"></path>'],
-  ];
-
-  const GUIDE_ICON_PATHS = Object.fromEntries(GUIDE_ICONS.map(([key, , d]) => [key, d]));
 
   /** Tegner et guide-ikon, eller ingenting hvis guiden ikke har valgt noe. */
-  function guideIcon(key, size) {
-    const d = GUIDE_ICON_PATHS[key];
-    if (!d) return "";
-    const s = size || 18;
-    return `<span class="guide-icon"><svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg></span>`;
+  function guideIcon() {
+    return "";
   }
 
   let toastTimer = null;
@@ -301,14 +250,12 @@
         <span class="guide-form-legend">Slik ser kortet ut</span>
         <div class="guide-card guide-card-preview${draft.hidden ? " is-hidden-guide" : ""}">
           <span class="guide-card-thumb">
-            ${draft.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(draft.coverUrl)}" alt="">` : `<span class="guide-card-thumb-slot">${icon("image", 20)}</span>`}
-            <span class="guide-card-gradient"></span>
-            ${draft.icon ? `<span class="guide-card-icon">${guideIcon(draft.icon, 18)}</span>` : ""}
-            <h3 class="guide-card-title">${escapeHTML(draft.title) || '<span class="is-placeholder">Overskriften din havner her</span>'}</h3>
+            ${draft.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(draft.coverUrl)}" alt="">` : ""}
           </span>
           ${draft.hidden ? `<span class="guide-status-badge is-hidden">${icon("eyeOff", 13)}Skjult</span>` : ""}
           ${draft.featured ? `<span class="guide-status-badge is-featured">Fremhevet</span>` : ""}
           <div class="guide-card-body">
+            <h3 class="guide-card-title">${escapeHTML(draft.title) || '<span class="is-placeholder">Overskriften din havner her</span>'}</h3>
             <p class="guide-card-excerpt">${escapeHTML(draft.excerpt) || '<span class="is-placeholder">Ingressen vises her.</span>'}</p>
             <div class="guide-card-foot">
               <span class="guide-card-value">${escapeHTML(draft.valueLabel) || '<span class="is-placeholder">Mengde spart/tjent</span>'}</span>
@@ -355,21 +302,10 @@
             </section>
 
             <section class="guide-form-section">
-              <span class="guide-form-legend">Symbol</span>
-              <div class="guide-icon-row">
-                ${GUIDE_ICONS.map(([key, label]) => `
-                  <button type="button" class="guide-icon-choice${draft.icon === key ? " is-active" : ""}" data-gf-choice="icon" data-value="${key}" title="${escapeHTML(label)}" aria-label="${escapeHTML(label)}">${guideIcon(key, 20)}</button>
-                `).join("")}
-                ${draft.icon ? `<button type="button" class="guide-icon-choice is-clear" data-gf-choice="icon" data-value="" title="Uten symbol" aria-label="Uten symbol">${icon("x", 16)}</button>` : ""}
-              </div>
-              <span class="guide-field-hint">Vises på kortet og øverst i guiden. Valgfritt.</span>
-            </section>
-
-            <section class="guide-form-section">
               <span class="guide-form-legend">Kategori</span>
               ${cats.length ? `<div class="guide-choice-row">
                 ${cats.map((c) => `<button type="button" class="guide-choice${draft.category === c ? " is-active" : ""}" data-gf-choice="category" data-value="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join("")}
-                ${draft.category ? `<button type="button" class="guide-choice is-clear" data-gf-choice="category" data-value="">${icon("x", 13)}Ingen</button>` : ""}
+                ${draft.category ? `<button type="button" class="guide-choice is-clear" data-gf-choice="category" data-value="">Ingen</button>` : ""}
               </div>` : ""}
               <label class="admin-field is-wide">${cats.length ? "… eller skriv en ny" : "Kategori"}
                 <input type="text" data-gf="category" value="${escapeHTML(draft.category)}" placeholder="F.eks. Elevrådet">
@@ -595,7 +531,7 @@
           </div>
         </div>
         <div class="guide-feature-media">
-          ${featured.coverUrl ? `<img src="${escapeHTML(featured.coverUrl)}" alt="">` : `<span class="hero-placeholder-label">[ guide-bilde 16:10 ]</span>`}
+          ${featured.coverUrl ? `<img src="${escapeHTML(featured.coverUrl)}" alt="">` : ""}
         </div>
       </div>
     `;
@@ -618,20 +554,18 @@
     return `
       <div class="guide-card${isHidden && admin ? " is-hidden-guide" : ""}">
         <a href="guide.html?id=${encodeURIComponent(g.id)}" class="guide-card-thumb">
-          ${g.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(g.coverUrl)}" alt="">` : `<span class="guide-card-thumb-slot">${icon("image", 20)}</span>`}
-          <div class="guide-card-gradient"></div>
-          ${g.icon ? `<span class="guide-card-icon">${guideIcon(g.icon, 18)}</span>` : ""}
-          <h3 class="guide-card-title">${escapeHTML(g.title)}</h3>
+          ${g.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(g.coverUrl)}" alt="">` : ""}
         </a>
         ${isHidden && admin ? `<span class="guide-status-badge is-hidden">${icon("eyeOff", 13)}Skjult</span>` : ""}
         ${g.featured && admin ? `<span class="guide-status-badge is-featured">Fremhevet</span>` : ""}
         <div class="guide-card-body">
+          <h3 class="guide-card-title"><a href="guide.html?id=${encodeURIComponent(g.id)}">${escapeHTML(g.title)}</a></h3>
           <p class="guide-card-excerpt">${escapeHTML(g.excerpt)}</p>
           <div class="guide-card-foot">
             <span class="guide-card-value">${escapeHTML(g.valueLabel)}</span>
             <span class="guide-card-stats">
-              <span class="guide-card-stat">${icon("eye", 13)}${numFmt(g.viewCount || 0)}</span>
-              <span class="guide-card-stat">${icon("heart", 13)}${numFmt(g.likeCount || 0)}</span>
+              <span class="guide-card-stat">${numFmt(g.viewCount || 0)} lest</span>
+              <span class="guide-card-stat">${numFmt(g.likeCount || 0)} liker</span>
             </span>
           </div>
           ${admin ? `
@@ -829,7 +763,7 @@
     const thumb = game && game.thumbnail;
 
     const inner = `
-      <div class="guide-trick-thumb">${thumb ? `<img src="${escapeHTML(thumb)}" alt="">` : `<span class="hero-placeholder-label">[ triks-bilde ]</span>`}</div>
+      <div class="guide-trick-thumb">${thumb ? `<img src="${escapeHTML(thumb)}" alt="">` : ""}</div>
       <div class="guide-trick-body">
         <span class="guide-trick-title">${escapeHTML(title)}</span>
         ${intro ? `<span class="guide-trick-intro">${escapeHTML(intro)}</span>` : ""}
@@ -1329,7 +1263,7 @@
     document.querySelector("[data-guide-updated]").textContent = g.updatedAt ? `Oppdatert ${formatDate(g.updatedAt)}` : "";
 
     const cover = document.querySelector("[data-guide-cover]");
-    cover.innerHTML = g.coverUrl ? `<img src="${escapeHTML(g.coverUrl)}" alt="">` : `<span class="hero-placeholder-label">[ toppbilde 16:7 ]</span>`;
+    cover.innerHTML = g.coverUrl ? `<img src="${escapeHTML(g.coverUrl)}" alt="">` : "";
 
     const adminBar = document.querySelector("[data-guide-admin-bar]");
     if (adminBar) {

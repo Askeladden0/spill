@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  const HOLE_FILL = "#0d1117";
+  const HOLE_FILL = "#17141f";
 
   const FIGURES = {
     robot: {
@@ -111,7 +111,7 @@
 
   const FIGURE_KEYS = Object.keys(FIGURES);
   const DEFAULT_FIGURE = "robot";
-  const DEFAULT_COLORS = ["#2ee87f", "#38bdf8", "#a78bfa", "#f472b6", "#ffd166", "#fb923c", "#ff9385", "#e8edf5"];
+  const DEFAULT_COLORS = ["#2ee87f", "#38bdf8", "#a78bfa", "#f472b6", "#ffd166", "#fb923c", "#ff9385", "#ece8f2"];
 
   function attrsToString(attrs) {
     return Object.keys(attrs)

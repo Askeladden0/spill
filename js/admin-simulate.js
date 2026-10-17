@@ -16,12 +16,12 @@
   function injectStyles() {
     const style = document.createElement("style");
     style.textContent = `
-      .admin-sim-fab { position: fixed; right: 18px; bottom: 18px; z-index: 9000; width: 54px; height: 54px; border-radius: 50%; border: 0; cursor: pointer; background: #2ee87f; color: #0d1117; font: 800 11px/1 "Poppins", sans-serif; box-shadow: 0 6px 20px rgba(0,0,0,.45); }
+      .admin-sim-fab { position: fixed; right: 18px; bottom: 18px; z-index: 9000; width: 54px; height: 54px; border-radius: 50%; border: 0; cursor: pointer; background: #2ee87f; color: #17141f; font: 800 11px/1 "DM Sans", sans-serif; box-shadow: 0 6px 20px rgba(0,0,0,.45); }
       .admin-sim-fab:hover { filter: brightness(1.08); }
       .admin-sim-overlay { position: fixed; inset: 0; z-index: 9001; background: rgba(0,0,0,.65); display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 24px 12px; }
       .admin-sim-overlay[hidden] { display: none; }
       .admin-sim-box { width: 100%; max-width: 460px; }
-      .admin-sim-close { display: block; margin: 0 0 10px auto; background: #1b2434; color: #e8edf5; border: 1px solid rgba(255,255,255,.15); border-radius: 999px; padding: 6px 14px; font: 700 12px "Poppins", sans-serif; cursor: pointer; }
+      .admin-sim-close { display: block; margin: 0 0 10px auto; background: #201c2b; color: #ece8f2; border: 1px solid rgba(255,255,255,.15); border-radius: 999px; padding: 6px 14px; font: 700 12px "DM Sans", sans-serif; cursor: pointer; }
     `;
     document.head.appendChild(style);
   }
