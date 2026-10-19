@@ -2858,3 +2858,9 @@ html.is-player-view main { max-width: none; }
   background: var(--surface-2);
   vertical-align: middle;
 }
+
+/* Google-knappen i toppmenyen: bare ikon på smale skjermer */
+[data-google-signin].login-btn { gap: 8px; }
+@media (max-width: 700px) {
+  [data-google-signin].login-btn .google-signin-label { display: none; }
+}
