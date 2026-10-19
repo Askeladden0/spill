@@ -2864,3 +2864,5 @@ html.is-player-view main { max-width: none; }
 @media (max-width: 700px) {
   [data-google-signin].login-btn .google-signin-label { display: none; }
 }
+
+a.xp-widget { text-decoration: none; color: inherit; }
