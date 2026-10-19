@@ -80,7 +80,6 @@ select:focus-visible,
 }
 
 /* Dagens triks dekker hele skjermen under toppmenyen. */
-.hero-section .hero-media,
 .hero-section .hero-stage {
   min-height: calc(100svh - var(--header-h) - 40px);
 }
@@ -247,7 +246,6 @@ select:focus-visible,
 @media (max-width: 900px) {
   /* På smale skjermer ligger hilsenen under bildet i stedet for oppå. */
   .hero-greeting { position: static; width: auto; margin-top: 12px; }
-  .hero-section .hero-media,
   .hero-section .hero-stage { min-height: calc(100svh - var(--header-h) - 160px); }
 }
 
