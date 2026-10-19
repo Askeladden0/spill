@@ -1129,7 +1129,7 @@ select:focus-visible,
    -------------------------------------------------------------------------- */
 
 
-.hero-section .hero-content { padding: 28px 32px 32px; gap: 12px; }
+.hero-section .hero-content { padding: 80px 32px 28px; gap: 10px; }
 
 .hero-section .hero-content h2 {
   font-size: clamp(28px, 3.4vw, 42px);

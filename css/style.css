@@ -365,21 +365,26 @@ main {
   flex-direction: column;
 }
 
-/* Bildet står for seg selv, uten overlegg; tittel og knapp ligger under. */
+/* Hele coveret vises uten beskjæring; tittel og knapp ligger nederst over
+   en myk skygge (ingen heldekkende boks). */
 .hero-image {
   position: relative;
-  flex: 1;
-  min-height: 320px;
   background: var(--surface-3);
 }
 
+.hero-image:empty { min-height: 320px; }
+
 .hero-content {
-  padding: 28px 32px 32px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 96px 32px 32px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  border-top: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.45) 55%, rgba(0,0,0,.75) 100%);
 }
 
 .hero-content h2 {
@@ -449,11 +454,9 @@ main {
 }
 
 .hero-media-img {
-  position: absolute;
-  inset: 0;
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
 }
 
 .game-title {
@@ -2827,7 +2830,7 @@ html.is-player-view main { max-width: none; }
   .login-btn { padding: 6px 10px 6px 6px; gap: 6px; font-size: 13px; }
   main { padding: 28px 20px 0; gap: 40px; }
   .game-grid { grid-template-columns: 1fr; }
-  .hero-content { padding: 28px; }
+  .hero-content { padding: 64px 20px 20px; }
   .hero-content h2 { font-size: 30px; }
   .level-card { flex-direction: column; text-align: center; padding: 28px; }
   .level-stats-row { justify-content: center; }
