@@ -56,7 +56,7 @@
           </div>
 
           <div class="levelup-reward" data-levelup-reward hidden>
-            <span class="levelup-reward-icon"></span>
+            <span class="levelup-reward-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16a1 1 0 0 1 1 1v2.6a2 2 0 0 0 0 3.8v2.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2.6a2 2 0 0 0 0-3.8V7.5a1 1 0 0 1 1-1z"></path><line x1="9.5" y1="14.5" x2="14.5" y2="9.5"></line><circle cx="9.7" cy="10" r=".9"></circle><circle cx="14.3" cy="14" r=".9"></circle></svg></span>
             <div class="levelup-reward-body">
               <span class="levelup-reward-title" data-levelup-reward-title></span>
               <span class="levelup-reward-sub" data-levelup-reward-sub></span>

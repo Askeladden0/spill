@@ -370,7 +370,7 @@
       if (over) return;
       over = true;
       moving = null;
-      session.finish(score, { title: won ? "Brettet er tomt!" : "Spillet er over" });
+      session.finish(score, { title: won ? "Brettet er tomt! 🎉" : "Spillet er over" });
     }
 
     function shoot() {

@@ -2846,3 +2846,12 @@ html.is-player-view main { max-width: none; }
   .public-profile-header { flex-direction: column; text-align: center; }
   .public-profile-stats { margin-left: 0; justify-content: center; }
 }
+
+.game-icon-badge {
+  display: inline-block;
+  border-radius: 7px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--surface-2);
+  vertical-align: middle;
+}

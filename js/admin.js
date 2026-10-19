@@ -1048,7 +1048,7 @@
             <span class="admin-row-titles">
               <span class="admin-row-title-line">
                 <span class="admin-row-title">${escapeHTML(g.name)}</span>
-                ${daily ? `<span class="admin-pill-daily">DAGENS</span>` : ""}
+                ${daily ? `<span class="admin-pill-daily">★ DAGENS</span>` : ""}
                 ${g.hidden ? `<span class="admin-pill-hidden">SKJULT</span>` : ""}
               </span>
               <span class="admin-row-sub">${escapeHTML(g.id)}</span>
@@ -1080,7 +1080,7 @@
                 <span class="admin-dropzone-sub" style="padding-top:4px">1 = skåren gis 1:1. 2 = dobbelt så mange poeng, 0,5 = halvparten. Rekordene lagres alltid som den rå skåren.</span>
               </label>
               <div class="admin-row-actions">
-                <button type="button" class="btn-start" style="width:auto;padding:10px 15px;opacity:${daily || rotationOn ? ".55" : "1"}" data-game-set-daily="${g.id}"${rotationOn ? " disabled title=\"Skru av automatisk rotasjon for å velge dagens triks selv\"" : ""}>${daily ? "Er dagens triks" : "Sett som dagens triks"}</button>
+                <button type="button" class="btn-start" style="width:auto;padding:10px 15px;opacity:${daily || rotationOn ? ".55" : "1"}" data-game-set-daily="${g.id}"${rotationOn ? " disabled title=\"Skru av automatisk rotasjon for å velge dagens triks selv\"" : ""}>${daily ? "★ Er dagens triks" : "Sett som dagens triks"}</button>
                 <button type="button" class="btn-danger" style="padding:10px 15px" data-game-delete="${g.id}">Slett spill</button>
               </div>
             </div>
@@ -1798,7 +1798,7 @@
 
     const headCols = USER_COLS.map(([id, label]) => `
       <button type="button" class="admin-users-sort-btn${id !== "username" ? " align-end" : ""}${state.sort === id ? " is-active" : ""}" data-sort-col="${id}">
-        ${label}<span style="font-size:13px">${state.sort === id ? (state.dir === "asc" ? "▲" : "▼") : ""}</span>
+        ${label}<span style="font-size:9px">${state.sort === id ? (state.dir === "asc" ? "▲" : "▼") : ""}</span>
       </button>
     `).join("");
 

@@ -213,8 +213,8 @@
     ];
   }
 
-  const CHECK_SVG = '';
-  const CHEVRON_SVG = '';
+  const CHECK_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2ee87f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+  const CHEVRON_SVG = '<svg class="rank-menu-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8d8799" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
 
   function renderFilters() {
     document.querySelector("[data-filters]").innerHTML = menuDefs()
@@ -290,7 +290,7 @@
   function tagCell(p) {
     if (profile && p.id === profile.id) return '<span class="you-badge">DEG</span>';
     if (friendIds.indexOf(p.id) > -1) {
-      return '<span class="friend-badge"><span class="friend-badge-text">VENN</span></span>';
+      return '<span class="friend-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span class="friend-badge-text">VENN</span></span>';
     }
     return "";
   }

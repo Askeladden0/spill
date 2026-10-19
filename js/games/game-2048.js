@@ -231,7 +231,7 @@
     function showWinToast() {
       const toast = document.createElement("div");
       toast.className = "game-2048-toast";
-      toast.textContent = "Du nådde 2048! Fortsett å spille for enda flere poeng.";
+      toast.textContent = "Du nådde 2048! Fortsett å spille for enda flere poeng. 🎉";
       session.playArea.insertBefore(toast, session.playArea.firstChild);
       setTimeout(() => toast.remove(), 4000);
     }
