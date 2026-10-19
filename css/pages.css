@@ -704,7 +704,7 @@ a.guide-trick-card:hover { border-color: rgba(var(--accent-rgb), .35); }
   justify-content: center;
   width: 16px;
   height: 16px;
-  cursor: help;
+  cursor: default;
   outline: none;
 }
 .snorre-tag-info::after {
