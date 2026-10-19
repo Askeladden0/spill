@@ -405,6 +405,44 @@
     });
   });
 
+  // Google-popupen («One Tap») som dukker opp øverst til høyre for utloggede
+  // besøkende. Google gir en ID-token som Supabase bytter til en økt. Nonce:
+  // Google får hashen, Supabase får originalen.
+  async function startGoogleOneTap() {
+    const clientId = window.GOOGLE_CLIENT_ID;
+    if (!clientId || (await getSession())) return;
+
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    const rawNonce = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(rawNonce));
+    const hashedNonce = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+
+    await new Promise((resolve, reject) => {
+      if (window.google && window.google.accounts) return resolve();
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      nonce: hashedNonce,
+      use_fedcm_for_prompt: true,
+      callback: async function (response) {
+        const { error } = await sb.auth.signInWithIdToken({
+          provider: "google",
+          token: response.credential,
+          nonce: rawNonce,
+        });
+        if (error) console.error("[Studilla] Google-innlogging feilet:", error.message);
+      },
+    });
+    window.google.accounts.id.prompt();
+  }
+
   async function signOut() {
     await sb.auth.signOut();
     window.location.href = "index.html";
@@ -439,6 +477,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     renderHeaderAuth();
     renderFooterAdminLink();
+    startGoogleOneTap().catch((err) => console.warn("[Studilla] Google-popup:", err));
   });
 
   sb.auth.onAuthStateChange(function (event) {

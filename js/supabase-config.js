@@ -12,6 +12,11 @@
 window.SUPABASE_URL = "https://dtchrzsayskizbhuqdls.supabase.co";
 window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0Y2hyenNheXNraXpiaHVxZGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NjY1NjcsImV4cCI6MjEwMjQ0MjU2N30.T2zNImuxWM4E5JkqnAphpYt_NZ3biY8I4TPr6VPrmN0";
 
+// Google OAuth-klient-ID (den samme som i Supabase → Authentication → Providers
+// → Google). Brukes til Google-popupen («One Tap») for utloggede besøkende.
+// Tom verdi = popupen er av. Klient-ID-en er offentlig; hemmeligheten skal IKKE hit.
+window.GOOGLE_CLIENT_ID = "";
+
 if (
   window.SUPABASE_URL.includes("YOUR-PROJECT-REF") ||
   window.SUPABASE_ANON_KEY.includes("YOUR-PUBLIC-ANON-KEY")
