@@ -41,6 +41,7 @@
     rarityWeights: [],
     rewardCodes: [],
     claims: [],
+    useClicks: [],
     gameRecords: [],
     guestGameRecords: [],
     siteVisits: [],
@@ -267,13 +268,14 @@
   }
 
   async function loadAll() {
-    const [profilesRes, levelsRes, rewards, rarityRes, rewardCodes, claimsRes, recordsRes, guestRecords, siteVisits, avatarRes, games, settings, notifications, blocks] = await Promise.all([
+    const [profilesRes, levelsRes, rewards, rarityRes, rewardCodes, claimsRes, clicksRes, recordsRes, guestRecords, siteVisits, avatarRes, games, settings, notifications, blocks] = await Promise.all([
       sb.from("profiles").select("id, username, xp, level, is_admin, created_at, avatar_icon, avatar_color").order("created_at", { ascending: false }),
       loadLevels(),
       loadRewards(),
       sb.from("rarity_weights").select("rarity, weight"),
       loadRewardCodes(),
       sb.from("user_codes").select("user_id, reward_id, brand, title, code, created_at").order("created_at", { ascending: false }),
+      sb.from("reward_use_clicks").select("reward_id, brand, title"),
       sb.from("game_records").select("user_id, game_id, score, created_at"),
       loadGuestGameRecords(),
       loadSiteVisits(),
@@ -297,6 +299,8 @@
     state.rarityWeights = rarityRes.data || [];
     state.rewardCodes = rewardCodes;
     state.claims = claimsRes.data || [];
+    // Tabellen finnes først etter schema.sql seksjon 74; uten den vises 0 klikk.
+    state.useClicks = clicksRes.error ? [] : (clicksRes.data || []);
     state.gameRecords = recordsRes.data || [];
     state.guestGameRecords = guestRecords;
     state.siteVisits = siteVisits;
@@ -2317,6 +2321,26 @@
       `;
     }).join("");
 
+    const keyOf = (x) => `${x.brand} ${x.title}`;
+    const winsByKey = new Map();
+    state.claims.forEach((c) => winsByKey.set(keyOf(c), (winsByKey.get(keyOf(c)) || 0) + 1));
+    const clicksByKey = new Map();
+    state.useClicks.forEach((c) => clicksByKey.set(keyOf(c), (clicksByKey.get(keyOf(c)) || 0) + 1));
+    const statRows = state.rewards
+      .map((r) => ({ r, wins: winsByKey.get(keyOf(r)) || 0, clicks: clicksByKey.get(keyOf(r)) || 0 }))
+      .sort((a, b) => b.wins - a.wins || b.clicks - a.clicks);
+    const totalWins = statRows.reduce((n, x) => n + x.wins, 0);
+    const totalClicks = statRows.reduce((n, x) => n + x.clicks, 0);
+    const statTableRows = statRows.map(({ r, wins, clicks }) => `
+      <tr>
+        <td>${escapeHTML(r.brand)} – ${escapeHTML(r.title)}</td>
+        <td>${RARITY_LABELS[r.rarity] || r.rarity}</td>
+        <td>${wins}</td>
+        <td>${clicks}</td>
+        <td>${wins ? Math.round((clicks / wins) * 100) + " %" : "–"}</td>
+      </tr>
+    `).join("");
+
     const claimRows = state.claims.map((c) => `
       <tr>
         <td>${escapeHTML(usernameFor(c.user_id))}</td>
@@ -2332,6 +2356,14 @@
           <span class="admin-toolbar-count">${state.rewards.length} rabatter</span>
           <span class="admin-card-spacer"></span>
           <button type="button" class="admin-btn-ghost" data-koder-download-all>Last ned full oversikt (CSV)</button>
+        </div>
+        <div class="admin-card" style="overflow-x:auto">
+          <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Statistikk per rabatt</h2>
+          <span class="admin-card-sub">${totalWins} koder vunnet og ${totalClicks} klikk på «Bruk koden» totalt. Klikk telles fra og med at sporingen ble tatt i bruk.</span>
+          <table class="records-table">
+            <thead><tr><th>Rabatt</th><th>Sjeldenhet</th><th>Vunnet</th><th>Trykket «Bruk koden»</th><th>Klikk per vunnet</th></tr></thead>
+            <tbody>${statTableRows || `<tr><td colspan="5">Ingen rabatter ennå.</td></tr>`}</tbody>
+          </table>
         </div>
         <div class="admin-card" style="overflow-x:auto">
           <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--text-strong)">Rabatter</h2>

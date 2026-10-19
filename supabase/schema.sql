@@ -5028,6 +5028,50 @@ $$;
 revoke all on function public.game_play_count(text) from public;
 grant execute on function public.game_play_count(text) to anon, authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 74. reward_use_clicks – klikk på «Bruk koden»-knappen, brukt av adminpanelets
+--     Rabattkoder-statistikk (vunnet vs. klikk per rabatt). Ingen bruker- eller
+--     besøkerdata lagres. Klienten (js/reward-use-tracking.js) kaller kun
+--     track_reward_use_click; tabellen er bare lesbar for admin.
+-- ---------------------------------------------------------------------------
+create table if not exists public.reward_use_clicks (
+  id bigint generated always as identity primary key,
+  reward_id bigint references public.rewards (id) on delete set null,
+  brand text not null,
+  title text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists reward_use_clicks_reward_idx on public.reward_use_clicks (reward_id);
+
+alter table public.reward_use_clicks enable row level security;
+
+drop policy if exists "reward_use_clicks_select_admin" on public.reward_use_clicks;
+create policy "reward_use_clicks_select_admin" on public.reward_use_clicks
+  for select using (public.is_admin());
+
+create or replace function public.track_reward_use_click(p_brand text, p_title text)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if p_brand is null or p_title is null or length(p_brand) > 200 or length(p_title) > 200 then
+    return;
+  end if;
+  insert into public.reward_use_clicks (reward_id, brand, title)
+  values (
+    (select id from public.rewards where brand = p_brand and title = p_title order by id limit 1),
+    p_brand,
+    p_title
+  );
+end;
+$$;
+
+revoke all on function public.track_reward_use_click(text, text) from public;
+grant execute on function public.track_reward_use_click(text, text) to anon, authenticated;
+
 -- =============================================================================
 -- Bootstrap av første admin (kjør manuelt ETTER at du har registrert din
 -- egen bruker via login.html):

@@ -230,7 +230,7 @@
             <span class="case-reveal-code-label" data-ww-copy-label>Din kode</span>
             <span class="case-reveal-code-row"><span class="case-reveal-code-value">${esc(data.code)}</span>${COPY_ICON}</span>
           </button>
-          ${data.link_url ? `<a class="case-reveal-use" style="background:${neon}" href="${esc(data.link_url)}" target="_blank" rel="noopener noreferrer">Bruk koden ${LINK_ICON}</a>` : ""}
+          ${data.link_url ? `<a class="case-reveal-use" style="background:${neon}" href="${esc(data.link_url)}"${simulate ? "" : ` data-use-brand="${esc(data.brand)}" data-use-title="${esc(data.title)}"`} target="_blank" rel="noopener noreferrer">Bruk koden ${LINK_ICON}</a>` : ""}
           ${data.sub ? `<p class="case-reveal-sub-text" style="display:block;-webkit-line-clamp:unset;max-height:none">${esc(data.sub)}</p>` : ""}
           ${simulate
             ? `<p class="case-reveal-note">Simulering – ingen kode er brukt eller lagret.</p><button type="button" class="btn-primary" style="width:100%;margin-top:12px" data-ww-again>Simuler på nytt</button>`
