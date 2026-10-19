@@ -49,11 +49,6 @@
           <button type="submit" class="btn-primary" style="width:100%">Logg inn</button>
         </form>
 
-        <div data-welcome-preview style="display:none;align-items:center;gap:12px;padding:12px 14px;margin-bottom:16px;border-radius:12px;border:1px solid var(--border-strong);background:rgba(var(--accent-rgb), .08)">
-          <span data-welcome-logo style="width:44px;height:44px;flex:none;border-radius:10px;background:#201c2b;overflow:hidden;display:flex;align-items:center;justify-content:center"></span>
-          <span style="font-size:14px;line-height:1.35;color:var(--text-strong)">Registrer deg og spinn velkomsthjulet: vinn <strong data-welcome-text></strong>.</span>
-        </div>
-
         <form data-register-form>
           <label class="auth-field">
             <span>Brukernavn</span>
@@ -126,39 +121,7 @@
       loginForm.hidden = !isLogin;
       registerForm.hidden = isLogin;
       googleTerms.hidden = isLogin;
-      showWelcome();
     });
-  });
-
-  // Viser hvilken rabatt man får ved registrering (admin velger den under
-  // Rabatter → Velkomstbonus). Bare synlig på «Registrer deg»-fanen.
-  const welcomeBox = document.querySelector("[data-welcome-preview]");
-  let welcomePreview = null;
-  function showWelcome() {
-    welcomeBox.style.display = welcomePreview && !registerForm.hidden ? "flex" : "none";
-  }
-  sb.rpc("welcome_wheel_config").then(({ data, error }) => {
-    if (error || !data || !data.length) return;
-    // Hjulet har flere rabatter; vis de ulike partnerne som er med.
-    const seen = new Set();
-    const brands = [];
-    data.forEach((s) => {
-      if (!seen.has(s.brand)) { seen.add(s.brand); brands.push(s); }
-    });
-    welcomePreview = brands;
-    const names = brands.map((b) => b.brand.split(" ")[0]);
-    const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} eller ${names[names.length - 1]}` : names[0];
-    welcomeBox.querySelector("[data-welcome-text]").textContent = `en rabatt fra ${list}`;
-    const logoBox = welcomeBox.querySelector("[data-welcome-logo]");
-    const first = brands.find((b) => b.image_url);
-    if (first) {
-      const img = document.createElement("img");
-      img.src = first.image_url;
-      img.alt = "";
-      img.style.cssText = "width:100%;height:100%;object-fit:cover";
-      logoBox.appendChild(img);
-    }
-    showWelcome();
   });
 
   // Innlogging skjer med brukernavn og passord. Supabase Auth krever teknisk
