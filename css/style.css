@@ -920,10 +920,7 @@ html.is-player-view main { max-width: none; }
   aspect-ratio: 1;
   padding: 12px;
   border-radius: 16px;
-  background:
-    radial-gradient(circle at 50% 42%, rgba(245, 201, 92, .12), rgba(245, 201, 92, 0) 60%),
-    #131a25;
-  border: 1px solid var(--border-strong);
+  background: #bbada0;
   outline: none;
   touch-action: none;
 }
@@ -948,7 +945,7 @@ html.is-player-view main { max-width: none; }
   pointer-events: none;
 }
 
-.cell-2048 { border-radius: 10px; background: rgba(255, 255, 255, .04); }
+.cell-2048 { border-radius: 10px; background: rgba(238, 228, 218, .35); }
 
 .tile-2048 {
   position: absolute;
@@ -981,22 +978,22 @@ html.is-player-view main { max-width: none; }
   100% { transform: scale(1); box-shadow: none; }
 }
 
-.tile-2048[data-value="2"] { background: #1b2434; color: #e8edf5; }
-.tile-2048[data-value="4"] { background: #202b3d; color: #e8edf5; }
-.tile-2048[data-value="8"] { background: #5c8df5; color: #fff; }
-.tile-2048[data-value="16"] { background: #5cf5df; color: #0d1117; }
-.tile-2048[data-value="32"] { background: #8bf05c; color: #0d1117; }
-.tile-2048[data-value="64"] { background: #f5c95c; color: #0d1117; }
-.tile-2048[data-value="128"] { background: #f5a15c; color: #0d1117; font-size: 24px; }
-.tile-2048[data-value="256"] { background: #f55c9b; color: #fff; font-size: 24px; }
-.tile-2048[data-value="512"] { background: #a56cf5; color: #fff; font-size: 24px; }
-.tile-2048[data-value="1024"] { background: #5c8df5; color: #fff; font-size: 20px; }
-.tile-2048[data-value="2048"] { background: #2ee87f; color: #0d1117; font-size: 20px; box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .55), 0 0 16px rgba(var(--accent-rgb), .4); animation: tilePop .25s cubic-bezier(.34, 1.56, .64, 1), tileGlow 1.6s ease-in-out infinite; }
-.tile-2048[data-value="2048plus"] { background: #17141f; color: #2ee87f; border: 1px solid var(--accent); font-size: 18px; }
+.tile-2048[data-value="2"] { background: #eee4da; color: #776e65; }
+.tile-2048[data-value="4"] { background: #ede0c8; color: #776e65; }
+.tile-2048[data-value="8"] { background: #f2b179; color: #f9f6f2; }
+.tile-2048[data-value="16"] { background: #f59563; color: #f9f6f2; }
+.tile-2048[data-value="32"] { background: #f67c5f; color: #f9f6f2; }
+.tile-2048[data-value="64"] { background: #f65e3b; color: #f9f6f2; }
+.tile-2048[data-value="128"] { background: #edcf72; color: #f9f6f2; font-size: 24px; }
+.tile-2048[data-value="256"] { background: #edcc61; color: #f9f6f2; font-size: 24px; }
+.tile-2048[data-value="512"] { background: #edc850; color: #f9f6f2; font-size: 24px; }
+.tile-2048[data-value="1024"] { background: #edc53f; color: #f9f6f2; font-size: 20px; }
+.tile-2048[data-value="2048"] { background: #edc22e; color: #f9f6f2; font-size: 20px; box-shadow: 0 0 0 2px rgba(237, 194, 46, .55), 0 0 16px rgba(237, 194, 46, .4); animation: tilePop .25s cubic-bezier(.34, 1.56, .64, 1), tileGlow 1.6s ease-in-out infinite; }
+.tile-2048[data-value="2048plus"] { background: #3c3a32; color: #f9f6f2; font-size: 18px; }
 
 @keyframes tileGlow {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .55), 0 0 10px rgba(var(--accent-rgb), .3); }
-  50% { box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .8), 0 0 22px rgba(var(--accent-rgb), .6); }
+  0%, 100% { box-shadow: 0 0 0 2px rgba(237, 194, 46, .55), 0 0 10px rgba(237, 194, 46, .3); }
+  50% { box-shadow: 0 0 0 2px rgba(237, 194, 46, .8), 0 0 22px rgba(237, 194, 46, .6); }
 }
 
 /* ---------- Spill: Snake ---------- */
