@@ -49,6 +49,9 @@ const isSitePage = (name) => name.endsWith(".html") && !name.endsWith(".dc.html"
  */
 const HEAD_MARKER = '<link rel="stylesheet" href="css/style.css" data-studilla-head>';
 
+/** Sider som trenger css/admin.css (adminpanelet og adminverktøyene på tips-sidene). */
+const ADMIN_CSS_PAGES = new Set(["admin.html", "tip.html", "tips.html"]);
+
 const errors = [];
 const fail = (file, message) => errors.push(`${file}: ${message}`);
 
@@ -136,7 +139,7 @@ const gameModuleHashes = Object.fromEntries(
  */
 function readHeadPartial() {
   const lines = fs.readFileSync(path.join(ROOT, "build/partials/head.html"), "utf8").split("\n");
-  const commentEnd = lines.indexOf("-->");
+  const commentEnd = lines.findIndex((l) => l.trim() === "-->");
   return lines.slice(commentEnd + 1).join("\n").trimEnd();
 }
 
@@ -172,7 +175,18 @@ function buildPage(file) {
     fail(file, `mangler head-markøren ${HEAD_MARKER} i <head>`);
     return;
   }
-  html = html.replace(HEAD_MARKER, headPartial);
+  // Kildesidene har de samme stilarkene etter markøren (så de ser riktige ut
+  // uten bygg). Head-delen legger dem inn selv, så duplikatene fjernes her.
+  html = html.replace(/<link rel="stylesheet" href="css\/(?:style|admin|pages|social)\.css">[ \t]*\r?\n/g, "");
+  const adminCss = ADMIN_CSS_PAGES.has(file) ? '<link rel="stylesheet" href="css/admin.css">\n' : "";
+  html = html.replace(HEAD_MARKER, headPartial.replace("{{adminCss}}", adminCss));
+
+  // Sider uten inline-script kan trygt laste egne scripts med defer
+  // (rekkefølgen bevares). Sider med inline-script bruker globaler umiddelbart.
+  const hasInlineScript = /<script>/.test(html.slice(html.indexOf("</head>")));
+  if (!hasInlineScript) {
+    html = html.replace(/<script src="(js\/[^"]+)"><\/script>/g, '<script defer src="$1"></script>');
+  }
 
   const page = (html.match(/<body[^>]*\bdata-page="([^"]*)"/) || [])[1] || "";
 

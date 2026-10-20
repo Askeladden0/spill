@@ -1,3 +1,542 @@
+/* Delt ut fra admin.css: regler som brukes utenfor adminpanelet (profil, innstillinger, juridiske sider osv.). */
+
+
+.admin-switch { position: relative; display: inline-block; width: 38px; height: 22px; flex: none; cursor: pointer; border: none; padding: 0; background: none; }
+
+.admin-switch-track { position: absolute; inset: 0; border-radius: 99px; background: var(--border-strong); transition: background .15s ease; }
+
+.admin-switch.is-on .admin-switch-track { background: var(--accent); }
+
+.admin-switch.is-on .admin-switch-knob { transform: translateX(16px); }
+
+.admin-field { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 700; letter-spacing: .04em; color: var(--muted); padding-top: 14px; }
+
+.admin-field.is-wide { grid-column: 1 / -1; }
+
+.admin-field input, .admin-field textarea {
+  padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border-strong);
+  background: var(--bg); color: var(--text); font-family: inherit; font-size: 14px; font-weight: 400;
+}
+
+.admin-field input:focus, .admin-field textarea:focus, .admin-field select:focus { outline: none; border-color: var(--accent); }
+
+.admin-field textarea { resize: vertical; }
+
+
+/* Nedtrekksmenyer skal se ut som resten av feltene i adminpanelet: native
+   <select> tegnes ellers av nettleseren (lys bakgrunn, systemfont) og stikker
+   seg ut fra det mørke designet. -webkit-appearance/appearance slår av den
+   innebygde tegningen, og pilen legges inn som et eget bakgrunnsbilde. */
+.admin-field select {
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
+  padding: 10px 34px 10px 12px; border-radius: 9px; border: 1px solid var(--border-strong);
+  background-color: var(--bg); color: var(--text); font-family: inherit; font-size: 14px;
+  font-weight: 400; cursor: pointer; width: 100%;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2396a3b8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center; background-size: 15px 15px;
+}
+
+.admin-field select:hover { border-color: rgba(255, 255, 255, .16); }
+
+/* Selve listen som spretter opp tegnes av operativsystemet – den kan kun
+   farges via option, og kun i nettlesere som støtter det (Chrome/Edge/Firefox
+   på Windows/Linux). Safari/macOS bruker uansett systemets egen meny. */
+.admin-field select option { background: var(--surface); color: var(--text); }
+
+.admin-field input[type="date"], .admin-field input[type="datetime-local"] { color-scheme: dark; }
+
+.admin-btn-ghost { padding: 8px 13px; border-radius: 9px; border: 1px solid var(--border-strong); background: transparent; color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+.admin-btn-ghost:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--accent); }
+
+.admin-btn-ghost.is-danger { border-color: rgba(245, 113, 92, .4); background: rgba(245, 113, 92, .12); color: #ff9385; }
+
+.admin-btn-ghost.is-danger:hover { background: rgba(245, 113, 92, .22); }
+
+.admin-btn-text { padding: 8px 11px; border: none; border-radius: 9px; background: transparent; color: var(--muted-2); font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+/* Opplastede profilbilder skal fylle hele ruta i velgeren – med den vanlige
+   figur-luften rundt ble forhåndsvisningen et lite frimerke midt i boksen. */
+.avatar-image-swatch { position: relative; padding: 0; }
+
+.avatar-image-swatch .avatar-image-remove {
+  position: absolute; top: 4px; right: 4px; background: rgba(23, 20, 31, .72);
+  color: #fff; border-radius: 7px; padding: 2px 6px; font-size: 13px;
+}
+
+
+/* `display: flex` on the rules above beats the browser's default
+   `[hidden] { display: none }` (author styles always win over the
+   user-agent stylesheet, regardless of selector order/specificity), so the
+   native `hidden` attribute alone can't hide these – it needs an explicit,
+   higher-specificity override here. */
+.admin-shell[hidden], .admin-guard[hidden], .admin-palette-overlay[hidden], .admin-toast[hidden] { display: none; }
+
+
+/* ---------- Profil (min side) ---------- */
+.profile-top-card {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 26px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  flex-wrap: wrap;
+}
+
+
+.avatar-edit-trigger {
+  position: relative;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  display: block;
+  flex-shrink: 0;
+  border-radius: 22px;
+}
+
+
+.avatar-edit-trigger .avatar-badge { border-radius: 22px; }
+
+
+.avatar-edit-pencil {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.profile-top-meta { display: flex; flex-direction: column; gap: 8px; min-width: 200px; }
+
+.profile-top-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.profile-top-name-row h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.02em; color: var(--text-strong); }
+
+
+.level-pill {
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+
+.profile-stats-grid {
+  margin-left: auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+
+.profile-stats-grid.is-3col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 20px;
+  background: var(--surface-2);
+}
+
+
+.profile-stat-num { font-size: 20px; font-weight: 700; color: var(--text-strong); }
+
+.profile-stat-num.is-accent { color: var(--accent); }
+
+.profile-stat-label { font-size: 13px; font-weight: 700; letter-spacing: .04em; color: var(--muted-2); }
+
+
+.profile-tabs-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+
+.profile-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--surface);
+  padding: 5px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+
+
+.profile-tab {
+  padding: 10px 22px;
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+}
+
+
+.profile-tab.is-active { background: var(--accent-soft); color: var(--accent); }
+
+.profile-tab-count { opacity: .6; }
+
+
+.settings-link-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+
+.overview-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 22px; align-items: stretch; }
+
+
+@media (max-width: 860px) {
+
+  .overview-grid { grid-template-columns: 1fr; }
+
+  .profile-top-card { flex-direction: column; align-items: flex-start; }
+
+  .profile-stats-grid { margin-left: 0; width: 100%; }
+}
+
+
+.overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+
+.overview-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+
+.overview-card-head h2 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--text-strong); }
+
+.overview-divider { height: 1px; background: var(--border); }
+
+
+.level-progress-bar { height: 10px; border-radius: 99px; background: rgba(255, 255, 255, .09); overflow: hidden; }
+
+.level-progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
+
+.level-progress-labels { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--muted-2); }
+
+
+.best-record-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  border-radius: 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+
+.best-record-name { flex: 1; font-size: 14px; font-weight: 700; color: var(--text); }
+
+.best-record-rank { font-size: 13px; font-weight: 600; color: var(--muted-2); }
+
+.best-record-score { font-size: 15px; font-weight: 700; color: var(--accent); }
+
+
+.activity-row { display: flex; align-items: center; gap: 12px; }
+
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .2); flex-shrink: 0; }
+
+.activity-dot.is-new { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+.activity-text { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); }
+
+.activity-time { font-size: 13px; color: var(--muted-2); }
+
+.code-card-foot-label { font-size: 13px; font-weight: 600; color: var(--muted-2); }
+
+
+.codes-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+
+
+@media (max-width: 860px) {
+
+  .codes-grid { grid-template-columns: 1fr; }
+}
+
+
+.empty-state-note {
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+
+/* ---------- Avatar-redigeringsmodal ---------- */
+.avatar-modal-card { max-width: 480px; align-items: stretch; text-align: left; }
+
+
+.figure-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+}
+
+
+@media (min-width: 420px) {
+
+  .figure-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+
+.figure-swatch {
+  aspect-ratio: 1;
+  border-radius: 13px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  color: var(--text);
+  box-shadow: 0 0 0 1px transparent;
+}
+
+
+.figure-swatch.is-selected { box-shadow: 0 0 0 2px var(--accent); color: var(--accent); }
+
+
+/* ---------- Innstillinger ---------- */
+.settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 26px; align-items: start; }
+
+
+@media (max-width: 760px) {
+
+  .settings-layout { grid-template-columns: 1fr; }
+}
+
+
+.settings-nav {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+
+.settings-nav-link {
+  padding: 11px 14px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+
+.settings-nav-link.is-active { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+
+
+.settings-section { display: flex; flex-direction: column; gap: 3px; }
+
+.settings-section h2 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text-strong); }
+
+.settings-section-sub { font-size: 13px; font-weight: 500; color: var(--muted-2); }
+
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+
+.settings-row.is-danger { background: rgba(245, 113, 92, .08); border-color: rgba(245, 113, 92, .3); }
+
+
+.settings-row-label { display: flex; flex-direction: column; gap: 2px; }
+
+.settings-row-label span:first-child { font-size: 14px; font-weight: 700; color: var(--text); }
+
+.settings-row-label span:last-child { font-size: 13px; font-weight: 500; color: var(--muted-2); }
+
+.settings-row.is-danger .settings-row-label span:first-child { color: #ff9385; }
+
+
+.badge-locked {
+  padding: 5px 11px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .06);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+
+.btn-outline-sm {
+  padding: 11px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+
+.toggle-switch {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  border-radius: 99px;
+  border: none;
+  cursor: pointer;
+  flex: none;
+  background: rgba(255, 255, 255, .14);
+  transition: background .16s ease;
+}
+
+
+.toggle-switch.is-on { background: var(--accent); }
+
+
+.toggle-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left .16s ease;
+}
+
+
+.toggle-switch.is-on .toggle-switch-knob { left: 23px; }
+
+
+.back-to-profile-link { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+
+
+/* ---------- Vilkår / juridisk innhold ---------- */
+.legal-card {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+
+.legal-card h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.02em; color: var(--text-strong); }
+
+.legal-card .section-sub { margin: 0; }
+
+
+.legal-section { display: flex; flex-direction: column; gap: 8px; }
+
+.legal-section h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.01em; color: var(--text-strong); }
+
+.legal-section p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--muted); }
+
+.legal-section ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+
+.legal-section li { font-size: 14px; line-height: 1.6; color: var(--muted); }
+
+
+/* ---------- Kontakt ---------- */
+.contact-channels { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.contact-channel-btn {
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.contact-channel-btn:hover { color: var(--text); border-color: rgba(255, 255, 255, .2); }
+
+
+/* ---------- Aksepter-vilkår avkrysning ---------- */
+.auth-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted-2);
+  cursor: pointer;
+}
+
+
+.auth-terms input[type="checkbox"] {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+
+.auth-terms a { color: var(--accent); font-weight: 600; }
+
 /* ==========================================================================
    Studilla – enkeltsider
    Rabattbåndet på premier.html, guider og ressurser.
