@@ -298,7 +298,40 @@
    */
   function renderAuthOnlyLinks(signedIn) {
     document.querySelectorAll("[data-auth-only]").forEach((el) => { el.hidden = !signedIn; });
+    signedInForGate = signedIn;
   }
+
+  /**
+   * Lenker med data-signup-gate (Venner) er synlige for alle, men utloggede
+   * får en «Registrer deg»-popup i stedet for å komme til siden.
+   */
+  let signedInForGate = false;
+  function openSignupPopup() {
+    let ov = document.querySelector("[data-signup-popup]");
+    if (!ov) {
+      ov = document.createElement("div");
+      ov.className = "modal-overlay";
+      ov.setAttribute("data-signup-popup", "");
+      ov.innerHTML = `
+        <div class="modal-backdrop" data-signup-close></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="signup-popup-title">
+          <h2 class="modal-title" id="signup-popup-title">Registrer deg for å bruke Venner</h2>
+          <p style="margin:0;font-size:14px;line-height:1.6;color:var(--muted)">Lag en gratis konto for å legge til venner og sende meldinger.</p>
+          <a class="btn-primary" style="width:100%;text-align:center" href="login.html">Registrer deg</a>
+          <button type="button" class="btn-outline" style="width:100%" data-signup-close>Ikke nå</button>
+        </div>`;
+      document.body.appendChild(ov);
+      ov.addEventListener("click", (e) => { if (e.target.closest("[data-signup-close]")) ov.hidden = true; });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") ov.hidden = true; });
+    }
+    ov.hidden = false;
+  }
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest("[data-signup-gate]");
+    if (!link || signedInForGate) return;
+    e.preventDefault();
+    openSignupPopup();
+  });
 
   /**
    * Delt "fyll til 100% → nullstill uten transition → fyll til ny prosent"-

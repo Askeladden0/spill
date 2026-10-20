@@ -25,7 +25,7 @@
   const LEVELS_ENABLED = !!(window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled);
 
   const PREMIER_NAV_LINK = `
-        <a href="premier.html" class="nav-link" data-page="premier">
+        <a href="premier.html" class="nav-link" data-page="premier" data-auth-only hidden>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h16a1 1 0 0 1 1 1v2.6a2 2 0 0 0 0 3.8v2.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2.6a2 2 0 0 0 0-3.8V7.5a1 1 0 0 1 1-1z"></path><line x1="9.5" y1="14.5" x2="14.5" y2="9.5"></line><circle cx="9.7" cy="10" r=".9"></circle><circle cx="14.3" cy="14" r=".9"></circle></svg>
           Premier
         </a>`;
@@ -34,7 +34,7 @@
   // til js/auth.js slår den på (samme mønster som data-admin-only). Prikken
   // med antall uleste fylles av js/social.js.
   const MELDINGER_NAV_LINK = `
-        <a href="meldinger.html" class="nav-link" data-page="meldinger" data-auth-only hidden>
+        <a href="meldinger.html" class="nav-link" data-page="meldinger" data-signup-gate>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 9 9 0 0 1-3.4-.6L3 21l1.9-5.1A8.3 8.3 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"></path></svg>
           Venner
           <span class="nav-badge" data-dm-badge hidden aria-label="uleste meldinger"></span>

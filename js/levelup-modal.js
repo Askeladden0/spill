@@ -15,6 +15,7 @@
   const CONFETTI_COLORS = ["#2ee87f", "#5cf5a0", "#5c8df5", "#f5c95c", "#f55c9b", "#a56cf5", "#ffffff"];
   const RING_CIRCUMFERENCE = 364.4;
 
+  let levelsCache = null;
   let els = null;
   let timers = [];
   let runId = 0;
@@ -138,6 +139,24 @@
     els.confetti.appendChild(frag);
   }
 
+  async function hasActiveRewards() {
+    if (levelsCache != null) return levelsCache;
+    if (!sb) return false;
+    // Utgåtte rabatter (rewards.expires_at i fortiden) er deaktivert og skal
+    // ikke telle med. Databaser uten den kolonnen (schema.sql, seksjon 33)
+    // svarer med en feil, og teller da bare aktive som før.
+    const withExpiry = await sb
+      .from("rewards")
+      .select("id", { count: "exact", head: true })
+      .eq("active", true)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+    const { count, error } = withExpiry.error
+      ? await sb.from("rewards").select("id", { count: "exact", head: true }).eq("active", true)
+      : withExpiry;
+    levelsCache = !error && count > 0;
+    return levelsCache;
+  }
+
   /**
    * Viser nivå opp-modalen. Animerer den gamle nivåstolpen til 100 %, bytter
    * til det nye nivået, og fyller stolpen på nytt til riktig fremdrift –
@@ -174,7 +193,15 @@
     e.reward.hidden = true;
     e.rewardLink.hidden = true;
 
-    // Rabattene er pauset («Premier kommer snart!»), så ingen rabatt-linje vises.
+    // Hentes i parallell med animasjonen under, ikke før den, slik at en
+    // treg/mislykket nettforespørsel ikke fryser nivå opp-sekvensen.
+    hasActiveRewards().then((hasRewards) => {
+      if (id !== runId || !hasRewards) return;
+      e.reward.hidden = false;
+      e.rewardTitle.textContent = "Ny rabatt med en tilfeldig rabattkode";
+      e.rewardSub.textContent = `Låst opp på nivå ${newProfile.level} · åpne rabatten under Få en rabatt`;
+      e.rewardLink.hidden = false;
+    });
 
     timers = [
       setTimeout(() => {
