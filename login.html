@@ -145,11 +145,7 @@
     window.location.href = "index.html";
   });
 
-  // Nyregistrerte sendes rett til rabatten de får på premiesiden (så sant
-  // premiesiden er skrudd på, ellers til forsiden).
-  const AFTER_REGISTER = (window.STUDILLA_FEATURES && window.STUDILLA_FEATURES.levelsEnabled)
-    ? "premier.html#velkomst"
-    : "index.html";
+  const AFTER_REGISTER = "index.html";
 
   registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
