@@ -71,7 +71,7 @@ Dette er ikke fikset her, fordi det krever et produktvalg (se «Gjenstår»).
 ### Modal-stabling
 
 Undersøkt: `new-site-welcome-modal.js` lastes kun på `player.html` og
-`guide.html`, og vises kun med `?ny-side=` i URL-en. Cookie-varselet vises på
+`tip.html`, og vises kun med `?ny-side=` i URL-en. Cookie-varselet vises på
 forsiden og triks-siden. `levelup-modal.js` er avhengig av nivåsystemet, som
 er avslått (`js/feature-flags.js`).
 
@@ -215,7 +215,7 @@ Studilla, og det lå og støvet ned.
 ### Gjort
 
 - Ressursrad på forsiden med guider + de tre dokumentene.
-- Egen «Maler og filer»-seksjon på `guider.html` med alle fire filene
+- Egen «Maler og filer»-seksjon på `tips.html` med alle fire filene
   (hjelpeheftet både som PDF og Word).
 
 Å koble guidene til XP er *ikke* gjort – se «Gjenstår».
@@ -564,7 +564,7 @@ UX-detaljer:
 | Layout | `js/layout-markup.js` |
 | Cookie | `js/cookie-banner.js` |
 | Stil | `css/style.css` (delt), `css/admin.css`, `css/pages.css`, `css/social.css` |
-| Innhold | `guider.html` |
+| Innhold | `tips.html` |
 | Opprydding | `Premier (kasser).dc.html` slettet |
 
 **Sikkerhetskopi av versjonen før endringene:**

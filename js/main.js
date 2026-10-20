@@ -160,14 +160,14 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * Den fremhevede guiden på forsiden
+   * Den fremhevede tipset på forsiden
    * ------------------------------------------------------------------ */
 
   /**
-   * Forsiden viste tidligere en rad med små kort til guider og nedlastbare
-   * maler. Nå står den fremhevede guiden – den samme som ligger øverst på
-   * guider.html – i full bredde, med én knapp videre til resten. Maler og
-   * filer bor på guider.html, som er stedet man er når man leter etter dem.
+   * Forsiden viste tidligere en rad med små kort til tips og nedlastbare
+   * maler. Nå står den fremhevede tipset – den samme som ligger øverst på
+   * tips.html – i full bredde, med én knapp videre til resten. Maler og
+   * filer bor på tips.html, som er stedet man er når man leter etter dem.
    */
   async function renderFrontGuide() {
     const section = document.querySelector("[data-front-guide-section]");
@@ -186,12 +186,12 @@
     el.innerHTML = `
       <div class="guide-feature">
         <div class="guide-feature-text">
-          <span class="guide-feature-badge">Anbefalt guide</span>
+          <span class="guide-feature-badge">Anbefalt tips</span>
           <h2>${esc(guide.title)}</h2>
           <p>${esc(guide.excerpt)}</p>
           <div class="guide-feature-actions">
-            <a href="guide.html?id=${encodeURIComponent(guide.id)}" class="btn-primary btn-link">Les guiden</a>
-            <a href="guider.html" class="btn-ghost">Se flere guider</a>
+            <a href="tip.html?id=${encodeURIComponent(guide.id)}" class="btn-primary btn-link">Les tipset</a>
+            <a href="tips.html" class="btn-ghost">Se flere tips</a>
           </div>
         </div>
         <div class="guide-feature-media">

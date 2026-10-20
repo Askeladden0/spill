@@ -1685,7 +1685,7 @@ create policy "site_visits_select_admin" on public.site_visits
   for select using (public.is_admin());
 
 -- ---------------------------------------------------------------------------
--- 47. guides / guide_modules – "Guider og ressurser" (guider.html + guide.html).
+-- 47. guides / guide_modules – "Guider og ressurser" (tips.html + tip.html).
 --
 --     `guides` er ett kort per guide (tittel, kategori, ingress, "mengde
 --     spart/tjent" og lesetid). `guide_modules` er innholdet i guiden, som en
@@ -1695,7 +1695,7 @@ create policy "site_visits_select_admin" on public.site_visits
 --
 --     Det finnes ingen egen adminpanel-seksjon for dette – admin oppretter,
 --     redigerer og sletter guider og moduler direkte fra de offentlige sidene
---     guider.html og guide.html (se js/guides.js), på samme måte som resten av
+--     tips.html og tip.html (se js/guides.js), på samme måte som resten av
 --     siden bruker RLS (under) til å håndheve at kun admin kan skrive.
 --
 --     Modul-typer og felter i `data`:
@@ -1728,7 +1728,7 @@ create table if not exists public.guides (
 
 alter table public.guides add column if not exists is_hidden boolean not null default false;
 
--- Kun én guide kan være fremhevet (toppkortet på guider.html) om gangen.
+-- Kun én guide kan være fremhevet (toppkortet på tips.html) om gangen.
 create unique index if not exists guides_single_featured_idx
   on public.guides (is_featured) where is_featured;
 
@@ -1850,7 +1850,7 @@ create policy "guide_files_admin_delete" on storage.objects
 -- Guiden "Hvordan tjene penger på å sitte i elevrådet" (id 'elevrad-penger')
 -- ble tidligere satt inn her som eksempelguide. Den er slettet for godt –
 -- ikke legg den inn igjen, da dukker den opp på nytt hver gang denne filen
--- kjøres. Nye guider opprettes fra guider.html/guide.html som admin.
+-- kjøres. Nye guider opprettes fra tips.html/tip.html som admin.
 delete from public.guide_modules where guide_id = 'elevrad-penger';
 delete from public.guides where id = 'elevrad-penger';
 
@@ -1859,7 +1859,7 @@ delete from public.guides where id = 'elevrad-penger';
 -- (js/new-site-welcome-modal.js), bare med "guiden" i teksten i stedet for
 -- "spillet". Filene modulene peker til ligger statisk i /documents/ i dette
 -- repoet; admin kan bytte dem ut når som helst fra "Rediger modul" på
--- guide.html, som laster opp til guide-files-bøtta og overskriver url-en.
+-- tip.html, som laster opp til guide-files-bøtta og overskriver url-en.
 insert into public.guides (id, title, category, excerpt, value_label, read_time, is_featured, sort_order) values
   ('mal-norsk-nynorsk', 'Mal til norsk og nynorsk', 'Norsk', 'Ferdige maler til fagtekst, retorisk analyse, essay, leserinnlegg, sammenligning og novelle-/diktanalyse.', '', '2 min', false, 2),
   ('p-matte-snarveier', 'Snarveier til P-matte', 'Matte', 'Snarveier til Del 2 av eksamen, tilpasset 1P, 1PY, 2P og 2PY.', '', '1 min', false, 3),
@@ -1911,7 +1911,7 @@ select * from (values
 where not exists (select 1 from public.guide_modules where guide_id in ('mal-norsk-nynorsk', 'p-matte-snarveier', 'nynorsk-oversetter'));
 
 -- ---------------------------------------------------------------------------
--- 47b. Likes og visninger på guider (guide.html, se js/guides.js).
+-- 47b. Likes og visninger på guider (tip.html, se js/guides.js).
 --
 --     `view_count` og `like_count` på `guides` er tellere klienten leser
 --     direkte (offentlig, ingen innlogging kreves for å se tallene). Hver
@@ -1943,7 +1943,7 @@ create policy "guide_likes_select_all" on public.guide_likes
 -- (security definer), akkurat som guide_vote_poll over.
 
 -- Teller hver visning individuelt (ikke deduplisert per dag, i motsetning til
--- site_visits) – kalles én gang hver gang noen åpner guide.html for en guide.
+-- site_visits) – kalles én gang hver gang noen åpner tip.html for en guide.
 create or replace function public.guide_add_view(p_guide_id text)
 returns bigint
 language plpgsql

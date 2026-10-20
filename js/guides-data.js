@@ -1,5 +1,5 @@
 /**
- * Guide-database for Studilla ("Guider og ressurser" – guider.html/guide.html).
+ * Guide-database for Studilla ("Tips og ressurser" – tips.html/tip.html).
  *
  * Samme mønster som js/games-data.js: window.STUDILLA_GUIDES starter tom og
  * fylles med ekte data fra Supabase-tabellene `guides` og
@@ -12,7 +12,7 @@
  * Denne filen har ingen egen adminpanel-motpart – window.StudillaGuides
  * eksponerer også skrivefunksjonene (opprett/rediger/slett guide og modul,
  * last opp bilde/fil, stem i avstemning) som js/guides.js bruker til å bygge
- * redigeringskontrollene rett inn i guider.html/guide.html. RLS i
+ * redigeringskontrollene rett inn i tips.html/tip.html. RLS i
  * supabase/schema.sql sørger for at skriving faktisk krever admin uansett hva
  * klienten prøver på.
  */
@@ -20,7 +20,7 @@
 // Tom fallback-liste. Tidligere lå eksempelguiden "Hvordan tjene penger på å
 // sitte i elevrådet" her, og den dukket opp igjen på sidene hver gang Supabase
 // svarte med feil eller tidsavbrudd – også lenge etter at den var slettet fra
-// basen. Hold denne tom: ekte guider kommer fra Supabase.
+// basen. Hold denne tom: ekte tips kommer fra Supabase.
 window.STUDILLA_GUIDES = [];
 
 window.STUDILLA_GUIDE_MODULES = {};
@@ -76,19 +76,19 @@ window.STUDILLA_GUIDES_READY = (async function loadGuides() {
   const result = await Promise.race([fetchGuidesFromSupabase(), timeout]);
 
   if (result.timedOut) {
-    console.error("[Studilla] Tidsavbrudd ved henting av guider, bruker fallback-liste.");
+    console.error("[Studilla] Tidsavbrudd ved henting av tips, bruker fallback-liste.");
     return window.STUDILLA_GUIDES;
   }
 
   if (result.error) {
     // Tabellen finnes sannsynligvis ikke ennå (migrasjonen i supabase/schema.sql
     // er ikke kjørt). Behold fallback-listen i stedet for å vise en tom side.
-    console.error("[Studilla] Klarte ikke hente guider, bruker fallback-liste:", result.error.message);
+    console.error("[Studilla] Klarte ikke hente tips, bruker fallback-liste:", result.error.message);
     return window.STUDILLA_GUIDES;
   }
 
   // Tabellen svarte uten feil – dette er den ekte tilstanden, selv om den er
-  // tom (ingen guider opprettet ennå). Erstatt fallback-listen helt.
+  // tom (ingen tips opprettet ennå). Erstatt fallback-listen helt.
   window.STUDILLA_GUIDES.length = 0;
   window.STUDILLA_GUIDES.push(...result.data.guides);
   window.STUDILLA_GUIDE_MODULES = result.data.modulesByGuide;
@@ -169,7 +169,7 @@ window.StudillaGuides = {
     const id = await uniqueGuideId(fields.title);
     const row = {
       id,
-      title: fields.title || "Ny guide",
+      title: fields.title || "Nytt tips",
       category: fields.category || "",
       excerpt: fields.excerpt || "",
       icon: fields.icon || "",
@@ -193,7 +193,7 @@ window.StudillaGuides = {
 
     if (fields.featured === true) {
       // Kun én guide kan være fremhevet (håndhevet av en unik indeks i
-      // schema.sql) – fjern flagget fra den forrige fremhevede guiden først,
+      // schema.sql) – fjern flagget fra den forrige fremhevede tipset først,
       // ellers ville denne oppdateringen feilet på den unike indeksen.
       await sb.from("guides").update({ is_featured: false }).eq("is_featured", true).neq("id", id);
     }
@@ -237,7 +237,7 @@ window.StudillaGuides = {
   /**
    * Laster opp et bilde til `guide-images`-bøtta og gir tilbake den offentlige
    * URL-en. Brukes både til toppbildet (prefix "cover") og til bilde-modulene
-   * inne i guiden (prefix "bilde"), som har helt like krav til format og
+   * inne i tipset (prefix "bilde"), som har helt like krav til format og
    * størrelse.
    */
   async uploadImage(guideId, file, prefix) {
@@ -322,7 +322,7 @@ window.StudillaGuides = {
     return { data };
   },
 
-  // Telles hver gang guide.html åpnes for en guide – ikke deduplisert, i
+  // Telles hver gang tip.html åpnes for en guide – ikke deduplisert, i
   // motsetning til den daglige besøksmålingen i js/visit-tracking.js.
   async addView(guideId) {
     const sb = window.supabaseClient;
@@ -343,7 +343,7 @@ window.StudillaGuides = {
     return { data };
   },
 
-  /** Bruker-id-ene til alle som har likt guiden – brukt til å finne venner som har likt. */
+  /** Bruker-id-ene til alle som har likt tipset – brukt til å finne venner som har likt. */
   async likersFor(guideId) {
     const sb = window.supabaseClient;
     const { data, error } = await sb.from("guide_likes").select("user_id").eq("guide_id", guideId);
@@ -351,7 +351,7 @@ window.StudillaGuides = {
     return (data || []).map((r) => r.user_id);
   },
 
-  /** Har den innloggede brukeren likt denne guiden? */
+  /** Har den innloggede brukeren likt dette tipset? */
   async myLike(guideId) {
     const sb = window.supabaseClient;
     const { data: session } = await sb.auth.getSession();

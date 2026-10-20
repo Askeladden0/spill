@@ -1,14 +1,14 @@
 /**
- * Studilla – guider.html (oversikt) og guide.html (mal for én guide).
+ * Studilla – tips.html (oversikt) og tip.html (mal for én guide).
  *
  * Samme "enkel state -> render()" -mønster som js/admin.js, men kjører på de
  * offentlige sidene i stedet for i adminpanelet: det finnes ingen egen
- * adminpanel-seksjon for guider. Er man innlogget som admin
+ * adminpanel-seksjon for tips. Er man innlogget som admin
  * (window.StudillaAuth.getCurrentProfile().is_admin), dukker rediger-/
- * slette-knapper opp direkte på guider.html-kortene og inne i selve guiden på
- * guide.html – ellers ser alle besøkende akkurat samme side uten kontrollene.
+ * slette-knapper opp direkte på tips.html-kortene og inne i selve tipset på
+ * tip.html – ellers ser alle besøkende akkurat samme side uten kontrollene.
  *
- * Kun én ting redigeres om gangen (state.guideDraft for guide-info,
+ * Kun én ting redigeres om gangen (state.guideDraft for tips-info,
  * state.moduleDraft for én modul), og skjemafeltene skriver rett inn i
  * draft-objektet via delegerte "input"/"change"-lyttere, slik at et
  * mellomlagret felt aldri forsvinner selv om en annen del av siden
@@ -72,7 +72,7 @@
 
   /**
    * Symbolene en guide kan merkes med. Guidekortene skilte seg tidligere bare
-   * på tittel og et eventuelt toppbilde; et ikon gjør at man ser hva guiden
+   * på tittel og et eventuelt toppbilde; et ikon gjør at man ser hva tipset
    * handler om på et blunk, også der det ikke ligger noe bilde. Settet er
    * bevisst lite og fast – nøkkelen lagres i guides.icon (schema.sql seksjon
    * 64), slik at symbolet tegnes likt i alle nettlesere.
@@ -94,7 +94,7 @@
 
   const GUIDE_ICON_PATHS = Object.fromEntries(GUIDE_ICONS.map(([key, , d]) => [key, d]));
 
-  /** Tegner et guide-ikon, eller ingenting hvis guiden ikke har valgt noe. */
+  /** Tegner et guide-ikon, eller ingenting hvis tipset ikke har valgt noe. */
   function guideIcon(key, size) {
     const d = GUIDE_ICON_PATHS[key];
     if (!d) return "";
@@ -210,8 +210,8 @@
   const state = {
     isAdmin: false,
     filter: "Alle",
-    guideDraft: null,      // guide-info-skjemaet (nytt eller redigering av eksisterende)
-    moduleDraft: null,     // modul-skjemaet på guide.html
+    guideDraft: null,      // tips-info-skjemaet (nytt eller redigering av eksisterende)
+    moduleDraft: null,     // modul-skjemaet på tip.html
     addPickerOpen: false,
     addPickerIndex: null,  // hvor i lista den nye modulen skal settes inn (null = til slutt)
     previewMode: false,    // admin ser siden akkurat slik en besøkende gjør
@@ -223,7 +223,7 @@
   let statsLoadedFor = null; // hvilken guide-id vi sist telte en visning/hentet like-status for
 
   // Admin-kontrollene skjules i forhåndsvisningsmodus, men admin beholder
-  // fortsatt tilgang til skjulte guider (visibleGuides under).
+  // fortsatt tilgang til skjulte tips (visibleGuides under).
   function canEdit() { return state.isAdmin && !state.previewMode; }
 
   // Snapshot av skjemaet slik det så ut da det ble åpnet, slik at vi bare
@@ -256,12 +256,12 @@
     return markPristine({ id: g.id, tempId: g.id, title: g.title, category: g.category, excerpt: g.excerpt, icon: g.icon || "", valueLabel: g.valueLabel, coverUrl: g.coverUrl, featured: g.featured, hidden: g.hidden, uploadBusy: false });
   }
   function getCurrentGuide() { return Guides.list().find((g) => g.id === currentGuideId) || null; }
-  // Skjulte guider (g.hidden) er bare synlige for admin – brukes på guider.html
-  // (oversikten) og for å blokkere direkte lenker på guide.html.
+  // Skjulte tips (g.hidden) er bare synlige for admin – brukes på tips.html
+  // (oversikten) og for å blokkere direkte lenker på tip.html.
   function visibleGuides() { return state.isAdmin ? Guides.list() : Guides.list().filter((g) => !g.hidden); }
 
   // =====================================================================
-  // Guide-info-skjema (delt mellom "+ Ny guide" og "Rediger guide-info")
+  // Tips-info-skjema (delt mellom "+ Nytt tips" og "Rediger tips-info")
   // =====================================================================
   // Felles bilde-opplaster: stort felt der bildet selv er kontrollen, i stedet
   // for en tekstknapp ved siden av en liten miniatyr. Støtter både klikk og
@@ -292,7 +292,7 @@
     `;
   }
 
-  // Live-forhåndsvisning av kortet slik det vil se ut på guider.html. Gjør at
+  // Live-forhåndsvisning av kortet slik det vil se ut på tips.html. Gjør at
   // man ser konsekvensen av tittel, ingress, bilde og "mengde spart" med én
   // gang, i stedet for å måtte lagre og gå tilbake til oversikten.
   function guideCardPreviewHTML(draft) {
@@ -316,7 +316,7 @@
         </div>
         <span class="guide-field-hint">${draft.category
           ? `Ligger under filteret <strong>${escapeHTML(draft.category)}</strong>.`
-          : "Uten kategori vises guiden bare under «Alle»."}</span>
+          : "Uten kategori vises tipset bare under «Alle»."}</span>
       </div>
     `;
   }
@@ -327,7 +327,7 @@
     return `
       <div class="admin-card guide-form">
         <div class="guide-form-head">
-          <span class="guide-form-title">${icon(opts.isNew ? "plus" : "edit", 17)}${opts.isNew ? "Ny guide" : "Rediger guide-info"}</span>
+          <span class="guide-form-title">${icon(opts.isNew ? "plus" : "edit", 17)}${opts.isNew ? "Nytt tips" : "Rediger tips-info"}</span>
           <button type="button" class="guide-form-close" data-gf-cancel aria-label="Lukk skjemaet">${icon("x", 16)}</button>
         </div>
 
@@ -361,7 +361,7 @@
                 `).join("")}
                 ${draft.icon ? `<button type="button" class="guide-icon-choice is-clear" data-gf-choice="icon" data-value="" title="Uten symbol" aria-label="Uten symbol">${icon("x", 16)}</button>` : ""}
               </div>
-              <span class="guide-field-hint">Vises på kortet og øverst i guiden. Valgfritt.</span>
+              <span class="guide-field-hint">Vises på kortet og øverst i tipset. Valgfritt.</span>
             </section>
 
             <section class="guide-form-section">
@@ -394,21 +394,21 @@
               <span class="guide-form-legend">Synlighet</span>
               <div class="guide-toggle-list">
                 <div class="guide-toggle-row${draft.featured ? " is-on" : ""}">
-                  <button type="button" class="admin-switch${draft.featured ? " is-on" : ""}" data-gf-toggle="featured" role="switch" aria-checked="${draft.featured ? "true" : "false"}" aria-label="Vis som fremhevet guide">
+                  <button type="button" class="admin-switch${draft.featured ? " is-on" : ""}" data-gf-toggle="featured" role="switch" aria-checked="${draft.featured ? "true" : "false"}" aria-label="Vis som fremhevet tips">
                     <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
                   </button>
                   <span class="guide-toggle-text">
                     <strong>Fremhev øverst på oversikten</strong>
-                    <small>Kun én guide kan være fremhevet om gangen.</small>
+                    <small>Kun ett tips kan være fremhevet om gangen.</small>
                   </span>
                 </div>
                 <div class="guide-toggle-row is-warn${draft.hidden ? " is-on" : ""}">
-                  <button type="button" class="admin-switch is-warn${draft.hidden ? " is-on" : ""}" data-gf-toggle="hidden" role="switch" aria-checked="${draft.hidden ? "true" : "false"}" aria-label="Skjul guiden for besøkende">
+                  <button type="button" class="admin-switch is-warn${draft.hidden ? " is-on" : ""}" data-gf-toggle="hidden" role="switch" aria-checked="${draft.hidden ? "true" : "false"}" aria-label="Skjul tipset for besøkende">
                     <span class="admin-switch-track"></span><span class="admin-switch-knob"></span>
                   </button>
                   <span class="guide-toggle-text">
-                    <strong>Skjul guiden</strong>
-                    <small>${draft.hidden ? "Guiden er usynlig for besøkende – kun admin ser den." : "Guiden er publisert og synlig for alle."}</small>
+                    <strong>Skjul tipset</strong>
+                    <small>${draft.hidden ? "Tipset er usynlig for besøkende – kun admin ser den." : "Tipset er publisert og synlig for alle."}</small>
                   </span>
                 </div>
               </div>
@@ -425,7 +425,7 @@
           <div class="admin-row-actions">
             <button type="button" class="btn-outline" data-gf-cancel>Avbryt</button>
             <button type="button" class="admin-btn-ghost is-accent" data-gf-save ${state.saving ? "disabled" : ""}>
-              ${state.saving ? "Lagrer …" : (opts.isNew ? "Opprett guide" : "Lagre endringer")}
+              ${state.saving ? "Lagrer …" : (opts.isNew ? "Opprett tips" : "Lagre endringer")}
             </button>
           </div>
         </div>
@@ -441,7 +441,7 @@
     const d = state.guideDraft;
     if (!d || state.saving) return;
     const title = d.title.trim();
-    if (!title) { flash("Guiden må ha en overskrift."); focusField('[data-gf="title"]'); return; }
+    if (!title) { flash("Tipset må ha en overskrift."); focusField('[data-gf="title"]'); return; }
 
     const fields = {
       title, category: d.category.trim(), excerpt: d.excerpt.trim(),
@@ -456,22 +456,22 @@
         const { data, error } = await Guides.createGuide(fields);
         if (error) return flash(friendlyError(error));
         state.guideDraft = null;
-        flash("Guide opprettet");
-        window.location.href = `guide.html?id=${encodeURIComponent(data.id)}&edit=1`;
+        flash("Tips opprettet");
+        window.location.href = `tip.html?id=${encodeURIComponent(data.id)}&edit=1`;
         return;
       }
 
       const { error } = await Guides.updateGuide(d.id, fields);
       if (error) return flash(friendlyError(error));
       state.guideDraft = null;
-      flash("Guide-info lagret");
+      flash("Tips-info lagret");
     } finally {
       state.saving = false;
       renderAll();
     }
   }
 
-  // Rask av/på for synlighet, uten å måtte åpne hele guide-info-skjemaet.
+  // Rask av/på for synlighet, uten å måtte åpne hele tips-info-skjemaet.
   async function toggleGuideHidden(id) {
     const g = Guides.list().find((x) => x.id === id);
     if (!g || state.saving) return;
@@ -482,7 +482,7 @@
     state.saving = false;
     if (error) { flash(friendlyError(error)); renderAll(); return; }
     if (state.guideDraft && state.guideDraft.id === id) state.guideDraft.hidden = next;
-    flash(next ? "Guiden er skjult for besøkende" : "Guiden er publisert");
+    flash(next ? "Tipset er skjult for besøkende" : "Tipset er publisert");
     renderAll();
   }
 
@@ -491,11 +491,11 @@
     if (!g) return;
     const moduleCount = Guides.modulesFor(id).length;
     const extra = moduleCount ? `\n\nGuiden har ${moduleCount} modul${moduleCount === 1 ? "" : "er"} som slettes samtidig.` : "";
-    if (!window.confirm(`Slette guiden «${g.title}»?${extra}\n\nDette kan ikke angres. Vil du heller skjule guiden, avbryt og bruk «Skjul» i stedet.`)) return;
+    if (!window.confirm(`Slette tipset «${g.title}»?${extra}\n\nDette kan ikke angres. Vil du heller skjule tipset, avbryt og bruk «Skjul» i stedet.`)) return;
     const { error } = await Guides.deleteGuide(id);
     if (error) return flash(friendlyError(error));
-    flash("Guide slettet");
-    if (isGuidePage && currentGuideId === id) { window.location.href = "guider.html"; return; }
+    flash("Tips slettet");
+    if (isGuidePage && currentGuideId === id) { window.location.href = "tips.html"; return; }
     renderAll();
   }
 
@@ -518,7 +518,7 @@
     if (hint) {
       hint.innerHTML = d.category
         ? `Ligger under filteret <strong>${escapeHTML(d.category)}</strong>.`
-        : "Uten kategori vises guiden bare under «Alle».";
+        : "Uten kategori vises tipset bare under «Alle».";
     }
   }
 
@@ -550,7 +550,7 @@
   }
 
   // =====================================================================
-  // guider.html – oversikt
+  // tips.html – oversikt
   // =====================================================================
   function renderGuiderPage() {
     if (!isGuiderPage) return;
@@ -559,7 +559,7 @@
     renderGrid();
     const countEl = document.querySelector("[data-guide-count]");
     const list = visibleGuides();
-    if (countEl) countEl.textContent = `${list.length} guide${list.length === 1 ? "" : "r"}`;
+    if (countEl) countEl.textContent = `${list.length} tips`;
     const newBtn = document.querySelector("[data-guide-new]");
     if (newBtn) newBtn.hidden = !canEdit();
   }
@@ -573,9 +573,9 @@
     if (!featured) {
       el.innerHTML = state.isAdmin
         ? `<div class="admin-card" style="align-items:center;text-align:center;padding:48px 24px">
-             <h2 style="margin:0 0 8px">Ingen guider ennå</h2>
-             <p class="section-sub" style="margin:0 0 16px">Opprett den første guiden for å komme i gang.</p>
-             <button type="button" class="btn-primary" data-guide-new-inline>+ Ny guide</button>
+             <h2 style="margin:0 0 8px">Ingen tips ennå</h2>
+             <p class="section-sub" style="margin:0 0 16px">Opprett den første tipset for å komme i gang.</p>
+             <button type="button" class="btn-primary" data-guide-new-inline>+ Nytt tips</button>
            </div>`
         : "";
       return;
@@ -585,11 +585,11 @@
     el.innerHTML = `
       <div class="guide-feature">
         <div class="guide-feature-text">
-          <span class="guide-feature-badge">${featured.icon ? guideIcon(featured.icon, 15) : ""}Anbefalt guide</span>
+          <span class="guide-feature-badge">${featured.icon ? guideIcon(featured.icon, 15) : ""}Anbefalt tips</span>
           <h2>${escapeHTML(featured.title)}</h2>
           <p>${escapeHTML(featured.excerpt)}</p>
           <div class="guide-feature-actions">
-            <a href="guide.html?id=${encodeURIComponent(featured.id)}" class="btn-primary btn-link">Les guiden</a>
+            <a href="tip.html?id=${encodeURIComponent(featured.id)}" class="btn-primary btn-link">Les tipset</a>
             ${metaBits ? `<span class="section-sub">${escapeHTML(metaBits)}</span>` : ""}
           </div>
         </div>
@@ -616,14 +616,14 @@
     const isHidden = !!g.hidden;
     return `
       <div class="guide-card${isHidden && admin ? " is-hidden-guide" : ""}">
-        <a href="guide.html?id=${encodeURIComponent(g.id)}" class="guide-card-thumb">
+        <a href="tip.html?id=${encodeURIComponent(g.id)}" class="guide-card-thumb">
           ${g.coverUrl ? `<img loading="lazy" decoding="async" class="guide-card-thumb-img" src="${escapeHTML(g.coverUrl)}" alt="">` : ""}
           ${g.icon ? `<span class="guide-card-icon">${guideIcon(g.icon, 18)}</span>` : ""}
         </a>
         ${isHidden && admin ? `<span class="guide-status-badge is-hidden">${icon("eyeOff", 13)}Skjult</span>` : ""}
         ${g.featured && admin ? `<span class="guide-status-badge is-featured">Fremhevet</span>` : ""}
         <div class="guide-card-body">
-          <h3 class="guide-card-title"><a href="guide.html?id=${encodeURIComponent(g.id)}">${escapeHTML(g.title)}</a></h3>
+          <h3 class="guide-card-title"><a href="tip.html?id=${encodeURIComponent(g.id)}">${escapeHTML(g.title)}</a></h3>
           <p class="guide-card-excerpt">${escapeHTML(g.excerpt)}</p>
           <div class="guide-card-foot">
             <span class="guide-card-value">${escapeHTML(g.valueLabel)}</span>
@@ -658,14 +658,14 @@
       : "";
 
     if (!list.length && !newCardHTML) {
-      el.innerHTML = `<div class="guide-empty section-sub">Ingen guider i denne kategorien ennå.</div>`;
+      el.innerHTML = `<div class="guide-empty section-sub">Ingen tips i denne kategorien ennå.</div>`;
       return;
     }
     el.innerHTML = newCardHTML + list.map(guideCardHTML).join("");
   }
 
   // =====================================================================
-  // guide.html – én guide
+  // tip.html – én guide
   // =====================================================================
   function addModulePickerHTML(atIndex) {
     const isInline = atIndex !== null && atIndex !== undefined;
@@ -1161,7 +1161,7 @@
       el.innerHTML = admin
         ? `<div class="guide-modules-empty">
              ${icon("text", 24)}
-             <strong>Guiden har ingen innhold ennå</strong>
+             <strong>Tipset har ingen innhold ennå</strong>
              <span>Legg til den første modulen nedenfor – tekst, tabell, nedlasting, gevinst eller avstemning.</span>
            </div>`
         : "";
@@ -1205,12 +1205,12 @@
     card.innerHTML = `
       <span class="guide-gevinst-side-label">Gevinstpotensial</span>
       <span class="guide-gevinst-side-amount">${kr(gevinstSum(gevinst.data))}</span>
-      <span class="guide-gevinst-side-note">${escapeHTML(gevinst.data.note || "hvis du følger alle stegene i guiden.")}</span>
+      <span class="guide-gevinst-side-note">${escapeHTML(gevinst.data.note || "hvis du følger alle stegene i tipset.")}</span>
     `;
   }
 
   // Liten avatar+navn-boble som dukker opp over like-tallet når man holder
-  // musepekeren over det, hvis en eller flere man følger har likt guiden.
+  // musepekeren over det, hvis en eller flere man følger har likt tipset.
   function guideFriendTipHTML(friends) {
     if (!friends || !friends.length) return "";
     const shown = friends.slice(0, 5);
@@ -1232,7 +1232,7 @@
     const liked = !!(state.guideLike && state.guideLike.liked);
     const friends = (state.guideLike && state.guideLike.friends) || [];
     el.innerHTML = `
-      <button type="button" class="guide-like-btn${liked ? " is-liked" : ""}" data-guide-like aria-pressed="${liked ? "true" : "false"}" aria-label="Lik guiden" ${state.likeBusy ? "disabled" : ""}>
+      <button type="button" class="guide-like-btn${liked ? " is-liked" : ""}" data-guide-like aria-pressed="${liked ? "true" : "false"}" aria-label="Lik tipset" ${state.likeBusy ? "disabled" : ""}>
         <span class="guide-like-icon">${icon("heart", 17)}</span>
         <span class="guide-like-count">${numFmt(g.likeCount || 0)}</span>
         ${guideFriendTipHTML(friends)}
@@ -1242,7 +1242,7 @@
   }
 
   // Henter «liker jeg denne»-status og, hvis man er innlogget, hvilke av dem
-  // man følger som også har likt guiden – til hover-boblen over. Kjøres kun
+  // man følger som også har likt tipset – til hover-boblen over. Kjøres kun
   // én gang per guide (styrt av statsLoadedFor i renderGuidePage).
   async function loadGuideStats(guideId) {
     const liked = await Guides.myLike(guideId);
@@ -1268,7 +1268,7 @@
   async function toggleGuideLike() {
     if (state.likeBusy || !currentGuideId) return;
     const { data: session } = await window.supabaseClient.auth.getSession();
-    if (!session.session) { flash("Registrer deg for å like guider."); return; }
+    if (!session.session) { flash("Registrer deg for å like tips."); return; }
 
     // Optimistisk oppdatering + en kort «pop»-animasjon på selve hjertet, i
     // stedet for å vente på svar fra serveren før noe skjer på skjermen.
@@ -1319,9 +1319,9 @@
     const metaDesc = document.querySelector("[data-guide-meta-description]");
     if (metaDesc) metaDesc.setAttribute("content", g.excerpt || "");
 
-    // Symbolet står foran kategorien øverst i guiden, samme ikon som på kortet.
+    // Symbolet står foran kategorien øverst i tipset, samme ikon som på kortet.
     document.querySelector("[data-guide-category]").innerHTML =
-      (g.icon ? guideIcon(g.icon, 15) : "") + escapeHTML(g.category || "Guide");
+      (g.icon ? guideIcon(g.icon, 15) : "") + escapeHTML(g.category || "Tips");
     document.querySelector("[data-guide-title]").textContent = g.title;
     document.querySelector("[data-guide-excerpt]").textContent = g.excerpt;
     document.querySelector("[data-guide-updated]").textContent = g.updatedAt ? `Oppdatert ${formatDate(g.updatedAt)}` : "";
@@ -1341,10 +1341,10 @@
       banner.innerHTML = (state.isAdmin && g.hidden) ? `
         <span class="guide-banner-icon">${icon("eyeOff", 18)}</span>
         <span class="guide-banner-text">
-          <strong>Denne guiden er skjult</strong>
-          <small>Besøkende får «Fant ikke guiden» hvis de åpner lenken. Bare du som admin ser den nå.</small>
+          <strong>Dette tipset er skjult</strong>
+          <small>Besøkende får «Fant ikke tipset» hvis de åpner lenken. Bare du som admin ser den nå.</small>
         </span>
-        <button type="button" class="admin-btn-ghost is-accent" data-guide-hide-toggle ${state.saving ? "disabled" : ""}>Publiser guiden</button>
+        <button type="button" class="admin-btn-ghost is-accent" data-guide-hide-toggle ${state.saving ? "disabled" : ""}>Publiser tipset</button>
       ` : "";
     }
 
@@ -1376,7 +1376,7 @@
     document.body.classList.toggle("is-guide-admin", canEdit());
   }
 
-  // Verktøylinja på guide.html. Rendres fra JS slik at knappene kan speile
+  // Verktøylinja på tip.html. Rendres fra JS slik at knappene kan speile
   // gjeldende tilstand (skjult/publisert, forhåndsvisning av/på).
   function guideAdminBarHTML(g) {
     if (state.previewMode) {
@@ -1392,7 +1392,7 @@
       <span class="guide-admin-bar-label">${icon("settings", 14)}Adminverktøy</span>
       <div class="guide-admin-bar-actions">
         <button type="button" class="guide-action-btn${editingInfo ? " is-active" : ""}" data-guide-edit>
-          ${icon("edit", 15)}<span>${editingInfo ? "Lukk guide-info" : "Rediger guide-info"}</span>
+          ${icon("edit", 15)}<span>${editingInfo ? "Lukk tips-info" : "Rediger tips-info"}</span>
         </button>
         <button type="button" class="guide-action-btn${g.hidden ? " is-warn" : ""}" data-guide-hide-toggle ${state.saving ? "disabled" : ""}>
           ${icon(g.hidden ? "eye" : "eyeOff", 15)}<span>${g.hidden ? "Publiser" : "Skjul"}</span>
@@ -1401,7 +1401,7 @@
           ${icon("eye", 15)}<span>Forhåndsvis</span>
         </button>
         <button type="button" class="guide-action-btn is-danger" data-guide-delete>
-          ${icon("trash", 15)}<span>Slett guide</span>
+          ${icon("trash", 15)}<span>Slett tips</span>
         </button>
       </div>
     `;

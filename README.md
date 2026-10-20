@@ -60,8 +60,8 @@ spill/
 ├── rangering.html          Rangering-siden – delt layout, plassholderinnhold
 ├── player.html            Delt spillmal – viser ETT spill basert på ?id=<slug> i URL-en.
 │                          Det lages IKKE én fil per spill; alle spill går gjennom denne malen.
-├── guider.html            Guider og ressurser – oversikt over alle guider (se under)
-├── guide.html             Delt guide-mal – viser ÉN guide basert på ?id=<slug> i URL-en,
+├── tips.html            Guider og ressurser – oversikt over alle guider (se under)
+├── tip.html             Delt guide-mal – viser ÉN guide basert på ?id=<slug> i URL-en,
 │                          akkurat som player.html gjør for spill
 ├── login.html             Logg inn / registrer deg (brukernavn + passord)
 ├── profil.html            Profilside – avatar, brukernavn, nivå, rekorder, slett konto
@@ -73,7 +73,7 @@ spill/
 ├── js/
 │   ├── games-data.js      Midlertidig "database" med spillobjekter (se under)
 │   ├── guides-data.js     Samme mønster som games-data.js, men for guider/moduler (se under)
-│   ├── guides.js          Rendring + admin-redigering for guider.html/guide.html
+│   ├── guides.js          Rendring + admin-redigering for tips.html/tip.html
 │   ├── layout-markup.js   HTML-en for topp-nav og bunnmeny – eneste kilde, leses
 │   │                      både av layout.js i nettleseren og av byggesteget
 │   ├── layout.js          Setter inn header/footer (hvis bygget ikke har gjort det),
@@ -261,7 +261,7 @@ det helt. `js/games-data.js` henter denne tabellen ved sidelasting og fyller
 `window.STUDILLA_GAMES` i place; den statiske listen øverst i filen er kun en
 fallback hvis Supabase er utilgjengelig.
 
-## Guider og ressurser (`guider.html` / `guide.html`)
+## Guider og ressurser (`tips.html` / `tip.html`)
 
 Guidene ligger i Supabase-tabellene `guides` (ett kort per guide: overskrift,
 kategori, ingress, "mengde spart/tjent" og lesetid) og `guide_modules` (selve
@@ -273,12 +273,12 @@ i `supabase/schema.sql` ikke er kjørt ennå.
 
 **Det finnes ingen egen adminpanel-seksjon for dette.** Er man innlogget som
 admin, dukker det i stedet opp rediger-/slette-knapper direkte på kortene på
-`guider.html` og inne i selve guiden på `guide.html` (`js/guides.js`) – helt
+`tips.html` og inne i selve guiden på `tip.html` (`js/guides.js`) – helt
 uten at andre besøkende ser noe til dem. Derfra kan en admin:
 
 - Opprette, redigere (overskrift, kategori, ingress, mengde spart/tjent,
   lesetid, toppbilde) og slette guider, samt velge hvilken guide som vises
-  fremhevet øverst på `guider.html`.
+  fremhevet øverst på `tips.html`.
 - Bygge innholdet i en guide som en fritt sammensatt rekke moduler – legg til,
   rediger, flytt opp/ned eller slett hver enkelt modul. Modultypene er:
   - **Tekst** – overskrift (H2/H3), brødtekst, punktliste og en tips-boks.
@@ -293,7 +293,7 @@ uten at andre besøkende ser noe til dem. Derfra kan en admin:
   - **Triks** – lenke til et eksisterende triks (hentet fra `games-data.js`,
     med bilde/navn/beskrivelse) eller en egendefinert lenke.
 
-Innholdsfortegnelsen i sidefeltet på `guide.html` bygges automatisk ut fra
+Innholdsfortegnelsen i sidefeltet på `tip.html` bygges automatisk ut fra
 modulene som har en tittel (tekst-overskrift, tabelltittel osv.), og
 "gevinstpotensial"-kortet i sidefeltet plukkes fra guidens gevinst-modul, hvis
 den har en.

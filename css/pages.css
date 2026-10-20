@@ -120,7 +120,7 @@
 }
 
 /* ==========================================================================
-   Guider og ressurser (guider.html + guide.html)
+   Guider og ressurser (tips.html + tip.html)
    ========================================================================== */
 
 .guide-filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 22px; }
@@ -176,7 +176,7 @@
 
 /* ---------- Skjult guide: tydelig markert for admin ---------- */
 /* Varselfargen brukes gjennomgående for "skjult/upublisert" – både på kortet,
-   i banneret på guide.html og på synlighetsbryteren i skjemaet. */
+   i banneret på tip.html og på synlighetsbryteren i skjemaet. */
 :root { --guide-warn: #ffb347; --guide-warn-soft: rgba(255, 179, 71, .13); --guide-warn-line: rgba(255, 179, 71, .42); }
 
 .guide-card.is-hidden-guide { border-color: var(--guide-warn-line); background: linear-gradient(180deg, var(--guide-warn-soft) 0%, transparent 90px), var(--surface); }
@@ -336,7 +336,7 @@
 .admin-btn-ghost.is-accent { background: var(--accent-soft); color: var(--accent); border-color: rgba(var(--accent-rgb), .4); }
 .admin-btn-ghost.is-accent:hover { background: var(--accent-soft-strong); }
 
-/* ---------- guide.html ---------- */
+/* ---------- tip.html ---------- */
 .guide-back-link {
   display: inline-flex; align-items: center; gap: 8px; margin: 28px 0 20px;
   font-size: 14px; font-weight: 800; color: var(--muted);
@@ -348,7 +348,7 @@
 
 .guide-article { display: flex; flex-direction: column; gap: 34px; min-width: 0; }
 .guide-header { display: flex; flex-direction: column; gap: 16px; }
-/* ---------- Adminverktøy på guide.html ---------- */
+/* ---------- Adminverktøy på tip.html ---------- */
 .guide-admin-bar {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
   padding: 10px 12px 10px 15px; border-radius: 12px;
@@ -380,7 +380,7 @@
 .guide-meta-credit:hover { color: var(--text); }
 .guide-meta-credit .header-credit-avatar { width: 20px; height: 20px; }
 
-/* ---------- Like og visningstall (guide.html) ---------- */
+/* ---------- Like og visningstall (tip.html) ---------- */
 .guide-stats-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 
 .guide-like-btn {

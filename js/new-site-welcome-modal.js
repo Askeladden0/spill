@@ -1,7 +1,7 @@
 /**
  * Studilla – velkomstpopup for besøkende som ble videresendt hit fra en av
  * de gamle sidene på skolesaus.no. Vises kun når URL-en har ?ny-side=1
- * (spill) eller ?ny-side=guide (guider/ressurser) – satt av
+ * (spill) eller ?ny-side=guide (tips/ressurser) – satt av
  * redirect-scriptet der (public/shared/game-redirect-popup.js i
  * skolesaus-repoet) – og fjernes fra URL-en igjen så popup'en ikke dukker
  * opp på nytt ved refresh.
@@ -72,9 +72,9 @@
   const overlay = document.createElement("div");
   overlay.id = "ss-welcome-overlay";
   const icon = isGuide ? "📄" : "🎮";
-  const title = isGuide ? "Denne guiden har flyttet!" : "Dette spillet har flyttet!";
+  const title = isGuide ? "Dette tipset har flyttet!" : "Dette spillet har flyttet!";
   const body = isGuide
-    ? "Dette er min nye nettside – med guider og spill, pluss flere filer og maler."
+    ? "Dette er min nye nettside – med tips og spill, pluss flere filer og maler."
     : "Dette er min nye spillnettside – med flere spill, poeng og rangeringer.";
   const btnText = isGuide ? "Kult, la oss se!" : "Kult, la oss spille!";
 

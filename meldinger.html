@@ -127,7 +127,7 @@
             <div class="dm-thread-body" data-dm-messages></div>
             <div class="dm-compose">
               <!-- Velgeren for vedlegg. Innholdet fylles av JS-en under, ett av tre
-                   sett: triks, guider eller rekorder. -->
+                   sett: triks, tips eller rekorder. -->
               <div class="dm-attach-panel" data-attach-panel hidden></div>
 
               <!-- Vedlegget man har valgt, før meldingen er sendt. Man kan fortsatt
@@ -449,10 +449,10 @@
     threadSearchTimer = window.setTimeout(renderThreads, 120);
   });
 
-  /* ---------------- Vedlegg: triks, guider og rekorder ---------------- */
+  /* ---------------- Vedlegg: triks, tips og rekorder ---------------- */
   /*
    * De tre knappene over skrivefeltet er de samme tre tingene som ligger i
-   * toppmenyen: triks, guider og rangering. Trykker man på en av dem, får
+   * toppmenyen: triks, tips og rangering. Trykker man på en av dem, får
    * man opp en liste med noe å sende – et triks den andre kan spille, en
    * guide hen kan lese, eller sin egen rekord (i ett triks eller totalt,
    * med lenke til rangeringen). Valget henger som et vedlegg over
@@ -461,7 +461,7 @@
 
   const ATTACH_KINDS = {
     spill: { label: "Triks", empty: "Ingen triks å sende ennå." },
-    guide: { label: "Guider", empty: "Ingen guider å sende ennå." },
+    guide: { label: "Tips", empty: "Ingen tips å sende ennå." },
     rekord: { label: "Rekorder", empty: "Du har ingen rekorder ennå. Spill et triks først!" },
   };
 
@@ -584,11 +584,11 @@
     if (att.kind === "guide") {
       const guide = guideById(att.ref);
       return {
-        eyebrow: "Les denne guiden",
+        eyebrow: "Les denne tipset",
         title: guide ? guide.title : "Guide",
         sub: guide && guide.excerpt ? guide.excerpt : "",
         icon: kindIconHTML("guide"),
-        href: `guide.html?id=${encodeURIComponent(att.ref)}`,
+        href: `tip.html?id=${encodeURIComponent(att.ref)}`,
         action: "Les",
       };
     }
