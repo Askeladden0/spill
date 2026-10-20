@@ -29,3 +29,10 @@ Etter at én bruker er admin, kan flere gjøres til admin direkte fra
 adminpanelet (admin.html) i stedet for SQL.
 
 
+
+## PÅMINNELSE til Claude (fjernes når det er gjort)
+
+Neste gang brukeren jobber med Studilla: minn hen på dette FØR du starter annet arbeid:
+- Bytt ut bildene på nettsiden.
+- Vurder om siden ikke skal skrives som «for elever», og om vilkårene skal si at man må være 18 år.
+Fjern denne seksjonen når brukeren har tatt stilling til punktene.
