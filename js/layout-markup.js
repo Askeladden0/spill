@@ -84,7 +84,6 @@
       <a href="kontakt.html">Kontakt</a>
       <a href="personvern.html">Personvern</a>
       <a href="vilkar.html">Vilkår</a>
-      <a href="https://www.tiktok.com/@snorre.saus" target="_blank" rel="noopener noreferrer">TikTok</a>
       <a href="admin.html" data-admin-only style="display:none">Admin</a>
     </nav>
   </footer>`;

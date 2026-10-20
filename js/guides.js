@@ -617,7 +617,7 @@
     return `
       <div class="guide-card${isHidden && admin ? " is-hidden-guide" : ""}">
         <a href="guide.html?id=${encodeURIComponent(g.id)}" class="guide-card-thumb">
-          ${g.coverUrl ? `<img class="guide-card-thumb-img" src="${escapeHTML(g.coverUrl)}" alt="">` : ""}
+          ${g.coverUrl ? `<img loading="lazy" decoding="async" class="guide-card-thumb-img" src="${escapeHTML(g.coverUrl)}" alt="">` : ""}
           ${g.icon ? `<span class="guide-card-icon">${guideIcon(g.icon, 18)}</span>` : ""}
         </a>
         ${isHidden && admin ? `<span class="guide-status-badge is-hidden">${icon("eyeOff", 13)}Skjult</span>` : ""}

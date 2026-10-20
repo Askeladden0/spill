@@ -12,4 +12,6 @@
 | 404.html | OK |
 | Annonseplass + data-adtest | Forberedt (`.ad-slot` med 150px avstand, `STUDILLA_ADS.adtest`). Ingen enheter plassert |
 | Cookie-samtykke | Eksisterende Consent Mode v2 (default denied) blokkerer ikke en CMP. Sett opp CMP i AdSense |
-| Lighthouse, 360px-test, bilde-komprimering | Ikke kjørt |
+| 360px-test | OK. Ingen horisontal scroll på forside, om, kontakt, personvern, vilkår, guider, rangering, 404 og spillside |
+| Lighthouse (mobil, lokal server uten komprimering) | Forside perf 49 / tilgj. 90 / BP 100 / SEO 100. Om 72/92/100/100. Guider 47/92/100/100. Personvern 56/92/100/100. Spillside 58/92/100/100. Lav ytelse skyldes store spillbilder fra Supabase (200-550 KB, LCP 12 s på throttlet mobil) og ubrukt JS/CSS |
+| Bilde-komprimering | Ikke gjort (bildene ligger i Supabase Storage) |
