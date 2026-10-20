@@ -1,0 +1,13 @@
+User-agent: *
+Disallow: /admin.html
+Disallow: /profil.html
+Disallow: /meldinger.html
+Disallow: /innstillinger.html
+Disallow: /spillerprofil.html
+Disallow: /tilbakestill-passord.html
+Disallow: /login.html
+
+User-agent: Mediapartners-Google
+Allow: /
+
+Sitemap: https://studilla.no/sitemap.xml

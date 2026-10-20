@@ -899,3 +899,8 @@ a.guide-trick-card:hover { border-color: rgba(var(--accent-rgb), .35); }
 }
 .case-reveal-more[hidden] { display: none; }
 .case-reveal-more:hover { color: var(--accent-light); }
+
+/* Reservert annonseplass (ingen enheter aktivert ennå). Aldri tett på
+   spillflaten: minst 150px avstand, også på mobil. */
+.ad-slot { display: block; margin: 150px auto; max-width: 100%; text-align: center; min-height: 0; }
+.ad-slot[data-ad-empty] { display: none; }

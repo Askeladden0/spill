@@ -28,12 +28,11 @@ const DIST = path.join(ROOT, "dist");
 const COPY_DIRS = ["css", "js", "assets", "documents"];
 
 /**
- * Enkeltfiler i rota som GitHub Pages trenger, hvis de finnes. Ingen av dem
- * er i bruk i dag, men de ligger her slik at f.eks. et CNAME for eget domene
+ * Enkeltfiler i rota som GitHub Pages trenger, hvis de finnes. De ligger her slik at f.eks. et CNAME for eget domene
  * eller en robots.txt blir med i dist/ i stedet for å forsvinne stille den
  * dagen noen legger dem til.
  */
-const COPY_ROOT_FILES = ["CNAME", ".nojekyll", "robots.txt", "sitemap.xml"];
+const COPY_ROOT_FILES = ["CNAME", ".nojekyll", "robots.txt", "sitemap.xml", "ads.txt"];
 
 /**
  * HTML-filer som IKKE er sider på nettstedet. *.dc.html er designutkast fra

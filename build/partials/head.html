@@ -30,6 +30,14 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8465850027811409"
      crossorigin="anonymous"></script>
 <script>
+/* Annonseforberedelse: ingen annonseenheter er plassert ennå. Når de kommer,
+   skal de bruke window.STUDILLA_ADS.adtest som data-adtest, slik at testing
+   på localhost/utvikling aldri treffer ekte annonser. */
+window.STUDILLA_ADS = {
+  adtest: /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || /\.(localhost|test)$/.test(location.hostname) ? "on" : "off"
+};
+</script>
+<script>
 /* Slår opp innholdshash for moduler som lastes dynamisk fra JavaScript, der
    byggesteget ikke kan skrive om src-en. Uten bygg returneres stien uendret. */
 window.studillaAsset = function (path) {
