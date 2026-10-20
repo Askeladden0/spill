@@ -38,6 +38,7 @@
             <span class="player-back-link-text">Tilbake til menyen</span>
           </a>
           <div class="player-hud-slot" data-player-hud></div>
+          <button type="button" class="howto-btn" data-howto-btn>Hvordan spille</button>
         </div>
         <div class="player-stage-inner" data-player-stage></div>
       </div>
@@ -58,6 +59,7 @@
 <script src="js/dm-popup.js"></script>
 <script src="js/visit-tracking.js"></script>
 <script src="js/games-data.js"></script>
+<script src="js/game-howto.js"></script>
 <script src="js/levelup-modal.js"></script>
 <script src="js/new-site-welcome-modal.js"></script>
 <script src="js/game-runtime.js"></script>
@@ -101,6 +103,12 @@
     Promise.resolve()
   );
 })();
+</script>
+<script>
+document.querySelector("[data-howto-btn]").addEventListener("click", function () {
+  var id = new URLSearchParams(location.search).get("id") || (window.STUDILLA_GAMES && window.STUDILLA_GAMES[0] && window.STUDILLA_GAMES[0].id);
+  if (window.StudillaHowTo) window.StudillaHowTo.open(id);
+});
 </script>
 <script src="js/main.js"></script>
 </body>

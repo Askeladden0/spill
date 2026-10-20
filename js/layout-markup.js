@@ -80,7 +80,7 @@
       <span class="footer-copy">© 2026 Studilla</span>
     </div>
     <nav class="footer-nav">
-      <a href="om.html">Om oss</a>
+      <a href="om.html">Om Studilla</a>
       <a href="kontakt.html">Kontakt</a>
       <a href="personvern.html">Personvern</a>
       <a href="vilkar.html">Vilkår</a>
