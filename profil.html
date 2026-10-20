@@ -97,13 +97,6 @@
           <div class="codes-grid" data-codes-grid>
             <p class="section-sub">Laster rabattkoder …</p>
           </div>
-          <div class="codes-cta">
-            <div>
-              <div class="codes-cta-title" data-codes-cta-title>Du har poeng å bruke</div>
-              <div class="codes-cta-sub">Hent nye rabattkoder på premier-siden</div>
-            </div>
-            <a href="premier.html" class="btn-primary" style="padding:12px 22px">Hent ny kode</a>
-          </div>
         </div>
       </div>
     </section>
@@ -313,7 +306,7 @@
     const slot = document.querySelector("[data-latest-code-slot]");
     const moreLabel = document.querySelector("[data-more-codes-label]");
     if (!codes.length) {
-      slot.innerHTML = `<div class="empty-state-note">Ingen rabattkoder hentet ennå. Åpne en rabatt på premier-siden!</div>`;
+      slot.innerHTML = `<div class="empty-state-note">Ingen rabattkoder hentet ennå.</div>`;
       moreLabel.textContent = "";
       return;
     }
@@ -403,9 +396,8 @@
 
   function renderCodesTab() {
     const grid = document.querySelector("[data-codes-grid]");
-    document.querySelector("[data-codes-cta-title]").textContent = `Du har ${fmt(profile.xp)} poeng å bruke`;
     if (!codes.length) {
-      grid.innerHTML = `<div class="empty-state-note">Ingen rabattkoder hentet ennå. Åpne en rabatt på premier-siden!</div>`;
+      grid.innerHTML = `<div class="empty-state-note">Ingen rabattkoder hentet ennå.</div>`;
       return;
     }
     grid.innerHTML = codes.map((c) => codeCardHTML(c)).join("");

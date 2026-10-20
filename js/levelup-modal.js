@@ -65,7 +65,6 @@
 
           <div class="levelup-actions">
             <button type="button" class="btn-primary" data-levelup-continue>Fortsett</button>
-            <a class="btn-outline levelup-reward-link" data-levelup-reward-link href="premier.html" hidden>Åpne rabatten</a>
           </div>
         </div>
       </div>
@@ -91,7 +90,6 @@
       reward: document.querySelector("[data-levelup-reward]"),
       rewardTitle: document.querySelector("[data-levelup-reward-title]"),
       rewardSub: document.querySelector("[data-levelup-reward-sub]"),
-      rewardLink: document.querySelector("[data-levelup-reward-link]"),
       continueBtn: document.querySelector("[data-levelup-continue]"),
       closeBtn: document.querySelector("[data-levelup-close]"),
       backdrop: document.querySelector("[data-levelup-backdrop]"),
@@ -191,7 +189,6 @@
     e.ringFill.style.transition = "";
 
     e.reward.hidden = true;
-    e.rewardLink.hidden = true;
 
     // Hentes i parallell med animasjonen under, ikke før den, slik at en
     // treg/mislykket nettforespørsel ikke fryser nivå opp-sekvensen.
@@ -199,8 +196,7 @@
       if (id !== runId || !hasRewards) return;
       e.reward.hidden = false;
       e.rewardTitle.textContent = "Ny rabatt med en tilfeldig rabattkode";
-      e.rewardSub.textContent = `Låst opp på nivå ${newProfile.level} · åpne rabatten under Få en rabatt`;
-      e.rewardLink.hidden = false;
+      e.rewardSub.textContent = `Låst opp på nivå ${newProfile.level}`;
     });
 
     timers = [
