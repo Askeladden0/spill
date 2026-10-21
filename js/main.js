@@ -64,9 +64,6 @@
           <h2>${daily.name}</h2>
           ${daily.pointsMultiplier ? `<p class="hero-bonus">${daily.pointsMultiplier}</p>` : ""}
           <p class="hero-desc">${daily.description || ""}</p>
-          ${window.StudillaHowTo && window.StudillaHowTo.get(daily.id)
-            ? `<div class="hero-howto"><strong>Hvordan spille</strong>${window.StudillaHowTo.listHtml(window.StudillaHowTo.get(daily.id))}</div>`
-            : ""}
           <button type="button" class="btn-primary" data-hero-start>Start her</button>
         </div>
       </div>
