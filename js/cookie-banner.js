@@ -79,7 +79,7 @@
             '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#17141f;border:1px solid rgba(255,255,255,.06);">' +
               '<div style="display:flex;flex-direction:column;gap:4px;">' +
                 '<span style="font-size:14px;font-weight:700;color:#ece8f2;">Markedsføring</span>' +
-                '<span style="font-size:13px;line-height:1.5;color:#8d8799;">Brukes for å vise relevante rabatter og annonser til deg, blant annet via Google Ads.</span>' +
+                '<span style="font-size:13px;line-height:1.5;color:#8d8799;">Lar oss vise annonser fra Google AdSense. Uten dette vises ingen annonser, og ingenting sendes til Google.</span>' +
               '</div>' +
               '<label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;margin-top:2px;cursor:pointer;">' +
                 '<input type="checkbox" id="scb-marketing" style="opacity:0;width:0;height:0;">' +
