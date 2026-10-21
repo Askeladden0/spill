@@ -732,6 +732,7 @@
     els.chatEmpty.hidden = true;
     els.chatActive.hidden = false;
     els.panel.classList.add("is-chat-open");
+    els.panel.scrollIntoView({ block: "nearest" });
 
     const isGroup = kind === "group";
     els.dmName.href = isGroup ? "#" : `spillerprofil.html?u=${encodeURIComponent(name)}`;
@@ -865,6 +866,8 @@
       if (openChat.kind === "group") await Social.sendGroupMessage(openChat.id, body);
       else await Social.send(openChat.id, body);
       await renderConversation();
+      els.panel.scrollIntoView({ block: "nearest" });
+      els.dmInput.focus({ preventScroll: true });
       renderThreads();
     } catch (err) {
       els.dmError.textContent = err.message;

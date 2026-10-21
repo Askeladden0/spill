@@ -535,7 +535,10 @@ select:focus-visible,
   display: grid;
   grid-template-columns: 330px minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
-  height: 660px;
+  /* Skal få plass i vinduet sammen med menyen, så skrivefeltet nederst ikke
+     havner under skjermkanten. */
+  height: clamp(440px, calc(100vh - 150px), 660px);
+  height: clamp(440px, calc(100dvh - 150px), 660px);
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, .07);
   background: var(--surface, #201c2b);
@@ -785,7 +788,6 @@ select:focus-visible,
 .dm-thread-body {
   flex: 1;
   min-height: 0;
-  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 8px;
