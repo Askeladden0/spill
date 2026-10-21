@@ -965,8 +965,8 @@
     return `
       <span class="admin-upload-row">
         <label class="admin-upload-btn${busy ? " is-busy" : ""}">
-          ${busy ? "Laster opp …" : "Last opp PNG/JPG"}
-          <input type="file" accept="image/png,image/jpeg" data-game-upload="${field}" data-game-id="${g.id}" ${busy ? "disabled" : ""}>
+          ${busy ? "Laster opp …" : "Last opp PNG/JPG/WebP"}
+          <input type="file" accept="image/png,image/jpeg,image/webp" data-game-upload="${field}" data-game-id="${g.id}" ${busy ? "disabled" : ""}>
         </label>
       </span>
     `;
@@ -974,9 +974,9 @@
 
   async function uploadGameImage(g, field, file) {
     if (!file) return;
-    const allowed = { "image/png": "png", "image/jpeg": "jpg" };
+    const allowed = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
     const ext = allowed[file.type];
-    if (!ext) return flash("Kun PNG og JPG er støttet.");
+    if (!ext) return flash("Kun PNG, JPG og WebP er støttet.");
     if (file.size > 5 * 1024 * 1024) return flash("Bildet er for stort (maks 5 MB).");
 
     const busyKey = `${g.id}:${field}`;
