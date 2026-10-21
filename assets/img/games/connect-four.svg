@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+<defs>
+<linearGradient id="bgg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#202b3d"/><stop offset="1" stop-color="#0d1117"/></linearGradient>
+<radialGradient id="glow" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#fbc82e" stop-opacity=".22"/><stop offset="1" stop-color="#fbc82e" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="800" height="500" fill="url(#bgg)"/>
+<rect width="800" height="500" fill="url(#glow)"/>
+<rect x="109" y="22" width="582" height="456" rx="22" fill="#2b4fd8"/>
+<circle cx="163" cy="73" r="29" fill="#17141f"/>
+<circle cx="241" cy="73" r="29" fill="#17141f"/>
+<circle cx="319" cy="73" r="29" fill="#17141f"/>
+<circle cx="397" cy="73" r="29" fill="#17141f"/>
+<circle cx="475" cy="73" r="29" fill="#17141f"/>
+<circle cx="553" cy="73" r="29" fill="#17141f"/>
+<circle cx="631" cy="73" r="29" fill="#17141f"/>
+<circle cx="163" cy="143" r="29" fill="#17141f"/>
+<circle cx="241" cy="143" r="29" fill="#17141f"/>
+<circle cx="319" cy="143" r="29" fill="#17141f"/>
+<circle cx="397" cy="143" r="29" fill="#17141f"/>
+<circle cx="475" cy="143" r="29" fill="#17141f"/>
+<circle cx="553" cy="143" r="29" fill="#17141f"/>
+<circle cx="631" cy="143" r="29" fill="#17141f"/>
+<circle cx="163" cy="213" r="29" fill="#17141f"/>
+<circle cx="241" cy="213" r="29" fill="#17141f"/>
+<circle cx="319" cy="213" r="29" fill="#17141f"/>
+<circle cx="397" cy="213" r="29" fill="#17141f"/>
+<circle cx="475" cy="213" r="29" fill="#17141f"/>
+<circle cx="553" cy="213" r="29" fill="#17141f"/>
+<circle cx="631" cy="213" r="29" fill="#17141f"/>
+<circle cx="163" cy="283" r="29" fill="#17141f"/>
+<circle cx="241" cy="283" r="29" fill="#17141f"/>
+<circle cx="319" cy="283" r="29" fill="#17141f"/>
+<circle cx="397" cy="283" r="29" fill="#fbc82e"/>
+<circle cx="475" cy="283" r="29" fill="#17141f"/>
+<circle cx="553" cy="283" r="29" fill="#17141f"/>
+<circle cx="631" cy="283" r="29" fill="#17141f"/>
+<circle cx="163" cy="353" r="29" fill="#17141f"/>
+<circle cx="241" cy="353" r="29" fill="#17141f"/>
+<circle cx="319" cy="353" r="29" fill="#ee3b4a"/>
+<circle cx="397" cy="353" r="29" fill="#ee3b4a"/>
+<circle cx="475" cy="353" r="29" fill="#fbc82e"/>
+<circle cx="553" cy="353" r="29" fill="#17141f"/>
+<circle cx="631" cy="353" r="29" fill="#17141f"/>
+<circle cx="163" cy="423" r="29" fill="#17141f"/>
+<circle cx="241" cy="423" r="29" fill="#ee3b4a"/>
+<circle cx="319" cy="423" r="29" fill="#fbc82e"/>
+<circle cx="397" cy="423" r="29" fill="#fbc82e"/>
+<circle cx="475" cy="423" r="29" fill="#ee3b4a"/>
+<circle cx="553" cy="423" r="29" fill="#fbc82e"/>
+<circle cx="631" cy="423" r="29" fill="#17141f"/>
+</svg>

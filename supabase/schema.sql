@@ -483,6 +483,12 @@ insert into public.games (id, name, genre, rating, points, time_estimate, descri
   ('bubble-shooter', 'Bubble Shooter', 'Puslespill', '4,7', 'Din skår = dine poeng', '~10 min', 'Sikt og skyt kuler for å matche tre eller flere med samme farge. Tøm hele brettet for maks poeng før kulene når bunnen.', 'assets/img/games/bubble-shooter.svg', 'assets/img/icons/bubble-shooter.svg', false, 6)
 on conflict (id) do nothing;
 
+insert into public.games (id, name, points, time_estimate, description, thumbnail_url, icon_url, is_daily_game, sort_order) values
+  ('minesweeper', 'Minesveiper', 'Din skår = dine poeng', '~5 min', 'Avdekk alle rutene uten miner. Åpne ruter, sett flagg der du tror det ligger en mine, og bruk tallene til å resonnere deg frem.', 'assets/img/games/minesweeper.svg', 'assets/img/icons/minesweeper.svg', false, 7),
+  ('connect-four', 'Fire på rad', 'Din skår = dine poeng', '~5 min', 'Slipp brikker i kolonnene og få fire på rad før AI-motstanderen gjør det. Jo raskere du vinner, jo flere poeng.', 'assets/img/games/connect-four.svg', 'assets/img/icons/connect-four.svg', false, 8),
+  ('flappy', 'Flappy', 'Din skår = dine poeng', '~3 min', 'Trykk for å flakse og fly fuglen gjennom åpningene mellom rørene. Ett feiltrykk og det er over.', 'assets/img/games/flappy.svg', 'assets/img/icons/flappy.svg', false, 9)
+on conflict (id) do nothing;
+
 -- 'slope' er fjernet fra siden; slett eventuell gammel rad slik at den ikke vises.
 delete from public.games where id = 'slope';
 

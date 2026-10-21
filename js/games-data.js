@@ -78,6 +78,33 @@ window.STUDILLA_GAMES = [
     icon: "assets/img/icons/bubble-shooter.svg",
     description: "Sikt og skyt kuler for å matche tre eller flere med samme farge. Tøm hele brettet for maks poeng før kulene når bunnen.",
     isDailyGame: false
+  },
+  {
+    id: "minesweeper",
+    name: "Minesveiper",
+    time: "~5 min",
+    thumbnail: "assets/img/games/minesweeper.svg",
+    icon: "assets/img/icons/minesweeper.svg",
+    description: "Avdekk alle rutene uten miner. Åpne ruter, sett flagg der du tror det ligger en mine, og bruk tallene til å resonnere deg frem.",
+    isDailyGame: false
+  },
+  {
+    id: "connect-four",
+    name: "Fire på rad",
+    time: "~5 min",
+    thumbnail: "assets/img/games/connect-four.svg",
+    icon: "assets/img/icons/connect-four.svg",
+    description: "Slipp brikker i kolonnene og få fire på rad før AI-motstanderen gjør det. Jo raskere du vinner, jo flere poeng.",
+    isDailyGame: false
+  },
+  {
+    id: "flappy",
+    name: "Flappy",
+    time: "~3 min",
+    thumbnail: "assets/img/games/flappy.svg",
+    icon: "assets/img/icons/flappy.svg",
+    description: "Trykk for å flakse og fly fuglen gjennom åpningene mellom rørene. Ett feiltrykk og det er over.",
+    isDailyGame: false
   }
 ];
 

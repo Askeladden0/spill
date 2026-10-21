@@ -55,6 +55,30 @@
         "Treffer du tre eller flere bobler i samme farge, spretter de og gir poeng.",
         "Ikke la boblene nå bunnen av brettet."
       ]
+    },
+    minesweeper: {
+      intro: "Finn alle rutene uten miner.",
+      steps: [
+        "Trykk på en rute for å åpne den. Tallet viser hvor mange miner som ligger rundt den.",
+        "Høyreklikk, trykk lenge, eller slå på flaggmodus for å sette et flagg der du tror det er en mine.",
+        "Åpne alle trygge ruter for å vinne. Treffer du en mine, er spillet over."
+      ]
+    },
+    "connect-four": {
+      intro: "Få fire brikker på rad før AI-en gjør det.",
+      steps: [
+        "Trykk på en kolonne for å slippe en rød brikke ned i den.",
+        "Fire på rad vannrett, loddrett eller diagonalt vinner.",
+        "Jo færre trekk du bruker på å vinne, jo flere poeng får du."
+      ]
+    },
+    flappy: {
+      intro: "Hold fuglen i lufta og slipp gjennom rørene.",
+      steps: [
+        "Trykk, klikk eller bruk mellomrom for å flakse.",
+        "Fly gjennom åpningen mellom rørene for å få poeng.",
+        "Treffer du et rør, bakken eller taket, er runden over."
+      ]
     }
   };
 
