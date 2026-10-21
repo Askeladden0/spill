@@ -803,6 +803,15 @@
       return;
     }
 
+    // Polling bygger lista på nytt hvert 8. sekund. Hopp bare ned til bunnen
+    // hvis man allerede var der (eller samtalen nettopp ble åpnet) – ellers
+    // blir man dratt ned mens man blar tilbake i eldre meldinger.
+    const box = els.dmMessages;
+    const wasAtBottom = box.dataset.chatKey !== chatKey()
+      || box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    const prevTop = box.scrollTop;
+    box.dataset.chatKey = chatKey();
+
     els.dmMessages.innerHTML = messages
       .map((m) => {
         const parsed = Social.parseBody(m.body);
@@ -818,7 +827,11 @@
         });
       })
       .join("");
-    els.dmMessages.scrollTop = els.dmMessages.scrollHeight;
+    box.scrollTop = wasAtBottom ? box.scrollHeight : prevTop;
+  }
+
+  function chatKey() {
+    return openChat ? `${openChat.kind}:${openChat.id}` : "";
   }
 
   // Enkel polling mens en samtale er åpen. Ikke sanntid, men nok til at et
