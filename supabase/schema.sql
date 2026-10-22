@@ -486,7 +486,7 @@ on conflict (id) do nothing;
 insert into public.games (id, name, points, time_estimate, description, thumbnail_url, icon_url, is_daily_game, sort_order) values
   ('minesweeper', 'Minesveiper', 'Din skår = dine poeng', '~5 min', 'Avdekk alle rutene uten miner. Åpne ruter, sett flagg der du tror det ligger en mine, og bruk tallene til å resonnere deg frem.', 'assets/img/games/minesweeper.svg', 'assets/img/icons/minesweeper.svg', false, 7),
   ('connect-four', 'Fire på rad', 'Din skår = dine poeng', '~5 min', 'Slipp brikker i kolonnene og få fire på rad før AI-motstanderen gjør det. Jo raskere du vinner, jo flere poeng.', 'assets/img/games/connect-four.svg', 'assets/img/icons/connect-four.svg', false, 8),
-  ('papirkomet', 'Papirkomet', 'Din skår = dine poeng', '~3 min', 'Trykk for å tenne motoren og fly romskipet Polaris gjennom åpningene mellom asteroidene. Ett feiltrykk og det er over.', 'assets/img/games/flappy.svg', 'assets/img/icons/flappy.svg', false, 9)
+  ('papirkomet', 'Papirkomet', 'Din skår = dine poeng', '~3 min', 'Trykk for å tenne motoren og fly romskipet Polaris gjennom åpningene mellom asteroidene. Ett feiltrykk og det er over.', 'assets/img/games/papirkomet.svg', 'assets/img/icons/papirkomet.svg', false, 9)
 on conflict (id) do nothing;
 
 -- 'slope' er fjernet fra siden; slett eventuell gammel rad slik at den ikke vises.
@@ -5093,3 +5093,6 @@ grant execute on function public.track_reward_use_click(text, text) to anon, aut
 --
 -- Etter det kan du gjøre flere til admin direkte fra adminpanelet.
 -- =============================================================================
+
+-- Bildene til Papirkomet ble omdøpt fra flappy.svg til papirkomet.svg.
+update public.games set thumbnail_url = 'assets/img/games/papirkomet.svg', icon_url = 'assets/img/icons/papirkomet.svg' where id = 'papirkomet';
