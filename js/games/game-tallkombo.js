@@ -10,7 +10,7 @@
   "use strict";
 
   const SIZE = 4;
-  const GAME_ID = "2048";
+  const GAME_ID = "tallkombo";
   const MOVE_DURATION = 130;
   const GRID_GAP = 12;
   // Poeng per "nivå" en sammenslått brikke når (2=nivå 1, 4=nivå 2, ...).

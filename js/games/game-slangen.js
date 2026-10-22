@@ -9,7 +9,7 @@
   "use strict";
 
   const SIZE = 10;
-  const GAME_ID = "snake";
+  const GAME_ID = "slangen";
   const TICK_MS = 130;
   const SPRITE_PATH = "assets/img/games/snake/";
   const HEAD_IDLE = ["normal", "tongue", "normal", "tongue", "normal", "normal", "blink", "normal", "open", "open", "normal", "tongue"];

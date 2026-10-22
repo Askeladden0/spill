@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  const GAME_ID = "block-blast";
+  const GAME_ID = "blokksprenging";
   const SIZE = 8;
   const COLORS = ["a", "b", "c", "d", "e", "f"];
   // Poeng per rute som legges ned, og poeng per rad/kolonne som sprenges.

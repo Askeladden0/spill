@@ -5096,3 +5096,28 @@ grant execute on function public.track_reward_use_click(text, text) to anon, aut
 
 -- Bildene til Papirkomet ble omdøpt fra flappy.svg til papirkomet.svg.
 update public.games set thumbnail_url = 'assets/img/games/papirkomet.svg', icon_url = 'assets/img/icons/papirkomet.svg' where id = 'papirkomet';
+
+-- ============================================================
+-- 36. Spill-id-er = nåværende navn
+-- ============================================================
+-- snake→slangen, 2048→tallkombo, tetris→puslespill, block-blast→blokksprenging,
+-- bubble-shooter→boblekanonen, connect-four→fire-pa-rad, minesweeper→minesveiper.
+-- Skårer, gjesteforsøk og bilde-stier følger med. Allerede kjørt i produksjon.
+do $$
+declare
+  m text[][] := array[
+    ['snake','slangen'],['2048','tallkombo'],['tetris','puslespill'],
+    ['block-blast','blokksprenging'],['bubble-shooter','boblekanonen'],
+    ['connect-four','fire-pa-rad'],['minesweeper','minesveiper']];
+  i int; o text; n text;
+begin
+  for i in 1..array_length(m,1) loop
+    o := m[i][1]; n := m[i][2];
+    update public.games set id = n,
+      thumbnail_url = replace(thumbnail_url, 'assets/img/games/'||o||'.svg', 'assets/img/games/'||n||'.svg'),
+      icon_url = replace(icon_url, 'assets/img/icons/'||o||'.svg', 'assets/img/icons/'||n||'.svg')
+      where id = o;
+    update public.game_records set game_id = n where game_id = o;
+    update public.guest_game_plays set game_id = n where game_id = o;
+  end loop;
+end $$;

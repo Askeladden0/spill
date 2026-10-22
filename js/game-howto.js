@@ -8,7 +8,7 @@
   "use strict";
 
   const HOWTO = {
-    "2048": {
+    "tallkombo": {
       intro: "Slå sammen brikker med like tall til du lager 2048-brikken.",
       steps: [
         "Skyv alle brikkene i en retning med piltastene, eller sveip på mobil.",
@@ -24,7 +24,7 @@
         "Ikke la haugen vokse over kanten av krukken, da er spillet over."
       ]
     },
-    tetris: {
+    "puslespill": {
       intro: "Fyll hele rader med fallende klosser for å fjerne dem.",
       steps: [
         "Flytt klossen sideveis med venstre/høyre piltast, og roter den med pil opp.",
@@ -32,7 +32,7 @@
         "Hver rad uten hull forsvinner og gir poeng. Spillet er over når klossene stabler seg helt til toppen."
       ]
     },
-    "block-blast": {
+    "blokksprenging": {
       intro: "Plasser blokker på brettet og fyll hele rader eller kolonner.",
       steps: [
         "Dra en av de tre blokkene nederst og slipp den på et ledig sted på brettet.",
@@ -40,7 +40,7 @@
         "Blokkene kan ikke roteres. Spillet er over når ingen av blokkene lenger får plass."
       ]
     },
-    snake: {
+    "slangen": {
       intro: "Styr slangen, spis maten og bli lengst mulig.",
       steps: [
         "Styr slangen med piltastene, eller sveip på mobil.",
@@ -48,7 +48,7 @@
         "Unngå å kjøre inn i veggen eller i deg selv, da er spillet over."
       ]
     },
-    "bubble-shooter": {
+    "boblekanonen": {
       intro: "Skyt bobler og sprett grupper med samme farge.",
       steps: [
         "Sikt med musen eller fingeren og slipp for å skyte en boble.",
@@ -56,7 +56,7 @@
         "Ikke la boblene nå bunnen av brettet."
       ]
     },
-    minesweeper: {
+    "minesveiper": {
       intro: "Finn alle rutene uten miner.",
       steps: [
         "Trykk på en rute for å åpne den. Tallet viser hvor mange miner som ligger rundt den.",
@@ -64,7 +64,7 @@
         "Åpne alle trygge ruter for å vinne. Treffer du en mine, er spillet over."
       ]
     },
-    "connect-four": {
+    "fire-pa-rad": {
       intro: "Få fire brikker på rad før AI-en gjør det.",
       steps: [
         "Trykk på en kolonne for å slippe en rød brikke ned i den.",

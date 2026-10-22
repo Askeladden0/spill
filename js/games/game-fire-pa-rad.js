@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  const GAME_ID = "connect-four";
+  const GAME_ID = "fire-pa-rad";
   const ROWS = 6;
   const COLS = 7;
   const HUMAN = 1;

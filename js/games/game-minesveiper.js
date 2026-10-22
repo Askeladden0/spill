@@ -11,7 +11,7 @@
 (function () {
   "use strict";
 
-  const GAME_ID = "minesweeper";
+  const GAME_ID = "minesveiper";
   const ROWS = 9;
   const COLS = 9;
   const MINES = 10;

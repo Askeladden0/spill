@@ -10,7 +10,7 @@
 (function () {
   "use strict";
 
-  const GAME_ID = "bubble-shooter";
+  const GAME_ID = "boblekanonen";
   const RADIUS = 20;
   const COL_WIDTH = RADIUS * 2;
   const ROW_HEIGHT = RADIUS * Math.sqrt(3);

@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const GAME_ID = "tetris";
+  const GAME_ID = "puslespill";
   const COLS = 10;
   const ROWS = 18;
   const DROP_MS = 780;
