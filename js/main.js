@@ -19,6 +19,7 @@
             : ""}
         </a>
         <div class="game-body">
+          ${g.description ? `<p class="game-desc" title="${String(g.description).replace(/"/g, "&quot;")}">${g.description}</p>` : ""}
           <h3 class="game-title">${g.name}</h3>
           <!-- Knappen lå tidligere inni <a>, som både er ugyldig HTML
                (klikkbart element inni et klikkbart element) og ga to

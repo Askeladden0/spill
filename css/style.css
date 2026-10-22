@@ -474,6 +474,15 @@ main {
   gap: 14px;
 }
 
+.game-desc {
+  margin: 0 0 -6px;
+  font-size: 13px;
+  color: var(--text-muted, var(--text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .game-actions {
   display: flex;
   flex-direction: row;
