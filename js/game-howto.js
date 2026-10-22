@@ -73,11 +73,11 @@
       ]
     },
     flappy: {
-      intro: "Hold fuglen i lufta og slipp gjennom rørene.",
+      intro: "Fly romskipet Polaris gjennom asteroidene.",
       steps: [
-        "Trykk, klikk eller bruk mellomrom for å flakse.",
-        "Fly gjennom åpningen mellom rørene for å få poeng.",
-        "Treffer du et rør, bakken eller taket, er runden over."
+        "Trykk, klikk eller bruk mellomrom for å tenne motoren.",
+        "Fly gjennom åpningen mellom asteroidesøylene for å få poeng.",
+        "Treffer du en asteroide eller bakken, er runden over."
       ]
     }
   };

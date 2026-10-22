@@ -2973,10 +2973,11 @@ a.xp-widget { text-decoration: none; color: inherit; }
 
 .flappy-canvas {
   display: block;
-  width: 360px;
-  height: 540px;
+  width: 420px;
+  height: 680px;
   border-radius: 14px;
   border: 1px solid var(--border-strong);
+  background: #1c1a35;
   touch-action: none;
   cursor: pointer;
   user-select: none;

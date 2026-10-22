@@ -103,7 +103,7 @@ window.STUDILLA_GAMES = [
     time: "~3 min",
     thumbnail: "assets/img/games/flappy.svg",
     icon: "assets/img/icons/flappy.svg",
-    description: "Trykk for å flakse og fly fuglen gjennom åpningene mellom rørene. Ett feiltrykk og det er over.",
+    description: "Trykk for å tenne motoren og fly romskipet Polaris gjennom åpningene mellom asteroidene. Ett feiltrykk og det er over.",
     isDailyGame: false
   }
 ];
