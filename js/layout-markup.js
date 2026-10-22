@@ -40,7 +40,7 @@
   <header class="site-header">
     <div class="header-left">
       <a href="index.html" class="logo">
-        <span class="logo-mark"><img src="assets/img/snorre-saus-avatar.jpeg" alt="" width="30" height="30"></span>
+        <span class="logo-mark"><img src="assets/img/snorre-saus-avatar.svg" alt="" width="30" height="30"></span>
         <span class="logo-text">Studi<span>ll</span>a</span>
       </a>
       <nav class="main-nav" id="main-nav">
@@ -76,7 +76,7 @@
   const FOOTER_HTML = `
   <footer class="site-footer">
     <div class="footer-brand">
-      <span class="footer-logo-mark"><img src="assets/img/snorre-saus-avatar.jpeg" alt="" width="24" height="24"></span>
+      <span class="footer-logo-mark"><img src="assets/img/snorre-saus-avatar.svg" alt="" width="24" height="24"></span>
       <span class="footer-copy">© 2026 Studilla</span>
     </div>
     <nav class="footer-nav">
