@@ -66,7 +66,7 @@ spill/
 ├── login.html             Logg inn / registrer deg (brukernavn + passord)
 ├── profil.html            Profilside – avatar, brukernavn, nivå, rekorder, slett konto
 ├── admin.html             Adminpanel – eget sidemeny-dashbord (se under), krever admin-status
-├── assets/img/favicon.svg  Faviconet (Studilla-logoen), lenket inn fra alle sidene
+├── assets/img/favicon.svg  Faviconet (Snorre Saus-logoen), lenket inn fra alle sidene
 ├── css/
 │   └── style.css          Alt av delt CSS (farger, header, footer, kort, skjemaer, adminpanel osv.)
 │                          Brukes av alle sider – endringer her slår ut overalt.
