@@ -486,11 +486,15 @@ on conflict (id) do nothing;
 insert into public.games (id, name, points, time_estimate, description, thumbnail_url, icon_url, is_daily_game, sort_order) values
   ('minesweeper', 'Minesveiper', 'Din skår = dine poeng', '~5 min', 'Avdekk alle rutene uten miner. Åpne ruter, sett flagg der du tror det ligger en mine, og bruk tallene til å resonnere deg frem.', 'assets/img/games/minesweeper.svg', 'assets/img/icons/minesweeper.svg', false, 7),
   ('connect-four', 'Fire på rad', 'Din skår = dine poeng', '~5 min', 'Slipp brikker i kolonnene og få fire på rad før AI-motstanderen gjør det. Jo raskere du vinner, jo flere poeng.', 'assets/img/games/connect-four.svg', 'assets/img/icons/connect-four.svg', false, 8),
-  ('flappy', 'Flappy', 'Din skår = dine poeng', '~3 min', 'Trykk for å flakse og fly fuglen gjennom åpningene mellom rørene. Ett feiltrykk og det er over.', 'assets/img/games/flappy.svg', 'assets/img/icons/flappy.svg', false, 9)
+  ('papirkomet', 'Papirkomet', 'Din skår = dine poeng', '~3 min', 'Trykk for å tenne motoren og fly romskipet Polaris gjennom åpningene mellom asteroidene. Ett feiltrykk og det er over.', 'assets/img/games/flappy.svg', 'assets/img/icons/flappy.svg', false, 9)
 on conflict (id) do nothing;
 
 -- 'slope' er fjernet fra siden; slett eventuell gammel rad slik at den ikke vises.
 delete from public.games where id = 'slope';
+
+-- 'flappy' ble omdøpt til 'papirkomet'; flytt eksisterende skårer og fjern gammel rad.
+update public.game_records set game_id = 'papirkomet' where game_id = 'flappy';
+delete from public.games where id = 'flappy';
 
 alter table public.games enable row level security;
 
@@ -1639,6 +1643,9 @@ create table if not exists public.guest_game_plays (
 );
 
 create index if not exists guest_game_plays_game_idx on public.guest_game_plays (game_id);
+
+-- 'flappy' ble omdøpt til 'papirkomet'.
+update public.guest_game_plays set game_id = 'papirkomet' where game_id = 'flappy';
 create index if not exists guest_game_plays_created_idx on public.guest_game_plays (created_at);
 
 alter table public.guest_game_plays enable row level security;

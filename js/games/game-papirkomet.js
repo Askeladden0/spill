@@ -10,7 +10,7 @@
 (function () {
   "use strict";
 
-  const GAME_ID = "flappy";
+  const GAME_ID = "papirkomet";
   const W = 420;
   const H = 680;
   const G = 96;               // bakkehøyde

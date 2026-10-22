@@ -72,7 +72,7 @@
         "Jo færre trekk du bruker på å vinne, jo flere poeng får du."
       ]
     },
-    flappy: {
+    papirkomet: {
       intro: "Fly romskipet Polaris gjennom asteroidene.",
       steps: [
         "Trykk, klikk eller bruk mellomrom for å tenne motoren.",

@@ -98,8 +98,8 @@ window.STUDILLA_GAMES = [
     isDailyGame: false
   },
   {
-    id: "flappy",
-    name: "Flappy",
+    id: "papirkomet",
+    name: "Papirkomet",
     time: "~3 min",
     thumbnail: "assets/img/games/flappy.svg",
     icon: "assets/img/icons/flappy.svg",
