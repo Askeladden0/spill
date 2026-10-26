@@ -70,6 +70,7 @@
     openGames: new Set(),
     dragFromId: null,
     gameUploadBusy: new Set(),
+    imageShrink: { running: false, text: "" },
 
     // Rabatter
     openCodeLists: new Set(),
@@ -972,21 +973,36 @@
     `;
   }
 
+  const IMAGE_EXT = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+  // Filnavnene har tidsstempel og byttes aldri ut, så nettleseren kan
+  // trygt holde på dem i et år.
+  const IMAGE_CACHE_SECONDS = "31536000";
+
+  /** Krymper bildet (js/image-compress.js) før det lastes opp. */
+  function shrinkImage(file, preset) {
+    return window.StudillaImage ? window.StudillaImage.compress(file, preset) : Promise.resolve(file);
+  }
+
   async function uploadGameImage(g, field, file) {
     if (!file) return;
-    const allowed = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
-    const ext = allowed[file.type];
-    if (!ext) return flash("Kun PNG, JPG og WebP er støttet.");
-    if (file.size > 5 * 1024 * 1024) return flash("Bildet er for stort (maks 5 MB).");
+    if (!IMAGE_EXT[file.type]) return flash("Kun PNG, JPG og WebP er støttet.");
+    if (file.size > 20 * 1024 * 1024) return flash("Bildet er for stort (maks 20 MB).");
 
     const busyKey = `${g.id}:${field}`;
     state.gameUploadBusy.add(busyKey);
     renderMain();
 
-    const path = `${g.id}/${field}-${Date.now()}.${ext}`;
+    const small = await shrinkImage(file, field === "icon_url" ? "icon" : "cover");
+    if (small.size > 5 * 1024 * 1024) {
+      state.gameUploadBusy.delete(busyKey);
+      renderMain();
+      return flash("Bildet er for stort selv etter krymping (maks 5 MB).");
+    }
+
+    const path = `${g.id}/${field}-${Date.now()}.${IMAGE_EXT[small.type]}`;
     const { error: uploadError } = await sb.storage
       .from(GAME_IMAGE_BUCKET)
-      .upload(path, file, { contentType: file.type, upsert: true });
+      .upload(path, small, { contentType: small.type, upsert: true, cacheControl: IMAGE_CACHE_SECONDS });
 
     if (uploadError) {
       state.gameUploadBusy.delete(busyKey);
@@ -1008,6 +1024,131 @@
     // navn også slår ut i den sammenslåtte rad-tittelen med én gang.
     renderMain();
     flash("Lagret!");
+  }
+
+  // ---------------------------------------------------------------------
+  // Krymp bildene som allerede ligger ute
+  // ---------------------------------------------------------------------
+
+  /**
+   * Bildene som ble lastet opp før js/image-compress.js fantes, er opptil
+   * 2,7 MB store. Denne gjennomgangen henter hvert spill- og tipsbilde som
+   * ligger i Supabase Storage, krymper det, laster opp en ny kopi og bytter
+   * lenken. De gamle filene blir liggende i bøtta, så en lenke kan settes
+   * tilbake for hånd hvis noe skulle se feil ut.
+   */
+  const GUIDE_IMAGE_BUCKET = "guide-images";
+  // Den nye filen må være minst 20 % mindre, ellers er det ikke verdt et bytte.
+  const SHRINK_MIN_SAVING = 0.8;
+
+  function isOwnStorageUrl(url) {
+    return typeof url === "string" && url.includes("/storage/v1/object/public/");
+  }
+
+  async function shrinkRemoteImage(job) {
+    const res = await fetch(job.url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    if (!IMAGE_EXT[blob.type]) return null;
+    const original = new File([blob], "bilde", { type: blob.type });
+    const small = await shrinkImage(original, job.preset);
+    if (small === original || small.size > original.size * SHRINK_MIN_SAVING) return null;
+
+    const path = `${job.folder}/${job.prefix}-${Date.now()}.${IMAGE_EXT[small.type]}`;
+    const { error } = await sb.storage
+      .from(job.bucket)
+      .upload(path, small, { contentType: small.type, upsert: true, cacheControl: IMAGE_CACHE_SECONDS });
+    if (error) throw error;
+    const { data: pub } = sb.storage.from(job.bucket).getPublicUrl(path);
+    return { url: pub.publicUrl, before: original.size, after: small.size };
+  }
+
+  async function collectImageJobs() {
+    const jobs = [];
+    const throwIf = ({ error }) => { if (error) throw error; };
+
+    state.games.forEach((g) => {
+      ["thumbnail_url", "icon_url"].forEach((field) => {
+        if (!isOwnStorageUrl(g[field])) return;
+        jobs.push({
+          url: g[field], preset: field === "icon_url" ? "icon" : "cover",
+          bucket: GAME_IMAGE_BUCKET, folder: g.id, prefix: field,
+          save: async (url) => {
+            throwIf(await sb.from("games").update({ [field]: url }).eq("id", g.id));
+            g[field] = url;
+          },
+        });
+      });
+    });
+
+    const [guides, modules] = await Promise.all([
+      sb.from("guides").select("id, cover_url"),
+      sb.from("guide_modules").select("id, guide_id, data").eq("type", "bilde"),
+    ]);
+    throwIf(guides);
+    throwIf(modules);
+
+    guides.data.forEach((gd) => {
+      if (!isOwnStorageUrl(gd.cover_url)) return;
+      jobs.push({
+        url: gd.cover_url, preset: "cover", bucket: GUIDE_IMAGE_BUCKET, folder: gd.id, prefix: "cover",
+        save: async (url) => throwIf(await sb.from("guides").update({ cover_url: url }).eq("id", gd.id)),
+      });
+    });
+    modules.data.forEach((m) => {
+      const url = m.data && m.data.url;
+      if (!isOwnStorageUrl(url)) return;
+      jobs.push({
+        url, preset: "content", bucket: GUIDE_IMAGE_BUCKET, folder: m.guide_id, prefix: "bilde",
+        save: async (next) => throwIf(await sb.from("guide_modules").update({ data: { ...m.data, url: next } }).eq("id", m.id)),
+      });
+    });
+    return jobs;
+  }
+
+  async function shrinkAllImages() {
+    if (state.imageShrink.running) return;
+    if (!window.StudillaImage) return flash("Bildekrymping er ikke lastet (js/image-compress.js).");
+    if (!window.confirm("Krympe alle store spill- og tipsbilder? Det lages nye, mindre kopier, og lenkene byttes. De gamle filene blir liggende i Storage.")) return;
+
+    const setStatus = (text) => { state.imageShrink.text = text; renderMain(); };
+    state.imageShrink.running = true;
+    setStatus("Finner bilder …");
+
+    let jobs;
+    try {
+      jobs = await collectImageJobs();
+    } catch (e) {
+      state.imageShrink.running = false;
+      setStatus("");
+      return flash(Auth.friendlyAuthError(e));
+    }
+
+    let shrunk = 0;
+    let failed = 0;
+    let before = 0;
+    let after = 0;
+    for (let i = 0; i < jobs.length; i++) {
+      setStatus(`Krymper bilde ${i + 1} av ${jobs.length} …`);
+      try {
+        const result = await shrinkRemoteImage(jobs[i]);
+        if (!result) continue;
+        await jobs[i].save(result.url);
+        shrunk++;
+        before += result.before;
+        after += result.after;
+      } catch (e) {
+        failed++;
+        console.error("[Studilla] Klarte ikke krympe", jobs[i].url, e);
+      }
+    }
+
+    const mb = (bytes) => `${(bytes / 1048576).toLocaleString("nb-NO", { maximumFractionDigits: 1 })} MB`;
+    state.imageShrink.running = false;
+    setStatus(
+      (shrunk ? `${shrunk} bilder krympet fra ${mb(before)} til ${mb(after)}.` : "Ingen bilder trengte krymping.")
+      + (failed ? ` ${failed} feilet – se konsollen.` : "")
+    );
   }
 
   async function deleteGame(g) {
@@ -1118,8 +1259,10 @@
           <span class="admin-toolbar-count">${state.games.length} spill</span>
           <span class="admin-card-spacer"></span>
           <span class="admin-toolbar-hint">Dra ⠿ for å endre rekkefølgen på forsiden</span>
+          <button type="button" class="btn-outline" style="width:auto;padding:10px 16px" data-quick="shrink-images" ${state.imageShrink.running ? "disabled" : ""} title="Lager mindre WebP-kopier av store spill- og tipsbilder og bytter lenkene">Krymp store bilder</button>
           <button type="button" class="btn-start" style="width:auto;padding:10px 16px" data-quick="new-game">+ Nytt spill</button>
         </div>
+        ${state.imageShrink.text ? `<p class="admin-card-sub" style="margin:0" role="status">${escapeHTML(state.imageShrink.text)}</p>` : ""}
         ${migrationNote}
         <div class="admin-row-list" data-games-list>
           ${rows || `<p class="admin-card-sub">Ingen spill ennå.</p>`}
@@ -2133,7 +2276,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // Varsler – nye registreringer og blokkeringer
+  // Varsler – nye registreringer, blokkeringer og rapporter
   // ---------------------------------------------------------------------
 
   function unreadNotificationCount() {
@@ -2143,6 +2286,7 @@
   const NOTIFICATION_META = {
     signup: { label: "NY BRUKER", cls: "is-signup" },
     block: { label: "BLOKKERING", cls: "is-block" },
+    report: { label: "RAPPORT", cls: "is-block" },
   };
 
   function renderVarsler() {
@@ -2160,9 +2304,9 @@
     const unread = unreadNotificationCount();
     const rows = state.notifications.map((n) => {
       const meta = NOTIFICATION_META[n.kind] || { label: n.kind.toUpperCase(), cls: "" };
-      // Blokkeringsvarsler lenker rett til samtalen mellom de to, som er det
-      // eneste stedet man faktisk kan vurdere hva som har skjedd.
-      const action = n.kind === "block" && n.actor_id && n.target_id
+      // Blokkeringer og rapporter lenker rett til samtalen mellom de to, som
+      // er det eneste stedet man faktisk kan vurdere hva som har skjedd.
+      const action = (n.kind === "block" || n.kind === "report") && n.actor_id && n.target_id
         ? `<button type="button" class="admin-btn-ghost" data-open-block="${n.actor_id}:${n.target_id}">Se samtalen</button>`
         : n.actor_username
           ? `<a class="admin-profile-link" href="spillerprofil.html?u=${encodeURIComponent(n.actor_username)}" target="_blank">Profil ↗</a>`
@@ -2460,6 +2604,7 @@
       if (quick.dataset.quick === "new-game") return addGame();
       if (quick.dataset.quick === "new-level") return addLevel();
       if (quick.dataset.quick === "new-reward") return addReward();
+      if (quick.dataset.quick === "shrink-images") return shrinkAllImages();
     }
 
     if (t.closest("[data-koder-download-all]")) return downloadAllCodesOverview();

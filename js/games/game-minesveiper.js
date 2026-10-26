@@ -147,6 +147,15 @@
         renderMode();
       });
       session.onRestart(() => initGame());
+      // Pause (js/game-runtime.js): stopp klokka, som gir tidsbonus ved seier.
+      session.onPause(() => {
+        if (!timer || over) return false;
+        clearInterval(timer);
+        timer = null;
+        return true;
+      }, () => {
+        if (!over) startTimer();
+      });
       buildBoard();
       initGame();
     });

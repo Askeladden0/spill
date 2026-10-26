@@ -64,6 +64,16 @@
         </div>
       `;
       session.onRestart(() => initGame());
+      // Pause (js/game-runtime.js): stopp fallet. En gjenopptatt runde som
+      // venter på første tast, står allerede stille.
+      session.onPause(() => {
+        if (!dropTimer || over) return false;
+        clearInterval(dropTimer);
+        dropTimer = null;
+        return true;
+      }, () => {
+        if (!over) dropTimer = setInterval(() => softDrop(false), DROP_MS);
+      });
       attachControls();
       // Fortsett en påbegynt runde hvis den ligger lagret, ellers ny runde.
       if (!resumeGame()) initGame();

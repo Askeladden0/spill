@@ -110,6 +110,19 @@
               </button>
             </div>
 
+            <!-- Kolonnen dm_from_followers_only fantes, men kunne ikke endres
+                 noe sted. Standard er nå at bare venner kan skrive til deg
+                 (supabase/schema.sql, seksjon 75). -->
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Meldinger fra andre enn venner</span>
+                <span>Som standard kan bare vennene dine sende deg meldinger. Slå på for å ta imot meldinger fra alle med konto.</span>
+              </div>
+              <button type="button" class="toggle-switch" data-toggle-dm-open aria-label="Ta imot meldinger fra andre enn venner">
+                <span class="toggle-switch-knob"></span>
+              </button>
+            </div>
+
             <div class="settings-row">
               <div class="settings-row-label">
                 <span>Informasjonskapsler</span>
@@ -233,6 +246,7 @@
   function renderPrivacy() {
     const toggle = document.querySelector("[data-toggle-hidden]");
     toggle.classList.toggle("is-on", !!profile.is_hidden);
+    document.querySelector("[data-toggle-dm-open]").classList.toggle("is-on", profile.dm_from_followers_only === false);
   }
 
   // Sprettoppvarselet (js/dm-popup.js) er på som standard. Kolonnen mangler
@@ -311,6 +325,17 @@
       return;
     }
     profile.is_hidden = nextValue;
+    renderPrivacy();
+  });
+
+  document.querySelector("[data-toggle-dm-open]").addEventListener("click", async () => {
+    const friendsOnly = profile.dm_from_followers_only === false;
+    const { error } = await sb.from("profiles").update({ dm_from_followers_only: friendsOnly }).eq("id", profile.id);
+    if (error) {
+      console.error(error);
+      return;
+    }
+    profile.dm_from_followers_only = friendsOnly;
     renderPrivacy();
   });
 

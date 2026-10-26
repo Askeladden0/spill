@@ -302,6 +302,18 @@
         draw();
       });
       session.onRestart(() => initGame());
+      // Pause (js/game-runtime.js): stopp løkka bare midt i en flytur – på
+      // startskjermen og etter krasj står alt stille uansett.
+      session.onPause(() => {
+        if (state !== "playing") return false;
+        cancelAnimationFrame(raf);
+        raf = 0;
+        return true;
+      }, () => {
+        last = 0;
+        acc = 0;
+        raf = requestAnimationFrame(loop);
+      });
       attachControls();
       initGame();
       raf = requestAnimationFrame(loop);

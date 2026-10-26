@@ -5121,3 +5121,159 @@ begin
     update public.guest_game_plays set game_id = n where game_id = o;
   end loop;
 end $$;
+
+
+-- ---------------------------------------------------------------------------
+-- 75. Trygghet i meldinger (EVALUERING.md, tiltak T9).
+--
+--     a) Bare venner kan sende deg meldinger, med mindre du selv slår på
+--        «Meldinger fra andre enn venner» i innstillingene. Kolonnen
+--        dm_from_followers_only fantes (seksjon 56), men sto på false og
+--        kunne ikke endres noe sted – så alle med konto kunne skrive til
+--        alle, på en side der de fleste er elever. Et vennskap lagres som to
+--        rader i follows (seksjon 58), så «mottakeren følger avsenderen»
+--        betyr i praksis «dere er venner».
+--     b) Unntak: meldinger TIL en administrator slipper alltid gjennom, slik
+--        at «Send en melding» til Snorre på forsiden virker for alle.
+--     c) Rapportering: report_user() legger et varsel hos admin (kind
+--        'report'), og adminpanelet lenker rett til samtalen mellom partene.
+-- ---------------------------------------------------------------------------
+alter table public.profiles alter column dm_from_followers_only set default true;
+
+-- Eksisterende brukere flyttes over til den nye standarden én gang. Uten
+-- flagget ville hver ny kjøring av denne fila skrudd av valget for dem som
+-- senere har slått på «Meldinger fra andre enn venner».
+alter table public.app_settings add column if not exists dm_friends_default_applied boolean not null default false;
+
+do $$
+begin
+  if not coalesce((select dm_friends_default_applied from public.app_settings where id = 1), false) then
+    update public.profiles set dm_from_followers_only = true where dm_from_followers_only = false;
+    update public.app_settings set dm_friends_default_applied = true where id = 1;
+  end if;
+end $$;
+
+create or replace function public.send_direct_message(p_recipient uuid, p_body text)
+returns public.direct_messages
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  msg public.direct_messages;
+  per_hour int;
+  enabled boolean;
+  used int;
+  clean text;
+  friends_only boolean;
+  recipient_is_admin boolean;
+begin
+  if uid is null then
+    raise exception 'Du må være logget inn for å sende meldinger';
+  end if;
+  if p_recipient is null or p_recipient = uid then
+    raise exception 'Ugyldig mottaker';
+  end if;
+
+  select dm_from_followers_only, coalesce(is_admin, false)
+    into friends_only, recipient_is_admin
+    from public.profiles where id = p_recipient;
+  if friends_only is null then
+    raise exception 'Fant ikke mottakeren';
+  end if;
+
+  select coalesce(dm_enabled, true), coalesce(dm_max_per_hour, 60)
+    into enabled, per_hour from public.app_settings where id = 1;
+  if enabled is false then
+    raise exception 'Meldinger er midlertidig slått av.';
+  end if;
+  per_hour := coalesce(per_hour, 60);
+
+  if public.is_blocked_between(uid, p_recipient) then
+    raise exception 'Du kan ikke sende melding til denne spilleren.';
+  end if;
+
+  -- Bare venner, med mindre mottakeren har åpnet for alle. Har mottakeren
+  -- selv skrevet i samtalen, slipper svaret gjennom, og en administrator
+  -- kan alltid nås.
+  if friends_only
+     and not recipient_is_admin
+     and not exists (select 1 from public.follows
+                      where follower_id = p_recipient and following_id = uid)
+     and not exists (select 1 from public.direct_messages
+                      where thread_key = public.dm_thread_key(uid, p_recipient)
+                        and sender_id = p_recipient) then
+    raise exception 'Dere må være venner for å sende meldinger. Send en venneforespørsel først.';
+  end if;
+
+  clean := btrim(p_body);
+  if clean = '' then
+    raise exception 'Meldingen er tom';
+  end if;
+
+  if per_hour > 0 then
+    select count(*) into used from public.direct_messages
+     where sender_id = uid and created_at > now() - interval '1 hour';
+    if used >= per_hour then
+      raise exception 'Du har sendt mange meldinger på kort tid. Prøv igjen om litt.';
+    end if;
+  end if;
+
+  insert into public.direct_messages (sender_id, recipient_id, thread_key, body)
+  values (uid, p_recipient, public.dm_thread_key(uid, p_recipient), left(clean, 1000))
+  returning * into msg;
+
+  return msg;
+end;
+$$;
+
+revoke all on function public.send_direct_message(uuid, text) from public, anon;
+grant execute on function public.send_direct_message(uuid, text) to authenticated;
+
+alter table public.admin_notifications drop constraint if exists admin_notifications_kind;
+alter table public.admin_notifications
+  add constraint admin_notifications_kind check (kind in ('signup', 'block', 'report'));
+
+create or replace function public.report_user(p_user uuid, p_reason text default null)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  reporter_name text;
+  reported_name text;
+  recent int;
+  reason text := nullif(left(btrim(coalesce(p_reason, '')), 500), '');
+begin
+  if uid is null then
+    raise exception 'Du må være logget inn for å rapportere';
+  end if;
+  if p_user is null or p_user = uid then
+    raise exception 'Ugyldig spiller';
+  end if;
+
+  select username into reported_name from public.profiles where id = p_user;
+  if reported_name is null then
+    raise exception 'Fant ikke spilleren';
+  end if;
+
+  -- Fartsgrense, så knappen ikke kan brukes til å fylle opp adminpanelet.
+  select count(*) into recent from public.admin_notifications
+   where kind = 'report' and actor_id = uid and created_at > now() - interval '1 hour';
+  if recent >= 10 then
+    raise exception 'Du har sendt mange rapporter på kort tid. Prøv igjen senere.';
+  end if;
+
+  select username into reporter_name from public.profiles where id = uid;
+  insert into public.admin_notifications (kind, actor_id, target_id, body)
+  values ('report', uid, p_user,
+          coalesce(reporter_name, 'En bruker') || ' rapporterte ' || reported_name
+            || coalesce(': «' || reason || '»', ''));
+end;
+$$;
+
+revoke all on function public.report_user(uuid, text) from public, anon;
+grant execute on function public.report_user(uuid, text) to authenticated;

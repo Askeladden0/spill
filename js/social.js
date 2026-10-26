@@ -156,6 +156,40 @@
     return true;
   }
 
+  /* ---------------------------------------------------------------- *
+   * Rapportering
+   * ---------------------------------------------------------------- */
+
+  /**
+   * Rapporterer en spiller til admin. Havner i adminpanelets varsler sammen
+   * med blokkeringene, med lenke til samtalen deres (supabase/schema.sql,
+   * seksjon 75). Går ikke via rpc() over: mangler funksjonen, skal ikke hele
+   * det sosiale laget regnes som utilgjengelig. Gir false hvis databasen
+   * ikke har funksjonen ennå.
+   */
+  async function report(userId, reason) {
+    const { error } = await sb.rpc("report_user", { p_user: userId, p_reason: reason || null });
+    if (error) {
+      if (isMissing(error)) return false;
+      throw error;
+    }
+    return true;
+  }
+
+  /** Spør etter en valgfri begrunnelse og sender rapporten. Brukes av knappene. */
+  async function reportWithPrompt(userId) {
+    const reason = window.prompt("Hva har skjedd? Admin leser rapporten og kan se samtalen deres. Du kan la feltet stå tomt.");
+    if (reason === null) return;
+    try {
+      const ok = await report(userId, reason.trim().slice(0, 500));
+      window.alert(ok
+        ? "Takk. Admin har fått beskjed. Du kan også blokkere spilleren."
+        : "Rapportering er ikke slått på ennå. Bruk kontakt-siden i mellomtiden.");
+    } catch (e) {
+      window.alert((e && e.message) || "Klarte ikke sende rapporten.");
+    }
+  }
+
   async function isBlocked(userId) {
     const me = await myId();
     if (!me) return false;
@@ -389,7 +423,7 @@
     myId,
     friendStats, addFriend, respondFriendRequest, cancelFriendRequest, removeFriend,
     incomingRequests, outgoingRequests, friendsList, friendIds, playerActivity,
-    block, unblock, isBlocked, blockedUsers,
+    block, unblock, isBlocked, blockedUsers, report, reportWithPrompt,
     threads, unreadCount, recentUnread, markRead, send, conversation,
     createGroup, groupThreads, groupConversation, sendGroupMessage,
     groupMarkRead, groupMembers, addGroupMembers, leaveGroup,

@@ -122,6 +122,7 @@
               <span class="dm-thread-sub" data-dm-sub></span>
               <button type="button" class="dm-thread-action" data-group-add hidden>Legg til</button>
               <button type="button" class="dm-thread-action" data-group-leave hidden>Forlat</button>
+              <button type="button" class="dm-thread-block" data-dm-report hidden>Rapporter</button>
               <button type="button" class="dm-thread-block" data-dm-block hidden>Blokker</button>
             </div>
             <div class="dm-thread-body" data-dm-messages></div>
@@ -243,6 +244,7 @@
     dmInput: document.querySelector("[data-dm-input]"),
     dmError: document.querySelector("[data-dm-error]"),
     dmBlock: document.querySelector("[data-dm-block]"),
+    dmReport: document.querySelector("[data-dm-report]"),
     groupAdd: document.querySelector("[data-group-add]"),
     groupLeave: document.querySelector("[data-group-leave]"),
     groupModal: document.querySelector("[data-group-modal]"),
@@ -748,6 +750,7 @@
     els.dmAvatar.outerHTML = `<span data-dm-avatar>${avatar}</span>`;
     els.dmAvatar = document.querySelector("[data-dm-avatar]");
     els.dmBlock.hidden = isGroup;
+    els.dmReport.hidden = isGroup;
     els.groupAdd.hidden = !isGroup;
     els.groupLeave.hidden = !isGroup;
     els.dmSub.textContent = "";
@@ -883,6 +886,13 @@
     if (e.key !== "Escape") return;
     if (openPicker) return closePicker();
     if (!els.groupModal.hidden) closeGroupModal();
+  });
+
+  // Rapporter havner hos admin sammen med en lenke til samtalen
+  // (js/social.js, reportWithPrompt).
+  els.dmReport.addEventListener("click", () => {
+    if (!openChat || openChat.kind !== "dm") return;
+    Social.reportWithPrompt(openChat.id);
   });
 
   els.dmBlock.addEventListener("click", async () => {

@@ -243,12 +243,18 @@ window.StudillaGuides = {
   async uploadImage(guideId, file, prefix) {
     const sb = window.supabaseClient;
     const allowed = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
-    const ext = allowed[file.type];
-    if (!ext) return { error: { message: "Kun PNG, JPG og WEBP er støttet." } };
-    if (file.size > 5 * 1024 * 1024) return { error: { message: "Bildet er for stort (maks 5 MB)." } };
+    if (!allowed[file.type]) return { error: { message: "Kun PNG, JPG og WEBP er støttet." } };
+    if (file.size > 20 * 1024 * 1024) return { error: { message: "Bildet er for stort (maks 20 MB)." } };
 
-    const path = `${guideId}/${prefix || "bilde"}-${Date.now()}.${ext}`;
-    const { error } = await sb.storage.from(GUIDE_IMAGE_BUCKET).upload(path, file, { contentType: file.type, upsert: true });
+    // Krympes til visningsstørrelse og WebP før opplasting (js/image-compress.js).
+    const small = window.StudillaImage
+      ? await window.StudillaImage.compress(file, prefix === "cover" ? "cover" : "content")
+      : file;
+    if (small.size > 5 * 1024 * 1024) return { error: { message: "Bildet er for stort selv etter krymping (maks 5 MB)." } };
+
+    const path = `${guideId}/${prefix || "bilde"}-${Date.now()}.${allowed[small.type]}`;
+    // Filnavnet har tidsstempel og byttes aldri ut, så det kan caches i et år.
+    const { error } = await sb.storage.from(GUIDE_IMAGE_BUCKET).upload(path, small, { contentType: small.type, upsert: true, cacheControl: "31536000" });
     if (error) return { error };
     const { data: pub } = sb.storage.from(GUIDE_IMAGE_BUCKET).getPublicUrl(path);
     return { data: pub.publicUrl };

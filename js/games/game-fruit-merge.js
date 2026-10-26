@@ -97,6 +97,14 @@
         </div>
       `;
       session.onRestart(() => initGame());
+      // Pause (js/game-runtime.js): fysikken står stille mens runneren er av.
+      session.onPause(() => {
+        if (over || !runner || !runner.enabled) return false;
+        runner.enabled = false;
+        return true;
+      }, () => {
+        if (runner) runner.enabled = true;
+      });
       // Spillflaten skalerer hele brettet opp for å fylle skjermen (se
       // watchShellFit i js/game-runtime.js). Et canvas som bare strekkes opp
       // blir uskarpt, så Matter får beskjed om å tegne i den oppløsningen
@@ -441,7 +449,11 @@
     function checkDanger() {
       if (over) return;
       const bodies = Matter.Composite.allBodies(world).filter((b) => b.fruitIndex !== undefined);
-      const now = Date.now();
+      // Simulert tid, ikke veggklokke: med Date.now() fortsatte klokka å gå
+      // mens fysikken sto (fanebytte, pause, eller en treg maskin som mister
+      // bilder), og en frukt som var på vei ned kunne gi game over før den
+      // rakk å passere linja.
+      const now = engine.timing.timestamp;
       for (const b of bodies) {
         const topY = b.position.y - FRUITS[b.fruitIndex].radius;
         if (topY < DANGER_Y) {

@@ -85,6 +85,50 @@ select:focus-visible,
 }
 .hero-section .hero-stage-inner { min-height: 0; }
 
+/* Heltekortet holder plassen sin.
+   Bildet bestemte høyden alene, og teksten lå absolutt oppå. Før bildet var
+   lastet var kortet 0 px høyt, så alt under hoppet ned når det kom (CLS 0,97
+   på mobil). På smale skjermer var teksten høyere enn bildet, og navnet på
+   dagens triks ble klippet bort øverst. Nå deler bilde og tekst samme rute
+   i et grid: kortet er 16:9, men vokser hvis teksten trenger mer, og
+   bildet fyller flaten med object-fit. Coverne er mellom 16:10 og 16:9;
+   litt beskjæring oppe og nede er bedre enn at «Start her» havner under
+   bretten på en vanlig bærbar (1366 × 768). */
+.hero-card[data-hero]:empty { aspect-ratio: 16 / 9; }
+.hero-media {
+  display: grid;
+  grid-template: 1fr / 1fr;
+  aspect-ratio: 16 / 9;
+}
+.hero-media > .hero-image,
+.hero-media > .hero-content { grid-area: 1 / 1; }
+.hero-media-img {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-content {
+  position: relative;
+  align-self: end;
+}
+@media (max-width: 720px) {
+  /* Innloggingsknappene i toppmenyen settes inn av js/auth.js. Uten
+     reservert høyde vokste menyen fra 58 til 64 px på mobil når de kom, og
+     hele siden hoppet ned (CLS ca. 0,2 på alle sider). */
+  .header-right[data-auth-slot] { min-height: 43px; }
+
+  /* Teksten (navn, beskrivelse og knapp) er høyere enn 16:10 på en telefon.
+     Plassen reserveres på forhånd, så kortet ikke vokser etter at det kom. */
+  .hero-card[data-hero]:empty,
+  .hero-media {
+    /* Ikke 16:10 her: min-height overført gjennom aspect-ratio ville gitt
+       en minstebredde på 512 px og dyttet teksten ut til siden. */
+    aspect-ratio: auto;
+    min-height: 320px;
+  }
+}
+
 /* Liten hilsen nede i høyre hjørne, over bildet. Skjules når trikset spilles. */
 .hero-greeting {
   position: absolute;

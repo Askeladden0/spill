@@ -426,6 +426,11 @@ main {
   gap: 24px;
 }
 
+/* Kortene settes inn av js/main.js etter at triksene er hentet. Til da
+   holder rutenettet en skjermhøyde av plass, så bunnmenyen ikke ligger
+   synlig og hopper ned når kortene kommer. */
+.game-grid:empty { min-height: 100svh; }
+
 .game-card {
   display: flex;
   flex-direction: column;
@@ -742,6 +747,26 @@ html.is-player-view main { max-width: none; }
 .game-hud-value.is-accent { color: var(--accent); }
 .game-hud-value.is-bump { animation: hudValueBump .32s cubic-bezier(.34, 1.56, .64, 1); }
 
+/* Pauseknappen vises bare for spill med tid (session.onPause i
+   js/game-runtime.js). */
+.game-hud-pause {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  margin-right: -10px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+.game-hud-pause:hover { border-color: rgba(var(--accent-rgb), .5); color: var(--accent); }
+.game-hud-pause[hidden] { display: none; }
+
 @keyframes hudValueBump {
   0% { transform: scale(1); }
   40% { transform: scale(1.22); color: var(--accent); }
@@ -1033,6 +1058,24 @@ html.is-player-view main { max-width: none; }
 }
 
 .board-snake.is-shaking { animation: snakeShake .4s ease; }
+
+/* Står på brettet til første tastetrykk eller sveip (js/games/game-slangen.js). */
+.snake-start-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 16%;
+  z-index: 3;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border-radius: 99px;
+  background: rgba(13, 17, 23, .82);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.snake-start-hint[hidden] { display: none; }
 @keyframes snakeShake {
   10%, 90% { transform: translateX(-1px); }
   20%, 80% { transform: translateX(2px); }
@@ -1363,6 +1406,15 @@ html.is-player-view main { max-width: none; }
   .player-topbar { gap: 8px; }
   .game-hud { gap: 10px; padding: 5px 12px; }
   .game-hud-label { font-size: 13px; }
+}
+
+/* På en smal telefon deler HUDen topplinjen med tilbake-knappen og
+   «Hvordan spille»; med pauseknappen ble «POENG» klemt ut av kanten. */
+@media (max-width: 420px) {
+  .game-hud { gap: 8px; padding: 5px 10px; }
+  .game-hud-label { font-size: 11px; letter-spacing: .04em; }
+  .game-hud-value { font-size: 17px; }
+  .game-hud-pause { width: 28px; height: 28px; margin-right: -4px; }
 }
 
 /* ---------- Footer ---------- */

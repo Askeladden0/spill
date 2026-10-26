@@ -35,10 +35,12 @@
     let sprEls = null;
     let moves = 0;
     let idleStep = 0;
-    // Satt til true frem til spilleren trykker høyre-tast (eller sveiper
-    // høyre): slangen står stille helt til da, både ved ny runde og ved en
+    // Satt til true frem til spilleren trykker en retningstast eller sveiper:
+    // slangen står stille helt til da, både ved ny runde og ved en
     // gjenopptatt lagret runde, slik at man ikke krasjer med en gang.
+    // Hintet på brettet (hintEl) sier hva som skal til.
     let waitingToStart = false;
+    let hintEl = null;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -49,6 +51,16 @@
         <div class="board-snake" data-board-snake tabindex="0"></div>
       `;
       session.onRestart(() => initGame());
+      // Pause (js/game-runtime.js): stopp steg-timeren. Venter slangen på
+      // første tast, står den allerede stille.
+      session.onPause(() => {
+        if (!timer) return false;
+        clearInterval(timer);
+        timer = null;
+        return true;
+      }, () => {
+        if (!over && !waitingToStart) timer = setInterval(tick, TICK_MS);
+      });
       attachControls();
       // Fortsett en påbegynt runde hvis den ligger lagret, ellers ny runde.
       if (!resumeGame()) initGame();
@@ -80,7 +92,7 @@
 
       if (timer) clearInterval(timer);
       timer = null;
-      waitingToStart = true;
+      setWaiting(true);
 
       const boardEl = session.playArea.querySelector("[data-board-snake]");
       if (boardEl) boardEl.focus({ preventScroll: true });
@@ -104,7 +116,7 @@
       session.setScore(0);
       session.hideOverlay();
       session.clearState();
-      waitingToStart = true;
+      setWaiting(true);
 
       if (timer) clearInterval(timer);
       timer = null;
@@ -202,6 +214,11 @@
         cellEls.push(rowEls);
         sprEls.push(sprRow);
       }
+      hintEl = document.createElement("div");
+      hintEl.className = "snake-start-hint";
+      hintEl.textContent = "Trykk en piltast eller sveip for å starte";
+      hintEl.hidden = !waitingToStart;
+      boardEl.appendChild(hintEl);
       return boardEl;
     }
 
@@ -297,13 +314,20 @@
       s: "down",
     };
 
+    function setWaiting(on) {
+      waitingToStart = on;
+      if (hintEl) hintEl.hidden = !on;
+    }
+
     function setDirection(dir) {
       if (!dir || !session || over) return;
-      // Slangen står stille til spilleren trykker/sveiper høyre – da starter
-      // runden. Andre taster/retninger ignoreres helt til det skjer.
+      // Første retning starter runden. Før godtok den bare «høyre», og alle
+      // andre taster ble ignorert uten at noe på skjermen sa hvorfor. Rett
+      // bakover (inn i halen) ville vært game over på første steg, så da
+      // fortsetter slangen bare dit den peker.
       if (waitingToStart) {
-        if (dir !== "right") return;
-        waitingToStart = false;
+        if (dir !== OPPOSITE[direction]) nextDirection = dir;
+        setWaiting(false);
         if (timer) clearInterval(timer);
         timer = setInterval(tick, TICK_MS);
         return;

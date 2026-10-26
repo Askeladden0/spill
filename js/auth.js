@@ -437,9 +437,27 @@
     });
   }
 
+  // Vilkårene krever at man er over 16 år (vilkar.html). Registrering med
+  // brukernavn har en egen avkrysning, men Google-knappen – også den i
+  // toppmenyen – opprettet konto uten at noen ble spurt. Svaret huskes i
+  // nettleseren, så den som logger inn igjen blir spurt bare én gang.
+  const AGE_CONFIRMED_KEY = "studilla_age_confirmed";
+
+  function confirmAge() {
+    try {
+      if (window.localStorage.getItem(AGE_CONFIRMED_KEY) === "1") return true;
+    } catch (e) {}
+    const ok = window.confirm("Studilla er for deg som er over 16 år. Trykk OK for å bekrefte at du er over 16 år og godtar vilkårene på studilla.no/vilkar.html.");
+    if (ok) {
+      try { window.localStorage.setItem(AGE_CONFIRMED_KEY, "1"); } catch (e) {}
+    }
+    return ok;
+  }
+
   document.addEventListener("click", function (e) {
     const btn = e.target.closest && e.target.closest("[data-google-signin]");
     if (!btn) return;
+    if (!confirmAge()) return;
     btn.disabled = true;
     signInWithGoogle().then(function (res) {
       if (res && res.error) {

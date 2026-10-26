@@ -231,6 +231,9 @@
           <span class="game-hud-label">Rekord</span>
           <span class="game-hud-value is-accent" data-hud-best>–</span>
         </div>
+        <button type="button" class="game-hud-pause" data-hud-pause hidden aria-label="Pause (P)" title="Pause (P)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+        </button>
       </div>
     `;
   }
@@ -297,6 +300,18 @@
             <a class="btn-outline game-over-next" data-game-over-next href="#">Se rangering</a>
           </div>
           <button type="button" class="game-over-share" data-game-over-share hidden>Utfordre en venn</button>
+        </div>
+      </div>
+
+      <!-- Pause: dekker flaten slik game over-kortet gjør. Vises fra
+           pauseknappen i HUDen, med P, og av seg selv når fanen byttes. -->
+      <div class="game-over-overlay" data-game-pause hidden role="dialog" aria-modal="true" aria-labelledby="game-pause-title">
+        <div class="game-over-card">
+          <h3 id="game-pause-title">Pause</h3>
+          <p class="game-over-note">Runden står stille til du fortsetter.</p>
+          <div class="game-over-actions">
+            <button type="button" class="btn-primary game-over-again" data-game-pause-resume>Fortsett</button>
+          </div>
         </div>
       </div>
 
@@ -448,6 +463,9 @@
       overlayLevelXp: container.querySelector("[data-game-over-level-xp]"),
       overlayLevelFill: container.querySelector("[data-game-over-level-fill]"),
       overlayLevelUp: container.querySelector("[data-game-over-levelup]"),
+      pauseBtn: hudRoot.querySelector("[data-hud-pause]"),
+      pauseOverlay: container.querySelector("[data-game-pause]"),
+      pauseResume: container.querySelector("[data-game-pause-resume]"),
       shareOverlay: container.querySelector("[data-share-overlay]"),
       shareBackdrop: container.querySelector("[data-share-backdrop]"),
       shareClose: container.querySelector("[data-share-close]"),
@@ -610,8 +628,72 @@
       }, 1100);
     }
 
+    /**
+     * Pause. Spill med tid (fallende klosser, slangen, fysikk …) melder seg
+     * på med session.onPause(pause, resume). Før dette tapte en elev runden
+     * hver gang hen byttet fane i timen (se EVALUERING.md, D15 og T4).
+     * pause() gir false når spillet allerede står stille (venter på første
+     * trekk), og da vises ikke noe pausekort.
+     */
+    let pauseHandlers = null;
+    let paused = false;
+    let focusBeforePause = null;
+
+    function pauseGame() {
+      if (!pauseHandlers || paused || !els.overlay.hidden || !container.isConnected) return;
+      if (pauseHandlers.pause() === false) return;
+      paused = true;
+      focusBeforePause = document.activeElement;
+      els.pauseOverlay.hidden = false;
+      try { els.pauseResume.focus({ preventScroll: true }); } catch (e) {}
+    }
+
+    function resumeGame() {
+      if (!paused) return;
+      paused = false;
+      els.pauseOverlay.hidden = true;
+      pauseHandlers.resume();
+      try {
+        if (focusBeforePause && focusBeforePause.focus) focusBeforePause.focus({ preventScroll: true });
+      } catch (e) {}
+    }
+
+    els.pauseBtn.addEventListener("click", pauseGame);
+    els.pauseResume.addEventListener("click", resumeGame);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) pauseGame();
+    });
+
+    // P setter på og av pause; under pause fortsetter også Esc, Enter og
+    // mellomrom. Lytter i capture-fasen på window, slik at tastetrykk under
+    // pause stoppes før de når spillenes egne lyttere (som ligger på
+    // document) – ellers ville en piltast flyttet brikken bak pausekortet.
+    window.addEventListener("keydown", (e) => {
+      if (!pauseHandlers) return;
+      if (e.target && e.target.closest && e.target.closest("input, textarea, select, [contenteditable]")) return;
+      const key = e.key;
+      if (paused) {
+        if (key === "Tab") return;
+        e.stopPropagation();
+        if (key === "p" || key === "P" || key === "Escape" || key === "Enter" || key === " ") {
+          e.preventDefault();
+          resumeGame();
+        } else if (key.startsWith("Arrow")) {
+          e.preventDefault();
+        }
+        return;
+      }
+      if ((key === "p" || key === "P") && els.overlay.hidden) {
+        e.preventDefault();
+        e.stopPropagation();
+        pauseGame();
+      }
+    }, true);
+
     function fireRestart() {
       writeSavedState(gameId, null);
+      paused = false;
+      els.pauseOverlay.hidden = true;
       els.overlay.hidden = true;
       lastScoreValue = 0;
       nextMilestoneIndex = 0;
@@ -717,6 +799,18 @@
 
       onRestart(cb) {
         restartHandler = cb;
+      },
+
+      /**
+       * Meld spillet på pause (knappen i HUDen, P og automatisk ved
+       * fanebytte). pause() stopper spillets egen løkke og gir false hvis det
+       * ikke var noe å stoppe; resume() starter den igjen. Spill uten tid
+       * (Tallkombo, Blokksprenging, Boblekanonen) trenger ikke melde seg på:
+       * der står alt stille mellom trekkene uansett.
+       */
+      onPause(pause, resume) {
+        pauseHandlers = pause && resume ? { pause, resume } : null;
+        els.pauseBtn.hidden = !pauseHandlers;
       },
 
       hideOverlay() {

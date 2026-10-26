@@ -43,7 +43,7 @@
     "slangen": {
       intro: "Styr slangen, spis maten og bli lengst mulig.",
       steps: [
-        "Styr slangen med piltastene, eller sveip på mobil.",
+        "Trykk en piltast (eller sveip på mobil) for å starte, og styr slangen på samme måte.",
         "Hver gang slangen spiser, vokser den og du får poeng.",
         "Unngå å kjøre inn i veggen eller i deg selv, da er spillet over."
       ]

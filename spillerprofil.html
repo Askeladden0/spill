@@ -64,6 +64,7 @@
         <button type="button" class="btn-primary" data-friend-btn>Legg til venn</button>
         <button type="button" class="btn-outline" data-decline-btn hidden>Avslå</button>
         <a class="btn-outline" data-message-btn href="#">Send melding</a>
+        <button type="button" class="btn-outline" data-report-btn>Rapporter</button>
         <button type="button" class="btn-outline is-danger-outline" data-block-btn>Blokker</button>
         <span class="public-profile-follow-counts" data-friend-counts></span>
       </div>
@@ -135,6 +136,7 @@
     const declineBtn = document.querySelector("[data-decline-btn]");
     const msg = document.querySelector("[data-message-btn]");
     const blockBtn = document.querySelector("[data-block-btn]");
+    const reportBtn = document.querySelector("[data-report-btn]");
     const counts = document.querySelector("[data-friend-counts]");
     if (!viewer || viewer.id === player.id) return;
 
@@ -220,6 +222,8 @@
       declineBtn.disabled = false;
       paint();
     });
+
+    reportBtn.addEventListener("click", () => Social.reportWithPrompt(player.id));
 
     blockBtn.addEventListener("click", async () => {
       if (!stats.is_blocked && !window.confirm(
