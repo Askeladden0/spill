@@ -11,7 +11,7 @@
  */
 const STUDILLA_GA_MEASUREMENT_ID = ""; // f.eks. "G-XXXXXXXXXX" (Google Analytics 4)
 const STUDILLA_GOOGLE_ADS_ID = ""; // f.eks. "AW-XXXXXXXXX" (Google Ads / konverteringssporing)
-const STUDILLA_ADSENSE_CLIENT = "ca-pub-8465850027811409"; // Google AdSense
+// AdSense lastes fast fra build/partials/head.html, ikke herfra.
 
 (function () {
   "use strict";
@@ -71,22 +71,6 @@ const STUDILLA_ADSENSE_CLIENT = "ca-pub-8465850027811409"; // Google AdSense
     if (STUDILLA_GOOGLE_ADS_ID) gtag("config", STUDILLA_GOOGLE_ADS_ID);
   }
 
-  let adsenseLoaded = false;
-
-  // AdSense lastes først når brukeren har samtykket til markedsføring.
-  // Uten samtykke settes det verken annonse-cookies eller kontaktes Google.
-  function loadAdSense() {
-    if (adsenseLoaded || !STUDILLA_ADSENSE_CLIENT) return;
-    adsenseLoaded = true;
-    const script = document.createElement("script");
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    script.src =
-      "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" +
-      encodeURIComponent(STUDILLA_ADSENSE_CLIENT);
-    document.head.appendChild(script);
-  }
-
   function applyConsent(consent) {
     gtag("consent", "update", {
       analytics_storage: consent.stats ? "granted" : "denied",
@@ -95,7 +79,6 @@ const STUDILLA_ADSENSE_CLIENT = "ca-pub-8465850027811409"; // Google AdSense
       ad_personalization: consent.marketing ? "granted" : "denied"
     });
     if (consent.stats || consent.marketing) loadGoogleTags();
-    if (consent.marketing) loadAdSense();
   }
 
   const StudillaConsent = {
