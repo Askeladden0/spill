@@ -250,10 +250,27 @@
     const guides = (window.STUDILLA_GUIDES || []).filter((g) => !g.hidden);
     if (!guides.length) return;
 
+    // Nyeste tips (høyest sortOrder) får banner øverst.
+    const newest = guides.reduce((a, b) => ((b.sortOrder || 0) > (a.sortOrder || 0) ? b : a));
+    const banner = document.querySelector("[data-front-guide-banner]");
+    if (banner) {
+      banner.href = window.studillaGuideHref(newest.id);
+      banner.innerHTML = `
+        ${newest.coverUrl ? `<img class="front-banner-img" src="${esc(newest.coverUrl)}" alt="" decoding="async">` : ""}
+        <div class="front-banner-body">
+          <span class="front-toc-note">Nyeste tips</span>
+          <h3>${esc(newest.title)}</h3>
+          ${newest.excerpt ? `<p>${esc(newest.excerpt)}</p>` : ""}
+        </div>`;
+      banner.hidden = false;
+    }
+
+    const rest = guides.filter((g) => g !== newest);
     const mostRead = guides.reduce((a, b) => (b.viewCount > a.viewCount ? b : a));
-    el.innerHTML = guides.slice(0, FRONT_GUIDE_LIMIT).map((g) => `
+    el.innerHTML = rest.slice(0, FRONT_GUIDE_LIMIT).map((g) => `
       <li>
         <a href="${esc(window.studillaGuideHref(g.id))}">
+          ${g.coverUrl ? `<img class="front-toc-icon" src="${esc(g.coverUrl)}" alt="" loading="lazy" decoding="async">` : `<span class="front-toc-icon"></span>`}
           <h3>${esc(g.title)}</h3>
           ${g.excerpt ? `<p>${esc(g.excerpt)}</p>` : ""}
           ${g === mostRead && g.viewCount > 0 ? `<span class="front-toc-note">Mest lest</span>` : ""}

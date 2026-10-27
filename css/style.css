@@ -3123,16 +3123,32 @@ a.xp-widget { text-decoration: none; color: inherit; }
 .front-toc li { border-bottom: 1px solid var(--border-strong); }
 .front-toc a {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px 32px;
-  padding: 20px 4px;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 6px 20px;
+  padding: 16px 4px;
   color: var(--text);
 }
+.front-toc-icon { grid-row: 1 / span 3; grid-column: 1; align-self: center; width: 72px; height: 72px; border-radius: 14px; object-fit: cover; background: var(--accent-soft); }
+.front-toc h3, .front-toc p, .front-toc-note { grid-column: 2; }
+.front-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  margin-bottom: 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  overflow: hidden;
+  color: var(--text);
+}
+.front-banner[hidden] { display: none; }
+.front-banner-img { width: 100%; height: 100%; min-height: 200px; max-height: 280px; object-fit: cover; }
+.front-banner-body { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 10px; padding: 24px 28px; }
+.front-banner h3 { margin: 0; font-size: 26px; letter-spacing: -.01em; color: var(--text-strong); }
+.front-banner:hover h3 { color: var(--accent); }
+.front-banner p { margin: 0; color: var(--muted); font-weight: 500; }
 .front-toc h3 { margin: 0; font-size: 20px; letter-spacing: -.01em; color: var(--text-strong); transition: color .15s ease; }
 .front-toc a:hover h3 { color: var(--accent); }
-.front-toc p { grid-column: 1; margin: 0; max-width: 64ch; color: var(--muted); font-weight: 500; }
+.front-toc p { margin: 0; max-width: 64ch; color: var(--muted); font-weight: 500; }
 .front-toc-note {
-  grid-column: 1;
   justify-self: start;
   padding: 3px 10px;
   border-radius: 99px;
@@ -3141,7 +3157,7 @@ a.xp-widget { text-decoration: none; color: inherit; }
   font-size: 12px;
   font-weight: 800;
 }
-.front-toc-views { grid-row: 1 / span 3; grid-column: 2; align-self: center; text-align: right; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.front-toc-views { grid-row: 1 / span 3; grid-column: 3; align-self: center; text-align: right; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .front-toc-views b { display: block; font-size: 18px; color: var(--text); }
 
 /* Topplista under Snorres hilsen oppå dagens triks. */
@@ -3193,7 +3209,10 @@ a.xp-widget { text-decoration: none; color: inherit; }
   .front-trick-big .front-trick-img { min-height: 0; aspect-ratio: 8 / 5; }
   .front-trick-row { flex-direction: column; gap: 2px; }
   .front-section-head h2 { font-size: 26px; }
-  .front-toc a { grid-template-columns: 1fr; }
-  .front-toc-views { grid-row: auto; grid-column: 1; text-align: left; }
+  .front-banner { grid-template-columns: 1fr; }
+  .front-banner-body { padding: 18px 20px; }
+  .front-toc a { grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; }
+  .front-toc-icon { width: 56px; height: 56px; }
+  .front-toc-views { grid-row: auto; grid-column: 2; text-align: left; }
   .front-toc-views b { display: inline; font-size: 14px; }
 }
