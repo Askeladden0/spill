@@ -3045,6 +3045,23 @@ a.xp-widget { text-decoration: none; color: inherit; }
   -webkit-user-select: none;
 }
 
+/* ---------- Header: mellombredder ----------
+   Mellom mobilmenyen (720px) og full bredde var menyen, nivåmåleren og
+   Google-knappen bredere enn skjermen, så hele siden fikk horisontal scroll
+   på mindre bærbare og nettbrett på tvers. */
+@media (max-width: 1120px) and (min-width: 721px) {
+  .site-header { gap: 16px; padding: 0 20px; }
+  .header-left { gap: 18px; }
+  .main-nav { gap: 2px; }
+  .nav-link { padding: 9px 10px; }
+  .nav-link svg { display: none; }
+  .xp-meta { width: 96px; }
+}
+@media (max-width: 960px) and (min-width: 721px) {
+  .xp-widget, .guest-points { display: none; }
+  [data-google-signin].login-btn .google-signin-label { display: none; }
+}
+
 /* ---------- Forsiden: triks, tips og toppliste ---------- */
 .front-section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 24px; }
 .front-section-head h2 { margin: 0; font-size: 30px; letter-spacing: -.025em; color: var(--text-strong); }
@@ -3088,9 +3105,7 @@ a.xp-widget { text-decoration: none; color: inherit; }
   .front-tricks[data-last3="2"] .front-trick:last-child .front-trick-img { aspect-ratio: 8 / 3; }
 }
 
-/* Tips som innholdsfortegnelse, topplista ved siden av. */
-.front-bottom { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; align-items: start; }
-.front-bottom .front-podium { grid-column: 2; }
+/* Tips som innholdsfortegnelse. */
 .front-toc { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border-strong); }
 .front-toc li { border-bottom: 1px solid var(--border-strong); }
 .front-toc a {
@@ -3116,34 +3131,34 @@ a.xp-widget { text-decoration: none; color: inherit; }
 .front-toc-views { grid-row: 1 / span 3; grid-column: 2; align-self: center; text-align: right; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .front-toc-views b { display: block; font-size: 18px; color: var(--text); }
 
-.front-podium { padding: 20px 22px 8px; border-radius: var(--radius-card); background: var(--surface); border: 1px solid var(--border); }
+/* Topplista under Snorres hilsen oppå dagens triks. */
+.front-podium { margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--border-strong); }
 .front-podium h2 {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin: 0 0 6px;
-  font-size: 18px;
+  margin: 0 0 2px;
+  font-size: 14px;
   color: var(--text-strong);
 }
-.front-podium ol { list-style: none; margin: 0; padding: 0; min-height: 150px; }
+.front-podium h2 a { font-size: 12px; }
+.front-podium ol { list-style: none; margin: 0; padding: 0; min-height: 99px; font-size: 13px; }
 .front-podium li {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-strong);
+  gap: 8px;
+  padding: 6px 0;
 }
-.front-podium li:first-child { border-top: 0; }
 .front-podium li a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 .front-podium li a:hover { color: var(--accent); }
 .front-place {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--bg);
 }
@@ -3155,11 +3170,6 @@ a.xp-widget { text-decoration: none; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .front-trick-img img { transition: none; }
   .front-trick:hover .front-trick-img img { transform: none; }
-}
-
-@media (max-width: 1080px) {
-  .front-bottom { grid-template-columns: 1fr; }
-  .front-bottom .front-podium { grid-column: auto; }
 }
 
 @media (max-width: 760px) {

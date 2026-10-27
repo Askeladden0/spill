@@ -30,7 +30,7 @@
 
   <main id="hovedinnhold">
     <!-- Dagens triks dekker hele skjermen (js/main.js fyller [data-hero]),
-         med en liten hilsen fra Snorre nede i høyre hjørne. -->
+         med en liten hilsen fra Snorre og topplista i høyre hjørne. -->
     <section class="hero-section">
       <div class="hero-card" data-hero></div>
 
@@ -47,6 +47,11 @@
           <span class="hero-byline-sep">·</span>
           <a href="meldinger.html?til=SnorreSaus">Send en melding</a>
         </div>
+
+        <div class="front-podium">
+          <h2>Toppliste <a href="rangering.html">Se alle</a></h2>
+          <ol data-front-podium></ol>
+        </div>
       </div>
     </section>
 
@@ -60,7 +65,7 @@
       <div class="front-tricks" data-game-grid></div>
     </section>
 
-    <!-- Tipsene som en innholdsfortegnelse, med topplista ved siden av. -->
+    <!-- Tipsene som en innholdsfortegnelse. -->
     <section class="front-bottom">
       <div class="front-guides" data-front-guide-section hidden>
         <div class="front-section-head">
@@ -72,11 +77,6 @@
         </div>
         <ol class="front-toc" data-front-guide></ol>
       </div>
-
-      <aside class="front-podium">
-        <h2>Toppliste <a href="rangering.html">Se alle</a></h2>
-        <ol data-front-podium></ol>
-      </aside>
     </section>
   </main>
 
