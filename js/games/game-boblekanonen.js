@@ -33,7 +33,11 @@
   // spillet fyller skjermen. Kolonnetallet regnes fortsatt ut fra
   // kulefeltet, så brettet og fysikken er nøyaktig som før.
   const HEIGHT = SHOOTER_Y + RADIUS * 2 + 18;
-  const DANGER_Y = SHOOTER_Y - RADIUS * 2.4;
+  // Tapsgrensen: havner en kule på rad DANGER_ROW eller lenger ned, er spillet
+  // over. Tidligere lå linjen under nederste rad, så ingen kule kunne nå den
+  // og det var umulig å tape.
+  const DANGER_ROW = TOTAL_ROWS - 2;
+  const DANGER_Y = DANGER_ROW * ROW_HEIGHT + RADIUS;
   const SPEED = 620; // px/sek
   const MAX_AIM_DEG = 75;
 
