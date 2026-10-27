@@ -76,11 +76,17 @@
       if (!(r.game_id in best) || s > best[r.game_id]) best[r.game_id] = s;
       (players[r.game_id] = players[r.game_id] || new Set()).add(r.user_id);
     });
-    document.querySelectorAll("[data-trick-players]").forEach((el) => {
-      const set = players[el.getAttribute("data-trick-players")];
-      const count = set ? set.size : 0;
-      el.innerHTML = `${EYE_ICON}<span><b>${formatNumber(count)}</b> har spilt</span>`;
-      el.title = `${formatNumber(count)} har spilt dette trikset`;
+    // Antall runder spilt (innloggede + gjester) via game_play_count, så tallet
+    // går opp hver gang noen spiller (supabase/schema.sql, seksjon 73). Faller
+    // tilbake til unike innloggede spillere hvis funksjonen ikke svarer.
+    document.querySelectorAll("[data-trick-players]").forEach(async (el) => {
+      const gameId = el.getAttribute("data-trick-players");
+      const set = players[gameId];
+      let count = set ? set.size : 0;
+      const { data, error } = await window.supabaseClient.rpc("game_play_count", { p_game_id: gameId });
+      if (!error && data != null) count = Number(data) || 0;
+      el.innerHTML = `${EYE_ICON}<span><b>${formatNumber(count)}</b> ganger spilt</span>`;
+      el.title = `Dette trikset er spilt ${formatNumber(count)} ganger`;
     });
     document.querySelectorAll("[data-trick-record]").forEach((el) => {
       const s = best[el.getAttribute("data-trick-record")];
