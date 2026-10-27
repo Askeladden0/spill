@@ -3055,7 +3055,8 @@ a.xp-widget { text-decoration: none; color: inherit; }
   .main-nav { gap: 2px; }
   .nav-link { padding: 9px 10px; }
   .nav-link svg { display: none; }
-  .xp-meta { width: 96px; }
+  .xp-meta { width: 116px; }
+  .xp-labels { white-space: nowrap; gap: 6px; }
 }
 @media (max-width: 960px) and (min-width: 721px) {
   .xp-widget, .guest-points { display: none; }

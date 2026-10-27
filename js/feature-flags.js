@@ -16,4 +16,7 @@
  */
 window.STUDILLA_FEATURES = {
   levelsEnabled: false,
+  // Nivåmåleren i toppmenyen kan vises selv om resten av nivå-/premiesystemet
+  // (kasser, premier, nivå opp-popup) står av.
+  levelCounterEnabled: true,
 };
