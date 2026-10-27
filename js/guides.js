@@ -24,18 +24,21 @@
   const isGuidePage = !!document.querySelector("[data-guide-modules]");
   if (!isGuiderPage && !isGuidePage) return;
 
-  function escapeHTML(str) {
-    return String(str == null ? "" : str).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
+  // Artikkelsidene byggesteget lager (én statisk side per tips) merker
+  // <body> med tipsets id. tip.html?id=… sender videre dit når siden finnes,
+  // så hvert tips bare har én adresse – unntatt når admin åpner redigering.
+  const staticGuideId = document.body.dataset.guideId || null;
+  if (isGuidePage && !staticGuideId) {
+    const params = new URLSearchParams(window.location.search);
+    const page = (window.STUDILLA_GUIDE_PAGES || {})[params.get("id")];
+    if (page && params.get("edit") !== "1") {
+      window.location.replace(page + window.location.hash);
+      return;
+    }
   }
-  function nl2br(str) { return escapeHTML(str).replace(/\n/g, "<br>"); }
-  function numFmt(n) { return Number(n || 0).toLocaleString("nb-NO").replace(/ /g, " "); }
-  function kr(n) { return numFmt(Math.round(Number(n) || 0)) + " kr"; }
-  function formatDate(iso) {
-    if (!iso) return "";
-    return new Date(iso).toLocaleDateString("no-NO", { day: "numeric", month: "long", year: "numeric" });
-  }
+
+  const Render = window.StudillaGuideRender;
+  const { escapeHTML, numFmt, kr, formatDate, gevinstSum } = Render;
   function coerceModuleId(raw) { return /^\d+$/.test(raw) ? Number(raw) : raw; }
   function friendlyError(error) { return (error && error.message) || "Noe gikk galt. Prøv igjen."; }
 
@@ -194,8 +197,6 @@
     }
     return d;
   }
-
-  function gevinstSum(d) { return (d.gains || []).reduce((s, g) => s + (Number(g.amountKr) || 0), 0); }
 
   // Kort oppsummering av en modul, brukt i slette-bekreftelsen og i
   // modul-headeren slik at admin ser hvilken modul en knapp gjelder.
@@ -589,7 +590,7 @@
           <h2>${escapeHTML(featured.title)}</h2>
           <p>${escapeHTML(featured.excerpt)}</p>
           <div class="guide-feature-actions">
-            <a href="tip.html?id=${encodeURIComponent(featured.id)}" class="btn-primary btn-link">Les tipset</a>
+            <a href="${escapeHTML(window.studillaGuideHref(featured.id))}" class="btn-primary btn-link">Les tipset</a>
             ${metaBits ? `<span class="section-sub">${escapeHTML(metaBits)}</span>` : ""}
           </div>
         </div>
@@ -616,14 +617,14 @@
     const isHidden = !!g.hidden;
     return `
       <div class="guide-card${isHidden && admin ? " is-hidden-guide" : ""}">
-        <a href="tip.html?id=${encodeURIComponent(g.id)}" class="guide-card-thumb">
+        <a href="${escapeHTML(window.studillaGuideHref(g.id))}" class="guide-card-thumb">
           ${g.coverUrl ? `<img loading="lazy" decoding="async" class="guide-card-thumb-img" src="${escapeHTML(g.coverUrl)}" alt="">` : ""}
           ${g.icon ? `<span class="guide-card-icon">${guideIcon(g.icon, 18)}</span>` : ""}
         </a>
         ${isHidden && admin ? `<span class="guide-status-badge is-hidden">${icon("eyeOff", 13)}Skjult</span>` : ""}
         ${g.featured && admin ? `<span class="guide-status-badge is-featured">Fremhevet</span>` : ""}
         <div class="guide-card-body">
-          <h3 class="guide-card-title"><a href="tip.html?id=${encodeURIComponent(g.id)}">${escapeHTML(g.title)}</a></h3>
+          <h3 class="guide-card-title"><a href="${escapeHTML(window.studillaGuideHref(g.id))}">${escapeHTML(g.title)}</a></h3>
           <p class="guide-card-excerpt">${escapeHTML(g.excerpt)}</p>
           <div class="guide-card-foot">
             <span class="guide-card-value">${escapeHTML(g.valueLabel)}</span>
@@ -702,167 +703,21 @@
     `;
   }
 
-  function moduleTOCLabel(m) {
-    switch (m.type) {
-      case "tekst": return m.data.heading || null;
-      case "fil": return m.data.name || "Nedlasting";
-      case "tabell": return m.data.title || "Tabell";
-      case "gevinst": return m.data.heading || "Gevinst";
-      case "poll": return m.data.question || "Avstemning";
-      case "triks": {
-        const game = m.data.gameId ? (window.STUDILLA_GAMES || []).find((x) => x.id === m.data.gameId) : null;
-        return (game && game.name) || m.data.title || "Triks";
-      }
-      // Bilder får ingen oppføring i innholdsfortegnelsen – de hører til
-      // avsnittet over, og ville bare fylt lista med "Bilde"-lenker.
-      case "bilde": return null;
-      default: return null;
-    }
-  }
-
-  function tekstBodyHTML(d) {
-    const HTag = d.headingLevel === 3 ? "h3" : "h2";
-    const paragraphs = String(d.body || "").split(/\n{2,}/).filter(Boolean);
-    return `
-      <div class="guide-text-block">
-        ${d.heading ? `<${HTag} class="guide-text-heading is-h${d.headingLevel === 3 ? 3 : 2}">${escapeHTML(d.heading)}</${HTag}>` : ""}
-        ${paragraphs.map((p) => `<p class="guide-text-p">${nl2br(p)}</p>`).join("")}
-        ${(d.bullets || []).length ? `<ul class="guide-text-list">${d.bullets.map((b) => `<li>${escapeHTML(b)}</li>`).join("")}</ul>` : ""}
-        ${d.tip ? `<blockquote class="guide-tip-box"><strong>Tips:</strong> ${escapeHTML(d.tip)}</blockquote>` : ""}
-      </div>
-    `;
-  }
-
-  function filBodyHTML(d) {
-    return `
-      <div class="guide-file-card">
-        <span class="guide-file-badge">${escapeHTML(d.ext || "FIL")}</span>
-        <div class="guide-file-info">
-          <span class="guide-file-name">${escapeHTML(d.name || "Fil")}</span>
-          <span class="guide-file-meta">${escapeHTML(d.meta || "")}</span>
-        </div>
-        ${d.url
-          ? `<a href="${escapeHTML(d.url)}" download class="btn-primary guide-file-btn">Last ned</a>`
-          : `<span class="guide-file-missing">${state.isAdmin ? "Ingen fil lastet opp ennå" : "Utilgjengelig"}</span>`}
-      </div>
-    `;
-  }
-
-  function tabellBodyHTML(d) {
-    const cols = (d.columns && d.columns.length === 3) ? d.columns : ["Kolonne 1", "Kolonne 2", "Kolonne 3"];
-    return `
-      ${d.title ? `<h3 class="guide-table-title">${escapeHTML(d.title)}</h3>` : ""}
-      <div class="guide-table-wrap">
-        <table class="guide-table">
-          <thead><tr>${cols.map((c) => `<th>${escapeHTML(c)}</th>`).join("")}</tr></thead>
-          <tbody>${(d.rows || []).map((r) => `<tr><td>${escapeHTML(r.a)}</td><td>${escapeHTML(r.b)}</td><td class="is-num">${escapeHTML(r.c)}</td></tr>`).join("")}</tbody>
-        </table>
-      </div>
-      ${d.source ? `<span class="guide-table-source">${escapeHTML(d.source)}</span>` : ""}
-    `;
-  }
-
-  function gevinstBodyHTML(d) {
-    const sum = gevinstSum(d);
-    const perMonth = Math.round(sum / 10 / 50) * 50;
-    return `
-      <div class="guide-gevinst">
-        <div class="guide-gevinst-total">
-          <span class="guide-gevinst-label">${escapeHTML(d.heading || "Dette kan du tjene")}</span>
-          <span class="guide-gevinst-amount">${kr(sum)}</span>
-          ${d.note ? `<span class="guide-gevinst-note">${escapeHTML(d.note)}</span>` : ""}
-          ${sum > 0 ? `<span class="guide-gevinst-permonth">≈ ${kr(perMonth)} / mnd</span>` : ""}
-        </div>
-        <div class="guide-gevinst-rows">
-          ${(d.gains || []).map((g) => `
-            <div class="guide-gevinst-row">
-              <span>${escapeHTML(g.label)}</span>
-              <span>${g.amountKr ? kr(g.amountKr) : escapeHTML(g.displayText || "–")}</span>
-            </div>
-          `).join("")}
-          <div class="guide-gevinst-row is-sum"><span>Sum</span><span>${kr(sum)}</span></div>
-        </div>
-      </div>
-    `;
-  }
-
+  // Selve modul-innholdet tegnes av js/guide-render.js, som byggesteget også
+  // bruker til de statiske artikkelsidene.
   function pollVotedKey(moduleId) { return `studilla_guide_poll_${moduleId}`; }
-
-  function pollBodyHTML(m) {
-    const d = m.data;
-    const votedRaw = localStorage.getItem(pollVotedKey(m.id));
-    const voted = votedRaw === null ? null : Number(votedRaw);
-    const options = d.options || [];
-    const total = options.reduce((s, o) => s + (Number(o.votes) || 0), 0);
-
-    return `
-      <div class="guide-poll">
-        <h3 class="guide-poll-question">${escapeHTML(d.question || "")}</h3>
-        <span class="guide-poll-footer">${voted === null ? `${numFmt(total)} har svart · velg ett alternativ` : `Takk for svaret! ${numFmt(total)} har svart`}</span>
-        <div class="guide-poll-options">
-          ${options.map((o, i) => {
-            const pct = total ? Math.round(((Number(o.votes) || 0) / total) * 100) : 0;
-            const isMine = voted === i;
-            return `
-              <button type="button" class="guide-poll-option${isMine ? " is-mine" : ""}" data-poll-vote data-module="${escapeHTML(String(m.id))}" data-option="${i}" ${voted !== null ? "disabled" : ""}>
-                <span class="guide-poll-option-fill" style="width:${voted === null ? 0 : pct}%"></span>
-                <span class="guide-poll-option-row">
-                  <span class="guide-poll-option-dot"></span>
-                  <span class="guide-poll-option-label">${escapeHTML(o.label)}</span>
-                  <span class="guide-poll-option-pct">${voted === null ? "" : pct + " %"}</span>
-                </span>
-              </button>
-            `;
-          }).join("")}
-        </div>
-      </div>
-    `;
+  function renderCtx() {
+    return {
+      isAdmin: state.isAdmin,
+      games: window.STUDILLA_GAMES || [],
+      pollVoted(moduleId) {
+        const raw = localStorage.getItem(pollVotedKey(moduleId));
+        return raw === null ? null : Number(raw);
+      },
+    };
   }
-
-  function triksBodyHTML(d) {
-    const game = d.gameId ? (window.STUDILLA_GAMES || []).find((x) => x.id === d.gameId) : null;
-    const title = game ? game.name : (d.title || "Triks");
-    const intro = d.intro || (game ? game.description : "") || "";
-    const href = game ? `player.html?id=${encodeURIComponent(game.id)}` : d.href;
-    const thumb = game && game.thumbnail;
-
-    const inner = `
-      <div class="guide-trick-thumb">${thumb ? `<img src="${escapeHTML(thumb)}" alt="">` : ""}</div>
-      <div class="guide-trick-body">
-        <span class="guide-trick-title">${escapeHTML(title)}</span>
-        ${intro ? `<span class="guide-trick-intro">${escapeHTML(intro)}</span>` : ""}
-        <span class="guide-trick-cta">Spill trikset →</span>
-      </div>
-    `;
-    return href
-      ? `<a class="guide-trick-card" href="${escapeHTML(href)}">${inner}</a>`
-      : `<div class="guide-trick-card is-static">${inner}</div>`;
-  }
-
-  function bildeBodyHTML(d) {
-    if (!d.url) {
-      return `<div class="guide-image-block is-empty">${icon("image", 22)}<span>${state.isAdmin ? "Ingen fil lastet opp ennå" : ""}</span></div>`;
-    }
-    return `
-      <figure class="guide-image-block${d.size === "medium" ? " is-medium" : ""}">
-        <img src="${escapeHTML(d.url)}" alt="${escapeHTML(d.alt || "")}" loading="lazy">
-        ${d.caption ? `<figcaption>${escapeHTML(d.caption)}</figcaption>` : ""}
-      </figure>
-    `;
-  }
-
-  function moduleBodyHTML(m) {
-    switch (m.type) {
-      case "bilde": return bildeBodyHTML(m.data);
-      case "tekst": return tekstBodyHTML(m.data);
-      case "fil": return filBodyHTML(m.data);
-      case "tabell": return tabellBodyHTML(m.data);
-      case "gevinst": return gevinstBodyHTML(m.data);
-      case "poll": return pollBodyHTML(m);
-      case "triks": return triksBodyHTML(m.data);
-      default: return "";
-    }
-  }
+  function moduleTOCLabel(m) { return Render.moduleTOCLabel(m, renderCtx()); }
+  function moduleBodyHTML(m) { return Render.moduleBodyHTML(m, renderCtx()); }
 
   function moduleBlockHTML(m, index, total) {
     const isEditing = state.moduleDraft && !state.moduleDraft.isNew && state.moduleDraft.id === m.id;
@@ -1302,11 +1157,15 @@
   function renderGuidePage() {
     if (!isGuidePage) return;
     const params = new URLSearchParams(window.location.search);
-    currentGuideId = params.get("id");
+    currentGuideId = staticGuideId || params.get("id");
     const g = getCurrentGuide();
 
     const root = document.querySelector("[data-guide-root]");
     const notfound = document.querySelector("[data-guide-notfound]");
+    // Den statiske artikkelsiden har allerede innholdet fra bygget. Fikk vi
+    // ikke hentet tipsene (feil/tidsavbrudd), blir det stående i stedet for
+    // å bytte det ut med «Fant ikke tipset».
+    if (!g && staticGuideId && !Guides.list().length) return;
     if (!g || (g.hidden && !state.isAdmin)) {
       if (root) root.hidden = true;
       if (notfound) notfound.hidden = false;
@@ -1834,7 +1693,7 @@
     if (isGuidePage && state.isAdmin) {
       const params = new URLSearchParams(window.location.search);
       if (params.get("edit") === "1") {
-        const g = Guides.list().find((x) => x.id === params.get("id"));
+        const g = Guides.list().find((x) => x.id === (staticGuideId || params.get("id")));
         if (g) state.guideDraft = guideDraftFrom(g);
       }
     }

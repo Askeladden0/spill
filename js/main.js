@@ -253,7 +253,7 @@
     const mostRead = guides.reduce((a, b) => (b.viewCount > a.viewCount ? b : a));
     el.innerHTML = guides.slice(0, FRONT_GUIDE_LIMIT).map((g) => `
       <li>
-        <a href="tip.html?id=${encodeURIComponent(g.id)}">
+        <a href="${esc(window.studillaGuideHref(g.id))}">
           <h3>${esc(g.title)}</h3>
           ${g.excerpt ? `<p>${esc(g.excerpt)}</p>` : ""}
           ${g === mostRead && g.viewCount > 0 ? `<span class="front-toc-note">Mest lest</span>` : ""}

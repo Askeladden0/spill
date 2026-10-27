@@ -590,7 +590,7 @@
         title: guide ? guide.title : "Guide",
         sub: guide && guide.excerpt ? guide.excerpt : "",
         icon: kindIconHTML("guide"),
-        href: `tip.html?id=${encodeURIComponent(att.ref)}`,
+        href: window.studillaGuideHref(att.ref),
         action: "Les",
       };
     }

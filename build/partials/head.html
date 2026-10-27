@@ -44,5 +44,11 @@ window.studillaAsset = function (path) {
   var hash = (window.STUDILLA_ASSET_HASHES || {})[path];
   return hash ? path + "?v=" + hash : path;
 };
+/* Lenke til et tips: den statiske artikkelsiden byggesteget lagde, eller
+   tip.html?id=… for tips som er opprettet etter siste bygg. */
+window.studillaGuideHref = function (id) {
+  var page = (window.STUDILLA_GUIDE_PAGES || {})[id];
+  return page || "tip.html?id=" + encodeURIComponent(id);
+};
 </script>
 {{assetHashes}}
