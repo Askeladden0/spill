@@ -182,6 +182,9 @@
     let unsubscribe = null;
     let lastMoveSeen = null;
     let inviteShown = false;
+    // Øker for hver startOnline, så et eldre kall som fortsatt venter på
+    // serveren ikke rekker å abonnere etter at et nyere har tatt over.
+    let onlineGen = 0;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
@@ -370,6 +373,8 @@
     }
 
     async function startOnline(id) {
+      if (id === matchId && unsubscribe) return;
+      const gen = ++onlineGen;
       stopOnline();
       matchId = id;
       setKampParam(id);
@@ -383,15 +388,15 @@
       setStatus("Kobler til kampen …");
       try {
         seat = await Online.join(id);
-        if (matchId !== id) return;
+        if (gen !== onlineGen) return;
         myPiece = seat === 2 ? AI : HUMAN;
         const first = await Online.fetch(id);
-        if (matchId !== id) return;
+        if (gen !== onlineGen) return;
         if (!first) throw new Error("Fant ikke kampen.");
         applyRow(first);
         unsubscribe = Online.subscribe(id, applyRow);
       } catch (e) {
-        if (matchId !== id) return;
+        if (gen !== onlineGen) return;
         setStatus((e && e.message) || "Fant ikke kampen.");
         onlineEl.innerHTML = `<button type="button" class="btn-primary" data-c4-new>Start en ny kamp</button>`;
         onlineEl.querySelector("[data-c4-new]").addEventListener("click", showModePicker);
@@ -411,6 +416,7 @@
       if (!next || next.id !== matchId) return;
       // Begge spillerne følger revansjen automatisk.
       if (next.rematch_id && seat > 0) {
+        Online.followRematch(matchId, next.rematch_id);
         startOnline(next.rematch_id);
         return;
       }

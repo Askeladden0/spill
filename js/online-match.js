@@ -88,6 +88,15 @@
     return newId;
   }
 
+  /**
+   * Motspilleren startet en revansj: den nye kampen eies av de samme
+   * nøklene, så nøkkelen fra forrige kamp tas med over.
+   */
+  function followRematch(oldId, newId) {
+    const old = readToken(oldId);
+    if (old) rememberToken(newId, old);
+  }
+
   async function fetchMatch(id) {
     const client = sb();
     if (!client) throw new Error("Får ikke kontakt med serveren.");
@@ -157,6 +166,7 @@
     move,
     resign,
     rematch,
+    followRematch,
     fetch: fetchMatch,
     subscribe,
     matchUrl,
