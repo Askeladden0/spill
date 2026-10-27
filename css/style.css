@@ -3233,6 +3233,8 @@ a.xp-widget { text-decoration: none; color: inherit; }
 .front-support h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -.02em; color: var(--text-strong); }
 .front-support h2 img { display: inline-block; vertical-align: middle; width: 30px; height: 30px; margin-left: 4px; }
 .front-support p { margin: 0; color: var(--muted); font-weight: 500; }
+.front-support-link { display: inline-block; margin-top: 12px; padding: 8px 16px; border-radius: 99px; background: var(--accent); color: var(--bg); font-weight: 800; font-size: 14px; }
+.front-support-link:hover { opacity: .9; }
 
 @media (max-width: 760px) {
   .front-support { flex-direction: column; align-items: flex-start; gap: 16px; padding: 18px 20px; }
