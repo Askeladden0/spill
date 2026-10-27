@@ -162,7 +162,7 @@
     if (!el || !LB || !window.supabaseClient) return;
     const profiles = LB.visiblePlayers(await LB.loadProfiles());
     const top = profiles
-      .map((p) => ({ name: p.username, score: p.score != null ? p.score : p.xp }))
+      .map((p) => ({ name: p.username, score: p.score != null ? p.score : p.xp, color: p.avatar_color, icon: p.avatar_icon }))
       .filter((p) => p.name && p.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 3);
@@ -170,7 +170,10 @@
       ? top.map((p, i) => `
           <li>
             <span class="front-place front-place-${i + 1}">${i + 1}</span>
-            <a href="spillerprofil.html?u=${encodeURIComponent(p.name)}">${esc(p.name)}</a>
+            <span class="front-who">
+              <a href="spillerprofil.html?u=${encodeURIComponent(p.name)}">${esc(p.name)}</a>
+              ${window.StudillaAvatars.avatarBadgeHTML(p.color, p.icon, 22)}
+            </span>
             <span class="front-pts">${formatNumber(p.score)}</span>
           </li>`).join("")
       : `<li>Ingen på lista ennå. Bli den første!</li>`;

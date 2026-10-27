@@ -3179,7 +3179,9 @@ a.xp-widget { text-decoration: none; color: inherit; }
   gap: 8px;
   padding: 6px 0;
 }
-.front-podium li a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.front-who { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.front-podium li a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.front-who .avatar-badge { flex: 0 0 auto; }
 .front-podium li a:hover { color: var(--accent); }
 .front-place {
   display: grid;
