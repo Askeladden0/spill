@@ -3,21 +3,27 @@
    Alle sider (index, premier, rangering, spill.html) bruker denne filen.
    ========================================================================== */
 
+/* «Kladdeboka»: blekkblå bakgrunn, maskotgult som merkevarefarge og
+   hovedhandling, grønt bare for fremgang (nivå/XP). */
 :root {
-  --bg: #17141f;
-  --surface: #201c2b;
-  --surface-2: #17141f;
-  --border: rgba(255, 255, 255, .06);
-  --border-strong: rgba(255, 255, 255, .09);
-  --text: #ece8f2;
+  --bg: #121a2e;
+  --surface: #1b2440;
+  --surface-2: #121a2e;
+  --border: rgba(160, 180, 230, .09);
+  --border-strong: rgba(160, 180, 230, .16);
+  --rule: #2c3760;
+  --text: #eef1f8;
   --text-strong: #ffffff;
-  --muted: #a9a3b6;
-  --muted-2: #8d8799;
-  --muted-3: #7c768a;
-  --accent: #2ee87f;
-  --accent-light: #5cf5a0;
-  --accent-rgb: 46, 232, 127;
-  --surface-3: #272235;
+  --muted: #a3abc4;
+  --muted-2: #8b93ad;
+  --muted-3: #7b839c;
+  --accent: #ffd23f;
+  --accent-light: #ffdc66;
+  --accent-rgb: 255, 210, 63;
+  --cheek: #ff9f87;
+  --xp: #3ddc84;
+  --font-hand: 'Kalam', 'Comic Sans MS', cursive;
+  --surface-3: #222c4d;
   --accent-soft: rgba(var(--accent-rgb), .12);
   --accent-soft-strong: rgba(var(--accent-rgb), .2);
   --radius-card: 8px;
@@ -46,7 +52,7 @@ html, body {
   color: var(--text);
   font-family: var(--font-body);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
@@ -120,7 +126,7 @@ h1, h2, h3, h4, .logo-text, .game-title { font-weight: 900; }
   color: var(--text-strong);
 }
 
-.logo-text span { color: var(--accent); }
+.logo-text span { color: inherit; }
 
 .main-nav {
   display: flex;
@@ -135,8 +141,8 @@ h1, h2, h3, h4, .logo-text, .game-title { font-weight: 900; }
   padding: 9px 15px;
   border-radius: var(--radius-sm);
   color: var(--muted);
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 700;
   transition: background .15s ease, color .15s ease;
 }
 
@@ -145,14 +151,16 @@ h1, h2, h3, h4, .logo-text, .game-title { font-weight: 900; }
   background: rgba(255, 255, 255, .05);
 }
 
+/* Aktiv side: gul strek under, som en understreking i kladdeboka. */
 .nav-link.is-active {
-  background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--text-strong);
+  border-radius: 0;
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .nav-link.is-active:hover {
-  background: var(--accent-soft-strong);
-  color: var(--accent);
+  background: transparent;
+  color: var(--text-strong);
 }
 
 .nav-link svg { flex-shrink: 0; }
@@ -236,8 +244,8 @@ h1, h2, h3, h4, .logo-text, .game-title { font-weight: 900; }
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: rgba(61, 220, 132, .14);
+  color: var(--xp);
   font-size: 13px;
   font-weight: 800;
   flex-shrink: 0;
@@ -271,7 +279,7 @@ h1, h2, h3, h4, .logo-text, .game-title { font-weight: 900; }
 .xp-bar-fill {
   height: 100%;
   border-radius: 99px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  background: var(--xp);
   transition: width .9s cubic-bezier(.22, 1, .36, 1);
 }
 
@@ -305,7 +313,7 @@ h1, h2, h3, h4, .logo-text, .game-title { font-weight: 900; }
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  background: linear-gradient(135deg, #2f2a3b, #201c2b);
+  background: var(--surface-3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3043,4 +3051,229 @@ a.xp-widget { text-decoration: none; color: inherit; }
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* ---------- Header: mellombredder ----------
+   Mellom mobilmenyen (720px) og full bredde var menyen, nivåmåleren og
+   Google-knappen bredere enn skjermen, så hele siden fikk horisontal scroll
+   på mindre bærbare og nettbrett på tvers. */
+@media (max-width: 1120px) and (min-width: 721px) {
+  .site-header { gap: 16px; padding: 0 20px; }
+  .header-left { gap: 18px; }
+  .main-nav { gap: 2px; }
+  .nav-link { padding: 9px 10px; }
+  .nav-link svg { display: none; }
+  .xp-meta { width: 96px; }
+}
+@media (max-width: 960px) and (min-width: 721px) {
+  .xp-widget, .guest-points { display: none; }
+  [data-google-signin].login-btn .google-signin-label { display: none; }
+}
+
+/* ---------- Forsiden: «Kladdeboka» ----------
+   Dagens triks øverst med maskoten på kanten, Snorres hilsen i håndskrift og
+   topplista ved siden av. Håndskriften er forbeholdt Snorre. */
+.front-today-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: end;
+}
+
+.front-date { margin: 0 0 6px; min-height: 1.5em; color: var(--muted); font-weight: 500; }
+
+.front-today h1 {
+  margin: 0 0 36px;
+  max-width: 16ch;
+  font-size: clamp(36px, 5.2vw, 64px);
+  line-height: 1.02;
+  letter-spacing: -.035em;
+  color: var(--text-strong);
+  text-wrap: balance;
+}
+
+.front-feature { position: relative; border-radius: 14px; background: var(--surface); }
+.front-feature.is-playing { overflow: hidden; }
+
+.front-mascot {
+  position: absolute;
+  z-index: 2;
+  top: -58px;
+  right: 36px;
+  width: 96px;
+  height: 96px;
+  pointer-events: none;
+}
+.front-mascot svg { display: block; width: 100%; height: 100%; }
+.front-mascot-pupils { transition: transform .12s ease-out; }
+.front-today:has(.is-playing) .front-mascot { display: none; }
+
+.front-feature-media {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  min-height: 320px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.front-feature-img { position: relative; background: var(--surface-3); }
+.front-feature-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+.front-feature-body { display: flex; flex-direction: column; gap: 14px; padding: 32px 32px 28px; }
+.front-feature-body h2 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  color: var(--text-strong);
+  text-wrap: balance;
+}
+.front-feature-body p { margin: 0; max-width: 38ch; color: var(--muted); }
+.front-feature-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); }
+.front-feature-meta strong { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+.front-feature-body .btn-primary { align-self: flex-start; margin-top: auto; padding: 15px 22px; border-radius: 6px; }
+
+.front-note {
+  margin: 0 0 28px;
+  padding: 0 2px;
+  font-family: var(--font-hand);
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 36px;
+  color: #e9ddb8;
+  background-image: linear-gradient(transparent 35px, var(--rule) 35px, var(--rule) 36px);
+  background-size: 100% 36px;
+}
+.front-note p { margin: 0; }
+.front-note-sign { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.front-note-sign img { width: 28px; height: 28px; }
+.front-note a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
+
+.front-podium { padding: 20px 22px 8px; border-radius: 14px; background: var(--surface); }
+.front-podium h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.front-podium h2 a, .front-section-head > a { font-size: 14px; font-weight: 500; color: var(--muted); }
+.front-podium h2 a:hover, .front-section-head > a:hover { color: var(--text); }
+.front-podium ol { list-style: none; margin: 0; padding: 0; min-height: 150px; }
+.front-podium li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--rule);
+}
+.front-podium li:first-child { border-top: 0; }
+.front-podium li a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.front-podium li a:hover { text-decoration: underline; }
+.front-place {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 800;
+  color: #2a1f00;
+}
+.front-place-1 { background: var(--accent); }
+.front-place-2 { background: #d9dcea; }
+.front-place-3 { background: var(--cheek); }
+.front-pts { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.front-section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 24px; }
+.front-section-head h2 { margin: 0; font-size: 30px; letter-spacing: -.025em; color: var(--text-strong); }
+.front-section-head p { margin: 4px 0 0; color: var(--muted); }
+.front-section-head > a { white-space: nowrap; }
+
+/* Triks: hele kortet er lenken. Det første (ikke dagens) er stort, og
+   kortene på siste rad strekkes så raden fylles. data-last4/-3/-2 (antall
+   kort på siste rad ved 4, 3 og 2 kolonner) settes av js/main.js.
+   Bildeforholdet følger bredden, så høyden blir som i radene over. */
+.front-tricks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.front-tricks:empty { min-height: 100svh; }
+.front-trick { display: flex; flex-direction: column; gap: 12px; color: var(--text); }
+.front-trick:hover { color: var(--text); }
+.front-trick-img { position: relative; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; background: var(--surface); }
+.front-trick-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease; }
+.front-trick:hover .front-trick-img img { transform: scale(1.03); }
+.front-trick h3 { margin: 0; font-size: 19px; letter-spacing: -.01em; color: var(--text-strong); }
+.front-trick-row { display: flex; justify-content: space-between; gap: 8px; margin-top: -8px; font-size: 14px; color: var(--muted); }
+.front-trick-row b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.front-trick-big { grid-column: span 2; grid-row: span 2; }
+.front-trick-big .front-trick-img { flex: 1; aspect-ratio: auto; min-height: 280px; }
+.front-trick-big h3 { font-size: 24px; }
+@media (min-width: 1081px) {
+  .front-tricks[data-last4="1"] .front-trick:last-child { grid-column: span 4; }
+  .front-tricks[data-last4="1"] .front-trick:last-child .front-trick-img { aspect-ratio: 16 / 3; }
+  .front-tricks[data-last4="2"] .front-trick:nth-last-child(-n+2),
+  .front-tricks[data-last4="3"] .front-trick:last-child { grid-column: span 2; }
+  .front-tricks[data-last4="2"] .front-trick:nth-last-child(-n+2) .front-trick-img,
+  .front-tricks[data-last4="3"] .front-trick:last-child .front-trick-img { aspect-ratio: 8 / 3; }
+}
+@media (max-width: 1080px) and (min-width: 761px) {
+  .front-tricks[data-last3="1"] .front-trick:last-child { grid-column: span 3; }
+  .front-tricks[data-last3="1"] .front-trick:last-child .front-trick-img { aspect-ratio: 4 / 1; }
+  .front-tricks[data-last3="2"] .front-trick:last-child { grid-column: span 2; }
+  .front-tricks[data-last3="2"] .front-trick:last-child .front-trick-img { aspect-ratio: 8 / 3; }
+}
+@media (max-width: 760px) {
+  .front-tricks[data-last2="1"] .front-trick:last-child { grid-column: span 2; }
+  .front-tricks[data-last2="1"] .front-trick:last-child .front-trick-img { aspect-ratio: 8 / 5; }
+}
+
+/* Tips: innholdsfortegnelse i stedet for kort. */
+.front-toc { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.front-toc li { border-bottom: 1px solid var(--rule); }
+.front-toc a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 32px;
+  padding: 20px 4px;
+  color: var(--text);
+}
+.front-toc h3 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; color: var(--text-strong); }
+.front-toc a:hover h3 { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.front-toc p { grid-column: 1; margin: 0; max-width: 64ch; color: var(--muted); }
+.front-toc-note { grid-column: 1; font-family: var(--font-hand); font-size: 18px; font-weight: 400; color: #e9ddb8; }
+.front-toc-views { grid-row: 1 / span 3; grid-column: 2; align-self: center; text-align: right; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.front-toc-views b { display: block; font-size: 18px; color: var(--text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .front-mascot-pupils, .front-trick-img img { transition: none; }
+  .front-trick:hover .front-trick-img img { transform: none; }
+}
+
+@media (max-width: 1080px) {
+  .front-today-grid { grid-template-columns: 1fr; align-items: start; }
+  .front-side { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+  .front-tricks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Mens trikset spilles i heltefeltet får det hele bredden. */
+.front-today-grid:has(.is-playing) { grid-template-columns: 1fr; }
+.front-today-grid:has(.is-playing) .front-side { display: none; }
+
+@media (max-width: 760px) {
+  .front-today h1 { margin-bottom: 64px; }
+  .front-feature-media { grid-template-columns: 1fr; min-height: 0; }
+  .front-feature-img { aspect-ratio: 16 / 10; }
+  .front-feature-body { padding: 22px; }
+  .front-feature-body h2 { font-size: 26px; }
+  .front-mascot { top: -50px; right: 20px; width: 80px; height: 80px; }
+  .front-side { grid-template-columns: 1fr; }
+  .front-tricks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .front-trick-big { grid-row: auto; }
+  .front-trick-big .front-trick-img { min-height: 0; aspect-ratio: 8 / 5; }
+  .front-trick-row { flex-direction: column; gap: 0; }
+  .front-section-head h2 { font-size: 26px; }
+  .front-toc a { grid-template-columns: 1fr; }
+  .front-toc-views { grid-row: auto; grid-column: 1; text-align: left; }
+  .front-toc-views b { display: inline; font-size: 14px; }
 }

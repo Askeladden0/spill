@@ -21,7 +21,7 @@
   function trackStyle(on) {
     return (
       "position:absolute;inset:0;border-radius:99px;transition:background .15s ease;" +
-      "background:" + (on ? "#2ee87f" : "rgba(255,255,255,.09)") + ";"
+      "background:" + (on ? "#ffd23f" : "rgba(255,255,255,.09)") + ";"
     );
   }
   function dotStyle(on) {
@@ -46,26 +46,26 @@
             '<button type="button" id="scb-accept-all" class="scb-btn scb-btn-primary">Godta alle</button>' +
           '</div>' +
         '</div>' +
-        '<div id="scb-preferences" style="display:none;position:relative;z-index:1;width:100%;max-width:460px;background:#201c2b;border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:30px 30px 26px;flex-direction:column;gap:18px;box-shadow:0 24px 64px rgba(0,0,0,.5);font-family:\'Figtree\',system-ui,sans-serif;">' +
+        '<div id="scb-preferences" style="display:none;position:relative;z-index:1;width:100%;max-width:460px;background:#1b2440;border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:30px 30px 26px;flex-direction:column;gap:18px;box-shadow:0 24px 64px rgba(0,0,0,.5);font-family:\'Figtree\',system-ui,sans-serif;">' +
           '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">' +
             '<div style="display:flex;flex-direction:column;gap:4px;">' +
               '<h2 style="margin:0;font-size:19px;font-weight:700;letter-spacing:-.02em;color:#ffffff;">Tilpass cookies</h2>' +
               '<p style="margin:0;font-size:13px;color:#8d8799;">Velg hva du vil tillate. Du kan endre dette senere.</p>' +
             '</div>' +
-            '<button type="button" id="scb-back" aria-label="Tilbake" style="flex-shrink:0;width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:#17141f;color:#a9a3b6;font-size:15px;line-height:1;cursor:pointer;">←</button>' +
+            '<button type="button" id="scb-back" aria-label="Tilbake" style="flex-shrink:0;width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.09);background:#121a2e;color:#a3abc4;font-size:15px;line-height:1;cursor:pointer;">←</button>' +
           '</div>' +
           '<div style="display:flex;flex-direction:column;gap:10px;">' +
-            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#17141f;border:1px solid rgba(255,255,255,.06);">' +
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#121a2e;border:1px solid rgba(255,255,255,.06);">' +
               '<div style="display:flex;flex-direction:column;gap:4px;">' +
                 '<span style="font-size:14px;font-weight:700;color:#ece8f2;">Nødvendige</span>' +
                 '<span style="font-size:13px;line-height:1.5;color:#8d8799;">Kreves for at Studilla skal fungere som den skal. Kan ikke skrus av.</span>' +
               '</div>' +
               '<span style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;margin-top:2px;">' +
-                '<span style="position:absolute;inset:0;background:#2ee87f;border-radius:99px;opacity:.5;"></span>' +
+                '<span style="position:absolute;inset:0;background:#ffd23f;border-radius:99px;opacity:.5;"></span>' +
                 '<span style="position:absolute;width:16px;height:16px;left:19px;top:3px;background:#fff;border-radius:50%;opacity:.5;"></span>' +
               '</span>' +
             '</div>' +
-            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#17141f;border:1px solid rgba(255,255,255,.06);">' +
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#121a2e;border:1px solid rgba(255,255,255,.06);">' +
               '<div style="display:flex;flex-direction:column;gap:4px;">' +
                 '<span style="font-size:14px;font-weight:700;color:#ece8f2;">Statistikk</span>' +
                 '<span style="font-size:13px;line-height:1.5;color:#8d8799;">Hjelper oss å forstå hvilke triks som brukes, slik at vi kan forbedre dem.</span>' +
@@ -76,7 +76,7 @@
                 '<span id="scb-stats-dot" style="' + dotStyle(false) + '"></span>' +
               '</label>' +
             '</div>' +
-            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#17141f;border:1px solid rgba(255,255,255,.06);">' +
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:14px;background:#121a2e;border:1px solid rgba(255,255,255,.06);">' +
               '<div style="display:flex;flex-direction:column;gap:4px;">' +
                 '<span style="font-size:14px;font-weight:700;color:#ece8f2;">Markedsføring</span>' +
                 '<span style="font-size:13px;line-height:1.5;color:#8d8799;">Lar Google tilpasse annonsene du ser og måle markedsføring.</span>' +
@@ -90,7 +90,7 @@
           '</div>' +
           '<div style="display:flex;gap:10px;margin-top:2px;">' +
             '<button type="button" id="scb-reject" style="flex:1;padding:13px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#ece8f2;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">Avvis alle</button>' +
-            '<button type="button" id="scb-save" style="flex:1;padding:13px;border:none;border-radius:10px;background:#2ee87f;color:#17141f;font-size:14px;font-weight:700;letter-spacing:-.01em;cursor:pointer;">Lagre valg</button>' +
+            '<button type="button" id="scb-save" style="flex:1;padding:13px;border:none;border-radius:10px;background:#ffd23f;color:#121a2e;font-size:14px;font-weight:700;letter-spacing:-.01em;cursor:pointer;">Lagre valg</button>' +
           '</div>' +
         '</div>' +
       '</div>';

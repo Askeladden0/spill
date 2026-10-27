@@ -10,75 +10,186 @@
 
   const games = window.STUDILLA_GAMES || [];
 
-  function gameCardHTML(g) {
+  const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+
+  const formatNumber = (n) => Number(n || 0).toLocaleString("nb-NO");
+
+  // "~10 min" i spilldataene blir "Cirka 10 min" på kortene.
+  const formatTime = (t) => (t ? String(t).replace(/^~\s*/, "Cirka ") : "");
+
+  function dailyGame() {
+    return games.find((g) => g.isDailyGame) || games[0] || null;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Triksene
+   *
+   * Hele kortet er én lenke; knappeparet «Start / Se rangering» på hvert
+   * kort ga sju like knapper på rad. Rekorden fylles inn når
+   * leaderboard_totals har svart (loadRecordsIntoGrid).
+   * ------------------------------------------------------------------ */
+
+  function trickCardHTML(g, big) {
     return `
-      <article class="game-card">
-        <a href="player.html?id=${encodeURIComponent(g.id)}" class="game-thumb" aria-label="Åpne ${g.name}">
-          ${g.thumbnail
-            ? `<img class="game-thumb-img" src="${g.thumbnail}" alt="" loading="lazy">`
-            : ""}
-        </a>
-        <div class="game-body">
-          <h3 class="game-title">${g.name}</h3>
-          ${g.description ? `<p class="game-desc" title="${String(g.description).replace(/"/g, "&quot;")}">${g.description}</p>` : ""}
-          <!-- Knappen lå tidligere inni <a>, som både er ugyldig HTML
-               (klikkbart element inni et klikkbart element) og ga to
-               tabulator-stopp for samme mål. Nå er hele kortet én lenke.
-               «Se rangering» ved siden av gir veien til topplista for nettopp
-               dette trikset, uten å måtte finne det i en nedtrekksmeny. -->
-          <div class="game-actions">
-            <a class="btn-start" href="player.html?id=${encodeURIComponent(g.id)}">Start</a>
-            <a class="btn-ghost btn-card-secondary" href="rangering.html?spill=${encodeURIComponent(g.id)}">Se rangering</a>
-          </div>
-        </div>
-      </article>
+      <a class="front-trick${big ? " front-trick-big" : ""}" href="player.html?id=${encodeURIComponent(g.id)}">
+        <span class="front-trick-img">
+          ${g.thumbnail ? `<img src="${esc(g.thumbnail)}" alt="" loading="lazy">` : ""}
+        </span>
+        <h3>${esc(g.name)}</h3>
+        <span class="front-trick-row">
+          <span>${esc(formatTime(g.time))}</span>
+          <span data-trick-record="${esc(g.id)}"></span>
+        </span>
+      </a>
     `;
   }
 
   function renderGameGrid(selector) {
     const el = document.querySelector(selector);
     if (!el) return;
-    el.innerHTML = games.map(gameCardHTML).join("");
 
-    const countEl = document.querySelector("[data-game-count]");
-    if (countEl) countEl.textContent = `${games.length} triks tilgjengelig`;
+    // Det første trikset som ikke er dagens (det står allerede øverst) får
+    // stor plass.
+    const daily = dailyGame();
+    const bigIndex = Math.max(0, games.findIndex((g) => g !== daily));
+    el.innerHTML = games.map((g, i) => trickCardHTML(g, i === bigIndex)).join("");
+
+    // Det store kortet tar 2×2 ruter (2×1 på mobil). data-lastN forteller CSS-en
+    // hvor mange kort som står på siste rad med N kolonner, så de kan strekkes
+    // og rutenettet går opp uansett hvor mange triks det er.
+    const n = games.length;
+    [[4, 4 + n - 1], [3, 4 + n - 1], [2, 2 + n - 1]].forEach(([cols, cells]) => {
+      const onLastRow = cells % cols;
+      if (n > 2 && onLastRow) el.setAttribute(`data-last${cols}`, onLastRow);
+      else el.removeAttribute(`data-last${cols}`);
+    });
   }
 
-  function dailyGame() {
-    return games.find((g) => g.isDailyGame) || games[0] || null;
+  async function loadRecordsIntoGrid() {
+    const LB = window.StudillaLeaderboard;
+    if (!LB || !window.supabaseClient) return;
+    const rows = await LB.loadRecords();
+    const best = {};
+    rows.forEach((r) => {
+      const s = Number(r.score) || 0;
+      if (!(r.game_id in best) || s > best[r.game_id]) best[r.game_id] = s;
+    });
+    document.querySelectorAll("[data-trick-record]").forEach((el) => {
+      const s = best[el.getAttribute("data-trick-record")];
+      el.innerHTML = s ? `Rekord <b>${formatNumber(s)}</b>` : "Ingen rekord ennå";
+    });
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Dagens triks
+   * ------------------------------------------------------------------ */
+
+  function renderDate() {
+    const el = document.querySelector("[data-front-date]");
+    if (!el) return;
+    const text = new Date().toLocaleDateString("nb-NO", { weekday: "long", day: "numeric", month: "long" });
+    el.textContent = text.charAt(0).toUpperCase() + text.slice(1);
   }
 
   function renderHero(selector) {
     const el = document.querySelector(selector);
-    if (!el) return;
+    const slot = el && el.querySelector("[data-hero-slot]");
+    if (!slot) return;
     const daily = dailyGame();
     if (!daily) return;
 
-    el.innerHTML = `
-      <div class="hero-media" data-hero-media>
-        <div class="hero-image">
-          ${daily.thumbnail
-            ? `<img class="hero-media-img" src="${daily.thumbnail}" alt="" fetchpriority="high">`
-            : ""}
-        </div>
-        <div class="hero-content">
-          <h2>${daily.name}</h2>
-          ${daily.pointsMultiplier ? `<p class="hero-bonus">${daily.pointsMultiplier}</p>` : ""}
-          <p class="hero-desc">${daily.description || ""}</p>
-          <button type="button" class="btn-primary" data-hero-start>Start her</button>
-        </div>
+    slot.setAttribute("data-hero-media", "");
+    slot.innerHTML = `
+      <div class="front-feature-img">
+        ${daily.thumbnail ? `<img src="${esc(daily.thumbnail)}" alt="" fetchpriority="high">` : ""}
       </div>
-      <!-- Selve spillflaten når man trykker start. Ligger tom til da, slik at
-           forsiden ikke drar inn en spillmodul den kanskje aldri trenger. -->
+      <div class="front-feature-body">
+        <h2>Dagens triks: ${esc(daily.name)}</h2>
+        <p>${esc(daily.description)}</p>
+        <div class="front-feature-meta">
+          ${daily.time ? `<span>Tar ${esc(formatTime(daily.time).toLowerCase())}</span>` : ""}
+          <span data-hero-best hidden></span>
+          <span>Nytt triks om <strong data-daily-countdown></strong></span>
+        </div>
+        <button type="button" class="btn-primary" data-hero-start>Start dagens triks</button>
+      </div>
+    `;
+
+    // Selve flaten når man trykker start. Ligger tom til da, slik at
+    // forsiden ikke drar inn en modul den kanskje aldri trenger.
+    el.insertAdjacentHTML("beforeend", `
       <div class="hero-stage" data-hero-stage hidden>
         <div class="hero-stage-bar">
-          <span class="hero-stage-title">${daily.name}</span>
+          <span class="hero-stage-title">${esc(daily.name)}</span>
           <div class="player-hud-slot" data-player-hud></div>
-          <a class="hero-stage-full" href="player.html?id=${encodeURIComponent(daily.id)}">Åpne i full skjerm →</a>
+          <a class="hero-stage-full" href="player.html?id=${encodeURIComponent(daily.id)}">Åpne i full skjerm</a>
         </div>
         <div class="hero-stage-inner" data-hero-stage-inner></div>
       </div>
-    `;
+    `);
+  }
+
+  async function loadHeroBest() {
+    const LB = window.StudillaLeaderboard;
+    const daily = dailyGame();
+    const el = document.querySelector("[data-hero-best]");
+    if (!LB || !daily || !el || !window.supabaseClient) return;
+    const rows = await LB.loadPeriod("today", daily.id);
+    const best = rows.reduce((m, r) => Math.max(m, Number(r.score) || 0), 0);
+    el.innerHTML = best
+      ? `Beste i dag <strong>${formatNumber(best)}</strong>`
+      : "Ingen har satt rekord i dag ennå";
+    el.hidden = false;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Topplista: de tre øverste totalt, samme tall som rangering.html.
+   * ------------------------------------------------------------------ */
+
+  async function renderPodium() {
+    const el = document.querySelector("[data-front-podium]");
+    const LB = window.StudillaLeaderboard;
+    if (!el || !LB || !window.supabaseClient) return;
+    const profiles = LB.visiblePlayers(await LB.loadProfiles());
+    const top = profiles
+      .map((p) => ({ name: p.username, score: p.score != null ? p.score : p.xp }))
+      .filter((p) => p.name && p.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+    el.innerHTML = top.length
+      ? top.map((p, i) => `
+          <li>
+            <span class="front-place front-place-${i + 1}">${i + 1}</span>
+            <a href="spillerprofil.html?u=${encodeURIComponent(p.name)}">${esc(p.name)}</a>
+            <span class="front-pts">${formatNumber(p.score)}</span>
+          </li>`).join("")
+      : `<li>Ingen på lista ennå. Bli den første!</li>`;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Maskoten følger pekeren med øynene. Ingenting skjer uten at brukeren
+   * selv beveger musa, og ingenting med redusert bevegelse.
+   * ------------------------------------------------------------------ */
+
+  function initMascotEyes() {
+    const mascot = document.querySelector("[data-front-mascot]");
+    const pupils = mascot && mascot.querySelector("[data-front-pupils]");
+    if (!pupils || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let frame = 0;
+    window.addEventListener("pointermove", (e) => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const r = mascot.getBoundingClientRect();
+        const dx = e.clientX - (r.left + r.width / 2);
+        const dy = e.clientY - (r.top + r.height / 2);
+        const d = Math.hypot(dx, dy) || 1;
+        const reach = 22 * Math.min(1, d / 300); // SVG-enheter (viewBox 612)
+        pupils.style.transform = `translate(${(dx / d) * reach}px, ${(dy / d) * reach}px)`;
+      });
+    }, { passive: true });
   }
 
   /* ------------------------------------------------------------------ *
@@ -141,7 +252,7 @@
     heroStarted = true;
     document.querySelector("[data-hero-media]").hidden = true;
     stage.hidden = false;
-    document.querySelector(".hero-card").classList.add("is-playing");
+    document.querySelector("[data-hero]").classList.add("is-playing");
 
     const module = window.STUDILLA_GAME_MODULES[daily.id];
     module.start(inner, daily);
@@ -161,15 +272,16 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * Den fremhevede tipset på forsiden
+   * Tipsene på forsiden
    * ------------------------------------------------------------------ */
 
   /**
-   * Forsiden viste tidligere en rad med små kort til tips og nedlastbare
-   * maler. Nå står den fremhevede tipset – den samme som ligger øverst på
-   * tips.html – i full bredde, med én knapp videre til resten. Maler og
-   * filer bor på tips.html, som er stedet man er når man leter etter dem.
+   * Tipsene står som en innholdsfortegnelse i kladdeboka: tittel, ingress og
+   * lesertall, i samme rekkefølge som på tips.html. Det mest leste får en
+   * liten håndskrevet merknad. Maler og filer bor på tips.html.
    */
+  const FRONT_GUIDE_LIMIT = 5;
+
   async function renderFrontGuide() {
     const section = document.querySelector("[data-front-guide-section]");
     const el = document.querySelector("[data-front-guide]");
@@ -177,31 +289,22 @@
 
     if (window.STUDILLA_GUIDES_READY) await window.STUDILLA_GUIDES_READY;
     const guides = (window.STUDILLA_GUIDES || []).filter((g) => !g.hidden);
-    const guide = guides.find((g) => g.featured) || guides[0];
-    if (!guide) return;
+    if (!guides.length) return;
 
-    const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
+    const mostRead = guides.reduce((a, b) => (b.viewCount > a.viewCount ? b : a));
+    el.innerHTML = guides.slice(0, FRONT_GUIDE_LIMIT).map((g) => `
+      <li>
+        <a href="tip.html?id=${encodeURIComponent(g.id)}">
+          <h3>${esc(g.title)}</h3>
+          ${g.excerpt ? `<p>${esc(g.excerpt)}</p>` : ""}
+          ${g === mostRead && g.viewCount > 0 ? `<span class="front-toc-note">Det mest leste tipset!</span>` : ""}
+          ${g.viewCount > 0 ? `<span class="front-toc-views"><b>${formatNumber(g.viewCount)}</b> lesere</span>` : ""}
+        </a>
+      </li>
+    `).join("");
 
-    el.innerHTML = `
-      <div class="guide-feature">
-        <div class="guide-feature-text">
-          <span class="guide-feature-badge">Anbefalt tips</span>
-          <h2>${esc(guide.title)}</h2>
-          <p>${esc(guide.excerpt)}</p>
-          <div class="guide-feature-actions">
-            <a href="tip.html?id=${encodeURIComponent(guide.id)}" class="btn-primary btn-link">Les tipset</a>
-            <a href="tips.html" class="btn-ghost">Se flere tips</a>
-          </div>
-        </div>
-        <div class="guide-feature-media">
-          ${guide.coverUrl
-            ? `<img src="${esc(guide.coverUrl)}" alt="">`
-            : ""}
-        </div>
-      </div>
-    `;
+    const countEl = document.querySelector("[data-front-guide-count]");
+    if (countEl) countEl.textContent = `Alle ${guides.length} tips`;
     section.hidden = false;
   }
 
@@ -246,7 +349,7 @@
       const ms = Math.max(0, window.studillaMsUntilNextDailyGame());
       const total = Math.floor(ms / 1000);
       const pad = (n) => String(n).padStart(2, "0");
-      el.textContent = `byttes om ${pad(Math.floor(total / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
+      el.textContent = `${pad(Math.floor(total / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
       // Når tiden er ute: hent siden på nytt, slik at dagens triks byttes uten
       // at brukeren må gjøre det selv. Men ikke midt i en runde – da mister
       // spilleren stillingen sin.
@@ -260,11 +363,16 @@
   document.addEventListener("DOMContentLoaded", async function () {
     // Aktivt menypunkt markeres av js/layout.js (kjører på alle sider).
     initHeroStart();
+    initMascotEyes();
+    renderDate();
     renderFrontGuide();
+    renderPodium();
     if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
     if (window.STUDILLA_GAME_SCRIPT_READY) await window.STUDILLA_GAME_SCRIPT_READY;
     renderHero("[data-hero]");
     renderGameGrid("[data-game-grid]");
+    loadHeroBest();
+    loadRecordsIntoGrid();
     initDailyCountdown();
     initPlayerPage();
   });

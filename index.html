@@ -29,36 +29,74 @@
   <div id="site-header"></div>
 
   <main id="hovedinnhold">
-    <!-- Dagens triks dekker hele skjermen (js/main.js fyller [data-hero]),
-         med en liten hilsen fra Snorre nede i høyre hjørne. -->
-    <section class="hero-section">
-      <div class="hero-card" data-hero></div>
+    <!-- Dagens triks (js/main.js fyller [data-hero]) med maskoten på kanten.
+         Snorres hilsen og topplista står ved siden av. -->
+    <section class="front-today">
+      <div class="front-today-grid">
+        <div>
+          <p class="front-date" data-front-date></p>
+          <h1>Nye triks hver dag</h1>
 
-      <div class="hero-greeting">
-        <h1>Hellu:) Hyggelig å se deg!</h1>
-        <p class="hero-lead">
-          Jeg har brukt de siste månedene på å bygge denne nettsiden hvor jeg har samlet opp
-          alle mine tips og triks. Gjerne send meg en melding her eller på TikTok med
-          tilbakemeldinger.
-        </p>
-        <div class="hero-byline">
-          <img src="assets/img/snorre-saus-avatar.svg" alt="" width="24" height="24">
-          <span>Snorre Saus</span>
-          <span class="hero-byline-sep">·</span>
-          <a href="meldinger.html?til=SnorreSaus">Send en melding</a>
+          <div class="front-feature" data-hero>
+            <div class="front-mascot" aria-hidden="true" data-front-mascot>
+              <svg viewBox="0 0 612 612">
+                <circle cx="306" cy="306" r="302" fill="#FFDC5E"/>
+                <circle cx="138" cy="372" r="30" fill="#FFA38C"/>
+                <circle cx="474" cy="372" r="30" fill="#FFA38C"/>
+                <path d="M280 330 Q280 365 304 365 Q328 365 328 330" fill="none" stroke="#000" stroke-width="20" stroke-linecap="round"/>
+                <g class="front-mascot-pupils" data-front-pupils>
+                  <circle cx="160" cy="282" r="56" fill="#000"/>
+                  <circle cx="452" cy="282" r="56" fill="#000"/>
+                  <circle cx="178" cy="262" r="16" fill="#fff"/>
+                  <circle cx="470" cy="262" r="16" fill="#fff"/>
+                  <circle cx="146" cy="300" r="7" fill="#fff"/>
+                  <circle cx="438" cy="300" r="7" fill="#fff"/>
+                </g>
+              </svg>
+            </div>
+            <div class="front-feature-media" data-hero-slot></div>
+          </div>
         </div>
+
+        <aside class="front-side">
+          <div class="front-note">
+            <p>Hellu:) Hyggelig å se deg! Jeg har brukt de siste månedene på å bygge denne
+              nettsiden hvor jeg har samlet opp alle mine tips og triks.</p>
+            <p>Gjerne send meg en melding her eller på TikTok med tilbakemeldinger.</p>
+            <p class="front-note-sign">
+              <img src="assets/img/snorre-saus-avatar.svg" alt="" width="28" height="28">
+              <span>Snorre Saus, <a href="meldinger.html?til=SnorreSaus">send en melding</a></span>
+            </p>
+          </div>
+
+          <div class="front-podium">
+            <h2>Toppliste <a href="rangering.html">Se alle</a></h2>
+            <ol data-front-podium></ol>
+          </div>
+        </aside>
       </div>
     </section>
 
     <section id="alle">
-      <div class="game-grid" data-game-grid></div>
+      <div class="front-section-head">
+        <div>
+          <h2>Alle triks</h2>
+          <p>Hver runde gir poeng til nivået ditt.</p>
+        </div>
+      </div>
+      <div class="front-tricks" data-game-grid></div>
     </section>
 
-    <!-- Tipsene lå tidligere som en isolert øy bak ett menypunkt. Forsiden
-         viser nå den fremhevede tipset i full bredde, med én vei videre til
-         resten – i stedet for en rad med små kort. -->
+    <!-- Tipsene som en innholdsfortegnelse, med lesertall fra databasen. -->
     <section data-front-guide-section hidden>
-      <div data-front-guide></div>
+      <div class="front-section-head">
+        <div>
+          <h2>Tips til skolen</h2>
+          <p>Maler, snarveier og rettighetene dine på skolen.</p>
+        </div>
+        <a href="tips.html" data-front-guide-count>Alle tips</a>
+      </div>
+      <ol class="front-toc" data-front-guide></ol>
     </section>
   </main>
 
@@ -80,6 +118,7 @@
 <script src="js/visit-tracking.js"></script>
 <script src="js/reward-use-tracking.js"></script>
 <script src="js/games-data.js"></script>
+<script src="js/leaderboard-data.js"></script>
 <script src="js/game-howto.js"></script>
 <script src="js/guides-data.js"></script>
 <script src="js/levelup-modal.js"></script>
