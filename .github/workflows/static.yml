@@ -10,6 +10,11 @@ on:
   push:
     branches: ["main"]
 
+  # Bygger på nytt hver 3. time, slik at nye og redigerte tips fra Supabase
+  # får sin statiske artikkelside og havner i sitemap.xml uten en push.
+  schedule:
+    - cron: "17 */3 * * *"
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
