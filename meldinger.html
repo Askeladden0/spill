@@ -146,6 +146,9 @@
                   <button type="button" class="dm-attach-btn" data-attach-open="rekord" aria-expanded="false" title="Send rekorden din" aria-label="Send rekorden din">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="4" width="6" height="17"></rect><rect x="15" y="9" width="6" height="12"></rect><rect x="3" y="12" width="6" height="9"></rect></svg>
                   </button>
+                  <button type="button" class="dm-attach-btn" data-attach-kamp title="Utfordre til Fire på rad" aria-label="Utfordre til Fire på rad">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><circle cx="15.5" cy="8.5" r="1.5"></circle><circle cx="8.5" cy="15.5" r="1.5"></circle><circle cx="15.5" cy="15.5" r="1.5"></circle></svg>
+                  </button>
                 </div>
                 <label class="visually-hidden" for="dm-input">Skriv en melding</label>
                 <input type="text" id="dm-input" data-dm-input maxlength="1000" placeholder="Skriv en melding …" autocomplete="off">
@@ -190,6 +193,7 @@
 <script src="js/avatar-figures.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/social.js"></script>
+<script src="js/online-match.js"></script>
 <script src="js/visit-tracking.js"></script>
 <script src="js/games-data.js"></script>
 <script src="js/guides-data.js"></script>
@@ -595,6 +599,20 @@
       };
     }
 
+    if (att.kind === "kamp") {
+      // Bare Fire på rad har online-kamper foreløpig.
+      if (!/^[0-9a-f-]{36}$/i.test(att.ref)) return null;
+      const game = gameById("fire-pa-rad");
+      return {
+        eyebrow: "Utfordring",
+        title: game ? game.name : "Fire på rad",
+        sub: "Bli med i en kamp mot meg",
+        icon: game ? window.gameIconHTML(game, 30) : kindIconHTML("spill"),
+        href: `player.html?id=fire-pa-rad&kamp=${encodeURIComponent(att.ref)}`,
+        action: "Bli med",
+      };
+    }
+
     if (att.kind === "rekord") {
       const allTime = att.ref === "alle";
       const game = allTime ? null : gameById(att.ref);
@@ -699,6 +717,30 @@
         renderPendingAttachment();
         els.dmInput.focus();
       });
+    });
+  }
+
+  // «Utfordre til Fire på rad» lager en ny online kamp med en gang (du blir
+  // rød, nøkkelen lagres i nettleseren din) og legger den ved meldingen.
+  // Den som åpner kortet først, blir motspilleren din.
+  const kampBtn = document.querySelector("[data-attach-kamp]");
+  if (kampBtn) {
+    kampBtn.addEventListener("click", async () => {
+      const Online = window.StudillaOnline;
+      if (!Online || kampBtn.disabled) return;
+      closePicker();
+      kampBtn.disabled = true;
+      try {
+        const id = await Online.create("fire-pa-rad");
+        pendingAttachment = { kind: "kamp", ref: id, value: "fire-pa-rad" };
+        renderPendingAttachment();
+        els.dmInput.focus();
+      } catch (e) {
+        els.dmError.hidden = false;
+        els.dmError.textContent = (e && e.message) || "Klarte ikke lage kampen.";
+      } finally {
+        kampBtn.disabled = false;
+      }
     });
   }
 

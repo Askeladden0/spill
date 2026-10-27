@@ -309,7 +309,7 @@
    * plukker merket av igjen og tegner det som et kort over teksten.
    */
 
-  const ATTACH_RE = /^\[\[v:(spill|guide|rekord)\|([^|\]]{1,120})(?:\|([^|\]]{0,32}))?\]\]\s*/;
+  const ATTACH_RE = /^\[\[v:(spill|guide|rekord|kamp)\|([^|\]]{1,120})(?:\|([^|\]]{0,32}))?\]\]\s*/;
 
   /** Deler en lagret meldingstekst i { attachment, text }. */
   function parseBody(body) {

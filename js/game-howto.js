@@ -65,11 +65,12 @@
       ]
     },
     "fire-pa-rad": {
-      intro: "Få fire brikker på rad før AI-en gjør det.",
+      intro: "Få fire brikker på rad før motstanderen gjør det – mot AI-en eller en venn online.",
       steps: [
-        "Trykk på en kolonne for å slippe en rød brikke ned i den.",
+        "Trykk på en kolonne for å slippe en brikke ned i den.",
         "Fire på rad vannrett, loddrett eller diagonalt vinner.",
-        "Jo færre trekk du bruker på å vinne, jo flere poeng får du."
+        "Mot AI-en: jo færre trekk du bruker på å vinne, jo flere poeng får du.",
+        "Mot en venn: velg «Mot en venn online» og send lenken, eller utfordre fra Meldinger. Online-kamper gir ikke poeng."
       ]
     },
     papirkomet: {

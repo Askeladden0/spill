@@ -551,11 +551,60 @@
 
     /**
      * «Utfordre en venn» åpner en liten meny i stedet for å dele med det
-     * samme: enten en delbar lenke (nettleserens egen delefunksjon der den
-     * finnes, ellers kopiert til utklippstavla), eller en direktemelding til
-     * en venn eller gruppe.
+     * samme: enten en lenke kopiert til utklippstavla (bare selve lenken,
+     * ingen tekst rundt), eller en direktemelding til en venn eller gruppe.
+     * openShareMenu brukes både av game over-knappen og av spill som vil
+     * invitere en motspiller (session.openInvite).
      */
     let copyResetTimer = null;
+    function copyText(value) {
+      return navigator.clipboard.writeText(value).then(() => true).catch(() => {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = value;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand("copy");
+          ta.remove();
+          return ok;
+        } catch (e) {
+          return false;
+        }
+      });
+    }
+
+    function openShareMenu(opts) {
+      const { url, attachmentBody, profile } = opts;
+      const title = opts.title || "Utfordre en venn";
+      const copyLabel = opts.copyLabel || "Del lenke til spillet";
+      const canSend = !!profile && Social && Social.isAvailable();
+      const titleEl = els.shareOverlay.querySelector("#share-overlay-title");
+      if (titleEl) titleEl.textContent = title;
+      els.shareMenu.hidden = false;
+      els.sharePicker.hidden = true;
+      els.shareStatus.hidden = true;
+      els.shareCopyBtn.textContent = copyLabel;
+      els.shareDmBtn.textContent = profile ? "Send til en venn" : "Send til en venn (logg inn)";
+      els.shareGroupBtn.textContent = profile ? "Send til en gruppe" : "Send til en gruppe (logg inn)";
+      els.shareDmBtn.hidden = profile ? !canSend : false;
+      els.shareGroupBtn.hidden = profile ? !canSend : false;
+      els.shareOverlay.hidden = false;
+
+      // Bare kopiering, ingen delingsdialog: knappeteksten bytter midlertidig.
+      els.shareCopyBtn.onclick = async () => {
+        if (!(await copyText(url))) return;
+        els.shareCopyBtn.textContent = "Kopiert!";
+        window.clearTimeout(copyResetTimer);
+        copyResetTimer = window.setTimeout(() => { els.shareCopyBtn.textContent = copyLabel; }, 2000);
+      };
+
+      const goLogin = () => { window.location.href = "login.html"; };
+      els.shareDmBtn.onclick = profile ? () => openSharePicker("dm", attachmentBody) : goLogin;
+      els.shareGroupBtn.onclick = profile ? () => openSharePicker("group", attachmentBody) : goLogin;
+    }
+
     function setupShare(currentGameId, score, profile) {
       const games = window.STUDILLA_GAMES || [];
       const game = games.find((g) => g.id === currentGameId);
@@ -563,49 +612,9 @@
       const url = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(currentGameId)}`;
       const text = `Jeg fikk ${score.toLocaleString("no-NO")} i ${name} på Studilla. Klarer du å slå meg?`;
       const attachmentBody = Social ? Social.buildBody({ kind: "spill", ref: currentGameId }, text) : text;
-      const canSend = !!profile && Social && Social.isAvailable();
 
       els.overlayShare.hidden = false;
-      els.overlayShare.onclick = () => {
-        els.shareMenu.hidden = false;
-        els.sharePicker.hidden = true;
-        els.shareStatus.hidden = true;
-        els.shareCopyBtn.textContent = "Del lenke til spillet";
-        els.shareDmBtn.textContent = profile ? "Send til en venn" : "Send til en venn (logg inn)";
-        els.shareGroupBtn.textContent = profile ? "Send til en gruppe" : "Send til en gruppe (logg inn)";
-        els.shareDmBtn.hidden = profile ? !canSend : false;
-        els.shareGroupBtn.hidden = profile ? !canSend : false;
-        els.shareOverlay.hidden = false;
-      };
-
-      // Bare kopiering, ingen delingsdialog: knappeteksten bytter midlertidig.
-      els.shareCopyBtn.onclick = async () => {
-        const full = `${text} ${url}`;
-        let ok = false;
-        try {
-          await navigator.clipboard.writeText(full);
-          ok = true;
-        } catch (e) {
-          try {
-            const ta = document.createElement("textarea");
-            ta.value = full;
-            ta.style.position = "fixed";
-            ta.style.opacity = "0";
-            document.body.appendChild(ta);
-            ta.select();
-            ok = document.execCommand("copy");
-            ta.remove();
-          } catch (e2) {}
-        }
-        if (!ok) return;
-        els.shareCopyBtn.textContent = "Kopiert!";
-        window.clearTimeout(copyResetTimer);
-        copyResetTimer = window.setTimeout(() => { els.shareCopyBtn.textContent = "Del lenke til spillet"; }, 2000);
-      };
-
-      const goLogin = () => { window.location.href = "login.html"; };
-      els.shareDmBtn.onclick = profile ? () => openSharePicker("dm", attachmentBody) : goLogin;
-      els.shareGroupBtn.onclick = profile ? () => openSharePicker("group", attachmentBody) : goLogin;
+      els.overlayShare.onclick = () => openShareMenu({ url, attachmentBody, profile });
     }
 
     let restartHandler = null;
@@ -799,6 +808,16 @@
 
       onRestart(cb) {
         restartHandler = cb;
+      },
+
+      /**
+       * Åpner dele-menyen for en invitasjon (f.eks. en online kamp):
+       * «Kopier lenke» kopierer bare `url`, og venn/gruppe sender
+       * `attachmentBody` som melding.
+       */
+      async openInvite({ url, attachmentBody, title, copyLabel }) {
+        const profile = await Auth.getCurrentProfile();
+        openShareMenu({ url, attachmentBody, profile, title, copyLabel });
       },
 
       /**

@@ -5,6 +5,8 @@
  * AI-en bruker minimax med alpha-beta-beskjæring og en enkel heuristikk
  * (midtkolonne og åpne tre-på-rad teller mest). Bruker den delte
  * spill-kjøretiden (js/game-runtime.js) for poeng-HUD, rekord og game-over.
+ * Man kan også spille online mot en venn (js/online-match.js): da tegnes
+ * brettet fra kampraden på serveren, og det gis ingen poeng.
  */
 (function () {
   "use strict";
@@ -150,7 +152,11 @@
 
   // ---------- Spillflyt og tegning ----------
 
+  // Med ?kamp=<id> i adressen er dette en online kamp mot en annen spiller
+  // (js/online-match.js). Uten velger man mellom AI-en og å invitere en venn.
   function start(container) {
+    const Online = window.StudillaOnline;
+    const Social = window.StudillaSocial;
     let board = emptyBoard();
     let turn = HUMAN;
     let over = false;
@@ -159,25 +165,117 @@
     let session = null;
     let boardEl = null;
     let statusEl = null;
+    let onlineEl = null;
     let hoverCol = -1;
     let aiTimer = null;
     let endTimer = null;
+    // Brikken som spilleren på denne skjermen slipper (styrer forhåndsvisningen).
+    let myPiece = HUMAN;
+    // Hva et klikk/tastetrykk på en kolonne gjør i gjeldende modus.
+    let onColumn = () => {};
+    let controlsAttached = false;
+
+    // Online-tilstand.
+    let matchId = null;
+    let seat = 0;
+    let row = null;
+    let unsubscribe = null;
+    let lastMoveSeen = null;
+    let inviteShown = false;
 
     window.StudillaGameRuntime.mount(container, GAME_ID).then((s) => {
       session = s;
+      const kamp = new URLSearchParams(window.location.search).get("kamp");
+      if (Online && Online.isMatchId(kamp)) startOnline(kamp);
+      else showModePicker();
+    });
+
+    function esc(text) {
+      return String(text == null ? "" : text).replace(/[&<>"']/g, (ch) => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+      ));
+    }
+
+    function setKampParam(id) {
+      const url = new URL(window.location.href);
+      if (id) url.searchParams.set("kamp", id);
+      else url.searchParams.delete("kamp");
+      window.history.replaceState(null, "", url.toString());
+    }
+
+    function showModePicker() {
+      stopOnline();
+      setKampParam(null);
+      session.onRestart(null);
+      session.playArea.innerHTML = `
+        <div class="c4-wrap c4-modes">
+          <div class="c4-status">Hvem vil du spille mot?</div>
+          <button type="button" class="btn-primary c4-mode-btn" data-c4-mode="ai">Mot datamaskinen</button>
+          <button type="button" class="btn-outline c4-mode-btn" data-c4-mode="online">Mot en venn online</button>
+          <p class="c4-mode-hint">Send en lenke eller en melding til en venn – dere trenger ikke være logget inn.</p>
+          <p class="c4-mode-error" data-c4-mode-error hidden></p>
+        </div>
+      `;
+      const errEl = session.playArea.querySelector("[data-c4-mode-error]");
+      session.playArea.querySelector('[data-c4-mode="ai"]').addEventListener("click", startAi);
+      const onlineBtn = session.playArea.querySelector('[data-c4-mode="online"]');
+      if (!Online || !Online.isAvailable()) {
+        onlineBtn.disabled = true;
+        errEl.hidden = false;
+        errEl.textContent = "Online-spill er ikke tilgjengelig akkurat nå.";
+        return;
+      }
+      onlineBtn.addEventListener("click", async () => {
+        onlineBtn.disabled = true;
+        onlineBtn.textContent = "Lager kamp …";
+        try {
+          const id = await Online.create(GAME_ID);
+          startOnline(id);
+        } catch (e) {
+          onlineBtn.disabled = false;
+          onlineBtn.textContent = "Mot en venn online";
+          errEl.hidden = false;
+          errEl.textContent = (e && e.message) || "Klarte ikke lage kampen.";
+        }
+      });
+    }
+
+    // Felles brett-markup for begge modusene.
+    function mountBoard(withOnlinePanel) {
       session.playArea.innerHTML = `
         <div class="c4-wrap">
           <div class="c4-status" data-c4-status></div>
           <div class="c4-board" data-c4-board tabindex="0" role="grid" aria-label="Fire på rad"></div>
+          ${withOnlinePanel ? '<div class="c4-online" data-c4-online></div>' : ""}
         </div>
       `;
       boardEl = session.playArea.querySelector("[data-c4-board]");
       statusEl = session.playArea.querySelector("[data-c4-status]");
+      onlineEl = session.playArea.querySelector("[data-c4-online]");
+      hoverCol = -1;
       buildBoard();
+      attachBoardControls();
+      if (!controlsAttached) {
+        controlsAttached = true;
+        document.addEventListener("keydown", (e) => {
+          if (!boardEl || !document.body.contains(boardEl)) return;
+          if (e.key >= "1" && e.key <= "7") {
+            e.preventDefault();
+            onColumn(+e.key - 1);
+          }
+        });
+      }
+    }
+
+    // ---------- Mot datamaskinen ----------
+
+    function startAi() {
+      myPiece = HUMAN;
+      mountBoard(false);
+      onColumn = humanMove;
       session.onRestart(() => initGame());
-      attachControls();
       initGame();
-    });
+    }
 
     function initGame() {
       clearTimeout(aiTimer);
@@ -258,6 +356,187 @@
       render();
     }
 
+    // ---------- Online mot en venn ----------
+    // Serveren (online_c4_move) bestemmer hva som er lov og hvem som vant;
+    // her tegnes bare raden den sender. Online-kamper gir ikke poeng.
+
+    function stopOnline() {
+      if (unsubscribe) unsubscribe();
+      unsubscribe = null;
+      matchId = null;
+      row = null;
+      seat = 0;
+      lastMoveSeen = null;
+    }
+
+    async function startOnline(id) {
+      stopOnline();
+      matchId = id;
+      setKampParam(id);
+      mountBoard(true);
+      onColumn = onlineMove;
+      session.onRestart(null);
+      session.setScore(0);
+      over = true;
+      busy = true;
+      render();
+      setStatus("Kobler til kampen …");
+      try {
+        seat = await Online.join(id);
+        if (matchId !== id) return;
+        myPiece = seat === 2 ? AI : HUMAN;
+        const first = await Online.fetch(id);
+        if (matchId !== id) return;
+        if (!first) throw new Error("Fant ikke kampen.");
+        applyRow(first);
+        unsubscribe = Online.subscribe(id, applyRow);
+      } catch (e) {
+        if (matchId !== id) return;
+        setStatus((e && e.message) || "Fant ikke kampen.");
+        onlineEl.innerHTML = `<button type="button" class="btn-primary" data-c4-new>Start en ny kamp</button>`;
+        onlineEl.querySelector("[data-c4-new]").addEventListener("click", showModePicker);
+      }
+    }
+
+    function opponentName() {
+      if (!row) return "Motspilleren";
+      return (seat === 2 ? row.host_name : row.guest_name) || "Motspilleren";
+    }
+
+    function colorName(s) {
+      return s === 1 ? "rød" : "gul";
+    }
+
+    function applyRow(next) {
+      if (!next || next.id !== matchId) return;
+      // Begge spillerne følger revansjen automatisk.
+      if (next.rematch_id && seat > 0) {
+        startOnline(next.rematch_id);
+        return;
+      }
+      row = next;
+      board = emptyBoard();
+      for (let i = 0; i < ROWS * COLS; i++) board[Math.floor(i / COLS)][i % COLS] = +row.board[i];
+      over = row.status !== "playing";
+      busy = over || seat === 0 || row.turn !== seat;
+      const info = {};
+      if (row.last_move != null && row.last_move !== lastMoveSeen) {
+        info.dropped = [Math.floor(row.last_move / COLS), row.last_move % COLS];
+      }
+      lastMoveSeen = row.last_move;
+      if (row.win_line) info.line = row.win_line;
+      render(info);
+      renderOnlineStatus();
+    }
+
+    function renderOnlineStatus() {
+      const opp = opponentName();
+      let status;
+      if (row.status === "waiting") {
+        status = seat === 1 ? "Venter på motspiller …" : "Kampen har ikke startet";
+      } else if (row.status === "playing") {
+        if (seat === 0) status = `${row.turn === 1 ? row.host_name : row.guest_name} (${colorName(row.turn)}) sin tur`;
+        else status = row.turn === seat ? `Din tur – du er ${colorName(seat)}` : `${opp} sin tur …`;
+      } else if (row.winner === 0) {
+        status = "Brettet er fullt – uavgjort";
+      } else if (seat === 0) {
+        status = `${row.winner === 1 ? row.host_name : row.guest_name} vant`;
+      } else if (row.winner === seat) {
+        status = row.resigned ? `${opp} ga opp – du vant!` : "Fire på rad – du vant!";
+      } else {
+        status = row.resigned === seat ? "Du ga opp" : `${opp} vant`;
+      }
+      setStatus(status);
+
+      let html = "";
+      if (seat === 0) {
+        html = `
+          <p class="c4-online-note">Kampen er full – du ser på.</p>
+          <button type="button" class="btn-outline" data-c4-new>Start din egen kamp</button>`;
+      } else if (row.status === "waiting") {
+        html = `
+          <p class="c4-online-note">Send lenken til en venn. Kampen starter når hen åpner den.</p>
+          <button type="button" class="btn-primary" data-c4-invite>Inviter en venn</button>
+          <button type="button" class="btn-outline" data-c4-new>Avbryt</button>`;
+      } else if (row.status === "playing") {
+        html = `
+          <p class="c4-online-note">Du (${colorName(seat)}) mot ${esc(opp)} (${colorName(seat === 1 ? 2 : 1)})</p>
+          <button type="button" class="btn-outline" data-c4-resign>Gi opp</button>`;
+      } else {
+        html = `
+          <button type="button" class="btn-primary" data-c4-rematch>Revansj</button>
+          <button type="button" class="btn-outline" data-c4-new>Ny kamp</button>`;
+      }
+      onlineEl.innerHTML = html;
+      bindOnlineButtons();
+
+      // Invitasjonsmenyen åpnes av seg selv første gang man lager en kamp.
+      if (row.status === "waiting" && seat === 1 && !inviteShown) {
+        inviteShown = true;
+        openInvite();
+      }
+    }
+
+    function bindOnlineButtons() {
+      const on = (sel, fn) => {
+        const el = onlineEl.querySelector(sel);
+        if (el) el.addEventListener("click", fn);
+      };
+      on("[data-c4-new]", showModePicker);
+      on("[data-c4-invite]", openInvite);
+      on("[data-c4-resign]", async (e) => {
+        if (!window.confirm("Vil du gi opp kampen?")) return;
+        e.currentTarget.disabled = true;
+        try { await Online.resign(matchId); } catch (err) { setStatus(err.message); }
+      });
+      on("[data-c4-rematch]", async (e) => {
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        btn.textContent = "Starter revansj …";
+        try {
+          const newId = await Online.rematch(matchId);
+          startOnline(newId);
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = "Revansj";
+          setStatus(err.message);
+        }
+      });
+    }
+
+    function openInvite() {
+      if (!matchId) return;
+      const url = Online.matchUrl(matchId, GAME_ID);
+      const attachmentBody = Social
+        ? Social.buildBody({ kind: "kamp", ref: matchId, value: GAME_ID }, "Bli med på Fire på rad!")
+        : url;
+      session.openInvite({ url, attachmentBody, title: "Inviter en venn", copyLabel: "Kopier lenke" });
+    }
+
+    async function onlineMove(col) {
+      if (!row || over || busy || seat === 0 || row.turn !== seat) return;
+      const r = dropRow(board, col);
+      if (r < 0) return;
+      // Vis brikken med en gang; serveren bekrefter via abonnementet.
+      board[r][col] = seat;
+      busy = true;
+      lastMoveSeen = r * COLS + col;
+      render({ dropped: [r, col] });
+      setStatus(`${opponentName()} sin tur …`);
+      try {
+        await Online.move(matchId, col);
+      } catch (e) {
+        setStatus((e && e.message) || "Trekket gikk ikke gjennom.");
+        const fresh = await Online.fetch(matchId).catch(() => null);
+        if (fresh) {
+          row = null;
+          applyRow(fresh);
+        }
+      }
+    }
+
+    // ---------- Tegning ----------
+
     function buildBoard() {
       boardEl.innerHTML = "";
       for (let r = 0; r < ROWS; r++) {
@@ -277,10 +556,10 @@
       return cell ? +cell.dataset.c : -1;
     }
 
-    function attachControls() {
+    function attachBoardControls() {
       boardEl.addEventListener("click", (e) => {
         const c = colFromEvent(e);
-        if (c >= 0) humanMove(c);
+        if (c >= 0) onColumn(c);
       });
       boardEl.addEventListener("pointerover", (e) => {
         const c = colFromEvent(e);
@@ -288,12 +567,6 @@
       });
       boardEl.addEventListener("pointerleave", () => {
         if (hoverCol !== -1) { hoverCol = -1; render(); }
-      });
-      document.addEventListener("keydown", (e) => {
-        if (e.key >= "1" && e.key <= "7") {
-          e.preventDefault();
-          humanMove(+e.key - 1);
-        }
       });
     }
 
@@ -303,6 +576,7 @@
       const cells = boardEl.children;
       // Forhåndsvisning av hvor brikken lander i kolonnen musa står over.
       const ghostRow = hoverCol >= 0 && !over && !busy ? dropRow(board, hoverCol) : -1;
+      const ghostCls = myPiece === AI ? " is-ghost is-ghost-yellow" : " is-ghost";
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           const v = board[r][c];
@@ -310,7 +584,7 @@
           let cls = "c4-cell";
           if (v === HUMAN) cls += " is-red";
           else if (v === AI) cls += " is-yellow";
-          else if (r === ghostRow && c === hoverCol) cls += " is-ghost";
+          else if (r === ghostRow && c === hoverCol) cls += ghostCls;
           if (winSet.has(r * COLS + c)) cls += " is-win";
           if (info.dropped && info.dropped[0] === r && info.dropped[1] === c) cls += " is-drop";
           if (c === hoverCol && !over && !busy) cls += " is-col";

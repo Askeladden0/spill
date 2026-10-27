@@ -3015,6 +3015,7 @@ a.xp-widget { text-decoration: none; color: inherit; }
 .c4-cell.is-red { background: #ee3b4a; }
 .c4-cell.is-yellow { background: #fbc82e; }
 .c4-cell.is-ghost { background: rgba(238, 59, 74, .35); }
+.c4-cell.is-ghost-yellow { background: rgba(251, 200, 46, .35); }
 .c4-cell.is-drop { animation: c4Drop .35s cubic-bezier(.3, 1.2, .5, 1); }
 .c4-cell.is-win { animation: c4Win .7s ease-in-out infinite; outline: 3px solid #fff; outline-offset: -3px; }
 @keyframes c4Drop {
@@ -3024,6 +3025,22 @@ a.xp-widget { text-decoration: none; color: inherit; }
 @keyframes c4Win {
   50% { transform: scale(.88); }
 }
+
+/* Valg av motstander og online-kamp mot en venn. */
+.c4-modes { width: 320px; max-width: 100%; padding: 24px 0; text-align: center; }
+.c4-mode-btn { width: 100%; }
+.c4-mode-hint,
+.c4-online-note { margin: 0; font-size: 14px; color: var(--muted); text-align: center; }
+.c4-mode-error { margin: 0; font-size: 14px; color: #ee3b4a; }
+.c4-online {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px 10px;
+  min-height: 44px;
+}
+.c4-online .c4-online-note { flex-basis: 100%; }
 
 /* ---------- Spill: Flappy ---------- */
 

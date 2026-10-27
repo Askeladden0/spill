@@ -5277,3 +5277,368 @@ $$;
 
 revoke all on function public.report_user(uuid, text) from public, anon;
 grant execute on function public.report_user(uuid, text) to authenticated;
+
+-- ============================================================
+-- 76. Online tospiller (Fire på rad).
+-- ============================================================
+-- En kamp er én rad i online_matches som begge spillerne (og eventuelle
+-- tilskuere) leser og abonnerer på via Supabase Realtime. Man trenger ikke
+-- være logget inn: hver plass eies av en tilfeldig nøkkel som klienten lager
+-- og lagrer i localStorage (js/online-match.js). Bare sha256 av nøkkelen
+-- lagres, i online_match_seats, som ingen kan lese direkte. Alle endringer
+-- går gjennom RPC-ene under, som sjekker nøkkel, tur og gyldig trekk.
+--
+-- Brettet er en tekst på 42 tegn ('0' tom, '1' rød/plass 1, '2' gul/plass 2),
+-- rad for rad ovenfra (indeks = rad * 7 + kolonne), som i
+-- js/games/game-fire-pa-rad.js.
+--
+-- Navnene settes på serveren (brukernavnet for innloggede, ellers «Gjest»),
+-- slik at ingen kan skrive hva som helst inn i en annen spillers skjerm.
+-- Online-kamper gir ikke poeng.
+
+create table if not exists public.online_matches (
+  id            uuid primary key default gen_random_uuid(),
+  game          text not null default 'fire-pa-rad' check (game in ('fire-pa-rad')),
+  status        text not null default 'waiting' check (status in ('waiting', 'playing', 'finished')),
+  board         text not null default repeat('0', 42) check (board ~ '^[012]{42}$'),
+  turn          smallint not null default 1 check (turn in (1, 2)),
+  winner        smallint check (winner in (0, 1, 2)),
+  win_line      jsonb,
+  last_move     smallint,
+  move_count    integer not null default 0,
+  host_name     text not null default 'Gjest',
+  guest_name    text,
+  host_user_id  uuid references auth.users (id) on delete set null,
+  guest_user_id uuid references auth.users (id) on delete set null,
+  resigned      smallint,
+  rematch_id    uuid,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+create index if not exists online_matches_created_idx on public.online_matches (created_at);
+create index if not exists online_matches_host_idx on public.online_matches (host_user_id) where status = 'waiting';
+
+create table if not exists public.online_match_seats (
+  match_id   uuid not null references public.online_matches (id) on delete cascade,
+  seat       smallint not null check (seat in (1, 2)),
+  token_hash text not null,
+  primary key (match_id, seat)
+);
+
+alter table public.online_matches enable row level security;
+alter table public.online_match_seats enable row level security;
+
+drop policy if exists "online_matches_select" on public.online_matches;
+create policy "online_matches_select" on public.online_matches
+  for select to anon, authenticated using (true);
+
+revoke all on public.online_match_seats from anon, authenticated;
+revoke insert, update, delete on public.online_matches from anon, authenticated;
+grant select on public.online_matches to anon, authenticated;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+     where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'online_matches'
+  ) then
+    alter publication supabase_realtime add table public.online_matches;
+  end if;
+end;
+$$;
+
+create or replace function public.online_token_hash(p_token text)
+returns text
+language sql
+immutable
+set search_path = public, pg_temp
+as $$
+  select encode(sha256(convert_to(coalesce(p_token, ''), 'UTF8')), 'hex');
+$$;
+
+revoke all on function public.online_token_hash(text) from public, anon, authenticated;
+
+create or replace function public.online_player_name()
+returns text
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select coalesce((select left(username, 24) from public.profiles where id = auth.uid()), 'Gjest');
+$$;
+
+revoke all on function public.online_player_name() from public, anon, authenticated;
+
+-- Hvilken plass (1/2) nøkkelen eier i kampen, eller 0.
+create or replace function public.online_seat_of(p_id uuid, p_token text)
+returns smallint
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select coalesce((
+    select seat from public.online_match_seats
+     where match_id = p_id and token_hash = public.online_token_hash(p_token)
+     limit 1
+  ), 0)::smallint;
+$$;
+
+revoke all on function public.online_seat_of(uuid, text) from public, anon, authenticated;
+
+create or replace function public.online_create_match(p_game text, p_token text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  new_id uuid;
+  recent integer;
+begin
+  if p_game is distinct from 'fire-pa-rad' then
+    raise exception 'Ukjent spill';
+  end if;
+  if p_token is null or length(p_token) < 16 or length(p_token) > 200 then
+    raise exception 'Ugyldig nøkkel';
+  end if;
+
+  -- Rydd bort gamle kamper.
+  delete from public.online_matches where created_at < now() - interval '14 days';
+
+  -- Enkel misbruksbrems.
+  select count(*) into recent from public.online_matches
+   where created_at > now() - interval '10 minutes';
+  if recent >= 300 then
+    raise exception 'Mange nye kamper akkurat nå. Prøv igjen om litt.';
+  end if;
+  if uid is not null then
+    select count(*) into recent from public.online_matches
+     where host_user_id = uid and status = 'waiting' and created_at > now() - interval '1 day';
+    if recent >= 20 then
+      raise exception 'Du har mange åpne invitasjoner. Prøv igjen senere.';
+    end if;
+  end if;
+
+  insert into public.online_matches (game, host_name, host_user_id)
+  values (p_game, public.online_player_name(), uid)
+  returning id into new_id;
+
+  insert into public.online_match_seats (match_id, seat, token_hash)
+  values (new_id, 1, public.online_token_hash(p_token));
+
+  return new_id;
+end;
+$$;
+
+-- Blir med i kampen. Returnerer plassen (1/2), eller 0 som tilskuer.
+create or replace function public.online_join_match(p_id uuid, p_token text)
+returns smallint
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  m public.online_matches;
+  s smallint;
+begin
+  if p_token is null or length(p_token) < 16 or length(p_token) > 200 then
+    raise exception 'Ugyldig nøkkel';
+  end if;
+
+  select * into m from public.online_matches where id = p_id for update;
+  if not found then
+    raise exception 'Fant ikke kampen';
+  end if;
+
+  s := public.online_seat_of(p_id, p_token);
+  if s > 0 then
+    return s;
+  end if;
+
+  if m.status <> 'waiting' then
+    return 0;
+  end if;
+
+  insert into public.online_match_seats (match_id, seat, token_hash)
+  values (p_id, 2, public.online_token_hash(p_token));
+
+  update public.online_matches
+     set status = 'playing',
+         guest_name = public.online_player_name(),
+         guest_user_id = auth.uid(),
+         updated_at = now()
+   where id = p_id;
+
+  return 2;
+end;
+$$;
+
+create or replace function public.online_c4_move(p_id uuid, p_token text, p_col integer)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  m public.online_matches;
+  s smallint;
+  b text;
+  r integer := -1;
+  i integer;
+  dirs integer[] := array[0,1, 1,0, 1,1, 1,-1];
+  dr integer;
+  dc integer;
+  sgn integer;
+  rr integer;
+  cc integer;
+  line jsonb;
+  piece text;
+  won jsonb := null;
+  full_board boolean;
+begin
+  select * into m from public.online_matches where id = p_id for update;
+  if not found then
+    raise exception 'Fant ikke kampen';
+  end if;
+  s := public.online_seat_of(p_id, p_token);
+  if s = 0 then
+    raise exception 'Du er ikke med i denne kampen';
+  end if;
+  if m.status <> 'playing' then
+    raise exception 'Kampen er ikke i gang';
+  end if;
+  if m.turn <> s then
+    raise exception 'Det er ikke din tur';
+  end if;
+  if p_col is null or p_col < 0 or p_col > 6 then
+    raise exception 'Ugyldig kolonne';
+  end if;
+
+  b := m.board;
+  for i in reverse 5..0 loop
+    if substr(b, i * 7 + p_col + 1, 1) = '0' then
+      r := i;
+      exit;
+    end if;
+  end loop;
+  if r < 0 then
+    raise exception 'Kolonnen er full';
+  end if;
+
+  piece := s::text;
+  b := overlay(b placing piece from r * 7 + p_col + 1 for 1);
+
+  -- Fire på rad gjennom den nye brikken?
+  for i in 0..3 loop
+    dr := dirs[i * 2 + 1];
+    dc := dirs[i * 2 + 2];
+    line := jsonb_build_array(jsonb_build_array(r, p_col));
+    foreach sgn in array array[1, -1] loop
+      rr := r + dr * sgn;
+      cc := p_col + dc * sgn;
+      while rr between 0 and 5 and cc between 0 and 6
+            and substr(b, rr * 7 + cc + 1, 1) = piece loop
+        line := line || jsonb_build_array(jsonb_build_array(rr, cc));
+        rr := rr + dr * sgn;
+        cc := cc + dc * sgn;
+      end loop;
+    end loop;
+    if jsonb_array_length(line) >= 4 then
+      won := line;
+      exit;
+    end if;
+  end loop;
+
+  full_board := position('0' in b) = 0;
+
+  update public.online_matches
+     set board = b,
+         last_move = r * 7 + p_col,
+         move_count = move_count + 1,
+         turn = case when s = 1 then 2 else 1 end,
+         status = case when won is not null or full_board then 'finished' else 'playing' end,
+         winner = case when won is not null then s when full_board then 0 else null end,
+         win_line = won,
+         updated_at = now()
+   where id = p_id;
+end;
+$$;
+
+create or replace function public.online_resign(p_id uuid, p_token text)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  s smallint := public.online_seat_of(p_id, p_token);
+begin
+  if s = 0 then
+    raise exception 'Du er ikke med i denne kampen';
+  end if;
+  update public.online_matches
+     set status = 'finished',
+         winner = case when s = 1 then 2 else 1 end,
+         resigned = s,
+         updated_at = now()
+   where id = p_id and status = 'playing';
+end;
+$$;
+
+-- Revansj: lager én ny kamp med byttede farger (den som var gul starter),
+-- med de samme nøklene. Kalles den av begge, får begge den samme kampen.
+create or replace function public.online_rematch(p_id uuid, p_token text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  m public.online_matches;
+  s smallint;
+  new_id uuid;
+begin
+  select * into m from public.online_matches where id = p_id for update;
+  if not found then
+    raise exception 'Fant ikke kampen';
+  end if;
+  s := public.online_seat_of(p_id, p_token);
+  if s = 0 then
+    raise exception 'Du er ikke med i denne kampen';
+  end if;
+  if m.status <> 'finished' or m.guest_name is null then
+    raise exception 'Kampen er ikke ferdig';
+  end if;
+  if m.rematch_id is not null then
+    return m.rematch_id;
+  end if;
+
+  insert into public.online_matches
+    (game, status, host_name, guest_name, host_user_id, guest_user_id)
+  values
+    (m.game, 'playing', m.guest_name, m.host_name, m.guest_user_id, m.host_user_id)
+  returning id into new_id;
+
+  insert into public.online_match_seats (match_id, seat, token_hash)
+  select new_id, case when seat = 1 then 2 else 1 end, token_hash
+    from public.online_match_seats where match_id = p_id;
+
+  update public.online_matches set rematch_id = new_id, updated_at = now() where id = p_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function public.online_create_match(text, text) from public;
+revoke all on function public.online_join_match(uuid, text) from public;
+revoke all on function public.online_c4_move(uuid, text, integer) from public;
+revoke all on function public.online_resign(uuid, text) from public;
+revoke all on function public.online_rematch(uuid, text) from public;
+grant execute on function public.online_create_match(text, text) to anon, authenticated;
+grant execute on function public.online_join_match(uuid, text) to anon, authenticated;
+grant execute on function public.online_c4_move(uuid, text, integer) to anon, authenticated;
+grant execute on function public.online_resign(uuid, text) to anon, authenticated;
+grant execute on function public.online_rematch(uuid, text) to anon, authenticated;
