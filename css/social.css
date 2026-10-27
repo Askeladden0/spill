@@ -93,8 +93,11 @@ select:focus-visible,
    i et grid: kortet er 16:9, men vokser hvis teksten trenger mer, og
    bildet fyller flaten med object-fit. Coverne er mellom 16:10 og 16:9;
    litt beskjæring oppe og nede er bedre enn at «Start her» havner under
-   bretten på en vanlig bærbar (1366 × 768). */
-.hero-card[data-hero]:empty { aspect-ratio: 16 / 9; }
+   bretten på en vanlig bærbar (1366 × 768).
+   content-box: kortet har en ramme på 1 px, og det fylte kortet er
+   .hero-media pluss rammen. Uten den ble det tomme kortet 2 px lavere, og
+   hilsenen med topplista under hoppet når trikset kom. */
+.hero-card[data-hero]:empty { aspect-ratio: 16 / 9; box-sizing: content-box; }
 .hero-media {
   display: grid;
   grid-template: 1fr / 1fr;
@@ -115,8 +118,9 @@ select:focus-visible,
 @media (max-width: 720px) {
   /* Innloggingsknappene i toppmenyen settes inn av js/auth.js. Uten
      reservert høyde vokste menyen fra 58 til 64 px på mobil når de kom, og
-     hele siden hoppet ned (CLS ca. 0,2 på alle sider). */
-  .header-right[data-auth-slot] { min-height: 43px; }
+     hele siden hoppet ned (CLS ca. 0,2 på alle sider). Knappen er 43,33 px
+     høy, så 44 px, ikke 43. */
+  .header-right[data-auth-slot] { min-height: 44px; }
 
   /* Teksten (navn, beskrivelse og knapp) er høyere enn 16:10 på en telefon.
      Plassen reserveres på forhånd, så kortet ikke vokser etter at det kom. */

@@ -426,11 +426,6 @@ main {
   gap: 24px;
 }
 
-/* Kortene settes inn av js/main.js etter at triksene er hentet. Til da
-   holder rutenettet en skjermhøyde av plass, så bunnmenyen ikke ligger
-   synlig og hopper ned når kortene kommer. */
-.game-grid:empty { min-height: 100svh; }
-
 .game-card {
   display: flex;
   flex-direction: column;
