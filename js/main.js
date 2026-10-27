@@ -29,11 +29,14 @@
    * leaderboard_totals har svart (loadRecordsIntoGrid).
    * ------------------------------------------------------------------ */
 
+  const isDuo = (g) => !!(window.studillaIsTwoPlayer && window.studillaIsTwoPlayer(g));
+
   function trickCardHTML(g, big) {
     return `
       <a class="front-trick${big ? " front-trick-big" : ""}" href="player.html?id=${encodeURIComponent(g.id)}">
         <span class="front-trick-img">
           ${g.thumbnail ? `<img src="${esc(g.thumbnail)}" alt="" loading="lazy">` : ""}
+          ${isDuo(g) ? `<span class="front-trick-badge">1v1</span>` : ""}
         </span>
         <h3>${esc(g.name)}</h3>
         <span class="front-trick-row">
@@ -44,25 +47,80 @@
     `;
   }
 
+  // «Alle», «1 person» (triks uten 1v1) eller «1v1».
+  let gridFilter = "all";
+
+  function filteredGames() {
+    if (gridFilter === "duo") return games.filter(isDuo);
+    if (gridFilter === "solo") return games.filter((g) => !isDuo(g));
+    return games;
+  }
+
   function renderGameGrid(selector) {
     const el = document.querySelector(selector);
     if (!el) return;
 
+    const list = filteredGames();
+    if (!list.length) {
+      el.removeAttribute("data-last4");
+      el.removeAttribute("data-last3");
+      el.removeAttribute("data-last2");
+      el.innerHTML = `<p class="front-tricks-empty">Ingen triks her ennå.</p>`;
+      return;
+    }
+
     // Det første trikset som ikke er dagens (det står allerede øverst) får
-    // stor plass.
+    // stor plass, men bare når alle triksene vises.
     const daily = dailyGame();
-    const bigIndex = Math.max(0, games.findIndex((g) => g !== daily));
-    el.innerHTML = games.map((g, i) => trickCardHTML(g, i === bigIndex)).join("");
+    const bigIndex = gridFilter === "all" ? Math.max(0, list.findIndex((g) => g !== daily)) : -1;
+    el.innerHTML = list.map((g, i) => trickCardHTML(g, i === bigIndex)).join("");
 
     // Det store kortet tar 2×2 ruter (2×1 på mobil). data-lastN forteller CSS-en
     // hvor mange kort som står på siste rad med N kolonner, så de kan strekkes
     // og rutenettet går opp uansett hvor mange triks det er.
-    const n = games.length;
-    [[4, 4 + n - 1], [3, 4 + n - 1], [2, 2 + n - 1]].forEach(([cols, cells]) => {
-      const onLastRow = cells % cols;
+    const n = list.length;
+    [[4, 4 + n - 1], [3, 4 + n - 1], [2, 2 + n - 1]].forEach(([cols, withBig]) => {
+      const onLastRow = (bigIndex >= 0 ? withBig : n) % cols;
       if (n > 2 && onLastRow) el.setAttribute(`data-last${cols}`, onLastRow);
       else el.removeAttribute(`data-last${cols}`);
     });
+  }
+
+  function initGridFilter(selector) {
+    const wrap = document.querySelector("[data-grid-filter]");
+    if (!wrap) return;
+    wrap.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-filter]");
+      if (!btn) return;
+      gridFilter = btn.getAttribute("data-filter");
+      wrap.querySelectorAll("[data-filter]").forEach((b) => {
+        b.setAttribute("aria-pressed", String(b === btn));
+      });
+      renderGameGrid(selector);
+      loadRecordsIntoGrid();
+    });
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Nyhetsboksen: 1v1-triksene
+   * ------------------------------------------------------------------ */
+
+  function renderNews() {
+    const box = document.querySelector("[data-front-news]");
+    const grid = document.querySelector("[data-front-news-grid]");
+    if (!box || !grid) return;
+    const duo = games.filter(isDuo);
+    // Boksen venter til de nye triksene faktisk finnes i trikslista.
+    if (duo.length < 2) return;
+    grid.innerHTML = duo.map((g) => `
+      <a class="front-news-card" href="player.html?id=${encodeURIComponent(g.id)}">
+        ${g.thumbnail ? `<img src="${esc(g.thumbnail)}" alt="" loading="lazy" decoding="async">` : ""}
+        <div>
+          <h3>${esc(g.name)}</h3>
+          <span>Utfordre en venn</span>
+        </div>
+      </a>`).join("");
+    box.hidden = false;
   }
 
   async function loadRecordsIntoGrid() {
@@ -344,6 +402,8 @@
     if (window.STUDILLA_GAMES_READY) await window.STUDILLA_GAMES_READY;
     if (window.STUDILLA_GAME_SCRIPT_READY) await window.STUDILLA_GAME_SCRIPT_READY;
     renderHero("[data-hero]");
+    renderNews();
+    initGridFilter("[data-game-grid]");
     renderGameGrid("[data-game-grid]");
     loadRecordsIntoGrid();
     initDailyCountdown();

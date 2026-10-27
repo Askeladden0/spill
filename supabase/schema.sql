@@ -5642,3 +5642,598 @@ grant execute on function public.online_join_match(uuid, text) to anon, authenti
 grant execute on function public.online_c4_move(uuid, text, integer) to anon, authenticated;
 grant execute on function public.online_resign(uuid, text) to anon, authenticated;
 grant execute on function public.online_rematch(uuid, text) to anon, authenticated;
+
+-- ============================================================
+-- 77. Online tospiller: Senke skip og Dama.
+-- ============================================================
+-- Bygger på seksjon 76. Nytt her:
+--   * online_matches.data (jsonb) holder spillspesifikk tilstand.
+--   * Dama: board er 64 tegn (rad * 8 + kolonne): '0' tom, '1' hvit brikke,
+--     '2' rød brikke, '3' hvit dame, '4' rød dame. Plass 1 (hvit) starter og
+--     går oppover (mot rad 0). data = {chain, quiet, from}: chain er feltet
+--     brikken må slå videre fra, quiet er antall rolige halvtrekk på rad.
+--     Brikker går ett felt diagonalt fremover, damer ett felt i alle
+--     retninger. Alle kan slå i alle retninger ved å hoppe over en
+--     motstander, og det er slagtvang. Når en brikke blir dame, er trekket slutt.
+--   * Senke skip: flåtene ligger i online_match_secrets, som ingen kan lese
+--     direkte. Det offentlige i data er bare skuddene: s1 er skuddene plass 1
+--     har avfyrt mot plass 2 (100 tegn: '0' ikke skutt, '1' bom, '2' treff,
+--     '3' treff på senket skip), sunk1 er skipene plass 1 har senket
+--     (id 1-5), r1/r2 er om flåten er plassert, og f1/f2 avsløres når
+--     kampen er over. Flåtestrengen er 100 tegn: '0' vann, '1'-'5' skip-id
+--     (lengde 5, 4, 3, 3, 2).
+
+alter table public.online_matches drop constraint if exists online_matches_game_check;
+alter table public.online_matches add constraint online_matches_game_check
+  check (game in ('fire-pa-rad', 'senke-skip', 'dama'));
+alter table public.online_matches drop constraint if exists online_matches_board_check;
+alter table public.online_matches add constraint online_matches_board_check
+  check (board ~ '^[0-4]{42}$' or board ~ '^[0-4]{64}$');
+alter table public.online_matches add column if not exists data jsonb not null default '{}'::jsonb;
+
+create table if not exists public.online_match_secrets (
+  match_id uuid not null references public.online_matches (id) on delete cascade,
+  seat     smallint not null check (seat in (1, 2)),
+  fleet    text not null check (fleet ~ '^[0-5]{100}$'),
+  primary key (match_id, seat)
+);
+alter table public.online_match_secrets enable row level security;
+revoke all on public.online_match_secrets from anon, authenticated;
+
+create or replace function public.online_initial_board(p_game text)
+returns text
+language plpgsql
+immutable
+set search_path = public, pg_temp
+as $$
+declare
+  b text := '';
+  r integer;
+  c integer;
+begin
+  if p_game = 'dama' then
+    for r in 0..7 loop
+      for c in 0..7 loop
+        if (r + c) % 2 = 1 and r <= 2 then
+          b := b || '2';
+        elsif (r + c) % 2 = 1 and r >= 5 then
+          b := b || '1';
+        else
+          b := b || '0';
+        end if;
+      end loop;
+    end loop;
+    return b;
+  end if;
+  return repeat('0', 42);
+end;
+$$;
+
+create or replace function public.online_initial_data(p_game text)
+returns jsonb
+language sql
+immutable
+set search_path = public, pg_temp
+as $$
+  select case p_game
+    when 'dama' then jsonb_build_object('chain', null, 'quiet', 0, 'from', null)
+    when 'senke-skip' then jsonb_build_object(
+      'phase', 'placing', 'r1', false, 'r2', false,
+      's1', repeat('0', 100), 's2', repeat('0', 100),
+      'sunk1', '[]'::jsonb, 'sunk2', '[]'::jsonb)
+    else '{}'::jsonb
+  end;
+$$;
+
+revoke all on function public.online_initial_board(text) from public, anon, authenticated;
+revoke all on function public.online_initial_data(text) from public, anon, authenticated;
+
+-- Opprett kamp: samme som før, men med de nye spillene.
+create or replace function public.online_create_match(p_game text, p_token text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  new_id uuid;
+  recent integer;
+begin
+  if p_game is null or p_game not in ('fire-pa-rad', 'senke-skip', 'dama') then
+    raise exception 'Ukjent spill';
+  end if;
+  if p_token is null or length(p_token) < 16 or length(p_token) > 200 then
+    raise exception 'Ugyldig nøkkel';
+  end if;
+
+  delete from public.online_matches where created_at < now() - interval '14 days';
+
+  select count(*) into recent from public.online_matches
+   where created_at > now() - interval '10 minutes';
+  if recent >= 300 then
+    raise exception 'Mange nye kamper akkurat nå. Prøv igjen om litt.';
+  end if;
+  if uid is not null then
+    select count(*) into recent from public.online_matches
+     where host_user_id = uid and status = 'waiting' and created_at > now() - interval '1 day';
+    if recent >= 20 then
+      raise exception 'Du har mange åpne invitasjoner. Prøv igjen senere.';
+    end if;
+  end if;
+
+  insert into public.online_matches (game, board, data, host_name, host_user_id)
+  values (p_game, public.online_initial_board(p_game), public.online_initial_data(p_game),
+          public.online_player_name(), uid)
+  returning id into new_id;
+
+  insert into public.online_match_seats (match_id, seat, token_hash)
+  values (new_id, 1, public.online_token_hash(p_token));
+
+  return new_id;
+end;
+$$;
+
+-- Revansj: byttede plasser, ferskt brett og ferske data for spillet.
+create or replace function public.online_rematch(p_id uuid, p_token text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  m public.online_matches;
+  s smallint;
+  new_id uuid;
+begin
+  select * into m from public.online_matches where id = p_id for update;
+  if not found then
+    raise exception 'Fant ikke kampen';
+  end if;
+  s := public.online_seat_of(p_id, p_token);
+  if s = 0 then
+    raise exception 'Du er ikke med i denne kampen';
+  end if;
+  if m.status <> 'finished' or m.guest_name is null then
+    raise exception 'Kampen er ikke ferdig';
+  end if;
+  if m.rematch_id is not null then
+    return m.rematch_id;
+  end if;
+
+  insert into public.online_matches
+    (game, status, board, data, host_name, guest_name, host_user_id, guest_user_id)
+  values
+    (m.game, 'playing', public.online_initial_board(m.game), public.online_initial_data(m.game),
+     m.guest_name, m.host_name, m.guest_user_id, m.host_user_id)
+  returning id into new_id;
+
+  insert into public.online_match_seats (match_id, seat, token_hash)
+  select new_id, case when seat = 1 then 2 else 1 end, token_hash
+    from public.online_match_seats where match_id = p_id;
+
+  update public.online_matches set rematch_id = new_id, updated_at = now() where id = p_id;
+  return new_id;
+end;
+$$;
+
+-- ---------- Dama ----------
+
+-- Kan brikken på feltet sq (eid av spiller s) hoppe over en motstander?
+create or replace function public.online_dama_can_jump(b text, s integer, sq integer)
+returns boolean
+language plpgsql
+immutable
+set search_path = public, pg_temp
+as $$
+declare
+  r integer := sq / 8;
+  c integer := sq % 8;
+  d integer[] := array[-1,-1, -1,1, 1,-1, 1,1];
+  i integer;
+  tr integer;
+  tc integer;
+  mid text;
+begin
+  for i in 0..3 loop
+    tr := r + d[i * 2 + 1] * 2;
+    tc := c + d[i * 2 + 2] * 2;
+    if tr between 0 and 7 and tc between 0 and 7
+       and substr(b, tr * 8 + tc + 1, 1) = '0' then
+      mid := substr(b, (r + d[i * 2 + 1]) * 8 + (c + d[i * 2 + 2]) + 1, 1);
+      if (s = 1 and mid in ('2', '4')) or (s = 2 and mid in ('1', '3')) then
+        return true;
+      end if;
+    end if;
+  end loop;
+  return false;
+end;
+$$;
+
+-- Har spiller s et lovlig trekk (steg eller hopp)? Med captures_only teller
+-- bare hopp.
+create or replace function public.online_dama_has_move(b text, s integer, captures_only boolean)
+returns boolean
+language plpgsql
+immutable
+set search_path = public, pg_temp
+as $$
+declare
+  sq integer;
+  p text;
+  r integer;
+  c integer;
+  fwd integer := case when s = 1 then -1 else 1 end;
+  king boolean;
+  dc integer;
+  dr integer;
+begin
+  for sq in 0..63 loop
+    p := substr(b, sq + 1, 1);
+    if (s = 1 and p in ('1', '3')) or (s = 2 and p in ('2', '4')) then
+      if public.online_dama_can_jump(b, s, sq) then
+        return true;
+      end if;
+      if not captures_only then
+        r := sq / 8;
+        c := sq % 8;
+        king := p in ('3', '4');
+        foreach dr in array array[-1, 1] loop
+          if king or dr = fwd then
+            foreach dc in array array[-1, 1] loop
+              if r + dr between 0 and 7 and c + dc between 0 and 7
+                 and substr(b, (r + dr) * 8 + c + dc + 1, 1) = '0' then
+                return true;
+              end if;
+            end loop;
+          end if;
+        end loop;
+      end if;
+    end if;
+  end loop;
+  return false;
+end;
+$$;
+
+create or replace function public.online_dama_move(p_id uuid, p_token text, p_from integer, p_to integer)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  m public.online_matches;
+  s smallint;
+  b text;
+  d jsonb;
+  piece text;
+  fr integer;
+  fc integer;
+  tr integer;
+  tc integer;
+  dr integer;
+  dc integer;
+  king boolean;
+  jump boolean;
+  mid integer := -1;
+  chain integer;
+  fwd integer;
+  promote boolean := false;
+  newpiece text;
+  next_turn smallint;
+  quiet integer;
+  new_chain integer := null;
+  fin boolean := false;
+  win smallint := null;
+begin
+  select * into m from public.online_matches where id = p_id for update;
+  if not found or m.game <> 'dama' then
+    raise exception 'Fant ikke kampen';
+  end if;
+  s := public.online_seat_of(p_id, p_token);
+  if s = 0 then
+    raise exception 'Du er ikke med i denne kampen';
+  end if;
+  if m.status <> 'playing' then
+    raise exception 'Kampen er ikke i gang';
+  end if;
+  if m.turn <> s then
+    raise exception 'Det er ikke din tur';
+  end if;
+  if p_from is null or p_to is null or p_from not between 0 and 63 or p_to not between 0 and 63 then
+    raise exception 'Ugyldig felt';
+  end if;
+
+  b := m.board;
+  d := m.data;
+  piece := substr(b, p_from + 1, 1);
+  if not ((s = 1 and piece in ('1', '3')) or (s = 2 and piece in ('2', '4'))) then
+    raise exception 'Det er ikke din brikke';
+  end if;
+  if substr(b, p_to + 1, 1) <> '0' then
+    raise exception 'Feltet er opptatt';
+  end if;
+
+  fr := p_from / 8; fc := p_from % 8;
+  tr := p_to / 8;   tc := p_to % 8;
+  dr := tr - fr;    dc := tc - fc;
+  king := piece in ('3', '4');
+  fwd := case when s = 1 then -1 else 1 end;
+  chain := (d ->> 'chain')::integer;
+  quiet := coalesce((d ->> 'quiet')::integer, 0);
+
+  if chain is not null and chain <> p_from then
+    raise exception 'Du må slå videre med samme brikke';
+  end if;
+
+  if abs(dr) = 2 and abs(dc) = 2 then
+    mid := ((fr + tr) / 2) * 8 + (fc + tc) / 2;
+    if not ((s = 1 and substr(b, mid + 1, 1) in ('2', '4'))
+         or (s = 2 and substr(b, mid + 1, 1) in ('1', '3'))) then
+      raise exception 'Ugyldig trekk';
+    end if;
+    jump := true;
+  elsif abs(dr) = 1 and abs(dc) = 1 then
+    if chain is not null then
+      raise exception 'Du må slå videre';
+    end if;
+    if not king and dr <> fwd then
+      raise exception 'Brikken kan bare gå fremover';
+    end if;
+    if public.online_dama_has_move(b, s, true) then
+      raise exception 'Du må slå når du kan';
+    end if;
+    jump := false;
+  else
+    raise exception 'Ugyldig trekk';
+  end if;
+
+  b := overlay(b placing '0' from p_from + 1 for 1);
+  if jump then
+    b := overlay(b placing '0' from mid + 1 for 1);
+  end if;
+  promote := not king and ((s = 1 and tr = 0) or (s = 2 and tr = 7));
+  newpiece := case when promote then (piece::integer + 2)::text else piece end;
+  b := overlay(b placing newpiece from p_to + 1 for 1);
+
+  if jump and not promote and public.online_dama_can_jump(b, s, p_to) then
+    new_chain := p_to;
+    next_turn := s;
+  else
+    next_turn := case when s = 1 then 2 else 1 end;
+  end if;
+
+  if jump or not king then
+    quiet := 0;
+  else
+    quiet := quiet + 1;
+  end if;
+
+  if next_turn <> s then
+    if not public.online_dama_has_move(b, next_turn, false) then
+      fin := true;
+      win := s;
+    elsif quiet >= 80 then
+      fin := true;
+      win := 0;
+    end if;
+  end if;
+
+  update public.online_matches
+     set board = b,
+         last_move = p_to,
+         move_count = move_count + 1,
+         turn = next_turn,
+         status = case when fin then 'finished' else 'playing' end,
+         winner = win,
+         data = jsonb_build_object('chain', new_chain, 'quiet', quiet, 'from', p_from),
+         updated_at = now()
+   where id = p_id;
+end;
+$$;
+
+-- ---------- Senke skip ----------
+
+create or replace function public.online_bs_valid_fleet(f text)
+returns boolean
+language plpgsql
+immutable
+set search_path = public, pg_temp
+as $$
+declare
+  lens integer[] := array[5, 4, 3, 3, 2];
+  k integer;
+  n integer;
+  lo integer;
+  hi integer;
+  rows_n integer;
+  cols_n integer;
+begin
+  if f is null or f !~ '^[0-5]{100}$' then
+    return false;
+  end if;
+  for k in 1..5 loop
+    select count(*), min(i), max(i), count(distinct i / 10), count(distinct i % 10)
+      into n, lo, hi, rows_n, cols_n
+      from generate_series(0, 99) as i
+     where substr(f, i + 1, 1) = k::text;
+    if n <> lens[k] then
+      return false;
+    end if;
+    if not ((rows_n = 1 and hi - lo = n - 1) or (cols_n = 1 and hi - lo = (n - 1) * 10)) then
+      return false;
+    end if;
+  end loop;
+  return true;
+end;
+$$;
+
+revoke all on function public.online_bs_valid_fleet(text) from public, anon, authenticated;
+
+create or replace function public.online_bs_place(p_id uuid, p_token text, p_fleet text)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  m public.online_matches;
+  s smallint;
+  d jsonb;
+begin
+  select * into m from public.online_matches where id = p_id for update;
+  if not found or m.game <> 'senke-skip' then
+    raise exception 'Fant ikke kampen';
+  end if;
+  s := public.online_seat_of(p_id, p_token);
+  if s = 0 then
+    raise exception 'Du er ikke med i denne kampen';
+  end if;
+  if m.status <> 'playing' or m.data ->> 'phase' <> 'placing' then
+    raise exception 'Du kan ikke plassere skip nå';
+  end if;
+  if (m.data ->> ('r' || s))::boolean then
+    raise exception 'Du har allerede plassert flåten';
+  end if;
+  if not public.online_bs_valid_fleet(p_fleet) then
+    raise exception 'Ugyldig flåte';
+  end if;
+
+  insert into public.online_match_secrets (match_id, seat, fleet) values (p_id, s, p_fleet);
+
+  d := m.data || jsonb_build_object('r' || s, true);
+  if (d ->> 'r1')::boolean and (d ->> 'r2')::boolean then
+    d := d || jsonb_build_object('phase', 'firing');
+  end if;
+
+  update public.online_matches
+     set data = d, turn = 1, move_count = move_count + 1, updated_at = now()
+   where id = p_id;
+end;
+$$;
+
+-- Din egen flåte (så den overlever en sideoppfriskning).
+create or replace function public.online_bs_fleet(p_id uuid, p_token text)
+returns text
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select fleet from public.online_match_secrets
+   where match_id = p_id and seat = public.online_seat_of(p_id, p_token);
+$$;
+
+create or replace function public.online_bs_shoot(p_id uuid, p_token text, p_cell integer)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  m public.online_matches;
+  s smallint;
+  opp smallint;
+  d jsonb;
+  sh text;
+  fleet text;
+  mine text;
+  ch text;
+  i integer;
+  all_hit boolean;
+  sunk jsonb;
+  fin boolean := false;
+begin
+  select * into m from public.online_matches where id = p_id for update;
+  if not found or m.game <> 'senke-skip' then
+    raise exception 'Fant ikke kampen';
+  end if;
+  s := public.online_seat_of(p_id, p_token);
+  if s = 0 then
+    raise exception 'Du er ikke med i denne kampen';
+  end if;
+  if m.status <> 'playing' or m.data ->> 'phase' <> 'firing' then
+    raise exception 'Kampen er ikke i gang';
+  end if;
+  if m.turn <> s then
+    raise exception 'Det er ikke din tur';
+  end if;
+  if p_cell is null or p_cell < 0 or p_cell > 99 then
+    raise exception 'Ugyldig rute';
+  end if;
+
+  opp := case when s = 1 then 2 else 1 end;
+  d := m.data;
+  sh := d ->> ('s' || s);
+  if substr(sh, p_cell + 1, 1) <> '0' then
+    raise exception 'Du har allerede skutt der';
+  end if;
+  select o.fleet into fleet from public.online_match_secrets o
+   where o.match_id = p_id and o.seat = opp;
+  if fleet is null then
+    raise exception 'Motstanderen er ikke klar';
+  end if;
+
+  ch := substr(fleet, p_cell + 1, 1);
+  sunk := coalesce(d -> ('sunk' || s), '[]'::jsonb);
+  if ch = '0' then
+    sh := overlay(sh placing '1' from p_cell + 1 for 1);
+  else
+    sh := overlay(sh placing '2' from p_cell + 1 for 1);
+    all_hit := true;
+    for i in 0..99 loop
+      if substr(fleet, i + 1, 1) = ch and substr(sh, i + 1, 1) = '0' then
+        all_hit := false;
+        exit;
+      end if;
+    end loop;
+    if all_hit then
+      for i in 0..99 loop
+        if substr(fleet, i + 1, 1) = ch then
+          sh := overlay(sh placing '3' from i + 1 for 1);
+        end if;
+      end loop;
+      sunk := sunk || to_jsonb(ch::integer);
+    end if;
+  end if;
+
+  d := d || jsonb_build_object('s' || s, sh, 'sunk' || s, sunk);
+  if jsonb_array_length(sunk) = 5 then
+    fin := true;
+    select o.fleet into mine from public.online_match_secrets o
+     where o.match_id = p_id and o.seat = s;
+    d := d || jsonb_build_object('f' || opp, fleet, 'f' || s, mine);
+  end if;
+
+  update public.online_matches
+     set data = d,
+         last_move = p_cell,
+         move_count = move_count + 1,
+         turn = opp,
+         status = case when fin then 'finished' else 'playing' end,
+         winner = case when fin then s else null end,
+         updated_at = now()
+   where id = p_id;
+end;
+$$;
+
+revoke all on function public.online_dama_can_jump(text, integer, integer) from public, anon, authenticated;
+revoke all on function public.online_dama_has_move(text, integer, boolean) from public, anon, authenticated;
+revoke all on function public.online_dama_move(uuid, text, integer, integer) from public;
+revoke all on function public.online_bs_place(uuid, text, text) from public;
+revoke all on function public.online_bs_fleet(uuid, text) from public;
+revoke all on function public.online_bs_shoot(uuid, text, integer) from public;
+revoke all on function public.online_create_match(text, text) from public;
+revoke all on function public.online_rematch(uuid, text) from public;
+grant execute on function public.online_dama_move(uuid, text, integer, integer) to anon, authenticated;
+grant execute on function public.online_bs_place(uuid, text, text) to anon, authenticated;
+grant execute on function public.online_bs_fleet(uuid, text) to anon, authenticated;
+grant execute on function public.online_bs_shoot(uuid, text, integer) to anon, authenticated;
+grant execute on function public.online_create_match(text, text) to anon, authenticated;
+grant execute on function public.online_rematch(uuid, text) to anon, authenticated;
+
+-- De nye triksene i forsidelista (hopp over hvis de allerede finnes).
+insert into public.games (id, name, points, time_estimate, description, thumbnail_url, icon_url, is_daily_game, sort_order) values
+  ('senke-skip', 'Senke skip', 'Din skår = dine poeng', '~10 min', 'Plasser flåten din og skyt mot motstanderens farvann. Senk alle fem skipene før AI-en eller vennen din senker dine.', 'assets/img/games/senke-skip.svg', 'assets/img/icons/senke-skip.svg', false, 10),
+  ('dama', 'Dama', 'Din skår = dine poeng', '~10 min', 'Hopp over motstanderens brikker, bli dame og fang alt som beveger seg. Mot AI-en eller en venn online.', 'assets/img/games/dama.svg', 'assets/img/icons/dama.svg', false, 11)
+on conflict (id) do nothing;

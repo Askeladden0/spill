@@ -73,6 +73,24 @@
         "Mot en venn: velg «Mot en venn online» og send lenken, eller utfordre fra Meldinger. Online-kamper gir ikke poeng."
       ]
     },
+    "senke-skip": {
+      intro: "Senk hele motstanderens flåte før motstanderen senker din – mot AI-en eller en venn online.",
+      steps: [
+        "Plasser de fem skipene dine på brettet. Trykk «Roter» for å legge dem på høykant, eller «Tilfeldig» for å la datamaskinen gjøre det.",
+        "Trykk på en rute i motstanderens farvann for å skyte. Rød rute er treff, hvit prikk er bom.",
+        "Et skip er senket når alle rutene er truffet. Den som først senker alle fem, vinner.",
+        "Mot AI-en: jo færre skudd du bruker, jo flere poeng får du. Mot en venn: velg «Mot en venn online» og send lenken. Online-kamper gir ikke poeng."
+      ]
+    },
+    dama: {
+      intro: "Ta alle motstanderens brikker, eller stenge dem inne – mot AI-en eller en venn online.",
+      steps: [
+        "Trykk på en brikke og så på et markert felt. Brikker går ett felt diagonalt fremover.",
+        "Hopp over en motstander for å ta den. Du må slå når du kan, og kan du slå igjen etter hoppet, må du fortsette.",
+        "Når en brikke når motstanderens bakerste rad, blir den en dame og kan gå og slå i alle retninger.",
+        "Mot AI-en: jo flere brikker du har igjen, jo flere poeng. Mot en venn: velg «Mot en venn online» og send lenken. Online-kamper gir ikke poeng."
+      ]
+    },
     papirkomet: {
       intro: "Fly romskipet Polaris gjennom asteroidene.",
       steps: [

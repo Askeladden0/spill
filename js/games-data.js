@@ -24,6 +24,16 @@
  *                       (1 = 1:1, 2 = dobbelt opp). Settes per spill i adminpanelet.
  */
 
+/**
+ * Triksene som kan spilles 1v1 mot en venn online (js/online-match.js).
+ * De kan også spilles alene mot AI-en. Forsiden bruker lista til
+ * 1v1-filteret og nyhetsboksen.
+ */
+window.STUDILLA_TWO_PLAYER = ["fire-pa-rad", "senke-skip", "dama"];
+window.studillaIsTwoPlayer = function isTwoPlayer(game) {
+  return !!game && window.STUDILLA_TWO_PLAYER.includes(game.id);
+};
+
 window.STUDILLA_GAMES = [
   {
     id: "fruktfusjon",
@@ -95,6 +105,24 @@ window.STUDILLA_GAMES = [
     thumbnail: "assets/img/games/fire-pa-rad.svg",
     icon: "assets/img/icons/fire-pa-rad.svg",
     description: "Slipp brikker i kolonnene og få fire på rad før AI-motstanderen gjør det. Jo raskere du vinner, jo flere poeng.",
+    isDailyGame: false
+  },
+  {
+    id: "senke-skip",
+    name: "Senke skip",
+    time: "~10 min",
+    thumbnail: "assets/img/games/senke-skip.svg",
+    icon: "assets/img/icons/senke-skip.svg",
+    description: "Plasser flåten din og skyt mot motstanderens farvann. Senk alle fem skipene før AI-en eller vennen din senker dine.",
+    isDailyGame: false
+  },
+  {
+    id: "dama",
+    name: "Dama",
+    time: "~10 min",
+    thumbnail: "assets/img/games/dama.svg",
+    icon: "assets/img/icons/dama.svg",
+    description: "Hopp over motstanderens brikker, bli dame og fang alt som beveger seg. Mot AI-en eller en venn online.",
     isDailyGame: false
   },
   {

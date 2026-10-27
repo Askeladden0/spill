@@ -55,11 +55,26 @@
       </div>
     </section>
 
+    <!-- Nyhet: triksene du kan ta 1v1 mot en venn (js/main.js fyller boksen). -->
+    <section class="front-news" data-front-news hidden aria-labelledby="front-news-title">
+      <div class="front-news-head">
+        <span class="front-news-tag">Nytt</span>
+        <h2 id="front-news-title">Nå finnes det 1v1-triks!</h2>
+        <p>Utfordre en venn og se hvem som er best. Trykk på et triks for å prøve.</p>
+      </div>
+      <div class="front-news-grid" data-front-news-grid></div>
+    </section>
+
     <section id="alle">
       <div class="front-section-head">
         <div>
           <h2>Alle triks</h2>
           <p>Hver runde gir poeng til nivået ditt.</p>
+        </div>
+        <div class="front-filter" role="group" aria-label="Filtrer triks" data-grid-filter>
+          <button type="button" data-filter="all" aria-pressed="true">Alle</button>
+          <button type="button" data-filter="solo" aria-pressed="false">1 person</button>
+          <button type="button" data-filter="duo" aria-pressed="false">1v1</button>
         </div>
       </div>
       <div class="front-tricks" data-game-grid></div>
@@ -103,6 +118,8 @@
 <script src="js/game-howto.js"></script>
 <script src="js/guides-data.js"></script>
 <script src="js/levelup-modal.js"></script>
+<script src="js/online-match.js"></script>
+<script src="js/online-shell.js"></script>
 <script src="js/game-runtime.js"></script>
 <script src="js/main.js"></script>
 </body>

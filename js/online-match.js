@@ -76,6 +76,26 @@
     return rpc("online_c4_move", { p_id: id, p_token: tokenFor(id), p_col: col });
   }
 
+  /** Dama: ett hopp eller steg fra felt `from` til felt `to` (0-63). */
+  function damaMove(id, from, to) {
+    return rpc("online_dama_move", { p_id: id, p_token: tokenFor(id), p_from: from, p_to: to });
+  }
+
+  /** Senke skip: send inn flåten (100 tegn, '0' vann og '1'-'5' skip-id). */
+  function placeFleet(id, fleet) {
+    return rpc("online_bs_place", { p_id: id, p_token: tokenFor(id), p_fleet: fleet });
+  }
+
+  /** Senke skip: din egen flåte, hentet fra serveren. */
+  function myFleet(id) {
+    return rpc("online_bs_fleet", { p_id: id, p_token: tokenFor(id) });
+  }
+
+  /** Senke skip: skyt på rute 0-99. */
+  function shoot(id, cell) {
+    return rpc("online_bs_shoot", { p_id: id, p_token: tokenFor(id), p_cell: cell });
+  }
+
   function resign(id) {
     return rpc("online_resign", { p_id: id, p_token: tokenFor(id) });
   }
@@ -164,6 +184,10 @@
     create,
     join,
     move,
+    damaMove,
+    placeFleet,
+    myFleet,
+    shoot,
     resign,
     rematch,
     followRematch,

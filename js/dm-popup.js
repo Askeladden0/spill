@@ -73,7 +73,7 @@
   function previewText(body) {
     const parsed = Social.parseBody(body);
     if (!parsed.attachment) return parsed.text;
-    const labels = { spill: "Sendte deg et triks", guide: "Sendte deg en guide", rekord: "Sendte deg en rekord", kamp: "Utfordret deg til Fire på rad" };
+    const labels = { spill: "Sendte deg et triks", guide: "Sendte deg en guide", rekord: "Sendte deg en rekord", kamp: "Utfordret deg til en kamp" };
     const label = labels[parsed.attachment.kind] || "Vedlegg";
     return parsed.text ? `${label} · ${parsed.text}` : label;
   }
