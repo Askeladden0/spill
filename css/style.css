@@ -3221,13 +3221,14 @@ a.xp-widget { text-decoration: none; color: inherit; }
 
 .front-support {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   margin: 28px 0;
-  padding: 22px 26px;
+  padding: 26px 26px 28px;
   border: 1px solid var(--border-strong);
   border-radius: 18px;
-  background: var(--accent-soft);
+  text-align: center;
 }
 .front-support > img { flex-shrink: 0; width: 160px; height: 160px; padding: 8px; box-sizing: border-box; border-radius: 12px; background: #fff; }
 .front-support h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -.02em; color: var(--text-strong); }
@@ -3237,7 +3238,7 @@ a.xp-widget { text-decoration: none; color: inherit; }
 .front-support-link:hover { opacity: .9; }
 
 @media (max-width: 760px) {
-  .front-support { flex-direction: column; align-items: flex-start; gap: 16px; padding: 18px 20px; }
+  .front-support { padding: 20px; }
   .front-support > img { width: 130px; height: 130px; }
 }
 
